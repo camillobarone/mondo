@@ -341,7 +341,8 @@ export function listRequirements(filters: {
   status?: string;
   contract?: string;
   city?: string;
-}): RequirementRow[] {
+  page?: string;
+}): { rows: RequirementRow[]; total: number; page: number; pages: number } {
   const clauses = ["c.deleted_at IS NULL"];
   const params: unknown[] = [];
 
@@ -365,19 +366,29 @@ export function listRequirements(filters: {
     params.push(filters.city);
   }
 
-  return all<RequirementRow>(
+  const where = clauses.join(" AND ");
+  const page = Math.max(1, Number(filters.page ?? 1) || 1);
+  const total = count(
+    `SELECT COUNT(*) AS n FROM requirements r JOIN clients c ON c.id = r.client_id WHERE ${where}`,
+    params,
+  );
+
+  const rows = all<RequirementRow>(
     `SELECT r.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
             c.mobile AS client_mobile
        FROM requirements r
        JOIN clients c ON c.id = r.client_id
-      WHERE ${clauses.join(" AND ")}
+      WHERE ${where}
       ORDER BY
         CASE r.status WHEN 'aperta' THEN 1 WHEN 'pausa' THEN 2 ELSE 3 END,
         CASE r.urgency WHEN 'alta' THEN 1 WHEN 'media' THEN 2 ELSE 3 END,
-        r.updated_at DESC`,
-    params,
+        r.updated_at DESC
+      LIMIT ? OFFSET ?`,
+    [...params, PAGE_SIZE, (page - 1) * PAGE_SIZE],
   );
+
+  return { rows, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
 export function getRequirement(id: number): RequirementRow | undefined {

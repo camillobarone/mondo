@@ -10,7 +10,7 @@ import {
   valuationsOfProperty,
   activeUserOptions,
 } from "@/lib/queries";
-import { matchesForProperty } from "@/lib/matching";
+import { matchesForProperty, countMatchesForProperty } from "@/lib/matching";
 import { deleteProperty } from "@/lib/actions";
 import { euro, shortDate, dateTime, relative, label } from "@/lib/format";
 import {
@@ -39,6 +39,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   if (!property) notFound();
 
   const matches = matchesForProperty(property);
+  const matchCount = countMatchesForProperty(property);
   const offers = offersOfProperty(propertyId);
   const activities = activitiesOfProperty(propertyId);
   const prices = priceHistory(propertyId);
@@ -216,7 +217,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         <div className="space-y-5 lg:col-span-2">
           {/* -------------------------------------------------- a chi proporlo */}
           <Card
-            title={`A chi proporlo (${matches.length})`}
+            title={`A chi proporlo (${matchCount})`}
             actions={
               <Link href="/incroci" className="text-xs text-brand-700 hover:underline">
                 Tutti gli incroci
@@ -231,7 +232,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
               />
             ) : (
               <ul className="divide-y divide-slate-100">
-                {matches.slice(0, 12).map((match) => (
+                {matches.map((match) => (
                   <li key={match.requirement.id} className="px-4 py-2.5">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">

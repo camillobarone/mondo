@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listRequirements } from "@/lib/queries";
-import { matchesForRequirement } from "@/lib/matching";
+import { requirementSummary } from "@/lib/matching";
 import { euro, fromCsv, shortDate } from "@/lib/format";
-import { PageHeader, Card, EmptyState, StatusChip, Chip } from "@/components/ui";
+import { PageHeader, Card, EmptyState, StatusChip, Chip, Pagination } from "@/components/ui";
 import { REQUIREMENT_STATUSES } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -11,17 +11,20 @@ export const dynamic = "force-dynamic";
 export default async function RequirementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; contract?: string; city?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; contract?: string; city?: string; page?: string }>;
 }) {
   await requireUser();
   const filters = await searchParams;
-  const requirements = listRequirements({ status: "aperta", ...filters });
+  const { rows: requirements, total, page, pages } = listRequirements({
+    status: "aperta",
+    ...filters,
+  });
 
   return (
     <>
       <PageHeader
         title="Richieste"
-        subtitle="Cosa cercano i tuoi clienti. Ogni richiesta viene incrociata con il portafoglio."
+        subtitle={`${total} richieste. Ognuna viene incrociata con il portafoglio.`}
         actions={
           <Link href="/incroci" className="btn-primary">
             Vedi gli incroci
@@ -86,9 +89,10 @@ export default async function RequirementsPage({
         ) : (
           <ul className="divide-y divide-slate-100">
             {requirements.map((requirement) => {
-              const matches =
-                requirement.status === "aperta" ? matchesForRequirement(requirement) : [];
-              const perfect = matches.filter((match) => match.warnings.length === 0).length;
+              const summary =
+                requirement.status === "aperta"
+                  ? requirementSummary(requirement, 4)
+                  : { count: 0, perfect: 0, top: [] };
 
               return (
                 <li key={requirement.id} className="px-4 py-3">
@@ -127,13 +131,13 @@ export default async function RequirementsPage({
 
                     <div className="text-right">
                       {requirement.status === "aperta" ? (
-                        matches.length ? (
+                        summary.count ? (
                           <>
                             <p className="text-sm font-semibold text-brand-700">
-                              {matches.length} immobili
+                              {summary.count} immobili
                             </p>
-                            {perfect ? (
-                              <p className="text-xs text-emerald-600">{perfect} perfetti</p>
+                            {summary.perfect ? (
+                              <p className="text-xs text-emerald-600">{summary.perfect} perfetti</p>
                             ) : null}
                           </>
                         ) : (
@@ -149,9 +153,9 @@ export default async function RequirementsPage({
                     </div>
                   </div>
 
-                  {matches.length > 0 ? (
+                  {summary.top.length > 0 ? (
                     <ul className="mt-2 flex flex-wrap gap-2">
-                      {matches.slice(0, 4).map((match) => (
+                      {summary.top.map((match) => (
                         <li key={match.property.id}>
                           <Link
                             href={`/immobili/${match.property.id}`}
@@ -171,6 +175,14 @@ export default async function RequirementsPage({
             })}
           </ul>
         )}
+
+        <Pagination
+          page={page}
+          pages={pages}
+          total={total}
+          params={filters as Record<string, string | undefined>}
+          basePath="/richieste"
+        />
       </Card>
     </>
   );

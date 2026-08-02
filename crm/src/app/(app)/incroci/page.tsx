@@ -1,29 +1,25 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { allMatches } from "@/lib/matching";
+import { matchesByClient } from "@/lib/matching";
 import { euro } from "@/lib/format";
-import { PageHeader, Card, EmptyState, Chip } from "@/components/ui";
+import { PageHeader, Card, EmptyState, Chip, Pagination } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
 export default async function MatchesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ soloPerfetti?: string }>;
+  searchParams: Promise<{ soloPerfetti?: string; page?: string }>;
 }) {
   await requireUser();
   const params = await searchParams;
   const onlyPerfect = params.soloPerfetti === "1";
 
-  const matches = allMatches().filter((match) => !onlyPerfect || match.warnings.length === 0);
-
-  // Raggruppati per cliente: cosi' una telefonata copre piu' immobili.
-  const byClient = new Map<number, typeof matches>();
-  for (const match of matches) {
-    const list = byClient.get(match.requirement.client_id) ?? [];
-    list.push(match);
-    byClient.set(match.requirement.client_id, list);
-  }
+  // Gia' raggruppati per cliente: una telefonata copre piu' immobili.
+  const { groups, total, clients, page, pages } = matchesByClient({
+    onlyPerfect,
+    page: Number(params.page ?? 1) || 1,
+  });
 
   return (
     <>
@@ -40,7 +36,7 @@ export default async function MatchesPage({
         }
       />
 
-      {byClient.size === 0 ? (
+      {groups.length === 0 ? (
         <Card>
           <EmptyState
             title="Nessun incrocio al momento."
@@ -55,27 +51,31 @@ export default async function MatchesPage({
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-slate-500">
-            {matches.length} abbinamenti per {byClient.size} clienti.
+            {total} abbinamenti per {clients} clienti
+            {pages > 1 ? ` · pagina ${page} di ${pages}, i più promettenti per primi` : ""}.
           </p>
 
-          {[...byClient.entries()].map(([clientId, clientMatches]) => (
+          {groups.map((group) => (
             <Card
-              key={clientId}
+              key={group.clientId}
               title={
-                <Link href={`/clienti/${clientId}`} className="hover:text-brand-700 hover:underline">
-                  {clientMatches[0]!.client_name || `Cliente #${clientId}`}
+                <Link
+                  href={`/clienti/${group.clientId}`}
+                  className="hover:text-brand-700 hover:underline"
+                >
+                  {group.clientName || `Cliente #${group.clientId}`}
                 </Link>
               }
               actions={
                 <span className="text-xs text-slate-500">
-                  {clientMatches.length}{" "}
-                  {clientMatches.length === 1 ? "immobile" : "immobili"}
+                  {group.total} {group.total === 1 ? "immobile" : "immobili"}
+                  {group.total > group.matches.length ? ` · mostrati i primi ${group.matches.length}` : ""}
                 </span>
               }
               bodyClassName=""
             >
               <ul className="divide-y divide-slate-100">
-                {clientMatches.slice(0, 8).map((match) => (
+                {group.matches.map((match) => (
                   <li
                     key={`${match.requirement.id}-${match.property.id}`}
                     className="flex flex-wrap items-start justify-between gap-3 px-4 py-2.5"
@@ -105,6 +105,16 @@ export default async function MatchesPage({
               </ul>
             </Card>
           ))}
+
+          <Card bodyClassName="">
+            <Pagination
+              page={page}
+              pages={pages}
+              total={clients}
+              params={params as Record<string, string | undefined>}
+              basePath="/incroci"
+            />
+          </Card>
         </div>
       )}
     </>

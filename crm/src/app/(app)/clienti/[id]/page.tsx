@@ -9,7 +9,7 @@ import {
   offersOfClient,
   activeUserOptions,
 } from "@/lib/queries";
-import { matchesForRequirement } from "@/lib/matching";
+import { requirementSummary } from "@/lib/matching";
 import { deleteClient } from "@/lib/actions";
 import {
   euro,
@@ -242,9 +242,10 @@ export default async function ClientPage({
             ) : (
               <ul className="divide-y divide-slate-100">
                 {requirements.map((requirement) => {
-                  const matches =
-                    requirement.status === "aperta" ? matchesForRequirement(requirement) : [];
-                  const good = matches.filter((match) => match.warnings.length === 0);
+                  const summary =
+                    requirement.status === "aperta"
+                      ? requirementSummary(requirement, 5)
+                      : { count: 0, perfect: 0, top: [] };
 
                   return (
                     <li key={requirement.id} className="px-4 py-3">
@@ -284,18 +285,18 @@ export default async function ClientPage({
 
                       {requirement.status === "aperta" ? (
                         <div className="mt-2 rounded-md bg-slate-50 p-2.5">
-                          {matches.length === 0 ? (
+                          {summary.count === 0 ? (
                             <p className="text-xs text-slate-500">
                               Nessun immobile in portafoglio corrisponde a questa richiesta.
                             </p>
                           ) : (
                             <>
                               <p className="mb-1.5 text-xs font-medium text-slate-600">
-                                {matches.length} immobili da valutare
-                                {good.length ? ` · ${good.length} corrispondono in pieno` : ""}
+                                {summary.count} immobili da valutare
+                                {summary.perfect ? ` · ${summary.perfect} corrispondono in pieno` : ""}
                               </p>
                               <ul className="space-y-1">
-                                {matches.slice(0, 5).map((match) => (
+                                {summary.top.map((match) => (
                                   <li key={match.property.id} className="text-xs">
                                     <Link
                                       href={`/immobili/${match.property.id}`}

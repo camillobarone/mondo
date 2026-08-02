@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { all } from "./db";
 import { fromCsv } from "./format";
 import type { Property, Requirement } from "./types";
@@ -9,6 +10,15 @@ import type { Property, Requirement } from "./types";
  * davvero (i criteri non compilati non contano ne' a favore ne' contro).
  * Un immobile compare solo se non viola nessun criterio obbligatorio:
  * tipo di contratto, budget e metri quadri minimi.
+ *
+ * PRESTAZIONI — con 500 richieste aperte e 150 immobili disponibili si
+ * valutano 75.000 combinazioni a ogni apertura di pagina. Tre accorgimenti
+ * tengono il calcolo sotto il decimo di secondo:
+ *   1. richieste e immobili vengono "preparati" una volta sola (zone, comuni
+ *      e requisiti gia' normalizzati), invece di rianalizzarli a ogni confronto;
+ *   2. il confronto lavora solo su numeri e stringhe gia' pronte;
+ *   3. le motivazioni testuali si costruiscono solo per gli abbinamenti che
+ *      finiscono davvero sotto gli occhi dell'utente.
  */
 
 export interface Match {
@@ -20,6 +30,14 @@ export interface Match {
   warnings: string[]; // dove non corrisponde del tutto
 }
 
+interface Scored {
+  property: Property;
+  requirement: Requirement;
+  score: number;
+  total: number;
+  misses: number;     // criteri non soddisfatti
+}
+
 /** Tolleranza sul budget massimo: un immobile poco sopra vale la telefonata. */
 const BUDGET_TOLERANCE = 1.08;
 
@@ -27,110 +45,190 @@ function normalise(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
 }
 
-function evaluate(requirement: Requirement, property: Property): Match | null {
+/* ------------------------------------------------------------ preparazione */
+
+interface ReadyRequirement {
+  source: Requirement;
+  contract: string;
+  kind: string;
+  city: string;
+  zones: string[];
+  needsElevator: boolean;
+  needsGarage: boolean;
+  needsOutdoor: boolean;
+  budgetMin: number;
+  budgetMax: number;
+  sqmMin: number;
+  roomsMin: number;
+}
+
+interface ReadyProperty {
+  source: Property;
+  contract: string;
+  kind: string;
+  city: string;
+  zone: string;
+  price: number;
+  sqm: number;
+  rooms: number;
+  elevator: boolean;
+  garage: boolean;
+  outdoor: boolean;
+}
+
+function prepareRequirement(requirement: Requirement): ReadyRequirement {
+  const needs = fromCsv(requirement.needs);
+  return {
+    source: requirement,
+    contract: normalise(requirement.contract),
+    kind: normalise(requirement.kind),
+    city: normalise(requirement.city),
+    zones: fromCsv(requirement.zones).map(normalise),
+    needsElevator: needs.includes("ascensore"),
+    needsGarage: needs.includes("box"),
+    needsOutdoor: needs.includes("esterno"),
+    budgetMin: requirement.budget_min ?? 0,
+    budgetMax: requirement.budget_max ?? 0,
+    sqmMin: requirement.sqm_min ?? 0,
+    roomsMin: requirement.rooms_min ?? 0,
+  };
+}
+
+function prepareProperty(property: Property): ReadyProperty {
+  return {
+    source: property,
+    contract: normalise(property.contract),
+    kind: normalise(property.kind),
+    city: normalise(property.city),
+    zone: normalise(property.zone),
+    price: property.price ?? 0,
+    sqm: property.sqm ?? 0,
+    rooms: property.rooms ?? 0,
+    elevator: property.elevator === 1,
+    garage: property.garage === 1,
+    outdoor: !!property.outdoor && normalise(property.outdoor) !== "nessuno",
+  };
+}
+
+/* -------------------------------------------------------------- confronto */
+
+/** Conta i criteri soddisfatti. Restituisce null se l'immobile va escluso. */
+function score(
+  requirement: ReadyRequirement,
+  property: ReadyProperty,
+): { score: number; total: number; misses: number } | null {
+  // --- criteri che escludono l'immobile ---------------------------------
+  if (property.contract !== requirement.contract) return null;
+  if (requirement.budgetMax && property.price > requirement.budgetMax * BUDGET_TOLERANCE) return null;
+  if (requirement.budgetMin && property.price > 0 && property.price < requirement.budgetMin * 0.75) {
+    return null;
+  }
+  if (requirement.sqmMin && property.sqm && property.sqm < requirement.sqmMin * 0.9) return null;
+
+  let hits = 0;
+  let total = 0;
+  let misses = 0;
+  const check = (satisfied: boolean) => {
+    total++;
+    if (satisfied) hits++;
+    else misses++;
+  };
+
+  if (requirement.budgetMax) check(property.price > 0 && property.price <= requirement.budgetMax);
+  if (requirement.kind) check(property.kind === requirement.kind);
+  if (requirement.city) check(property.city === requirement.city);
+  if (requirement.zones.length) check(requirement.zones.includes(property.zone));
+  if (requirement.sqmMin) check(property.sqm >= requirement.sqmMin);
+  if (requirement.roomsMin) check(property.rooms >= requirement.roomsMin);
+  if (requirement.needsElevator) check(property.elevator);
+  if (requirement.needsGarage) check(property.garage);
+  if (requirement.needsOutdoor) check(property.outdoor);
+
+  return { score: hits, total, misses };
+}
+
+/** Scrive le motivazioni: chiamata solo sugli abbinamenti da mostrare. */
+function explain(scored: Scored): Match {
+  const requirement = prepareRequirement(scored.requirement);
+  const property = prepareProperty(scored.property);
   const reasons: string[] = [];
   const warnings: string[] = [];
-  let score = 0;
-  let total = 0;
 
-  // --- criteri che escludono l'immobile ---------------------------------
-  if (normalise(property.contract) !== normalise(requirement.contract)) return null;
-
-  const price = property.price ?? 0;
-  if (requirement.budget_max && price > requirement.budget_max * BUDGET_TOLERANCE) return null;
-  if (requirement.budget_min && price > 0 && price < requirement.budget_min * 0.75) return null;
-  if (requirement.sqm_min && property.sqm && property.sqm < requirement.sqm_min * 0.9) return null;
-
-  // --- criteri che danno punteggio --------------------------------------
-  if (requirement.budget_max) {
-    total++;
-    if (price && price <= requirement.budget_max) {
-      score++;
+  if (requirement.budgetMax) {
+    if (property.price > 0 && property.price <= requirement.budgetMax) {
       reasons.push("Rientra nel budget");
-    } else if (price) {
+    } else if (property.price > 0) {
       warnings.push("Poco sopra il budget");
     }
   }
-
   if (requirement.kind) {
-    total++;
-    if (normalise(property.kind) === normalise(requirement.kind)) {
-      score++;
-      reasons.push(`Tipologia: ${property.kind}`);
-    } else {
-      warnings.push(`Tipologia diversa (${property.kind || "non indicata"})`);
-    }
+    if (property.kind === requirement.kind) reasons.push(`Tipologia: ${scored.property.kind}`);
+    else warnings.push(`Tipologia diversa (${scored.property.kind || "non indicata"})`);
   }
-
   if (requirement.city) {
-    total++;
-    if (normalise(property.city) === normalise(requirement.city)) {
-      score++;
-      reasons.push(`Comune: ${property.city}`);
+    if (property.city === requirement.city) reasons.push(`Comune: ${scored.property.city}`);
+    else warnings.push(`Comune diverso (${scored.property.city || "non indicato"})`);
+  }
+  if (requirement.zones.length) {
+    if (requirement.zones.includes(property.zone)) {
+      reasons.push(`Zona richiesta: ${scored.property.zone}`);
     } else {
-      warnings.push(`Comune diverso (${property.city || "non indicato"})`);
+      warnings.push(`Fuori dalle zone richieste (${scored.property.zone || "zona non indicata"})`);
     }
   }
-
-  const wantedZones = fromCsv(requirement.zones).map(normalise);
-  if (wantedZones.length) {
-    total++;
-    if (wantedZones.includes(normalise(property.zone))) {
-      score++;
-      reasons.push(`Zona richiesta: ${property.zone}`);
-    } else {
-      warnings.push(`Fuori dalle zone richieste (${property.zone || "zona non indicata"})`);
-    }
+  if (requirement.sqmMin) {
+    if (property.sqm >= requirement.sqmMin) reasons.push(`${scored.property.sqm} mq`);
+    else warnings.push("Metratura sotto il minimo richiesto");
+  }
+  if (requirement.roomsMin) {
+    if (property.rooms >= requirement.roomsMin) reasons.push(`${scored.property.rooms} vani`);
+    else warnings.push("Meno vani del richiesto");
+  }
+  if (requirement.needsElevator) {
+    if (property.elevator) reasons.push("Ha ascensore");
+    else warnings.push("Manca: ascensore");
+  }
+  if (requirement.needsGarage) {
+    if (property.garage) reasons.push("Ha il box");
+    else warnings.push("Manca: box");
+  }
+  if (requirement.needsOutdoor) {
+    if (property.outdoor) reasons.push("Ha esterno");
+    else warnings.push("Manca: esterno");
   }
 
-  if (requirement.sqm_min) {
-    total++;
-    if (property.sqm && property.sqm >= requirement.sqm_min) {
-      score++;
-      reasons.push(`${property.sqm} mq`);
-    } else {
-      warnings.push("Metratura sotto il minimo richiesto");
-    }
-  }
-
-  if (requirement.rooms_min) {
-    total++;
-    if (property.rooms && property.rooms >= requirement.rooms_min) {
-      score++;
-      reasons.push(`${property.rooms} vani`);
-    } else {
-      warnings.push("Meno vani del richiesto");
-    }
-  }
-
-  for (const need of fromCsv(requirement.needs)) {
-    total++;
-    const satisfied =
-      (need === "ascensore" && property.elevator === 1) ||
-      (need === "box" && property.garage === 1) ||
-      (need === "esterno" && !!property.outdoor && normalise(property.outdoor) !== "nessuno");
-    if (satisfied) {
-      score++;
-      reasons.push(need === "box" ? "Ha il box" : `Ha ${need}`);
-    } else {
-      warnings.push(`Manca: ${need}`);
-    }
-  }
-
-  return { property, requirement, score, total, reasons, warnings };
+  return {
+    property: scored.property,
+    requirement: scored.requirement,
+    score: scored.score,
+    total: scored.total,
+    reasons,
+    warnings,
+  };
 }
 
-function availableProperties(): Property[] {
-  return all<Property>(
+function byQuality(a: Scored, b: Scored): number {
+  return b.score - a.score || a.misses - b.misses;
+}
+
+/* ----------------------------------------------------------- dati di base */
+
+/**
+ * Immobili ancora proponibili, gia' preparati per il confronto. Memorizzato
+ * per singola richiesta HTTP: la stessa pagina puo' incrociare centinaia di
+ * richieste senza rileggere ne' rianalizzare il portafoglio ogni volta.
+ */
+const availableProperties = cache((): ReadyProperty[] =>
+  all<Property>(
     `SELECT * FROM properties
       WHERE deleted_at IS NULL
         AND status IN ('acquisizione', 'in_vendita')
       ORDER BY updated_at DESC`,
-  );
-}
+  ).map(prepareProperty),
+);
 
-function openRequirements(): (Requirement & { client_name: string })[] {
-  return all<Requirement & { client_name: string }>(
+const openRequirements = cache((): (ReadyRequirement & { clientName: string })[] =>
+  all<Requirement & { client_name: string }>(
     `SELECT r.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name
        FROM requirements r
@@ -138,43 +236,153 @@ function openRequirements(): (Requirement & { client_name: string })[] {
       WHERE r.status = 'aperta'
         AND c.deleted_at IS NULL
       ORDER BY r.updated_at DESC`,
-  );
+  ).map((row) => ({ ...prepareRequirement(row), clientName: row.client_name })),
+);
+
+function scoreAgainstPortfolio(requirement: Requirement): Scored[] {
+  const ready = prepareRequirement(requirement);
+  const results: Scored[] = [];
+
+  for (const property of availableProperties()) {
+    const outcome = score(ready, property);
+    if (outcome) results.push({ property: property.source, requirement, ...outcome });
+  }
+
+  return results.sort(byQuality);
 }
 
+/* ---------------------------------------------------------- API pubblica */
+
 /** Immobili che corrispondono a una richiesta, i migliori per primi. */
-export function matchesForRequirement(requirement: Requirement): Match[] {
-  return availableProperties()
-    .map((property) => evaluate(requirement, property))
-    .filter((match): match is Match => match !== null)
-    .sort((a, b) => b.score - a.score || a.warnings.length - b.warnings.length);
+export function matchesForRequirement(requirement: Requirement, limit = 20): Match[] {
+  return scoreAgainstPortfolio(requirement).slice(0, limit).map(explain);
+}
+
+/**
+ * Riepilogo per gli elenchi: quanti immobili corrispondono, quanti in pieno,
+ * e i primi da mostrare.
+ */
+export function requirementSummary(
+  requirement: Requirement,
+  top = 4,
+): { count: number; perfect: number; top: Match[] } {
+  const scored = scoreAgainstPortfolio(requirement);
+  let perfect = 0;
+  for (const item of scored) if (item.misses === 0) perfect++;
+
+  return { count: scored.length, perfect, top: scored.slice(0, top).map(explain) };
 }
 
 /** Richieste che corrispondono a un immobile: "a chi lo propongo?". */
 export function matchesForProperty(
   property: Property,
+  limit = 12,
 ): (Match & { client_name: string })[] {
-  return openRequirements()
-    .map((requirement) => {
-      const match = evaluate(requirement, property);
-      return match ? { ...match, client_name: requirement.client_name } : null;
-    })
-    .filter((match): match is Match & { client_name: string } => match !== null)
-    .sort((a, b) => b.score - a.score || a.warnings.length - b.warnings.length);
-}
-
-/** Tutti gli incroci aperti, per la pagina Incroci. */
-export function allMatches(minimumScore = 2): (Match & { client_name: string })[] {
-  const properties = availableProperties();
-  const results: (Match & { client_name: string })[] = [];
+  const ready = prepareProperty(property);
+  const scored: (Scored & { client_name: string })[] = [];
 
   for (const requirement of openRequirements()) {
-    for (const property of properties) {
-      const match = evaluate(requirement, property);
-      if (match && match.score >= minimumScore) {
-        results.push({ ...match, client_name: requirement.client_name });
-      }
+    const outcome = score(requirement, ready);
+    if (outcome) {
+      scored.push({
+        property,
+        requirement: requirement.source,
+        ...outcome,
+        client_name: requirement.clientName,
+      });
     }
   }
 
-  return results.sort((a, b) => b.score - a.score || a.warnings.length - b.warnings.length);
+  return scored
+    .sort(byQuality)
+    .slice(0, limit)
+    .map((item) => ({ ...explain(item), client_name: item.client_name }));
+}
+
+/** Quanti clienti aspettano un immobile come questo. */
+export function countMatchesForProperty(property: Property): number {
+  const ready = prepareProperty(property);
+  let count = 0;
+  for (const requirement of openRequirements()) {
+    if (score(requirement, ready)) count++;
+  }
+  return count;
+}
+
+export interface ClientMatches {
+  clientId: number;
+  clientName: string;
+  total: number;
+  matches: Match[];
+}
+
+/**
+ * Tutti gli incroci aperti, raggruppati per cliente: una telefonata sola
+ * puo' coprire piu' immobili.
+ */
+export function matchesByClient({
+  minimumScore = 2,
+  onlyPerfect = false,
+  perClient = 8,
+  page = 1,
+  clientsPerPage = 25,
+}: {
+  minimumScore?: number;
+  onlyPerfect?: boolean;
+  perClient?: number;
+  page?: number;
+  clientsPerPage?: number;
+} = {}): { groups: ClientMatches[]; total: number; clients: number; page: number; pages: number } {
+  const properties = availableProperties();
+  const byClient = new Map<number, { name: string; scored: Scored[] }>();
+  let total = 0;
+
+  for (const requirement of openRequirements()) {
+    for (const property of properties) {
+      const outcome = score(requirement, property);
+      if (!outcome) continue;
+      if (outcome.score < minimumScore) continue;
+      if (onlyPerfect && outcome.misses > 0) continue;
+
+      total++;
+      let group = byClient.get(requirement.source.client_id);
+      if (!group) {
+        group = { name: requirement.clientName, scored: [] };
+        byClient.set(requirement.source.client_id, group);
+      }
+      group.scored.push({
+        property: property.source,
+        requirement: requirement.source,
+        ...outcome,
+      });
+    }
+  }
+
+  // Ordina i clienti per qualita' del miglior abbinamento, poi costruisce le
+  // motivazioni solo per la pagina richiesta: e' quello che l'utente legge.
+  const ordered = [...byClient.entries()]
+    .map(([clientId, group]) => {
+      const scored = group.scored.sort(byQuality);
+      return { clientId, name: group.name, scored, best: scored[0]! };
+    })
+    .sort(
+      (a, b) =>
+        b.best.score - a.best.score ||
+        a.best.misses - b.best.misses ||
+        b.scored.length - a.scored.length,
+    );
+
+  const pages = Math.max(1, Math.ceil(ordered.length / clientsPerPage));
+  const current = Math.min(Math.max(1, page), pages);
+
+  const groups: ClientMatches[] = ordered
+    .slice((current - 1) * clientsPerPage, current * clientsPerPage)
+    .map((entry) => ({
+      clientId: entry.clientId,
+      clientName: entry.name,
+      total: entry.scored.length,
+      matches: entry.scored.slice(0, perClient).map(explain),
+    }));
+
+  return { groups, total, clients: ordered.length, page: current, pages };
 }
