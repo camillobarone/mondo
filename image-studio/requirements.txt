@@ -1,0 +1,7 @@
+# La CLI gira dentro il venv di ComfyUI, che installa gia' entrambe queste
+# librerie. Sono elencate qui per chi volesse usare un ambiente separato.
+requests>=2.31
+Pillow>=10.0
+
+# Solo per lo sviluppo (test dei grafi):
+# pytest>=8.0

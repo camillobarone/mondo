@@ -1,0 +1,5500 @@
+{
+ "nodes": {
+  "APG": {
+   "optional": [],
+   "required": [
+    "model",
+    "eta",
+    "norm_threshold",
+    "momentum"
+   ],
+   "spread": false
+  },
+  "ARVideoI2V": {
+   "optional": [],
+   "required": [
+    "model",
+    "vae",
+    "start_image",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "AddNoise": {
+   "optional": [],
+   "required": [
+    "model",
+    "noise",
+    "sigmas",
+    "latent_image"
+   ],
+   "spread": false
+  },
+  "AlignYourStepsScheduler": {
+   "optional": [],
+   "required": [
+    "model_type",
+    "steps",
+    "denoise"
+   ],
+   "spread": false
+  },
+  "AnimaLLLiteApply": {
+   "optional": [
+    "mask"
+   ],
+   "required": [
+    "model",
+    "model_patch",
+    "image",
+    "strength",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "AudioAdjustVolume": {
+   "optional": [],
+   "required": [
+    "audio",
+    "volume"
+   ],
+   "spread": false
+  },
+  "AudioConcat": {
+   "optional": [],
+   "required": [
+    "audio1",
+    "audio2",
+    "direction"
+   ],
+   "spread": false
+  },
+  "AudioEncoderEncode": {
+   "optional": [],
+   "required": [
+    "audio_encoder",
+    "audio"
+   ],
+   "spread": false
+  },
+  "AudioEncoderLoader": {
+   "optional": [],
+   "required": [
+    "audio_encoder_name"
+   ],
+   "spread": false
+  },
+  "AudioEqualizer3Band": {
+   "optional": [],
+   "required": [
+    "audio",
+    "low_gain_dB",
+    "low_freq",
+    "mid_gain_dB",
+    "mid_freq",
+    "mid_q",
+    "high_gain_dB",
+    "high_freq"
+   ],
+   "spread": false
+  },
+  "AudioMerge": {
+   "optional": [],
+   "required": [
+    "audio1",
+    "audio2",
+    "merge_method"
+   ],
+   "spread": false
+  },
+  "AutogrowNamesTestNode": {
+   "optional": [],
+   "required": [
+    "autogrow"
+   ],
+   "spread": false
+  },
+  "AutogrowPrefixTestNode": {
+   "optional": [],
+   "required": [
+    "autogrow"
+   ],
+   "spread": false
+  },
+  "BasicGuider": {
+   "optional": [],
+   "required": [
+    "model",
+    "conditioning"
+   ],
+   "spread": false
+  },
+  "BasicScheduler": {
+   "optional": [],
+   "required": [
+    "model",
+    "scheduler",
+    "steps",
+    "denoise"
+   ],
+   "spread": false
+  },
+  "BatchImagesMasksLatentsNode": {
+   "optional": [],
+   "required": [
+    "inputs"
+   ],
+   "spread": false
+  },
+  "BatchImagesNode": {
+   "optional": [],
+   "required": [
+    "images"
+   ],
+   "spread": false
+  },
+  "BatchLatentsNode": {
+   "optional": [],
+   "required": [
+    "latents"
+   ],
+   "spread": false
+  },
+  "BatchMasksNode": {
+   "optional": [],
+   "required": [
+    "masks"
+   ],
+   "spread": false
+  },
+  "BerniniConditioning": {
+   "optional": [
+    "source_video",
+    "reference_video",
+    "reference_images",
+    "ref_max_size"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "BetaSamplingScheduler": {
+   "optional": [],
+   "required": [
+    "model",
+    "steps",
+    "alpha",
+    "beta"
+   ],
+   "spread": false
+  },
+  "BuildJsonPromptIdeogram": {
+   "optional": [],
+   "required": [
+    "element",
+    "high_level_description",
+    "background",
+    "style",
+    "aesthetics",
+    "lighting",
+    "medium"
+   ],
+   "spread": true
+  },
+  "CFGGuider": {
+   "optional": [],
+   "required": [
+    "model",
+    "positive",
+    "negative",
+    "cfg"
+   ],
+   "spread": false
+  },
+  "CFGNorm": {
+   "optional": [
+    "pre_cfg"
+   ],
+   "required": [
+    "model",
+    "strength"
+   ],
+   "spread": false
+  },
+  "CFGOverride": {
+   "optional": [],
+   "required": [
+    "model",
+    "cfg",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "CFGZeroStar": {
+   "optional": [],
+   "required": [
+    "model"
+   ],
+   "spread": false
+  },
+  "CLIPAttentionMultiply": {
+   "optional": [],
+   "required": [
+    "clip",
+    "q",
+    "k",
+    "v",
+    "out"
+   ],
+   "spread": false
+  },
+  "CLIPLoader": {
+   "optional": [
+    "device"
+   ],
+   "required": [
+    "clip_name",
+    "type"
+   ],
+   "spread": false
+  },
+  "CLIPMergeAdd": {
+   "optional": [],
+   "required": [
+    "clip1",
+    "clip2"
+   ],
+   "spread": false
+  },
+  "CLIPMergeSimple": {
+   "optional": [],
+   "required": [
+    "clip1",
+    "clip2",
+    "ratio"
+   ],
+   "spread": false
+  },
+  "CLIPMergeSubtract": {
+   "optional": [],
+   "required": [
+    "clip1",
+    "clip2",
+    "multiplier"
+   ],
+   "spread": false
+  },
+  "CLIPSave": {
+   "optional": [],
+   "required": [
+    "clip",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "CLIPSetLastLayer": {
+   "optional": [],
+   "required": [
+    "clip",
+    "stop_at_clip_layer"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncode": {
+   "optional": [],
+   "required": [
+    "text",
+    "clip"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeControlnet": {
+   "optional": [],
+   "required": [
+    "clip",
+    "conditioning",
+    "text"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeFlux": {
+   "optional": [],
+   "required": [
+    "clip",
+    "clip_l",
+    "t5xxl",
+    "guidance"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeHiDream": {
+   "optional": [],
+   "required": [
+    "clip",
+    "clip_l",
+    "clip_g",
+    "t5xxl",
+    "llama"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeHunyuanDiT": {
+   "optional": [],
+   "required": [
+    "clip",
+    "bert",
+    "mt5xl"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeKandinsky5": {
+   "optional": [],
+   "required": [
+    "clip",
+    "clip_l",
+    "qwen25_7b"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeLumina2": {
+   "optional": [],
+   "required": [
+    "system_prompt",
+    "user_prompt",
+    "clip"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodePixArtAlpha": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "text",
+    "clip"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeSD3": {
+   "optional": [],
+   "required": [
+    "clip",
+    "clip_l",
+    "clip_g",
+    "t5xxl",
+    "empty_padding"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeSDXL": {
+   "optional": [],
+   "required": [
+    "clip",
+    "width",
+    "height",
+    "crop_w",
+    "crop_h",
+    "target_width",
+    "target_height",
+    "text_g",
+    "text_l"
+   ],
+   "spread": false
+  },
+  "CLIPTextEncodeSDXLRefiner": {
+   "optional": [],
+   "required": [
+    "ascore",
+    "width",
+    "height",
+    "text",
+    "clip"
+   ],
+   "spread": false
+  },
+  "CLIPVisionEncode": {
+   "optional": [],
+   "required": [
+    "clip_vision",
+    "image",
+    "crop"
+   ],
+   "spread": false
+  },
+  "CLIPVisionLoader": {
+   "optional": [],
+   "required": [
+    "clip_name"
+   ],
+   "spread": false
+  },
+  "Canny": {
+   "optional": [],
+   "required": [
+    "image",
+    "low_threshold",
+    "high_threshold"
+   ],
+   "spread": false
+  },
+  "CaseConverter": {
+   "optional": [],
+   "required": [
+    "string",
+    "mode"
+   ],
+   "spread": false
+  },
+  "CheckpointLoader": {
+   "optional": [],
+   "required": [
+    "config_name",
+    "ckpt_name"
+   ],
+   "spread": false
+  },
+  "CheckpointLoaderSimple": {
+   "optional": [],
+   "required": [
+    "ckpt_name"
+   ],
+   "spread": false
+  },
+  "CheckpointSave": {
+   "optional": [],
+   "required": [
+    "model",
+    "clip",
+    "vae",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "ChromaRadianceOptions": {
+   "optional": [],
+   "required": [
+    "model",
+    "preserve_wrapper",
+    "start_sigma",
+    "end_sigma",
+    "nerf_tile_size",
+    "force_sequential_txt_ids"
+   ],
+   "spread": false
+  },
+  "ColorToRGBInt": {
+   "optional": [],
+   "required": [
+    "color"
+   ],
+   "spread": false
+  },
+  "ColorTransfer": {
+   "optional": [],
+   "required": [
+    "image_target",
+    "image_ref",
+    "method",
+    "source_stats",
+    "strength"
+   ],
+   "spread": false
+  },
+  "ComboOptionTestNode": {
+   "optional": [],
+   "required": [
+    "combo",
+    "combo2"
+   ],
+   "spread": false
+  },
+  "ComfyAndNode": {
+   "optional": [],
+   "required": [
+    "values"
+   ],
+   "spread": false
+  },
+  "ComfyMathExpression": {
+   "optional": [],
+   "required": [
+    "expression",
+    "values"
+   ],
+   "spread": false
+  },
+  "ComfyNotNode": {
+   "optional": [],
+   "required": [
+    "value"
+   ],
+   "spread": false
+  },
+  "ComfyNumberConvert": {
+   "optional": [],
+   "required": [
+    "value"
+   ],
+   "spread": false
+  },
+  "ComfyOrNode": {
+   "optional": [],
+   "required": [
+    "values"
+   ],
+   "spread": false
+  },
+  "ComfySoftSwitchNode": {
+   "optional": [
+    "on_false",
+    "on_true"
+   ],
+   "required": [
+    "switch"
+   ],
+   "spread": false
+  },
+  "ComfySwitchNode": {
+   "optional": [],
+   "required": [
+    "switch",
+    "on_false",
+    "on_true"
+   ],
+   "spread": false
+  },
+  "ConditioningAverage": {
+   "optional": [],
+   "required": [
+    "conditioning_to",
+    "conditioning_from",
+    "conditioning_to_strength"
+   ],
+   "spread": false
+  },
+  "ConditioningCombine": {
+   "optional": [],
+   "required": [
+    "conditioning_1",
+    "conditioning_2"
+   ],
+   "spread": false
+  },
+  "ConditioningConcat": {
+   "optional": [],
+   "required": [
+    "conditioning_to",
+    "conditioning_from"
+   ],
+   "spread": false
+  },
+  "ConditioningMultiply": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "multiplier"
+   ],
+   "spread": false
+  },
+  "ConditioningSetArea": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "width",
+    "height",
+    "x",
+    "y",
+    "strength"
+   ],
+   "spread": false
+  },
+  "ConditioningSetAreaPercentage": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "width",
+    "height",
+    "x",
+    "y",
+    "strength"
+   ],
+   "spread": false
+  },
+  "ConditioningSetAreaPercentageVideo": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "width",
+    "height",
+    "temporal",
+    "x",
+    "y",
+    "z",
+    "strength"
+   ],
+   "spread": false
+  },
+  "ConditioningSetAreaStrength": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "strength"
+   ],
+   "spread": false
+  },
+  "ConditioningSetMask": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "mask",
+    "strength",
+    "set_cond_area"
+   ],
+   "spread": false
+  },
+  "ConditioningSetTimestepRange": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "start",
+    "end"
+   ],
+   "spread": false
+  },
+  "ConditioningStableAudio": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "seconds_start",
+    "seconds_total"
+   ],
+   "spread": false
+  },
+  "ConditioningZeroOut": {
+   "optional": [],
+   "required": [
+    "conditioning"
+   ],
+   "spread": false
+  },
+  "ContextWindowsManual": {
+   "optional": [],
+   "required": [
+    "model",
+    "context_length",
+    "context_overlap",
+    "context_schedule",
+    "context_stride",
+    "closed_loop",
+    "fuse_method",
+    "dim",
+    "freenoise",
+    "cond_retain_index_list",
+    "split_conds_to_windows",
+    "latent_retain_index_list",
+    "causal_window_fix"
+   ],
+   "spread": false
+  },
+  "ControlNetApply": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "control_net",
+    "image",
+    "strength"
+   ],
+   "spread": false
+  },
+  "ControlNetApplyAdvanced": {
+   "optional": [
+    "vae"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "control_net",
+    "image",
+    "strength",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "ControlNetApplySD3": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "control_net",
+    "vae",
+    "image",
+    "strength",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "ControlNetInpaintingAliMamaApply": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "control_net",
+    "vae",
+    "image",
+    "mask",
+    "strength",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "ControlNetLoader": {
+   "optional": [],
+   "required": [
+    "control_net_name"
+   ],
+   "spread": false
+  },
+  "ConvertArrayToString": {
+   "optional": [],
+   "required": [
+    "array",
+    "indent"
+   ],
+   "spread": false
+  },
+  "ConvertDictionaryToString": {
+   "optional": [],
+   "required": [
+    "dictionary",
+    "indent"
+   ],
+   "spread": false
+  },
+  "ConvertStringToComboNode": {
+   "optional": [],
+   "required": [
+    "string"
+   ],
+   "spread": false
+  },
+  "CosmosImageToVideoLatent": {
+   "optional": [
+    "start_image",
+    "end_image"
+   ],
+   "required": [
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "CosmosPredict2ImageToVideoLatent": {
+   "optional": [
+    "start_image",
+    "end_image"
+   ],
+   "required": [
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "CreateBoundingBoxes": {
+   "optional": [
+    "background",
+    "bboxes",
+    "last_incoming"
+   ],
+   "required": [
+    "width",
+    "height"
+   ],
+   "spread": true
+  },
+  "CreateCameraInfo": {
+   "optional": [],
+   "required": [
+    "mode",
+    "target_x",
+    "target_y",
+    "target_z",
+    "roll",
+    "fov",
+    "zoom",
+    "camera_type"
+   ],
+   "spread": false
+  },
+  "CreateList": {
+   "optional": [],
+   "required": [
+    "inputs"
+   ],
+   "spread": false
+  },
+  "CreateVideo": {
+   "optional": [
+    "audio",
+    "bit_depth"
+   ],
+   "required": [
+    "images",
+    "fps"
+   ],
+   "spread": false
+  },
+  "CropByBBoxes": {
+   "optional": [],
+   "required": [
+    "image",
+    "bboxes",
+    "output_width",
+    "output_height",
+    "padding",
+    "keep_aspect"
+   ],
+   "spread": false
+  },
+  "CropMask": {
+   "optional": [],
+   "required": [
+    "mask",
+    "x",
+    "y",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "CurveEditor": {
+   "optional": [
+    "histogram"
+   ],
+   "required": [
+    "curve"
+   ],
+   "spread": false
+  },
+  "CustomCombo": {
+   "optional": [],
+   "required": [
+    "choice"
+   ],
+   "spread": false
+  },
+  "DA3GeometryToMesh": {
+   "optional": [],
+   "required": [
+    "da3_geometry",
+    "batch_index",
+    "decimation",
+    "discontinuity_threshold",
+    "confidence_threshold",
+    "use_sky_mask",
+    "texture"
+   ],
+   "spread": false
+  },
+  "DA3GeometryToPointCloud": {
+   "optional": [],
+   "required": [
+    "da3_geometry",
+    "batch_index",
+    "confidence_threshold",
+    "use_sky_mask",
+    "downsample"
+   ],
+   "spread": false
+  },
+  "DA3Inference": {
+   "optional": [],
+   "required": [
+    "da3_model",
+    "image",
+    "resolution",
+    "resize_method",
+    "mode"
+   ],
+   "spread": false
+  },
+  "DA3Render": {
+   "optional": [],
+   "required": [
+    "da3_geometry",
+    "output"
+   ],
+   "spread": false
+  },
+  "DCTestNode": {
+   "optional": [],
+   "required": [
+    "combo"
+   ],
+   "spread": false
+  },
+  "DiffControlNetLoader": {
+   "optional": [],
+   "required": [
+    "model",
+    "control_net_name"
+   ],
+   "spread": false
+  },
+  "DifferentialDiffusion": {
+   "optional": [
+    "strength"
+   ],
+   "required": [
+    "model"
+   ],
+   "spread": false
+  },
+  "DiffusersLoader": {
+   "optional": [],
+   "required": [
+    "model_path"
+   ],
+   "spread": false
+  },
+  "DisableNoise": {
+   "optional": [],
+   "required": [],
+   "spread": false
+  },
+  "DrawBBoxes": {
+   "optional": [
+    "image"
+   ],
+   "required": [
+    "bboxes"
+   ],
+   "spread": false
+  },
+  "DualCFGGuider": {
+   "optional": [],
+   "required": [
+    "model",
+    "cond1",
+    "cond2",
+    "negative",
+    "cfg_conds",
+    "cfg_cond2_negative",
+    "style"
+   ],
+   "spread": false
+  },
+  "DualCLIPLoader": {
+   "optional": [
+    "device"
+   ],
+   "required": [
+    "clip_name1",
+    "clip_name2",
+    "type"
+   ],
+   "spread": false
+  },
+  "DualModelGuider": {
+   "optional": [
+    "model_negative",
+    "negative"
+   ],
+   "required": [
+    "model",
+    "positive",
+    "cfg"
+   ],
+   "spread": false
+  },
+  "EasyCache": {
+   "optional": [],
+   "required": [
+    "model",
+    "reuse_threshold",
+    "start_percent",
+    "end_percent",
+    "verbose"
+   ],
+   "spread": false
+  },
+  "EmptyARVideoLatent": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyAceStep1.5LatentAudio": {
+   "optional": [],
+   "required": [
+    "seconds",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyAceStepLatentAudio": {
+   "optional": [],
+   "required": [
+    "seconds",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyAudio": {
+   "optional": [],
+   "required": [
+    "duration",
+    "sample_rate",
+    "channels"
+   ],
+   "spread": false
+  },
+  "EmptyChromaRadianceLatentImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyCosmosLatentVideo": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyFlux2LatentImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyHiDreamO1LatentImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyHunyuanImageLatent": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyHunyuanLatentVideo": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "batch_size",
+    "color"
+   ],
+   "spread": false
+  },
+  "EmptyLTXVLatentVideo": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyLatentAudio": {
+   "optional": [],
+   "required": [
+    "seconds",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyLatentHunyuan3Dv2": {
+   "optional": [],
+   "required": [
+    "resolution",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyLatentImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyMochiLatentVideo": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptyQwenImageLayeredLatentImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "layers",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "EmptySD3LatentImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "Epsilon Scaling": {
+   "optional": [],
+   "required": [
+    "model",
+    "scaling_factor"
+   ],
+   "spread": false
+  },
+  "ExponentialScheduler": {
+   "optional": [],
+   "required": [
+    "steps",
+    "sigma_max",
+    "sigma_min"
+   ],
+   "spread": false
+  },
+  "ExtendIntermediateSigmas": {
+   "optional": [],
+   "required": [
+    "sigmas",
+    "steps",
+    "start_at_sigma",
+    "end_at_sigma",
+    "spacing"
+   ],
+   "spread": false
+  },
+  "FeatherMask": {
+   "optional": [],
+   "required": [
+    "mask",
+    "left",
+    "top",
+    "right",
+    "bottom"
+   ],
+   "spread": false
+  },
+  "File3DToSplat": {
+   "optional": [],
+   "required": [],
+   "spread": false
+  },
+  "FlipSigmas": {
+   "optional": [],
+   "required": [
+    "sigmas"
+   ],
+   "spread": false
+  },
+  "Flux2Scheduler": {
+   "optional": [],
+   "required": [
+    "steps",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "FluxDisableGuidance": {
+   "optional": [],
+   "required": [
+    "conditioning"
+   ],
+   "spread": false
+  },
+  "FluxGuidance": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "guidance"
+   ],
+   "spread": false
+  },
+  "FluxKVCache": {
+   "optional": [],
+   "required": [
+    "model"
+   ],
+   "spread": false
+  },
+  "FluxKontextImageScale": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "FluxKontextMultiReferenceLatentMethod": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "reference_latents_method"
+   ],
+   "spread": false
+  },
+  "FrameInterpolate": {
+   "optional": [],
+   "required": [
+    "interp_model",
+    "images",
+    "multiplier"
+   ],
+   "spread": false
+  },
+  "FrameInterpolationModelLoader": {
+   "optional": [],
+   "required": [
+    "model_name"
+   ],
+   "spread": false
+  },
+  "FreSca": {
+   "optional": [],
+   "required": [
+    "model",
+    "scale_low",
+    "scale_high",
+    "freq_cutoff"
+   ],
+   "spread": false
+  },
+  "FreeU": {
+   "optional": [],
+   "required": [
+    "model",
+    "b1",
+    "b2",
+    "s1",
+    "s2"
+   ],
+   "spread": false
+  },
+  "FreeU_V2": {
+   "optional": [],
+   "required": [
+    "model",
+    "b1",
+    "b2",
+    "s1",
+    "s2"
+   ],
+   "spread": false
+  },
+  "GITSScheduler": {
+   "optional": [],
+   "required": [
+    "coeff",
+    "steps",
+    "denoise"
+   ],
+   "spread": false
+  },
+  "GLIGENLoader": {
+   "optional": [],
+   "required": [
+    "gligen_name"
+   ],
+   "spread": false
+  },
+  "GLIGENTextBoxApply": {
+   "optional": [],
+   "required": [
+    "conditioning_to",
+    "clip",
+    "gligen_textbox_model",
+    "text",
+    "width",
+    "height",
+    "x",
+    "y"
+   ],
+   "spread": false
+  },
+  "GLSLShader": {
+   "optional": [],
+   "required": [
+    "fragment_shader",
+    "size_mode",
+    "images",
+    "floats",
+    "ints",
+    "bools",
+    "curves"
+   ],
+   "spread": false
+  },
+  "GenerateTracks": {
+   "optional": [
+    "track_mask"
+   ],
+   "required": [
+    "width",
+    "height",
+    "start_x",
+    "start_y",
+    "end_x",
+    "end_y",
+    "num_frames",
+    "num_tracks",
+    "track_spread",
+    "bezier",
+    "mid_x",
+    "mid_y",
+    "interpolation"
+   ],
+   "spread": false
+  },
+  "GetICLoRAParameters": {
+   "optional": [],
+   "required": [
+    "iclora_model"
+   ],
+   "spread": false
+  },
+  "GetImageSize": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "GetSplatCount": {
+   "optional": [],
+   "required": [
+    "splat"
+   ],
+   "spread": false
+  },
+  "GetVideoComponents": {
+   "optional": [],
+   "required": [
+    "video"
+   ],
+   "spread": false
+  },
+  "GrowMask": {
+   "optional": [],
+   "required": [
+    "mask",
+    "expand",
+    "tapered_corners"
+   ],
+   "spread": false
+  },
+  "HiDreamO1PatchSeamSmoothing": {
+   "optional": [],
+   "required": [
+    "model",
+    "start_percent",
+    "end_percent",
+    "pattern",
+    "passes",
+    "blend",
+    "strength"
+   ],
+   "spread": false
+  },
+  "HiDreamO1ReferenceImages": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "images"
+   ],
+   "spread": false
+  },
+  "Hunyuan3Dv2Conditioning": {
+   "optional": [],
+   "required": [
+    "clip_vision_output"
+   ],
+   "spread": false
+  },
+  "Hunyuan3Dv2ConditioningMultiView": {
+   "optional": [
+    "front",
+    "left",
+    "back",
+    "right"
+   ],
+   "required": [],
+   "spread": false
+  },
+  "HunyuanImageToVideo": {
+   "optional": [
+    "start_image"
+   ],
+   "required": [
+    "positive",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size",
+    "guidance_type"
+   ],
+   "spread": false
+  },
+  "HunyuanRefinerLatent": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "latent",
+    "noise_augmentation"
+   ],
+   "spread": false
+  },
+  "HunyuanVideo15ImageToVideo": {
+   "optional": [
+    "start_image",
+    "clip_vision_output"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "HunyuanVideo15LatentUpscaleWithModel": {
+   "optional": [],
+   "required": [
+    "model",
+    "samples",
+    "upscale_method",
+    "width",
+    "height",
+    "crop"
+   ],
+   "spread": false
+  },
+  "HunyuanVideo15SuperResolution": {
+   "optional": [
+    "vae",
+    "start_image",
+    "clip_vision_output"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "latent",
+    "noise_augmentation"
+   ],
+   "spread": false
+  },
+  "HyperTile": {
+   "optional": [],
+   "required": [
+    "model",
+    "tile_size",
+    "swap_size",
+    "max_depth",
+    "scale_depth"
+   ],
+   "spread": false
+  },
+  "HypernetworkLoader": {
+   "optional": [],
+   "required": [
+    "model",
+    "hypernetwork_name",
+    "strength"
+   ],
+   "spread": false
+  },
+  "Ideogram4Scheduler": {
+   "optional": [],
+   "required": [
+    "steps",
+    "width",
+    "height",
+    "mu",
+    "std"
+   ],
+   "spread": false
+  },
+  "ImageAddNoise": {
+   "optional": [],
+   "required": [
+    "image",
+    "seed",
+    "strength"
+   ],
+   "spread": false
+  },
+  "ImageBatch": {
+   "optional": [],
+   "required": [
+    "image1",
+    "image2"
+   ],
+   "spread": false
+  },
+  "ImageBlend": {
+   "optional": [],
+   "required": [
+    "image1",
+    "image2",
+    "blend_factor",
+    "blend_mode"
+   ],
+   "spread": false
+  },
+  "ImageBlur": {
+   "optional": [],
+   "required": [
+    "image",
+    "blur_radius",
+    "sigma"
+   ],
+   "spread": false
+  },
+  "ImageColorToMask": {
+   "optional": [],
+   "required": [
+    "image",
+    "color"
+   ],
+   "spread": false
+  },
+  "ImageCompare": {
+   "optional": [
+    "image_a",
+    "image_b"
+   ],
+   "required": [
+    "compare_view"
+   ],
+   "spread": false
+  },
+  "ImageCompositeMasked": {
+   "optional": [
+    "mask"
+   ],
+   "required": [
+    "destination",
+    "source",
+    "x",
+    "y",
+    "resize_source"
+   ],
+   "spread": false
+  },
+  "ImageCrop": {
+   "optional": [],
+   "required": [
+    "image",
+    "width",
+    "height",
+    "x",
+    "y"
+   ],
+   "spread": false
+  },
+  "ImageCropV2": {
+   "optional": [],
+   "required": [
+    "image",
+    "crop_region"
+   ],
+   "spread": false
+  },
+  "ImageFlip": {
+   "optional": [],
+   "required": [
+    "image",
+    "flip_method"
+   ],
+   "spread": false
+  },
+  "ImageFromBatch": {
+   "optional": [],
+   "required": [
+    "image",
+    "batch_index",
+    "length"
+   ],
+   "spread": false
+  },
+  "ImageHistogram": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "ImageInvert": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "ImageMergeTileList": {
+   "optional": [],
+   "required": [
+    "image_list",
+    "final_width",
+    "final_height",
+    "overlap"
+   ],
+   "spread": false
+  },
+  "ImageOnlyCheckpointLoader": {
+   "optional": [],
+   "required": [
+    "ckpt_name"
+   ],
+   "spread": false
+  },
+  "ImageOnlyCheckpointSave": {
+   "optional": [],
+   "required": [
+    "model",
+    "clip_vision",
+    "vae",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "ImagePadForOutpaint": {
+   "optional": [],
+   "required": [
+    "image",
+    "left",
+    "top",
+    "right",
+    "bottom",
+    "feathering"
+   ],
+   "spread": false
+  },
+  "ImageQuantize": {
+   "optional": [],
+   "required": [
+    "image",
+    "colors",
+    "dither"
+   ],
+   "spread": false
+  },
+  "ImageRGBToYUV": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "ImageRotate": {
+   "optional": [],
+   "required": [
+    "image",
+    "rotation"
+   ],
+   "spread": false
+  },
+  "ImageScale": {
+   "optional": [],
+   "required": [
+    "image",
+    "upscale_method",
+    "width",
+    "height",
+    "crop"
+   ],
+   "spread": false
+  },
+  "ImageScaleBy": {
+   "optional": [],
+   "required": [
+    "image",
+    "upscale_method",
+    "scale_by"
+   ],
+   "spread": false
+  },
+  "ImageScaleToMaxDimension": {
+   "optional": [],
+   "required": [
+    "image",
+    "upscale_method",
+    "largest_size"
+   ],
+   "spread": false
+  },
+  "ImageScaleToTotalPixels": {
+   "optional": [],
+   "required": [
+    "image",
+    "upscale_method",
+    "megapixels",
+    "resolution_steps"
+   ],
+   "spread": false
+  },
+  "ImageSharpen": {
+   "optional": [],
+   "required": [
+    "image",
+    "sharpen_radius",
+    "sigma",
+    "alpha"
+   ],
+   "spread": false
+  },
+  "ImageStitch": {
+   "optional": [
+    "image2"
+   ],
+   "required": [
+    "image1",
+    "direction",
+    "match_image_size",
+    "spacing_width",
+    "spacing_color"
+   ],
+   "spread": false
+  },
+  "ImageToMask": {
+   "optional": [],
+   "required": [
+    "image",
+    "channel"
+   ],
+   "spread": false
+  },
+  "ImageUpscaleWithModel": {
+   "optional": [],
+   "required": [
+    "upscale_model",
+    "image"
+   ],
+   "spread": false
+  },
+  "ImageYUVToRGB": {
+   "optional": [],
+   "required": [
+    "Y",
+    "U",
+    "V"
+   ],
+   "spread": false
+  },
+  "InpaintModelConditioning": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "pixels",
+    "mask",
+    "noise_mask"
+   ],
+   "spread": false
+  },
+  "InstructPixToPixConditioning": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "pixels"
+   ],
+   "spread": false
+  },
+  "InvertBooleanNode": {
+   "optional": [],
+   "required": [
+    "boolean"
+   ],
+   "spread": false
+  },
+  "InvertMask": {
+   "optional": [],
+   "required": [
+    "mask"
+   ],
+   "spread": false
+  },
+  "JoinAudioChannels": {
+   "optional": [],
+   "required": [
+    "audio_left",
+    "audio_right"
+   ],
+   "spread": false
+  },
+  "JoinImageWithAlpha": {
+   "optional": [],
+   "required": [
+    "image",
+    "alpha"
+   ],
+   "spread": false
+  },
+  "JsonExtractString": {
+   "optional": [],
+   "required": [
+    "json_string",
+    "key"
+   ],
+   "spread": false
+  },
+  "KSampler": {
+   "optional": [],
+   "required": [
+    "model",
+    "seed",
+    "steps",
+    "cfg",
+    "sampler_name",
+    "scheduler",
+    "positive",
+    "negative",
+    "latent_image",
+    "denoise"
+   ],
+   "spread": false
+  },
+  "KSamplerAdvanced": {
+   "optional": [],
+   "required": [
+    "model",
+    "add_noise",
+    "noise_seed",
+    "steps",
+    "cfg",
+    "sampler_name",
+    "scheduler",
+    "positive",
+    "negative",
+    "latent_image",
+    "start_at_step",
+    "end_at_step",
+    "return_with_leftover_noise"
+   ],
+   "spread": false
+  },
+  "KSamplerSelect": {
+   "optional": [],
+   "required": [
+    "sampler_name"
+   ],
+   "spread": false
+  },
+  "Kandinsky5ImageToVideo": {
+   "optional": [
+    "start_image"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "KarrasScheduler": {
+   "optional": [],
+   "required": [
+    "steps",
+    "sigma_max",
+    "sigma_min",
+    "rho"
+   ],
+   "spread": false
+  },
+  "LTXAVTextEncoderLoader": {
+   "optional": [],
+   "required": [
+    "text_encoder",
+    "ckpt_name",
+    "device"
+   ],
+   "spread": false
+  },
+  "LTXVAddGuide": {
+   "optional": [
+    "attention_mask",
+    "iclora_parameters"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "latent",
+    "image",
+    "frame_idx",
+    "strength"
+   ],
+   "spread": false
+  },
+  "LTXVAudioVAEDecode": {
+   "optional": [],
+   "required": [
+    "samples",
+    "audio_vae"
+   ],
+   "spread": false
+  },
+  "LTXVAudioVAEEncode": {
+   "optional": [],
+   "required": [
+    "audio",
+    "audio_vae"
+   ],
+   "spread": false
+  },
+  "LTXVAudioVAELoader": {
+   "optional": [],
+   "required": [
+    "ckpt_name"
+   ],
+   "spread": false
+  },
+  "LTXVConcatAVLatent": {
+   "optional": [],
+   "required": [
+    "video_latent",
+    "audio_latent"
+   ],
+   "spread": false
+  },
+  "LTXVConditioning": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "frame_rate"
+   ],
+   "spread": false
+  },
+  "LTXVCropGuides": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "latent"
+   ],
+   "spread": false
+  },
+  "LTXVEmptyLatentAudio": {
+   "optional": [],
+   "required": [
+    "frames_number",
+    "batch_size",
+    "audio_vae"
+   ],
+   "spread": false
+  },
+  "LTXVImgToVideo": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "image",
+    "width",
+    "height",
+    "length",
+    "batch_size",
+    "strength"
+   ],
+   "spread": false
+  },
+  "LTXVImgToVideoInplace": {
+   "optional": [],
+   "required": [
+    "vae",
+    "image",
+    "latent",
+    "strength",
+    "bypass"
+   ],
+   "spread": false
+  },
+  "LTXVLatentUpsampler": {
+   "optional": [],
+   "required": [
+    "samples",
+    "upscale_model",
+    "vae"
+   ],
+   "spread": false
+  },
+  "LTXVPreprocess": {
+   "optional": [],
+   "required": [
+    "image",
+    "img_compression"
+   ],
+   "spread": false
+  },
+  "LTXVReferenceAudio": {
+   "optional": [],
+   "required": [
+    "model",
+    "positive",
+    "negative",
+    "reference_audio",
+    "audio_vae",
+    "identity_guidance_scale",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "LTXVScheduler": {
+   "optional": [
+    "latent"
+   ],
+   "required": [
+    "steps",
+    "max_shift",
+    "base_shift",
+    "stretch",
+    "terminal"
+   ],
+   "spread": false
+  },
+  "LTXVSeparateAVLatent": {
+   "optional": [],
+   "required": [
+    "av_latent"
+   ],
+   "spread": false
+  },
+  "LaplaceScheduler": {
+   "optional": [],
+   "required": [
+    "steps",
+    "sigma_max",
+    "sigma_min",
+    "mu",
+    "beta"
+   ],
+   "spread": false
+  },
+  "LatentAdd": {
+   "optional": [],
+   "required": [
+    "samples1",
+    "samples2"
+   ],
+   "spread": false
+  },
+  "LatentApplyOperation": {
+   "optional": [],
+   "required": [
+    "samples",
+    "operation"
+   ],
+   "spread": false
+  },
+  "LatentApplyOperationCFG": {
+   "optional": [],
+   "required": [
+    "model",
+    "operation"
+   ],
+   "spread": false
+  },
+  "LatentBatch": {
+   "optional": [],
+   "required": [
+    "samples1",
+    "samples2"
+   ],
+   "spread": false
+  },
+  "LatentBatchSeedBehavior": {
+   "optional": [],
+   "required": [
+    "samples",
+    "seed_behavior"
+   ],
+   "spread": false
+  },
+  "LatentBlend": {
+   "optional": [],
+   "required": [
+    "samples1",
+    "samples2",
+    "blend_factor"
+   ],
+   "spread": false
+  },
+  "LatentComposite": {
+   "optional": [],
+   "required": [
+    "samples_to",
+    "samples_from",
+    "x",
+    "y",
+    "feather"
+   ],
+   "spread": false
+  },
+  "LatentCompositeMasked": {
+   "optional": [
+    "mask"
+   ],
+   "required": [
+    "destination",
+    "source",
+    "x",
+    "y",
+    "resize_source"
+   ],
+   "spread": false
+  },
+  "LatentConcat": {
+   "optional": [],
+   "required": [
+    "samples1",
+    "samples2",
+    "dim"
+   ],
+   "spread": false
+  },
+  "LatentCrop": {
+   "optional": [],
+   "required": [
+    "samples",
+    "width",
+    "height",
+    "x",
+    "y"
+   ],
+   "spread": false
+  },
+  "LatentCut": {
+   "optional": [],
+   "required": [
+    "samples",
+    "dim",
+    "index",
+    "amount"
+   ],
+   "spread": false
+  },
+  "LatentCutToBatch": {
+   "optional": [],
+   "required": [
+    "samples",
+    "dim",
+    "slice_size"
+   ],
+   "spread": false
+  },
+  "LatentFlip": {
+   "optional": [],
+   "required": [
+    "samples",
+    "flip_method"
+   ],
+   "spread": false
+  },
+  "LatentFromBatch": {
+   "optional": [],
+   "required": [
+    "samples",
+    "batch_index",
+    "length"
+   ],
+   "spread": false
+  },
+  "LatentInterpolate": {
+   "optional": [],
+   "required": [
+    "samples1",
+    "samples2",
+    "ratio"
+   ],
+   "spread": false
+  },
+  "LatentMultiply": {
+   "optional": [],
+   "required": [
+    "samples",
+    "multiplier"
+   ],
+   "spread": false
+  },
+  "LatentOperationSharpen": {
+   "optional": [],
+   "required": [
+    "sharpen_radius",
+    "sigma",
+    "alpha"
+   ],
+   "spread": false
+  },
+  "LatentOperationTonemapReinhard": {
+   "optional": [],
+   "required": [
+    "multiplier"
+   ],
+   "spread": false
+  },
+  "LatentRotate": {
+   "optional": [],
+   "required": [
+    "samples",
+    "rotation"
+   ],
+   "spread": false
+  },
+  "LatentSubtract": {
+   "optional": [],
+   "required": [
+    "samples1",
+    "samples2"
+   ],
+   "spread": false
+  },
+  "LatentUpscale": {
+   "optional": [],
+   "required": [
+    "samples",
+    "upscale_method",
+    "width",
+    "height",
+    "crop"
+   ],
+   "spread": false
+  },
+  "LatentUpscaleBy": {
+   "optional": [],
+   "required": [
+    "samples",
+    "upscale_method",
+    "scale_by"
+   ],
+   "spread": false
+  },
+  "LatentUpscaleModelLoader": {
+   "optional": [],
+   "required": [
+    "model_name"
+   ],
+   "spread": false
+  },
+  "LazyCache": {
+   "optional": [],
+   "required": [
+    "model",
+    "reuse_threshold",
+    "start_percent",
+    "end_percent",
+    "verbose"
+   ],
+   "spread": false
+  },
+  "Load3D": {
+   "optional": [],
+   "required": [
+    "model_file",
+    "image",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "Load3DAdvanced": {
+   "optional": [],
+   "required": [
+    "model_file",
+    "viewport_state",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "LoadAudio": {
+   "optional": [],
+   "required": [
+    "audio"
+   ],
+   "spread": false
+  },
+  "LoadBackgroundRemovalModel": {
+   "optional": [],
+   "required": [
+    "bg_removal_name"
+   ],
+   "spread": false
+  },
+  "LoadDA3Model": {
+   "optional": [],
+   "required": [
+    "model_name",
+    "weight_dtype"
+   ],
+   "spread": false
+  },
+  "LoadImage": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "LoadImageDataSetFromFolder": {
+   "optional": [],
+   "required": [
+    "folder"
+   ],
+   "spread": false
+  },
+  "LoadImageMask": {
+   "optional": [],
+   "required": [
+    "channel"
+   ],
+   "spread": true
+  },
+  "LoadImageOutput": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "LoadImageTextDataSetFromFolder": {
+   "optional": [],
+   "required": [
+    "folder"
+   ],
+   "spread": false
+  },
+  "LoadLatent": {
+   "optional": [],
+   "required": [
+    "latent"
+   ],
+   "spread": false
+  },
+  "LoadMediaPipeFaceLandmarker": {
+   "optional": [],
+   "required": [
+    "model_name"
+   ],
+   "spread": false
+  },
+  "LoadMoGeModel": {
+   "optional": [],
+   "required": [
+    "model_name"
+   ],
+   "spread": false
+  },
+  "LoadTrainingDataset": {
+   "optional": [],
+   "required": [
+    "folder_name"
+   ],
+   "spread": false
+  },
+  "LoadVideo": {
+   "optional": [],
+   "required": [
+    "file"
+   ],
+   "spread": false
+  },
+  "LoadVideoDataSetFromFolder": {
+   "optional": [],
+   "required": [
+    "folder"
+   ],
+   "spread": false
+  },
+  "LoadVideoTextDataSetFromFolder": {
+   "optional": [],
+   "required": [
+    "folder"
+   ],
+   "spread": false
+  },
+  "LoraLoader": {
+   "optional": [],
+   "required": [
+    "model",
+    "clip",
+    "lora_name",
+    "strength_model",
+    "strength_clip"
+   ],
+   "spread": false
+  },
+  "LoraLoaderBypass": {
+   "optional": [],
+   "required": [
+    "model",
+    "clip",
+    "lora_name",
+    "strength_model",
+    "strength_clip"
+   ],
+   "spread": false
+  },
+  "LoraLoaderBypassModelOnly": {
+   "optional": [],
+   "required": [
+    "model",
+    "lora_name",
+    "strength_model"
+   ],
+   "spread": false
+  },
+  "LoraLoaderModelOnly": {
+   "optional": [],
+   "required": [
+    "model",
+    "lora_name",
+    "strength_model"
+   ],
+   "spread": false
+  },
+  "LoraModelLoader": {
+   "optional": [],
+   "required": [
+    "model",
+    "lora",
+    "strength_model",
+    "bypass"
+   ],
+   "spread": false
+  },
+  "LoraSave": {
+   "optional": [
+    "model_diff",
+    "text_encoder_diff"
+   ],
+   "required": [
+    "filename_prefix",
+    "rank",
+    "lora_type",
+    "bias_diff"
+   ],
+   "spread": false
+  },
+  "LossGraphNode": {
+   "optional": [],
+   "required": [
+    "loss",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "LotusConditioning": {
+   "optional": [],
+   "required": [],
+   "spread": false
+  },
+  "Mahiro": {
+   "optional": [],
+   "required": [
+    "model"
+   ],
+   "spread": false
+  },
+  "MakeTrainingDataset": {
+   "optional": [
+    "texts"
+   ],
+   "required": [
+    "images",
+    "vae",
+    "clip"
+   ],
+   "spread": false
+  },
+  "ManualSigmas": {
+   "optional": [],
+   "required": [
+    "sigmas"
+   ],
+   "spread": false
+  },
+  "MaskComposite": {
+   "optional": [],
+   "required": [
+    "destination",
+    "source",
+    "x",
+    "y",
+    "operation"
+   ],
+   "spread": false
+  },
+  "MaskPreview": {
+   "optional": [],
+   "required": [
+    "mask"
+   ],
+   "spread": false
+  },
+  "MaskToImage": {
+   "optional": [],
+   "required": [
+    "mask"
+   ],
+   "spread": false
+  },
+  "MediaPipeFaceLandmarker": {
+   "optional": [],
+   "required": [
+    "face_detection_model",
+    "image",
+    "detector_variant",
+    "num_faces",
+    "min_confidence",
+    "missing_frame_fallback"
+   ],
+   "spread": false
+  },
+  "MediaPipeFaceMask": {
+   "optional": [],
+   "required": [
+    "face_landmarks",
+    "regions"
+   ],
+   "spread": false
+  },
+  "MediaPipeFaceMeshVisualize": {
+   "optional": [
+    "image"
+   ],
+   "required": [
+    "face_landmarks",
+    "connections",
+    "color",
+    "thickness",
+    "point_size"
+   ],
+   "spread": false
+  },
+  "MergeSplat": {
+   "optional": [],
+   "required": [
+    "splats"
+   ],
+   "spread": false
+  },
+  "MoGeInference": {
+   "optional": [],
+   "required": [
+    "moge_model",
+    "image",
+    "resolution_level",
+    "fov_x_degrees",
+    "batch_size",
+    "force_projection",
+    "apply_mask"
+   ],
+   "spread": false
+  },
+  "MoGePanoramaInference": {
+   "optional": [],
+   "required": [
+    "moge_model",
+    "image",
+    "resolution_level",
+    "split_resolution",
+    "merge_resolution",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "MoGePointMapToMesh": {
+   "optional": [],
+   "required": [
+    "moge_geometry",
+    "batch_index",
+    "decimation",
+    "discontinuity_threshold",
+    "texture"
+   ],
+   "spread": false
+  },
+  "MoGeRender": {
+   "optional": [],
+   "required": [
+    "moge_geometry",
+    "output"
+   ],
+   "spread": false
+  },
+  "ModelComputeDtype": {
+   "optional": [],
+   "required": [
+    "model",
+    "dtype"
+   ],
+   "spread": false
+  },
+  "ModelMergeAdd": {
+   "optional": [],
+   "required": [
+    "model1",
+    "model2"
+   ],
+   "spread": false
+  },
+  "ModelMergeAuraflow": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeBlocks": {
+   "optional": [],
+   "required": [
+    "model1",
+    "model2",
+    "input",
+    "middle",
+    "out"
+   ],
+   "spread": false
+  },
+  "ModelMergeCosmos14B": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeCosmos7B": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeCosmosPredict2_14B": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeCosmosPredict2_2B": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeFlux1": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeKrea2": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeLTXV": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeMochiPreview": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeQwenImage": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeSD1": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeSD2": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeSD35_Large": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeSD3_2B": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeSDXL": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelMergeSimple": {
+   "optional": [],
+   "required": [
+    "model1",
+    "model2",
+    "ratio"
+   ],
+   "spread": false
+  },
+  "ModelMergeSubtract": {
+   "optional": [],
+   "required": [
+    "model1",
+    "model2",
+    "multiplier"
+   ],
+   "spread": false
+  },
+  "ModelMergeWAN2_1": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "ModelNoiseScale": {
+   "optional": [],
+   "required": [
+    "model",
+    "noise_scale"
+   ],
+   "spread": false
+  },
+  "ModelPatchLoader": {
+   "optional": [],
+   "required": [
+    "name"
+   ],
+   "spread": false
+  },
+  "ModelSamplingAuraFlow": {
+   "optional": [],
+   "required": [
+    "model",
+    "shift"
+   ],
+   "spread": false
+  },
+  "ModelSamplingContinuousEDM": {
+   "optional": [],
+   "required": [
+    "model",
+    "sampling",
+    "sigma_max",
+    "sigma_min"
+   ],
+   "spread": false
+  },
+  "ModelSamplingContinuousV": {
+   "optional": [],
+   "required": [
+    "model",
+    "sampling",
+    "sigma_max",
+    "sigma_min"
+   ],
+   "spread": false
+  },
+  "ModelSamplingDiscrete": {
+   "optional": [],
+   "required": [
+    "model",
+    "sampling",
+    "zsnr"
+   ],
+   "spread": false
+  },
+  "ModelSamplingFlux": {
+   "optional": [],
+   "required": [
+    "model",
+    "max_shift",
+    "base_shift",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "ModelSamplingLTXV": {
+   "optional": [
+    "latent"
+   ],
+   "required": [
+    "model",
+    "max_shift",
+    "base_shift"
+   ],
+   "spread": false
+  },
+  "ModelSamplingSD3": {
+   "optional": [],
+   "required": [
+    "model",
+    "shift"
+   ],
+   "spread": false
+  },
+  "ModelSamplingStableCascade": {
+   "optional": [],
+   "required": [
+    "model",
+    "shift"
+   ],
+   "spread": false
+  },
+  "ModelSave": {
+   "optional": [],
+   "required": [
+    "model",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "Morphology": {
+   "optional": [],
+   "required": [
+    "image",
+    "operation",
+    "kernel_size"
+   ],
+   "spread": false
+  },
+  "MultiGPU_Options": {
+   "optional": [
+    "gpu_options"
+   ],
+   "required": [
+    "device_index",
+    "relative_speed"
+   ],
+   "spread": false
+  },
+  "MultiGPU_WorkUnits": {
+   "optional": [],
+   "required": [
+    "model",
+    "max_gpus"
+   ],
+   "spread": false
+  },
+  "NAGuidance": {
+   "optional": [],
+   "required": [
+    "model",
+    "nag_scale",
+    "nag_alpha",
+    "nag_tau"
+   ],
+   "spread": false
+  },
+  "NormalizeVideoLatentStart": {
+   "optional": [],
+   "required": [
+    "latent",
+    "start_frame_count",
+    "reference_frame_count"
+   ],
+   "spread": false
+  },
+  "OpticalFlowLoader": {
+   "optional": [],
+   "required": [
+    "model_name"
+   ],
+   "spread": false
+  },
+  "OptimalStepsScheduler": {
+   "optional": [],
+   "required": [
+    "model_type",
+    "steps",
+    "denoise"
+   ],
+   "spread": false
+  },
+  "Painter": {
+   "optional": [
+    "image"
+   ],
+   "required": [
+    "mask",
+    "width",
+    "height",
+    "bg_color"
+   ],
+   "spread": false
+  },
+  "PatchModelAddDownscale": {
+   "optional": [],
+   "required": [
+    "model",
+    "block_number",
+    "downscale_factor",
+    "start_percent",
+    "end_percent",
+    "downscale_after_skip",
+    "downscale_method",
+    "upscale_method"
+   ],
+   "spread": false
+  },
+  "PerpNeg": {
+   "optional": [],
+   "required": [
+    "model",
+    "empty_conditioning",
+    "neg_scale"
+   ],
+   "spread": false
+  },
+  "PerpNegGuider": {
+   "optional": [],
+   "required": [
+    "model",
+    "positive",
+    "negative",
+    "empty_conditioning",
+    "cfg",
+    "neg_scale"
+   ],
+   "spread": false
+  },
+  "PerturbedAttentionGuidance": {
+   "optional": [],
+   "required": [
+    "model",
+    "scale"
+   ],
+   "spread": false
+  },
+  "PhotoMakerEncode": {
+   "optional": [],
+   "required": [
+    "photomaker",
+    "image",
+    "clip",
+    "text"
+   ],
+   "spread": false
+  },
+  "PhotoMakerLoader": {
+   "optional": [],
+   "required": [
+    "photomaker_model_name"
+   ],
+   "spread": false
+  },
+  "PiDConditioning": {
+   "optional": [],
+   "required": [
+    "positive",
+    "latent",
+    "latent_format",
+    "degrade_sigma"
+   ],
+   "spread": false
+  },
+  "PolyexponentialScheduler": {
+   "optional": [],
+   "required": [
+    "steps",
+    "sigma_max",
+    "sigma_min",
+    "rho"
+   ],
+   "spread": false
+  },
+  "PorterDuffImageComposite": {
+   "optional": [],
+   "required": [
+    "source",
+    "source_alpha",
+    "destination",
+    "destination_alpha",
+    "mode"
+   ],
+   "spread": false
+  },
+  "Preview3D": {
+   "optional": [
+    "camera_info",
+    "bg_image"
+   ],
+   "required": [],
+   "spread": false
+  },
+  "Preview3DAdvanced": {
+   "optional": [
+    "model_3d_info",
+    "camera_info"
+   ],
+   "required": [
+    "model_3d",
+    "viewport_state",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "PreviewAny": {
+   "optional": [],
+   "required": [
+    "source"
+   ],
+   "spread": false
+  },
+  "PreviewAudio": {
+   "optional": [],
+   "required": [
+    "audio"
+   ],
+   "spread": false
+  },
+  "PreviewGaussianSplat": {
+   "optional": [
+    "model_3d_info",
+    "camera_info"
+   ],
+   "required": [
+    "model_3d",
+    "viewport_state",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "PreviewImage": {
+   "optional": [],
+   "required": [
+    "images"
+   ],
+   "spread": false
+  },
+  "PreviewPointCloud": {
+   "optional": [
+    "model_3d_info",
+    "camera_info"
+   ],
+   "required": [
+    "model_3d",
+    "viewport_state",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "PrimitiveBoolean": {
+   "optional": [],
+   "required": [
+    "value"
+   ],
+   "spread": false
+  },
+  "PrimitiveBoundingBox": {
+   "optional": [],
+   "required": [
+    "x",
+    "y",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "PrimitiveFloat": {
+   "optional": [],
+   "required": [
+    "value"
+   ],
+   "spread": false
+  },
+  "PrimitiveInt": {
+   "optional": [],
+   "required": [
+    "value"
+   ],
+   "spread": false
+  },
+  "PrimitiveString": {
+   "optional": [],
+   "required": [
+    "value"
+   ],
+   "spread": false
+  },
+  "PrimitiveStringMultiline": {
+   "optional": [],
+   "required": [
+    "value"
+   ],
+   "spread": false
+  },
+  "QuadrupleCLIPLoader": {
+   "optional": [],
+   "required": [
+    "clip_name1",
+    "clip_name2",
+    "clip_name3",
+    "clip_name4"
+   ],
+   "spread": false
+  },
+  "QwenImageDiffsynthControlnet": {
+   "optional": [
+    "mask"
+   ],
+   "required": [
+    "model",
+    "model_patch",
+    "vae",
+    "image",
+    "strength"
+   ],
+   "spread": false
+  },
+  "RTDETR_detect": {
+   "optional": [],
+   "required": [
+    "model",
+    "image",
+    "threshold",
+    "class_name",
+    "max_detections"
+   ],
+   "spread": false
+  },
+  "RandomNoise": {
+   "optional": [],
+   "required": [
+    "noise_seed"
+   ],
+   "spread": false
+  },
+  "RebatchImages": {
+   "optional": [],
+   "required": [
+    "images",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "RebatchLatents": {
+   "optional": [],
+   "required": [
+    "latents",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "RecordAudio": {
+   "optional": [],
+   "required": [
+    "audio"
+   ],
+   "spread": false
+  },
+  "ReferenceLatent": {
+   "optional": [
+    "latent"
+   ],
+   "required": [
+    "conditioning"
+   ],
+   "spread": false
+  },
+  "ReferenceTimbreAudio": {
+   "optional": [
+    "latent"
+   ],
+   "required": [
+    "conditioning"
+   ],
+   "spread": false
+  },
+  "RegexExtract": {
+   "optional": [],
+   "required": [
+    "string",
+    "regex_pattern",
+    "mode",
+    "case_insensitive",
+    "multiline",
+    "dotall",
+    "group_index"
+   ],
+   "spread": false
+  },
+  "RegexMatch": {
+   "optional": [],
+   "required": [
+    "string",
+    "regex_pattern",
+    "case_insensitive",
+    "multiline",
+    "dotall"
+   ],
+   "spread": false
+  },
+  "RegexReplace": {
+   "optional": [
+    "case_insensitive",
+    "multiline",
+    "dotall",
+    "count"
+   ],
+   "required": [
+    "string",
+    "regex_pattern",
+    "replace"
+   ],
+   "spread": false
+  },
+  "RemoveBackground": {
+   "optional": [],
+   "required": [
+    "bg_removal_model",
+    "image"
+   ],
+   "spread": false
+  },
+  "RenderSplat": {
+   "optional": [
+    "bg_image",
+    "camera_info"
+   ],
+   "required": [
+    "splat",
+    "width",
+    "height",
+    "frames",
+    "splat_scale",
+    "sharpen",
+    "headlight_shading",
+    "opacity_threshold",
+    "render_style",
+    "background"
+   ],
+   "spread": false
+  },
+  "RenormCFG": {
+   "optional": [],
+   "required": [
+    "model",
+    "cfg_trunc",
+    "renorm_cfg"
+   ],
+   "spread": false
+  },
+  "RepeatImageBatch": {
+   "optional": [],
+   "required": [
+    "image",
+    "amount"
+   ],
+   "spread": false
+  },
+  "RepeatLatentBatch": {
+   "optional": [],
+   "required": [
+    "samples",
+    "amount"
+   ],
+   "spread": false
+  },
+  "ReplaceVideoLatentFrames": {
+   "optional": [
+    "source"
+   ],
+   "required": [
+    "destination",
+    "index"
+   ],
+   "spread": false
+  },
+  "RescaleCFG": {
+   "optional": [],
+   "required": [
+    "model",
+    "multiplier"
+   ],
+   "spread": false
+  },
+  "ResizeAndPadImage": {
+   "optional": [],
+   "required": [
+    "image",
+    "target_width",
+    "target_height",
+    "padding_color",
+    "interpolation"
+   ],
+   "spread": false
+  },
+  "ResizeImageMaskNode": {
+   "optional": [],
+   "required": [
+    "input",
+    "resize_type",
+    "scale_method"
+   ],
+   "spread": false
+  },
+  "ResolutionBucket": {
+   "optional": [],
+   "required": [
+    "latents",
+    "conditioning"
+   ],
+   "spread": false
+  },
+  "ResolutionSelector": {
+   "optional": [],
+   "required": [
+    "aspect_ratio",
+    "megapixels",
+    "multiple"
+   ],
+   "spread": false
+  },
+  "SAM3_Detect": {
+   "optional": [
+    "conditioning",
+    "bboxes",
+    "positive_coords",
+    "negative_coords"
+   ],
+   "required": [
+    "model",
+    "image",
+    "threshold",
+    "refine_iterations",
+    "individual_masks"
+   ],
+   "spread": false
+  },
+  "SAM3_TrackPreview": {
+   "optional": [
+    "images"
+   ],
+   "required": [
+    "track_data",
+    "opacity",
+    "fps"
+   ],
+   "spread": false
+  },
+  "SAM3_TrackToMask": {
+   "optional": [],
+   "required": [
+    "track_data",
+    "object_indices"
+   ],
+   "spread": false
+  },
+  "SAM3_VideoTrack": {
+   "optional": [
+    "initial_mask",
+    "conditioning"
+   ],
+   "required": [
+    "images",
+    "model",
+    "detection_threshold",
+    "max_objects",
+    "detect_interval"
+   ],
+   "spread": false
+  },
+  "SCAIL2ColoredMask": {
+   "optional": [
+    "ref_track_data"
+   ],
+   "required": [
+    "driving_track_data",
+    "object_indices",
+    "sort_by",
+    "replacement_mode"
+   ],
+   "spread": false
+  },
+  "SDPoseDrawKeypoints": {
+   "optional": [],
+   "required": [
+    "keypoints",
+    "draw_body",
+    "draw_hands",
+    "draw_face",
+    "draw_feet",
+    "stick_width",
+    "face_point_size",
+    "score_threshold",
+    "draw_head"
+   ],
+   "spread": false
+  },
+  "SDPoseFaceBBoxes": {
+   "optional": [],
+   "required": [
+    "keypoints",
+    "scale",
+    "force_square"
+   ],
+   "spread": false
+  },
+  "SDPoseKeypointExtractor": {
+   "optional": [
+    "bboxes"
+   ],
+   "required": [
+    "model",
+    "vae",
+    "image",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "SDTurboScheduler": {
+   "optional": [],
+   "required": [
+    "model",
+    "steps",
+    "denoise"
+   ],
+   "spread": false
+  },
+  "SD_4XUpscale_Conditioning": {
+   "optional": [],
+   "required": [
+    "images",
+    "positive",
+    "negative",
+    "scale_ratio",
+    "noise_augmentation"
+   ],
+   "spread": false
+  },
+  "SUPIRApply": {
+   "optional": [],
+   "required": [],
+   "spread": true
+  },
+  "SV3D_Conditioning": {
+   "optional": [],
+   "required": [
+    "clip_vision",
+    "init_image",
+    "vae",
+    "width",
+    "height",
+    "video_frames",
+    "elevation"
+   ],
+   "spread": false
+  },
+  "SVD_img2vid_Conditioning": {
+   "optional": [],
+   "required": [
+    "clip_vision",
+    "init_image",
+    "vae",
+    "width",
+    "height",
+    "video_frames",
+    "motion_bucket_id",
+    "fps",
+    "augmentation_level"
+   ],
+   "spread": false
+  },
+  "SamplerARVideo": {
+   "optional": [],
+   "required": [
+    "num_frame_per_block"
+   ],
+   "spread": false
+  },
+  "SamplerCustom": {
+   "optional": [],
+   "required": [
+    "model",
+    "add_noise",
+    "noise_seed",
+    "cfg",
+    "positive",
+    "negative",
+    "sampler",
+    "sigmas",
+    "latent_image"
+   ],
+   "spread": false
+  },
+  "SamplerCustomAdvanced": {
+   "optional": [],
+   "required": [
+    "noise",
+    "guider",
+    "sampler",
+    "sigmas",
+    "latent_image"
+   ],
+   "spread": false
+  },
+  "SamplerDPMAdaptative": {
+   "optional": [],
+   "required": [
+    "order",
+    "rtol",
+    "atol",
+    "h_init",
+    "pcoeff",
+    "icoeff",
+    "dcoeff",
+    "accept_safety",
+    "eta",
+    "s_noise"
+   ],
+   "spread": false
+  },
+  "SamplerDPMPP_2M_SDE": {
+   "optional": [],
+   "required": [
+    "solver_type",
+    "eta",
+    "s_noise",
+    "noise_device"
+   ],
+   "spread": false
+  },
+  "SamplerDPMPP_2S_Ancestral": {
+   "optional": [],
+   "required": [
+    "eta",
+    "s_noise"
+   ],
+   "spread": false
+  },
+  "SamplerDPMPP_3M_SDE": {
+   "optional": [],
+   "required": [
+    "eta",
+    "s_noise",
+    "noise_device"
+   ],
+   "spread": false
+  },
+  "SamplerDPMPP_SDE": {
+   "optional": [],
+   "required": [
+    "eta",
+    "s_noise",
+    "r",
+    "noise_device"
+   ],
+   "spread": false
+  },
+  "SamplerER_SDE": {
+   "optional": [],
+   "required": [
+    "solver_type",
+    "max_stage",
+    "eta",
+    "s_noise"
+   ],
+   "spread": false
+  },
+  "SamplerEulerAncestral": {
+   "optional": [],
+   "required": [
+    "eta",
+    "s_noise"
+   ],
+   "spread": false
+  },
+  "SamplerEulerAncestralCFGPP": {
+   "optional": [],
+   "required": [
+    "eta",
+    "s_noise"
+   ],
+   "spread": false
+  },
+  "SamplerEulerCFGpp": {
+   "optional": [],
+   "required": [
+    "version"
+   ],
+   "spread": false
+  },
+  "SamplerLCM": {
+   "optional": [],
+   "required": [
+    "s_noise",
+    "s_noise_end",
+    "noise_clip_std"
+   ],
+   "spread": false
+  },
+  "SamplerLCMUpscale": {
+   "optional": [],
+   "required": [
+    "scale_ratio",
+    "scale_steps",
+    "upscale_method"
+   ],
+   "spread": false
+  },
+  "SamplerLMS": {
+   "optional": [],
+   "required": [
+    "order"
+   ],
+   "spread": false
+  },
+  "SamplerSASolver": {
+   "optional": [],
+   "required": [
+    "model",
+    "eta",
+    "sde_start_percent",
+    "sde_end_percent",
+    "s_noise",
+    "predictor_order",
+    "corrector_order",
+    "use_pece",
+    "simple_order_2"
+   ],
+   "spread": false
+  },
+  "SamplerSEEDS2": {
+   "optional": [],
+   "required": [
+    "solver_type",
+    "eta",
+    "s_noise",
+    "r"
+   ],
+   "spread": false
+  },
+  "SamplingPercentToSigma": {
+   "optional": [],
+   "required": [
+    "model",
+    "sampling_percent",
+    "return_actual_sigma"
+   ],
+   "spread": false
+  },
+  "Save3DAdvanced": {
+   "optional": [
+    "model_3d_info",
+    "camera_info"
+   ],
+   "required": [
+    "model_3d",
+    "filename_prefix",
+    "viewport_state",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "SaveAnimatedPNG": {
+   "optional": [],
+   "required": [
+    "images",
+    "filename_prefix",
+    "fps",
+    "compress_level"
+   ],
+   "spread": false
+  },
+  "SaveAnimatedWEBP": {
+   "optional": [],
+   "required": [
+    "images",
+    "filename_prefix",
+    "fps",
+    "lossless",
+    "quality",
+    "method"
+   ],
+   "spread": false
+  },
+  "SaveAudio": {
+   "optional": [],
+   "required": [
+    "audio",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "SaveAudioAdvanced": {
+   "optional": [],
+   "required": [
+    "audio",
+    "filename_prefix",
+    "format"
+   ],
+   "spread": false
+  },
+  "SaveAudioMP3": {
+   "optional": [],
+   "required": [
+    "audio",
+    "filename_prefix",
+    "quality"
+   ],
+   "spread": false
+  },
+  "SaveAudioOpus": {
+   "optional": [],
+   "required": [
+    "audio",
+    "filename_prefix",
+    "quality"
+   ],
+   "spread": false
+  },
+  "SaveGLB": {
+   "optional": [],
+   "required": [
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "SaveGaussianSplat": {
+   "optional": [
+    "model_3d_info",
+    "camera_info"
+   ],
+   "required": [
+    "model_3d",
+    "filename_prefix",
+    "viewport_state",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "SaveImage": {
+   "optional": [],
+   "required": [
+    "images",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "SaveImageAdvanced": {
+   "optional": [],
+   "required": [
+    "images",
+    "filename_prefix",
+    "format"
+   ],
+   "spread": false
+  },
+  "SaveImageDataSetToFolder": {
+   "optional": [],
+   "required": [
+    "images",
+    "folder_name",
+    "filename_prefix",
+    "mode"
+   ],
+   "spread": false
+  },
+  "SaveImageTextDataSetToFolder": {
+   "optional": [
+    "texts"
+   ],
+   "required": [
+    "images",
+    "folder_name",
+    "filename_prefix",
+    "mode"
+   ],
+   "spread": false
+  },
+  "SaveLatent": {
+   "optional": [],
+   "required": [
+    "samples",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "SaveLoRA": {
+   "optional": [
+    "steps"
+   ],
+   "required": [
+    "lora",
+    "prefix"
+   ],
+   "spread": false
+  },
+  "SavePointCloud": {
+   "optional": [
+    "model_3d_info",
+    "camera_info"
+   ],
+   "required": [
+    "model_3d",
+    "filename_prefix",
+    "viewport_state",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "SaveSVGNode": {
+   "optional": [],
+   "required": [
+    "svg",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "SaveText": {
+   "optional": [],
+   "required": [
+    "text",
+    "filename_prefix",
+    "format"
+   ],
+   "spread": false
+  },
+  "SaveTrainingDataset": {
+   "optional": [],
+   "required": [
+    "latents",
+    "conditioning",
+    "folder_name",
+    "shard_size"
+   ],
+   "spread": false
+  },
+  "SaveVideo": {
+   "optional": [],
+   "required": [
+    "video",
+    "filename_prefix",
+    "format",
+    "codec"
+   ],
+   "spread": false
+  },
+  "SaveWEBM": {
+   "optional": [],
+   "required": [
+    "images",
+    "filename_prefix",
+    "codec",
+    "fps",
+    "crf"
+   ],
+   "spread": false
+  },
+  "ScaleROPE": {
+   "optional": [],
+   "required": [
+    "model",
+    "scale_x",
+    "shift_x",
+    "scale_y",
+    "shift_y",
+    "scale_t",
+    "shift_t"
+   ],
+   "spread": false
+  },
+  "SeedNode": {
+   "optional": [],
+   "required": [
+    "seed"
+   ],
+   "spread": false
+  },
+  "SeedVR2Conditioning": {
+   "optional": [],
+   "required": [
+    "model",
+    "vae_conditioning"
+   ],
+   "spread": false
+  },
+  "SeedVR2PostProcessing": {
+   "optional": [],
+   "required": [
+    "images",
+    "original_resized_images",
+    "color_correction_method"
+   ],
+   "spread": false
+  },
+  "SeedVR2Preprocess": {
+   "optional": [],
+   "required": [
+    "resized_images"
+   ],
+   "spread": false
+  },
+  "SeedVR2TemporalChunk": {
+   "optional": [],
+   "required": [
+    "latent",
+    "temporal_overlap",
+    "chunking_mode"
+   ],
+   "spread": false
+  },
+  "SeedVR2TemporalMerge": {
+   "optional": [],
+   "required": [
+    "latents",
+    "temporal_overlap"
+   ],
+   "spread": false
+  },
+  "SelectCLIPDevice": {
+   "optional": [],
+   "required": [
+    "clip",
+    "device"
+   ],
+   "spread": false
+  },
+  "SelectModelDevice": {
+   "optional": [],
+   "required": [
+    "model",
+    "device"
+   ],
+   "spread": false
+  },
+  "SelectVAEDevice": {
+   "optional": [],
+   "required": [
+    "vae",
+    "device"
+   ],
+   "spread": false
+  },
+  "SelfAttentionGuidance": {
+   "optional": [],
+   "required": [
+    "model",
+    "scale",
+    "blur_sigma"
+   ],
+   "spread": false
+  },
+  "SetFirstSigma": {
+   "optional": [],
+   "required": [
+    "sigmas",
+    "sigma"
+   ],
+   "spread": false
+  },
+  "SetLatentNoiseMask": {
+   "optional": [],
+   "required": [
+    "samples",
+    "mask"
+   ],
+   "spread": false
+  },
+  "SetUnionControlNetType": {
+   "optional": [],
+   "required": [
+    "control_net",
+    "type"
+   ],
+   "spread": false
+  },
+  "ShuffleImageTextDataset": {
+   "optional": [],
+   "required": [
+    "images",
+    "texts",
+    "seed"
+   ],
+   "spread": false
+  },
+  "ShuffleVideoDataset": {
+   "optional": [],
+   "required": [
+    "videos",
+    "seed"
+   ],
+   "spread": false
+  },
+  "ShuffleVideoTextDataset": {
+   "optional": [],
+   "required": [
+    "videos",
+    "texts",
+    "seed"
+   ],
+   "spread": false
+  },
+  "SkipLayerGuidanceDiT": {
+   "optional": [],
+   "required": [
+    "model",
+    "double_layers",
+    "single_layers",
+    "scale",
+    "start_percent",
+    "end_percent",
+    "rescaling_scale"
+   ],
+   "spread": false
+  },
+  "SkipLayerGuidanceDiTSimple": {
+   "optional": [],
+   "required": [
+    "model",
+    "double_layers",
+    "single_layers",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "SkipLayerGuidanceSD3": {
+   "optional": [],
+   "required": [
+    "model",
+    "layers",
+    "scale",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "SolidMask": {
+   "optional": [],
+   "required": [
+    "value",
+    "width",
+    "height"
+   ],
+   "spread": false
+  },
+  "SplatToFile3D": {
+   "optional": [],
+   "required": [
+    "splat",
+    "format"
+   ],
+   "spread": false
+  },
+  "SplatToMesh": {
+   "optional": [],
+   "required": [
+    "splat",
+    "resolution",
+    "kernel",
+    "smooth",
+    "level",
+    "min_component",
+    "min_opacity",
+    "color_sharpen"
+   ],
+   "spread": false
+  },
+  "SplitAudioChannels": {
+   "optional": [],
+   "required": [
+    "audio"
+   ],
+   "spread": false
+  },
+  "SplitImageToTileList": {
+   "optional": [],
+   "required": [
+    "image",
+    "tile_width",
+    "tile_height",
+    "overlap"
+   ],
+   "spread": false
+  },
+  "SplitImageWithAlpha": {
+   "optional": [],
+   "required": [
+    "image"
+   ],
+   "spread": false
+  },
+  "SplitSigmas": {
+   "optional": [],
+   "required": [
+    "sigmas",
+    "step"
+   ],
+   "spread": false
+  },
+  "SplitSigmasDenoise": {
+   "optional": [],
+   "required": [
+    "sigmas",
+    "denoise"
+   ],
+   "spread": false
+  },
+  "StableCascade_EmptyLatentImage": {
+   "optional": [],
+   "required": [
+    "width",
+    "height",
+    "compression",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "StableCascade_StageB_Conditioning": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "stage_c"
+   ],
+   "spread": false
+  },
+  "StableCascade_StageC_VAEEncode": {
+   "optional": [],
+   "required": [
+    "image",
+    "vae",
+    "compression"
+   ],
+   "spread": false
+  },
+  "StableCascade_SuperResolutionControlnet": {
+   "optional": [],
+   "required": [
+    "image",
+    "vae"
+   ],
+   "spread": false
+  },
+  "StableZero123_Conditioning": {
+   "optional": [],
+   "required": [
+    "clip_vision",
+    "init_image",
+    "vae",
+    "width",
+    "height",
+    "batch_size",
+    "elevation",
+    "azimuth"
+   ],
+   "spread": false
+  },
+  "StableZero123_Conditioning_Batched": {
+   "optional": [],
+   "required": [
+    "clip_vision",
+    "init_image",
+    "vae",
+    "width",
+    "height",
+    "batch_size",
+    "elevation",
+    "azimuth",
+    "elevation_batch_increment",
+    "azimuth_batch_increment"
+   ],
+   "spread": false
+  },
+  "StringCompare": {
+   "optional": [],
+   "required": [
+    "string_a",
+    "string_b",
+    "mode",
+    "case_sensitive"
+   ],
+   "spread": false
+  },
+  "StringConcatenate": {
+   "optional": [],
+   "required": [
+    "string_a",
+    "string_b",
+    "delimiter"
+   ],
+   "spread": false
+  },
+  "StringContains": {
+   "optional": [],
+   "required": [
+    "string",
+    "substring",
+    "case_sensitive"
+   ],
+   "spread": false
+  },
+  "StringFormat": {
+   "optional": [],
+   "required": [
+    "values",
+    "f_string"
+   ],
+   "spread": false
+  },
+  "StringLength": {
+   "optional": [],
+   "required": [
+    "string"
+   ],
+   "spread": false
+  },
+  "StringReplace": {
+   "optional": [],
+   "required": [
+    "string",
+    "find",
+    "replace"
+   ],
+   "spread": false
+  },
+  "StringSubstring": {
+   "optional": [],
+   "required": [
+    "string",
+    "start",
+    "end"
+   ],
+   "spread": false
+  },
+  "StringTrim": {
+   "optional": [],
+   "required": [
+    "string",
+    "mode"
+   ],
+   "spread": false
+  },
+  "StyleModelApply": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "style_model",
+    "clip_vision_output",
+    "strength",
+    "strength_type"
+   ],
+   "spread": false
+  },
+  "StyleModelLoader": {
+   "optional": [],
+   "required": [
+    "style_model_name"
+   ],
+   "spread": false
+  },
+  "T5TokenizerOptions": {
+   "optional": [],
+   "required": [
+    "clip",
+    "min_padding",
+    "min_length"
+   ],
+   "spread": false
+  },
+  "TCFG": {
+   "optional": [],
+   "required": [
+    "model"
+   ],
+   "spread": false
+  },
+  "TemporalScoreRescaling": {
+   "optional": [],
+   "required": [
+    "model",
+    "tsr_k",
+    "tsr_sigma"
+   ],
+   "spread": false
+  },
+  "TextEncodeAceStepAudio": {
+   "optional": [],
+   "required": [
+    "clip",
+    "tags",
+    "lyrics",
+    "lyrics_strength"
+   ],
+   "spread": false
+  },
+  "TextEncodeAceStepAudio1.5": {
+   "optional": [],
+   "required": [
+    "clip",
+    "tags",
+    "lyrics",
+    "seed",
+    "bpm",
+    "duration",
+    "timesignature",
+    "language",
+    "keyscale",
+    "generate_audio_codes",
+    "cfg_scale",
+    "temperature",
+    "top_p",
+    "top_k",
+    "min_p"
+   ],
+   "spread": false
+  },
+  "TextEncodeBooguEdit": {
+   "optional": [],
+   "required": [
+    "clip",
+    "prompt",
+    "negative_prompt",
+    "vae",
+    "images"
+   ],
+   "spread": false
+  },
+  "TextEncodeHunyuanVideo_ImageToVideo": {
+   "optional": [],
+   "required": [
+    "clip",
+    "clip_vision_output",
+    "prompt",
+    "image_interleave"
+   ],
+   "spread": false
+  },
+  "TextEncodeJoyImageEdit": {
+   "optional": [
+    "vae",
+    "images"
+   ],
+   "required": [
+    "clip",
+    "prompt"
+   ],
+   "spread": false
+  },
+  "TextEncodeMageFlowEdit": {
+   "optional": [
+    "vae"
+   ],
+   "required": [
+    "clip",
+    "prompt",
+    "negative_prompt",
+    "images",
+    "width",
+    "height",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "TextEncodeQwenImageEdit": {
+   "optional": [
+    "vae",
+    "image"
+   ],
+   "required": [
+    "clip",
+    "prompt"
+   ],
+   "spread": false
+  },
+  "TextEncodeQwenImageEditPlus": {
+   "optional": [
+    "vae",
+    "image1",
+    "image2",
+    "image3"
+   ],
+   "required": [
+    "clip",
+    "prompt"
+   ],
+   "spread": false
+  },
+  "TextEncodeZImageOmni": {
+   "optional": [
+    "image_encoder",
+    "vae",
+    "image1",
+    "image2",
+    "image3"
+   ],
+   "required": [
+    "clip",
+    "prompt",
+    "auto_resize_images"
+   ],
+   "spread": false
+  },
+  "TextGenerate": {
+   "optional": [
+    "image",
+    "video",
+    "audio",
+    "thinking",
+    "use_default_template"
+   ],
+   "required": [
+    "clip",
+    "prompt",
+    "max_length",
+    "sampling_mode"
+   ],
+   "spread": false
+  },
+  "TextGenerateLTX2Prompt": {
+   "optional": [],
+   "required": [],
+   "spread": false
+  },
+  "TextOverlay": {
+   "optional": [],
+   "required": [
+    "images",
+    "text",
+    "font_size",
+    "color",
+    "position",
+    "align",
+    "outline"
+   ],
+   "spread": false
+  },
+  "ThresholdMask": {
+   "optional": [],
+   "required": [
+    "mask",
+    "value"
+   ],
+   "spread": false
+  },
+  "TomePatchModel": {
+   "optional": [],
+   "required": [
+    "model",
+    "ratio"
+   ],
+   "spread": false
+  },
+  "TorchCompileModel": {
+   "optional": [],
+   "required": [
+    "model",
+    "backend"
+   ],
+   "spread": false
+  },
+  "TrainLoraNode": {
+   "optional": [],
+   "required": [
+    "model",
+    "latents",
+    "positive",
+    "batch_size",
+    "grad_accumulation_steps",
+    "steps",
+    "learning_rate",
+    "rank",
+    "optimizer",
+    "loss_function",
+    "seed",
+    "training_dtype",
+    "lora_dtype",
+    "quantized_backward",
+    "algorithm",
+    "gradient_checkpointing",
+    "checkpoint_depth",
+    "offloading",
+    "existing_lora",
+    "bucket_mode",
+    "bypass_mode"
+   ],
+   "spread": false
+  },
+  "TransformSplat": {
+   "optional": [],
+   "required": [
+    "splat",
+    "translate_x",
+    "translate_y",
+    "translate_z",
+    "rotate_x",
+    "rotate_y",
+    "rotate_z",
+    "scale_x",
+    "scale_y",
+    "scale_z"
+   ],
+   "spread": false
+  },
+  "TrimAudioDuration": {
+   "optional": [],
+   "required": [
+    "audio",
+    "start_index",
+    "duration"
+   ],
+   "spread": false
+  },
+  "TrimVideoLatent": {
+   "optional": [],
+   "required": [
+    "samples",
+    "trim_amount"
+   ],
+   "spread": false
+  },
+  "TripleCLIPLoader": {
+   "optional": [],
+   "required": [
+    "clip_name1",
+    "clip_name2",
+    "clip_name3"
+   ],
+   "spread": false
+  },
+  "TripoSplatConditioning": {
+   "optional": [],
+   "required": [
+    "clip_vision",
+    "vae",
+    "image"
+   ],
+   "spread": false
+  },
+  "TripoSplatPreprocessImage": {
+   "optional": [],
+   "required": [
+    "image",
+    "mask",
+    "erode_radius",
+    "size"
+   ],
+   "spread": false
+  },
+  "TripoSplatSamplingPreview": {
+   "optional": [],
+   "required": [
+    "model",
+    "vae",
+    "octree_level",
+    "num_gaussians",
+    "yaw",
+    "pitch",
+    "point_size"
+   ],
+   "spread": false
+  },
+  "UNETLoader": {
+   "optional": [],
+   "required": [
+    "unet_name",
+    "weight_dtype"
+   ],
+   "spread": false
+  },
+  "UNetCrossAttentionMultiply": {
+   "optional": [],
+   "required": [
+    "model",
+    "q",
+    "k",
+    "v",
+    "out"
+   ],
+   "spread": false
+  },
+  "UNetSelfAttentionMultiply": {
+   "optional": [],
+   "required": [
+    "model",
+    "q",
+    "k",
+    "v",
+    "out"
+   ],
+   "spread": false
+  },
+  "UNetTemporalAttentionMultiply": {
+   "optional": [],
+   "required": [
+    "model",
+    "self_structural",
+    "self_temporal",
+    "cross_structural",
+    "cross_temporal"
+   ],
+   "spread": false
+  },
+  "USOStyleReference": {
+   "optional": [],
+   "required": [
+    "model",
+    "model_patch",
+    "clip_vision_output"
+   ],
+   "spread": false
+  },
+  "UpscaleModelLoader": {
+   "optional": [],
+   "required": [
+    "model_name"
+   ],
+   "spread": false
+  },
+  "VAEDecode": {
+   "optional": [],
+   "required": [
+    "samples",
+    "vae"
+   ],
+   "spread": false
+  },
+  "VAEDecodeAudio": {
+   "optional": [],
+   "required": [
+    "samples",
+    "vae"
+   ],
+   "spread": false
+  },
+  "VAEDecodeAudioTiled": {
+   "optional": [],
+   "required": [
+    "samples",
+    "vae",
+    "tile_size",
+    "overlap"
+   ],
+   "spread": false
+  },
+  "VAEDecodeHunyuan3D": {
+   "optional": [],
+   "required": [
+    "samples",
+    "vae",
+    "num_chunks",
+    "octree_resolution"
+   ],
+   "spread": false
+  },
+  "VAEDecodeTiled": {
+   "optional": [],
+   "required": [
+    "samples",
+    "vae",
+    "tile_size",
+    "overlap",
+    "temporal_size",
+    "temporal_overlap"
+   ],
+   "spread": false
+  },
+  "VAEDecodeTripoSplat": {
+   "optional": [],
+   "required": [
+    "samples",
+    "vae",
+    "num_gaussians",
+    "seed"
+   ],
+   "spread": false
+  },
+  "VAEEncode": {
+   "optional": [],
+   "required": [
+    "pixels",
+    "vae"
+   ],
+   "spread": false
+  },
+  "VAEEncodeAudio": {
+   "optional": [],
+   "required": [
+    "audio",
+    "vae"
+   ],
+   "spread": false
+  },
+  "VAEEncodeForInpaint": {
+   "optional": [],
+   "required": [
+    "pixels",
+    "vae",
+    "mask",
+    "grow_mask_by"
+   ],
+   "spread": false
+  },
+  "VAEEncodeTiled": {
+   "optional": [],
+   "required": [
+    "pixels",
+    "vae",
+    "tile_size",
+    "overlap",
+    "temporal_size",
+    "temporal_overlap"
+   ],
+   "spread": false
+  },
+  "VAELoader": {
+   "optional": [],
+   "required": [
+    "vae_name"
+   ],
+   "spread": false
+  },
+  "VAESave": {
+   "optional": [],
+   "required": [
+    "vae",
+    "filename_prefix"
+   ],
+   "spread": false
+  },
+  "VOIDInpaintConditioning": {
+   "optional": [],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "video",
+    "quadmask",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "VOIDQuadmaskPreprocess": {
+   "optional": [],
+   "required": [
+    "mask",
+    "dilate_width"
+   ],
+   "spread": false
+  },
+  "VOIDSampler": {
+   "optional": [],
+   "required": [],
+   "spread": false
+  },
+  "VOIDWarpedNoise": {
+   "optional": [],
+   "required": [
+    "optical_flow",
+    "video",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "VOIDWarpedNoiseSource": {
+   "optional": [],
+   "required": [
+    "warped_noise"
+   ],
+   "spread": false
+  },
+  "VPScheduler": {
+   "optional": [],
+   "required": [
+    "steps",
+    "beta_d",
+    "beta_min",
+    "eps_s"
+   ],
+   "spread": false
+  },
+  "Video Slice": {
+   "optional": [],
+   "required": [
+    "video",
+    "start_time",
+    "duration",
+    "strict_duration"
+   ],
+   "spread": false
+  },
+  "VideoFrameSample": {
+   "optional": [],
+   "required": [
+    "video",
+    "num_frames",
+    "strategy",
+    "seed"
+   ],
+   "spread": false
+  },
+  "VideoLinearCFGGuidance": {
+   "optional": [],
+   "required": [
+    "model",
+    "min_cfg"
+   ],
+   "spread": false
+  },
+  "VideoRandomTemporalCrop": {
+   "optional": [],
+   "required": [
+    "video",
+    "length",
+    "seed"
+   ],
+   "spread": false
+  },
+  "VideoTemporalCrop": {
+   "optional": [],
+   "required": [
+    "video",
+    "start_frame",
+    "length"
+   ],
+   "spread": false
+  },
+  "VideoTriangleCFGGuidance": {
+   "optional": [],
+   "required": [
+    "model",
+    "min_cfg"
+   ],
+   "spread": false
+  },
+  "VoxelToMesh": {
+   "optional": [],
+   "required": [
+    "voxel",
+    "algorithm",
+    "threshold"
+   ],
+   "spread": false
+  },
+  "VoxelToMeshBasic": {
+   "optional": [],
+   "required": [
+    "voxel",
+    "threshold"
+   ],
+   "spread": false
+  },
+  "Wan22FunControlToVideo": {
+   "optional": [
+    "ref_image",
+    "control_video"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "Wan22ImageToVideoLatent": {
+   "optional": [
+    "start_image"
+   ],
+   "required": [
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanAnimateToVideo": {
+   "optional": [
+    "clip_vision_output",
+    "reference_image",
+    "face_video",
+    "pose_video",
+    "background_video",
+    "character_mask",
+    "continue_motion"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size",
+    "continue_motion_max_frames",
+    "video_frame_offset"
+   ],
+   "spread": false
+  },
+  "WanCameraEmbedding": {
+   "optional": [
+    "speed",
+    "fx",
+    "fy",
+    "cx",
+    "cy"
+   ],
+   "required": [
+    "camera_pose",
+    "width",
+    "height",
+    "length"
+   ],
+   "spread": false
+  },
+  "WanCameraImageToVideo": {
+   "optional": [
+    "clip_vision_output",
+    "start_image",
+    "camera_conditions"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanDancerEncodeAudio": {
+   "optional": [],
+   "required": [
+    "audio",
+    "video_frames",
+    "audio_inject_scale"
+   ],
+   "spread": false
+  },
+  "WanDancerPadKeyframes": {
+   "optional": [],
+   "required": [
+    "images",
+    "segment_length",
+    "segment_index",
+    "audio"
+   ],
+   "spread": false
+  },
+  "WanDancerPadKeyframesList": {
+   "optional": [],
+   "required": [
+    "images",
+    "segment_length",
+    "num_segments",
+    "audio"
+   ],
+   "spread": false
+  },
+  "WanDancerVideo": {
+   "optional": [
+    "clip_vision_output",
+    "clip_vision_output_ref",
+    "start_image",
+    "mask",
+    "audio_encoder_output"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length"
+   ],
+   "spread": false
+  },
+  "WanFirstLastFrameToVideo": {
+   "optional": [
+    "clip_vision_start_image",
+    "clip_vision_end_image",
+    "start_image",
+    "end_image"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanFunControlToVideo": {
+   "optional": [
+    "clip_vision_output",
+    "start_image",
+    "control_video"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanFunInpaintToVideo": {
+   "optional": [
+    "clip_vision_output",
+    "start_image",
+    "end_image"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanHuMoImageToVideo": {
+   "optional": [
+    "audio_encoder_output",
+    "ref_image"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanImageToVideo": {
+   "optional": [
+    "clip_vision_output",
+    "start_image"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanInfiniteTalkToVideo": {
+   "optional": [
+    "clip_vision_output",
+    "start_image",
+    "previous_frames"
+   ],
+   "required": [
+    "mode",
+    "model",
+    "model_patch",
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "audio_encoder_output_1",
+    "motion_frame_count",
+    "audio_scale"
+   ],
+   "spread": false
+  },
+  "WanMoveConcatTrack": {
+   "optional": [
+    "tracks_2"
+   ],
+   "required": [
+    "tracks_1"
+   ],
+   "spread": false
+  },
+  "WanMoveTrackToVideo": {
+   "optional": [
+    "tracks",
+    "clip_vision_output"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "strength",
+    "width",
+    "height",
+    "length",
+    "batch_size",
+    "start_image"
+   ],
+   "spread": false
+  },
+  "WanMoveTracksFromCoords": {
+   "optional": [
+    "track_coords",
+    "track_mask"
+   ],
+   "required": [],
+   "spread": false
+  },
+  "WanMoveVisualizeTracks": {
+   "optional": [
+    "tracks"
+   ],
+   "required": [
+    "images",
+    "line_resolution",
+    "circle_size",
+    "opacity",
+    "line_width"
+   ],
+   "spread": false
+  },
+  "WanPhantomSubjectToVideo": {
+   "optional": [
+    "images"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanSCAILToVideo": {
+   "optional": [
+    "pose_video",
+    "pose_video_mask",
+    "replacement_mode",
+    "reference_image",
+    "reference_image_mask",
+    "clip_vision_output",
+    "previous_frames"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size",
+    "pose_strength",
+    "pose_start",
+    "pose_end",
+    "video_frame_offset",
+    "previous_frame_count"
+   ],
+   "spread": false
+  },
+  "WanSoundImageToVideo": {
+   "optional": [
+    "audio_encoder_output",
+    "ref_image",
+    "control_video",
+    "ref_motion"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size"
+   ],
+   "spread": false
+  },
+  "WanSoundImageToVideoExtend": {
+   "optional": [
+    "audio_encoder_output",
+    "ref_image",
+    "control_video"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "length",
+    "video_latent"
+   ],
+   "spread": false
+  },
+  "WanTrackToVideo": {
+   "optional": [
+    "clip_vision_output"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "tracks",
+    "width",
+    "height",
+    "length",
+    "batch_size",
+    "temperature",
+    "topk",
+    "start_image"
+   ],
+   "spread": false
+  },
+  "WanUni3CControlnetApply": {
+   "optional": [],
+   "required": [
+    "model",
+    "model_patch",
+    "vae",
+    "render_video",
+    "strength",
+    "start_percent",
+    "end_percent"
+   ],
+   "spread": false
+  },
+  "WanVaceToVideo": {
+   "optional": [
+    "control_video",
+    "control_masks",
+    "reference_image"
+   ],
+   "required": [
+    "positive",
+    "negative",
+    "vae",
+    "width",
+    "height",
+    "length",
+    "batch_size",
+    "strength"
+   ],
+   "spread": false
+  },
+  "WebcamCapture": {
+   "optional": [],
+   "required": [
+    "image",
+    "width",
+    "height",
+    "capture_on_queue"
+   ],
+   "spread": false
+  },
+  "ZImageFunControlnet": {
+   "optional": [
+    "image",
+    "inpaint_image",
+    "mask"
+   ],
+   "required": [
+    "model",
+    "model_patch",
+    "vae",
+    "strength"
+   ],
+   "spread": false
+  },
+  "unCLIPCheckpointLoader": {
+   "optional": [],
+   "required": [
+    "ckpt_name"
+   ],
+   "spread": false
+  },
+  "unCLIPConditioning": {
+   "optional": [],
+   "required": [
+    "conditioning",
+    "clip_vision_output",
+    "strength",
+    "noise_augmentation"
+   ],
+   "spread": false
+  },
+  "wanBlockSwap": {
+   "optional": [],
+   "required": [
+    "model"
+   ],
+   "spread": false
+  }
+ },
+ "samplers": [
+  "euler",
+  "euler_cfg_pp",
+  "euler_ancestral",
+  "euler_ancestral_cfg_pp",
+  "heun",
+  "heunpp2",
+  "exp_heun_2_x0",
+  "exp_heun_2_x0_sde",
+  "dpm_2",
+  "dpm_2_ancestral",
+  "lms",
+  "dpm_fast",
+  "dpm_adaptive",
+  "dpmpp_2s_ancestral",
+  "dpmpp_2s_ancestral_cfg_pp",
+  "dpmpp_sde",
+  "dpmpp_sde_gpu",
+  "dpmpp_2m",
+  "dpmpp_2m_cfg_pp",
+  "dpmpp_2m_sde",
+  "dpmpp_2m_sde_gpu",
+  "dpmpp_2m_sde_heun",
+  "dpmpp_2m_sde_heun_gpu",
+  "dpmpp_3m_sde",
+  "dpmpp_3m_sde_gpu",
+  "ddpm",
+  "lcm",
+  "ipndm",
+  "ipndm_v",
+  "deis",
+  "res_multistep",
+  "res_multistep_cfg_pp",
+  "res_multistep_ancestral",
+  "res_multistep_ancestral_cfg_pp",
+  "gradient_estimation",
+  "gradient_estimation_cfg_pp",
+  "er_sde",
+  "seeds_2",
+  "seeds_3",
+  "sa_solver",
+  "sa_solver_pece",
+  "ddim",
+  "uni_pc",
+  "uni_pc_bh2"
+ ],
+ "schedulers": [
+  "simple",
+  "sgm_uniform",
+  "karras",
+  "exponential",
+  "ddim_uniform",
+  "beta",
+  "normal",
+  "linear_quadratic",
+  "kl_optimal"
+ ],
+ "union_controlnet_types": [
+  "auto",
+  "openpose",
+  "depth",
+  "hed/pidi/scribble/ted",
+  "canny/lineart/anime_lineart/mlsd",
+  "normal",
+  "segment",
+  "tile",
+  "repaint"
+ ]
+}

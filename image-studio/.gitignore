@@ -1,0 +1,9 @@
+# Percorso dell'installazione ComfyUI: dipende dalla macchina
+comfy-path.txt
+
+# Immagini generate
+output/
+
+__pycache__/
+*.pyc
+.pytest_cache/

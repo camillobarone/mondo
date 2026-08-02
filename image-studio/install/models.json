@@ -1,0 +1,85 @@
+{
+  "_commento": [
+    "Manifest dei modelli. I file su Hugging Face si risolvono a runtime tramite",
+    "l'API del repository invece di avere il nome del file cablato qui: i nomi dei",
+    "file cambiano nel tempo, gli identificativi dei repository quasi mai.",
+    "",
+    "Il campo 'pattern' e' una regex applicata ai file nella radice del repository.",
+    "Un download opzionale che fallisce non blocca gli altri."
+  ],
+  "models": [
+    {
+      "id": "sdxl-base",
+      "label": "SDXL 1.0 base (checkpoint di riserva, sempre disponibile)",
+      "target": "checkpoints",
+      "required": true,
+      "approx_gb": 6.9,
+      "source": {
+        "type": "hf",
+        "repo": "stabilityai/stable-diffusion-xl-base-1.0",
+        "pattern": "^sd_xl_base_1\\.0\\.safetensors$"
+      }
+    },
+    {
+      "id": "juggernaut-xl",
+      "label": "Juggernaut XL (fotorealismo, il migliore per interni e annunci)",
+      "target": "checkpoints",
+      "required": false,
+      "approx_gb": 7.1,
+      "source": {
+        "type": "hf",
+        "repo": "RunDiffusion/Juggernaut-XL-v9",
+        "pattern": "(?i)^juggernaut.*\\.safetensors$"
+      }
+    },
+    {
+      "id": "realvis-xl",
+      "label": "RealVisXL V5 (alternativa fotorealistica, ottima sugli esterni)",
+      "target": "checkpoints",
+      "required": false,
+      "approx_gb": 6.9,
+      "source": {
+        "type": "hf",
+        "repo": "SG161222/RealVisXL_V5.0",
+        "pattern": "(?i)^realvisxl.*(?<!_fp16)\\.safetensors$"
+      }
+    },
+    {
+      "id": "sdxl-vae-fp16-fix",
+      "label": "VAE SDXL fp16-fix (elimina gli artefatti viola in fp16)",
+      "target": "vae",
+      "required": true,
+      "approx_gb": 0.33,
+      "source": {
+        "type": "hf",
+        "repo": "madebyollin/sdxl-vae-fp16-fix",
+        "pattern": "(?i)^(sdxl[._]vae|diffusion_pytorch_model)\\.safetensors$"
+      }
+    },
+    {
+      "id": "controlnet-union",
+      "label": "ControlNet Union Promax SDXL (geometria: serve al virtual staging)",
+      "target": "controlnet",
+      "required": true,
+      "approx_gb": 2.5,
+      "source": {
+        "type": "hf",
+        "repo": "xinsir/controlnet-union-sdxl-1.0",
+        "pattern": "(?i)^diffusion_pytorch_model_promax\\.safetensors$",
+        "fallback_pattern": "(?i)^diffusion_pytorch_model\\.safetensors$",
+        "rename_to": "controlnet-union-sdxl-promax.safetensors"
+      }
+    },
+    {
+      "id": "realesrgan-x4",
+      "label": "Real-ESRGAN x4plus (ingrandimento per stampa e portali)",
+      "target": "upscale_models",
+      "required": true,
+      "approx_gb": 0.07,
+      "source": {
+        "type": "url",
+        "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
+      }
+    }
+  ]
+}
