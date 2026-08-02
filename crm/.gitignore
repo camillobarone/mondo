@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+build
+next-env.d.ts
+*.tsbuildinfo
+
+# Database e backup: mai nel repository
+data/
+backup/
+*.db
+*.db-shm
+*.db-wal
+
+.env
+.env.local
+.DS_Store
