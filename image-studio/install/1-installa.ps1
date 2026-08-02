@@ -12,7 +12,8 @@
     supporto Intel e' ormai dentro PyTorch.
 
 .PARAMETER ComfyPath
-    Dove installare ComfyUI. Servono circa 25 GB fra ambiente e modelli.
+    Dove installare ComfyUI. Servono circa 15 GB fra ambiente e modelli
+    indispensabili, circa 30 GB scaricando tutti i checkpoint opzionali.
 
 .PARAMETER Nightly
     Usa le build nightly di PyTorch XPU: a volte piu' veloci, ma meno stabili.
@@ -161,7 +162,8 @@ Write-Host @"
 ============================================================
 Installazione completata.
 
-Prossimo passo, i modelli (circa 17 GB):
+Prossimo passo, i modelli. Aggiungi -RequiredOnly per fermarti a 10 GB
+invece di 24, il fotorealistico lo scarichi quando vuoi:
     powershell -ExecutionPolicy Bypass -File .\install\2-scarica-modelli.ps1
 
 Poi avvia il motore con:

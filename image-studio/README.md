@@ -29,7 +29,7 @@ automatica, i modelli giusti e una riga di comando che nasconde la complessità.
   Scaricali da [intel.com](https://www.intel.com/content/www/us/en/download/785597/)
 - [Python 3.12](https://www.python.org/downloads/) (spunta *Add python.exe to PATH*)
 - [Git per Windows](https://git-scm.com/download/win)
-- Circa **25 GB liberi** su disco
+- Spazio libero su disco: **15 GB** per l'installazione minima, **30 GB** per quella completa
 
 ---
 
@@ -41,13 +41,24 @@ Apri PowerShell nella cartella `image-studio` ed esegui, in quest'ordine:
 # 1. Motore e ambiente Python (circa 10 minuti)
 powershell -ExecutionPolicy Bypass -File .\install\1-installa.ps1
 
-# 2. Modelli (circa 17 GB — vai a prendere un caffè)
+# 2. Modelli (fino a 24 GB — vai a prendere un caffè)
 powershell -ExecutionPolicy Bypass -File .\install\2-scarica-modelli.ps1
 ```
 
-Se hai poco spazio o poca pazienza, `-RequiredOnly` scarica solo l'indispensabile
-(circa 10 GB). Se un download si interrompe, rilancia lo stesso comando: riprende
-da dove era rimasto.
+Se un download si interrompe, rilancia lo stesso comando: riprende da dove era
+rimasto.
+
+### Quanto scaricare
+
+| Livello | Comando | Peso |
+|---|---|---|
+| Minimo, tutto funziona | `.\install\2-scarica-modelli.ps1 -RequiredOnly` | 10 GB |
+| Consigliato, aggiunge il fotorealismo | il comando sopra, poi `.\install\2-scarica-modelli.ps1 -Only juggernaut-xl` | 17 GB |
+| Tutto, con un secondo checkpoint fotorealistico | `.\install\2-scarica-modelli.ps1` | 24 GB |
+
+Il livello minimo usa SDXL base: funziona, ma sugli interni resa meno convincente.
+Il checkpoint fotorealistico è ciò che alza davvero la qualità degli annunci, e
+puoi aggiungerlo in qualsiasi momento senza rifare nulla.
 
 Per installare ComfyUI altrove:
 `.\install\1-installa.ps1 -ComfyPath D:\AI\ComfyUI`

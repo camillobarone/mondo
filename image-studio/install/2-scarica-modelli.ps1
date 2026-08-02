@@ -8,7 +8,7 @@
     serve solo a trovare l'ambiente giusto e a passargli i parametri.
 
 .PARAMETER RequiredOnly
-    Scarica solo l'indispensabile (circa 10 GB invece di 17).
+    Scarica solo l'indispensabile: circa 10 GB invece di 24.
 
 .PARAMETER Only
     Scarica solo i modelli indicati, per id (vedi install\models.json).
