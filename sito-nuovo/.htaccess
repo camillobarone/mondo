@@ -1,0 +1,21 @@
+# Serve SOLO se hai caricato l'intero progetto dentro public_html senza poter
+# spostare il document root. Blocca il codice e inoltra le richieste a public/.
+#
+# Se invece hai puntato il document root del dominio alla cartella public/,
+# questo file non viene nemmeno letto: fa fede public/.htaccess.
+
+# Il file con le credenziali del database non deve uscire dal server.
+<Files "config.php">
+  Require all denied
+</Files>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Codice, template, database e script: mai serviti direttamente.
+  RewriteRule ^(app|views|db|bin|docs)/ - [F,L]
+
+  # Tutto il resto entra da public/.
+  RewriteCond %{REQUEST_URI} !^/public/
+  RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

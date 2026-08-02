@@ -1,0 +1,11 @@
+# Credenziali del database: generato da install.php, mai in repository.
+/config.php
+
+# Database SQLite della prova in locale.
+/db/*.sqlite
+/db/*.sqlite-shm
+/db/*.sqlite-wal
+
+# Foto caricate dal gestionale.
+/public/uploads/*
+!/public/uploads/.gitkeep
