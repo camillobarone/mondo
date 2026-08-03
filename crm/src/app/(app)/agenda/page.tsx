@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { all } from "@/lib/db";
-import { agenda, activeUserOptions } from "@/lib/queries";
-import { dateTime, relative } from "@/lib/format";
+import { agenda, activeUserOptions, upcomingBirthdays } from "@/lib/queries";
+import { dateTime, relative, fullName, shortDate, phoneHref } from "@/lib/format";
 import { PageHeader, Card, EmptyState, Chip } from "@/components/ui";
 import { CompleteButton } from "./complete-button";
 import { ActivityForm } from "./activity-form";
@@ -91,6 +91,9 @@ export default async function AgendaPage({
   const everyone = params.tutti === "1";
 
   const { overdue, today, upcoming, done } = agenda(everyone ? null : user.id);
+  // Gli auguri sono la telefonata che costa meno e vale di piu': se non
+  // compaiono da soli il giorno giusto, non li fa nessuno.
+  const compleanni = upcomingBirthdays(7);
   const users = activeUserOptions();
 
   const clients = all<{ id: number; name: string }>(
@@ -131,6 +134,62 @@ export default async function AgendaPage({
       </Card>
 
       <div className="space-y-5">
+        {compleanni.length > 0 ? (
+          <Card title={`Compleanni (${compleanni.length})`} bodyClassName="">
+            <ul className="divide-y divide-slate-100">
+              {compleanni.map((cliente) => {
+                const cellulare = phoneHref(cliente.mobile ?? cliente.phone);
+                return (
+                  <li
+                    key={cliente.id}
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Chip tone={cliente.birthdayIn === 0 ? "brand" : "amber"}>
+                          {cliente.birthdayIn === 0
+                            ? "oggi"
+                            : cliente.birthdayIn === 1
+                              ? "domani"
+                              : `fra ${cliente.birthdayIn} giorni`}
+                        </Chip>
+                        <Link
+                          href={`/clienti/${cliente.id}`}
+                          className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                        >
+                          {fullName(cliente)}
+                        </Link>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {shortDate(cliente.birth_date)}
+                        {cliente.age > 0 ? ` · compie ${cliente.age} anni` : ""}
+                      </p>
+                    </div>
+
+                    {cellulare ? (
+                      <div className="flex gap-2">
+                        <a href={`tel:${cellulare}`} className="btn-secondary px-2.5 py-1 text-xs">
+                          Chiama
+                        </a>
+                        <a
+                          href={`https://wa.me/${cellulare.replace(/^\+/, "")}?text=${encodeURIComponent(
+                            `Tanti auguri ${cliente.first_name || ""}!`.trim(),
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-secondary px-2.5 py-1 text-xs"
+                        >
+                          Auguri su WhatsApp
+                        </a>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        ) : null}
+
         {overdue.length > 0 ? (
           <Section title="In ritardo" items={overdue} tone="red" emptyText="" />
         ) : null}

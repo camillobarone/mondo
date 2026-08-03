@@ -565,6 +565,143 @@ export function agenda(userId: number | null) {
   };
 }
 
+/* ============================================================= venditori */
+
+export type SellerRow = Client & {
+  properties: Property[];
+  /** Giorni al prossimo compleanno: 0 = oggi. null se la data non c'e'. */
+  birthdayIn: number | null;
+};
+
+/**
+ * I proprietari: chi ha il ruolo di venditore o locatore, piu' chiunque
+ * risulti intestatario di un immobile in portafoglio. Il ruolo puo' non
+ * essere stato spuntato — l'immobile collegato dice la stessa cosa e non
+ * dipende da come e' stata compilata la scheda.
+ */
+export function listSellers(filters: { q?: string; page?: string } = {}): {
+  rows: SellerRow[];
+  total: number;
+  page: number;
+  pages: number;
+} {
+  const clauses = [
+    `c.deleted_at IS NULL`,
+    `(
+       (',' || c.roles || ',') LIKE '%,venditore,%'
+       OR (',' || c.roles || ',') LIKE '%,locatore,%'
+       OR EXISTS (SELECT 1 FROM properties p
+                   WHERE p.owner_client_id = c.id AND p.deleted_at IS NULL)
+     )`,
+  ];
+  const params: unknown[] = [];
+
+  const q = filters.q?.trim();
+  if (q) {
+    clauses.push(`(
+      c.first_name LIKE ? OR c.last_name LIKE ? OR c.company LIKE ?
+      OR c.mobile LIKE ? OR c.phone LIKE ? OR c.email LIKE ?
+      OR (c.first_name || ' ' || c.last_name) LIKE ?
+    )`);
+    const like = `%${q}%`;
+    params.push(like, like, like, like, like, like, like);
+  }
+
+  const where = clauses.join(" AND ");
+  const page = Math.max(1, Number(filters.page ?? 1) || 1);
+  const total = count(`SELECT COUNT(*) AS n FROM clients c WHERE ${where}`, params);
+
+  const clients = all<Client>(
+    `SELECT c.* FROM clients c
+      WHERE ${where}
+      ORDER BY c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE
+      LIMIT ? OFFSET ?`,
+    [...params, PAGE_SIZE, (page - 1) * PAGE_SIZE],
+  );
+
+  const ids = clients.map((client) => client.id);
+  const byOwner = new Map<number, Property[]>();
+  if (ids.length) {
+    const segnaposto = ids.map(() => "?").join(",");
+    for (const property of all<Property>(
+      `SELECT * FROM properties
+        WHERE deleted_at IS NULL AND owner_client_id IN (${segnaposto})
+        ORDER BY status, updated_at DESC`,
+      ids,
+    )) {
+      const elenco = byOwner.get(property.owner_client_id!) ?? [];
+      elenco.push(property);
+      byOwner.set(property.owner_client_id!, elenco);
+    }
+  }
+
+  return {
+    rows: clients.map((client) => ({
+      ...client,
+      properties: byOwner.get(client.id) ?? [],
+      birthdayIn: giorniAlCompleanno(client.birth_date),
+    })),
+    total,
+    page,
+    pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+  };
+}
+
+/* =========================================================== compleanni */
+
+/**
+ * Quanti giorni mancano al compleanno. Il 29 febbraio negli anni non
+ * bisestili viene trattato come 1 marzo: meglio gli auguri con un giorno di
+ * scarto che nessun augurio per tre anni su quattro.
+ */
+export function giorniAlCompleanno(birthDate: string | null): number | null {
+  if (!birthDate) return null;
+  const nascita = new Date(birthDate);
+  if (Number.isNaN(nascita.getTime())) return null;
+
+  const oggi = new Date();
+  oggi.setHours(0, 0, 0, 0);
+
+  const mese = nascita.getMonth();
+  const giorno = nascita.getDate();
+  let prossimo = new Date(oggi.getFullYear(), mese, giorno);
+  if (prossimo.getMonth() !== mese) prossimo = new Date(oggi.getFullYear(), mese + 1, 1);
+  if (prossimo < oggi) {
+    prossimo = new Date(oggi.getFullYear() + 1, mese, giorno);
+    if (prossimo.getMonth() !== mese) prossimo = new Date(oggi.getFullYear() + 1, mese + 1, 1);
+  }
+
+  return Math.round((prossimo.getTime() - oggi.getTime()) / 86400000);
+}
+
+export type BirthdayRow = Client & { birthdayIn: number; age: number };
+
+/**
+ * Compleanni dei prossimi giorni. Il confronto si fa su mese e giorno, non
+ * sulla data intera: l'anno di nascita non c'entra.
+ */
+export function upcomingBirthdays(days = 7): BirthdayRow[] {
+  const rows = all<Client>(
+    `SELECT * FROM clients
+      WHERE deleted_at IS NULL
+        AND birth_date IS NOT NULL AND birth_date != ''
+        AND status != 'non_interessato'`,
+  );
+
+  return rows
+    .map((client) => {
+      const mancano = giorniAlCompleanno(client.birth_date);
+      const nascita = client.birth_date ? new Date(client.birth_date) : null;
+      const anni =
+        nascita && !Number.isNaN(nascita.getTime())
+          ? new Date().getFullYear() - nascita.getFullYear() + (mancano === 0 ? 0 : 1)
+          : 0;
+      return { ...client, birthdayIn: mancano ?? 9999, age: anni };
+    })
+    .filter((client) => client.birthdayIn <= days)
+    .sort((a, b) => a.birthdayIn - b.birthdayIn || a.last_name.localeCompare(b.last_name, "it"));
+}
+
 /* ============================================================== proposte */
 
 export type OfferRow = Offer & {

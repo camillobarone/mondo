@@ -16,8 +16,9 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | **Clienti** | Anagrafica completa, tipo di cliente (venditore, acquirente, locatore…), provenienza del contatto, etichette, storico di ogni telefonata ed email |
 | **Richieste** | Cosa cerca ogni acquirente: zona, budget, metratura, requisiti irrinunciabili |
 | **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback e **foto** |
+| **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
-| **Agenda** | Cose da fare, appuntamenti, promemoria per i clienti trascurati e gli incarichi in scadenza |
+| **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
 | **Report** | Da dove arrivano i clienti che comprano davvero, tempi medi di vendita, rendimento per collaboratore |
 | **Adempimenti** | Consenso privacy con data, dati per l'adeguata verifica antiriciclaggio, registro di chi ha fatto cosa |
@@ -168,6 +169,27 @@ Provato con un archivio delle dimensioni reali dell'agenzia — 3.000 clienti,
 
 L'intero archivio occupa **2,2 MB**: sta su una chiavetta USB migliaia di volte.
 C'è ampio margine — il programma reggerebbe dieci volte tanto senza affanno.
+
+## Venditori e compleanni
+
+**Venditori** è l'altra faccia dei clienti: non chi cerca, ma chi ti ha affidato
+qualcosa da vendere. Ogni scheda mostra i recapiti e sotto l'elenco degli
+immobili di quel proprietario, con prezzo e stato.
+
+Ci finisce chi ha il ruolo *venditore* o *locatore*, **più chiunque risulti
+intestatario di un immobile in portafoglio** anche senza avere il ruolo
+spuntato: l'immobile collegato dice la stessa cosa, e non dipende da come è
+stata compilata la scheda.
+
+**I compleanni** compaiono in **Agenda**, in cima, da una settimana prima. Per
+ognuno c'è il pulsante per chiamare e quello per mandare gli auguri su WhatsApp
+**con il messaggio già scritto**. Basta compilare la data di nascita nella
+scheda cliente.
+
+È la telefonata che costa meno di tutte e vale più di molte altre. Se non
+compare da sola il giorno giusto, però, non la fa nessuno.
+
+---
 
 ## Perché un cliente non compare negli incroci
 

@@ -9,6 +9,7 @@ import {
   offersOfClient,
   activeUserOptions,
   knownZones,
+  giorniAlCompleanno,
 } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
 import { deleteClient } from "@/lib/actions";
@@ -76,6 +77,7 @@ export default async function ClientPage({
     (role) => role === "acquirente" || role === "conduttore",
   );
   const missingRequirement = buyer && requirements.every((r) => r.status !== "aperta");
+  const alCompleanno = giorniAlCompleanno(client.birth_date);
 
   return (
     <>
@@ -89,6 +91,15 @@ export default async function ClientPage({
                 {role}
               </Chip>
             ))}
+            {alCompleanno !== null && alCompleanno <= 7 ? (
+              <Chip tone={alCompleanno === 0 ? "brand" : "amber"}>
+                {alCompleanno === 0
+                  ? "compie gli anni oggi"
+                  : alCompleanno === 1
+                    ? "compleanno domani"
+                    : `compleanno fra ${alCompleanno} giorni`}
+              </Chip>
+            ) : null}
             {fromCsv(client.tags).map((tag) => (
               <Chip key={tag} tone="violet">
                 {tag}

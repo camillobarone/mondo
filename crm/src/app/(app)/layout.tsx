@@ -18,6 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/", label: "Cruscotto" },
     { href: "/agenda", label: "Agenda", badge: todo || undefined },
     { href: "/clienti", label: "Clienti" },
+    { href: "/venditori", label: "Venditori" },
     { href: "/immobili", label: "Immobili" },
     { href: "/richieste", label: "Richieste" },
     { href: "/incroci", label: "Incroci" },
