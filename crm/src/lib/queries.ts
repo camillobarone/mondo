@@ -203,6 +203,8 @@ export interface PropertyFilters {
   agent?: string;
   priceMin?: string;
   priceMax?: string;
+  /** Solo quelli senza proprietario collegato. */
+  noOwner?: string;
   page?: string;
 }
 
@@ -248,6 +250,9 @@ function propertyWhere(filters: PropertyFilters): { sql: string; params: unknown
   if (filters.agent) {
     clauses.push("p.agent_id = ?");
     params.push(Number(filters.agent));
+  }
+  if (filters.noOwner === "1") {
+    clauses.push("p.owner_client_id IS NULL");
   }
   if (filters.priceMin) {
     clauses.push("p.price >= ?");
@@ -645,6 +650,39 @@ export function listSellers(filters: { q?: string; page?: string } = {}): {
     page,
     pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
   };
+}
+
+/** Immobili ancora senza proprietario collegato: il buco da riempire. */
+export function propertiesWithoutOwner(limit = 500): Property[] {
+  return all<Property>(
+    `SELECT * FROM properties
+      WHERE deleted_at IS NULL AND owner_client_id IS NULL
+      ORDER BY status, title COLLATE NOCASE
+      LIMIT ?`,
+    [limit],
+  );
+}
+
+export function countPropertiesWithoutOwner(): number {
+  return count(
+    `SELECT COUNT(*) AS n FROM properties WHERE deleted_at IS NULL AND owner_client_id IS NULL`,
+  );
+}
+
+/**
+ * Clienti da proporre come proprietario. Il cellulare nell'etichetta serve a
+ * distinguere gli omonimi, che in un archivio da mille schede ci sono sempre.
+ */
+export function ownerCandidates(): { value: string; label: string }[] {
+  return all<{ id: number; label: string }>(
+    `SELECT id,
+            TRIM(COALESCE(last_name,'') || ' ' || COALESCE(first_name,'')) ||
+            CASE WHEN company IS NOT NULL AND company != '' THEN ' (' || company || ')' ELSE '' END ||
+            CASE WHEN mobile IS NOT NULL AND mobile != '' THEN ' — ' || mobile ELSE '' END AS label
+       FROM clients
+      WHERE deleted_at IS NULL
+      ORDER BY last_name COLLATE NOCASE, first_name COLLATE NOCASE`,
+  ).map((row) => ({ value: String(row.id), label: row.label || `Cliente #${row.id}` }));
 }
 
 /* =========================================================== compleanni */

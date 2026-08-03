@@ -181,6 +181,19 @@ intestatario di un immobile in portafoglio** anche senza avere il ruolo
 spuntato: l'immobile collegato dice la stessa cosa, e non dipende da come è
 stata compilata la scheda.
 
+**Il collegamento fra venditore e immobile si fa da entrambe le parti**, perché
+è lo stesso legame e lo si cerca da dove ci si trova in quel momento:
+
+- dalla **scheda dell'immobile**, quando manca il proprietario compare un
+  riquadro per sceglierlo fra i clienti in archivio;
+- dalla **scheda del cliente**, in fondo agli immobili di proprietà, si sceglie
+  fra quelli ancora senza intestatario — così non si porta via per sbaglio
+  l'immobile di qualcun altro.
+
+Non è obbligatorio: un venditore che ha già venduto tutto resta in elenco senza
+immobili collegati. Ma un immobile senza proprietario sì che è un problema, e
+l'elenco immobili lo segnala in cima con il collegamento per vedere quali sono.
+
 **I compleanni** compaiono in **Agenda**, in cima, da una settimana prima. Per
 ognuno c'è il pulsante per chiamare e quello per mandare gli auguri su WhatsApp
 **con il messaggio già scritto**. Basta compilare la data di nascita nella

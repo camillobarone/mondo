@@ -5,10 +5,11 @@ import {
   activeUserOptions,
   distinctCities,
   coverPhotos,
+  countPropertiesWithoutOwner,
   type PropertyFilters,
 } from "@/lib/queries";
 import { euro, shortDate, relative } from "@/lib/format";
-import { PageHeader, Card, EmptyState, StatusChip, Pagination, Chip } from "@/components/ui";
+import { PageHeader, Card, EmptyState, StatusChip, Pagination, Chip, Banner } from "@/components/ui";
 import { PROPERTY_KINDS, PROPERTY_STATUSES, ZONES } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export default async function PropertiesPage({
   const users = activeUserOptions();
   const cities = distinctCities();
   const copertine = coverPhotos(rows.map((property) => property.id));
+  const senzaProprietario = countPropertiesWithoutOwner();
 
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, value]) => Boolean(value)) as [string, string][],
@@ -49,6 +51,22 @@ export default async function PropertiesPage({
           </>
         }
       />
+
+      {senzaProprietario > 0 && filters.noOwner !== "1" ? (
+        <div className="mb-4">
+          <Banner tone="amber">
+            {senzaProprietario}{" "}
+            {senzaProprietario === 1
+              ? "immobile non è collegato a una scheda venditore"
+              : "immobili non sono collegati a una scheda venditore"}
+            : senza quel collegamento non sai chi chiamare per una trattativa.{" "}
+            <Link href="/immobili?noOwner=1" className="font-medium underline">
+              Vedili
+            </Link>
+            .
+          </Banner>
+        </div>
+      ) : null}
 
       <Card className="mb-5">
         <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">

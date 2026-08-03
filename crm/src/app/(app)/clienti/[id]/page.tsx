@@ -10,9 +10,10 @@ import {
   activeUserOptions,
   knownZones,
   giorniAlCompleanno,
+  propertiesWithoutOwner,
 } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
-import { deleteClient } from "@/lib/actions";
+import { deleteClient, linkOwner } from "@/lib/actions";
 import {
   euro,
   budgetRange,
@@ -34,7 +35,7 @@ import {
   EmptyState,
   Banner,
 } from "@/components/ui";
-import { ConfirmButton } from "@/components/client";
+import { ConfirmButton, SubmitButton } from "@/components/client";
 import { ActivityForm } from "../../agenda/activity-form";
 import { RequirementForm } from "../../richieste/requirement-form";
 import { CompleteButton } from "../../agenda/complete-button";
@@ -78,6 +79,9 @@ export default async function ClientPage({
   );
   const missingRequirement = buyer && requirements.every((r) => r.status !== "aperta");
   const alCompleanno = giorniAlCompleanno(client.birth_date);
+  // Immobili ancora senza intestatario: sono gli unici che ha senso proporre
+  // qui, cosi' non si porta via per sbaglio l'immobile di un altro.
+  const daCollegare = propertiesWithoutOwner();
 
   return (
     <>
@@ -376,8 +380,8 @@ export default async function ClientPage({
           </Card>
 
           {/* ------------------------------------------------ immobili e proposte */}
-          {properties.length > 0 ? (
-            <Card title={`Immobili di proprietà (${properties.length})`} bodyClassName="">
+          <Card title={`Immobili di proprietà (${properties.length})`} bodyClassName="">
+            {properties.length > 0 ? (
               <ul className="divide-y divide-slate-100">
                 {properties.map((property) => (
                   <li key={property.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
@@ -395,12 +399,49 @@ export default async function ClientPage({
                           : ""}
                       </p>
                     </div>
-                    <StatusChip value={property.status} kind="property" />
+                    <span className="flex items-center gap-2">
+                      <StatusChip value={property.status} kind="property" />
+                      <form action={linkOwner}>
+                        <input type="hidden" name="property_id" value={property.id} />
+                        <input type="hidden" name="client_id" value="" />
+                        <button type="submit" className="text-xs text-slate-400 hover:text-red-600">
+                          scollega
+                        </button>
+                      </form>
+                    </span>
                   </li>
                 ))}
               </ul>
-            </Card>
-          ) : null}
+            ) : (
+              <p className="px-4 py-3 text-sm text-slate-500">
+                Nessun immobile collegato. Se ne ha venduti in passato è normale.
+              </p>
+            )}
+
+            {daCollegare.length > 0 ? (
+              <form
+                action={linkOwner}
+                className="flex flex-wrap items-end gap-3 border-t border-slate-100 p-4"
+              >
+                <input type="hidden" name="client_id" value={client.id} />
+                <div className="min-w-0 flex-1">
+                  <label className="field-label" htmlFor="property_id">
+                    Collega un immobile
+                  </label>
+                  <select id="property_id" name="property_id" required className="field">
+                    <option value="">Scegli fra quelli senza proprietario…</option>
+                    {daCollegare.map((property) => (
+                      <option key={property.id} value={property.id}>
+                        {property.ref ? `${property.ref} · ` : ""}
+                        {property.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <SubmitButton>Collega</SubmitButton>
+              </form>
+            ) : null}
+          </Card>
 
           {offers.length > 0 ? (
             <Card title={`Proposte fatte (${offers.length})`} bodyClassName="">

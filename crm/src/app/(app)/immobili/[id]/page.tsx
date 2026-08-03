@@ -11,7 +11,10 @@ import {
   activeUserOptions,
 } from "@/lib/queries";
 import { matchesForProperty, countMatchesForProperty, nearMissesForProperty } from "@/lib/matching";
-import { photosOfProperty } from "@/lib/queries";
+import { photosOfProperty, ownerCandidates } from "@/lib/queries";
+import { linkOwner } from "@/lib/actions";
+import { SelectField } from "@/components/ui";
+import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
 import { deleteProperty } from "@/lib/actions";
 import { euro, shortDate, dateTime, relative, label } from "@/lib/format";
@@ -44,6 +47,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const matchCount = countMatchesForProperty(property);
   const missed = nearMissesForProperty(property);
   const photos = photosOfProperty(property.id);
+  const proprietari = property.owner_client_id ? [] : ownerCandidates();
   const offers = offersOfProperty(propertyId);
   const activities = activitiesOfProperty(propertyId);
   const prices = priceHistory(propertyId);
@@ -134,16 +138,48 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             </dl>
           </Card>
 
+          {!property.owner_client_id ? (
+            <Card title="Collega il proprietario">
+              <form action={linkOwner} className="space-y-3">
+                <input type="hidden" name="property_id" value={property.id} />
+                <SelectField
+                  label="Chi è il proprietario"
+                  name="client_id"
+                  options={proprietari}
+                  placeholder="Scegli dall'archivio clienti…"
+                  hint="Scrivi le prime lettere del cognome per trovarlo in fretta."
+                />
+                <SubmitButton>Collega</SubmitButton>
+              </form>
+              <p className="mt-2 text-xs text-slate-400">
+                Se non è ancora in archivio,{" "}
+                <Link href="/clienti/nuovo" className="text-brand-700 hover:underline">
+                  creagli prima la scheda
+                </Link>
+                .
+              </p>
+            </Card>
+          ) : null}
+
           <Card title="Incarico">
             <dl>
               <DataRow label="Proprietario">
                 {property.owner_client_id ? (
-                  <Link
-                    href={`/clienti/${property.owner_client_id}`}
-                    className="text-brand-700 hover:underline"
-                  >
-                    {property.owner_name}
-                  </Link>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/clienti/${property.owner_client_id}`}
+                      className="text-brand-700 hover:underline"
+                    >
+                      {property.owner_name}
+                    </Link>
+                    <form action={linkOwner}>
+                      <input type="hidden" name="property_id" value={property.id} />
+                      <input type="hidden" name="client_id" value="" />
+                      <button type="submit" className="text-xs text-slate-400 hover:text-red-600">
+                        scollega
+                      </button>
+                    </form>
+                  </span>
                 ) : (
                   <span className="text-amber-700">non collegato a una scheda</span>
                 )}

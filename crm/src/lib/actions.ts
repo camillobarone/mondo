@@ -295,6 +295,37 @@ export async function saveProperty(form: FormData) {
   redirect(`/immobili/${newId}`);
 }
 
+/* --------------------------------------------------- proprietario <-> immobile */
+
+/**
+ * Collega un immobile alla scheda del suo proprietario, o scollega.
+ * Si puo' fare da entrambe le parti: dalla scheda dell'immobile e da quella
+ * del venditore. E' lo stesso legame, e chi lo cerca lo cerca da dove si
+ * trova in quel momento.
+ */
+export async function linkOwner(form: FormData) {
+  const user = await requireUser();
+  const propertyId = Number(form.get("property_id"));
+  const clientId = Number(form.get("client_id")) || null;
+  if (!propertyId) return;
+
+  run(`UPDATE properties SET owner_client_id = ?, updated_at = datetime('now') WHERE id = ?`, [
+    clientId, propertyId,
+  ]);
+  audit(
+    user.id,
+    "modifica",
+    "immobile",
+    propertyId,
+    clientId ? `proprietario collegato (cliente ${clientId})` : "proprietario scollegato",
+  );
+
+  revalidatePath(`/immobili/${propertyId}`);
+  revalidatePath("/immobili");
+  revalidatePath("/venditori");
+  if (clientId) revalidatePath(`/clienti/${clientId}`);
+}
+
 /* ------------------------------------------------------------------ foto */
 
 export interface PhotoResult {
