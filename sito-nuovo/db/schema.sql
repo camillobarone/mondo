@@ -25,6 +25,9 @@ CREATE TABLE users (
 CREATE TABLE properties (
   id {PK},
   ref VARCHAR(30) NOT NULL UNIQUE,
+  -- ID del post WordPress di provenienza. Serve all'importatore per
+  -- riconoscere un immobile già importato e aggiornarlo invece di duplicarlo.
+  wp_id INTEGER NULL,
   title VARCHAR(191) NOT NULL,
   slug VARCHAR(191) NOT NULL UNIQUE,
   status VARCHAR(20) NOT NULL DEFAULT 'draft',
@@ -82,6 +85,7 @@ CREATE TABLE properties (
   updated_at DATETIME NULL
 ){SUFFIX};
 
+CREATE INDEX idx_properties_wpid ON properties (wp_id);
 CREATE INDEX idx_properties_status ON properties (status);
 CREATE INDEX idx_properties_stage ON properties (deal_stage);
 CREATE INDEX idx_properties_city ON properties (city);
@@ -147,6 +151,7 @@ CREATE INDEX idx_valuations_when ON valuations (created_at);
 CREATE TABLE property_images (
   id {PK},
   property_id INTEGER NOT NULL,
+  wp_id INTEGER NULL,
   path VARCHAR(255) NOT NULL,
   thumb VARCHAR(255) NOT NULL DEFAULT '',
   alt VARCHAR(191) NOT NULL DEFAULT '',

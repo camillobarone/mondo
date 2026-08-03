@@ -74,7 +74,7 @@ final class Vocab
     public const FEATURES = [
         'Giardino', 'Terrazzo', 'Balcone', 'Posto auto', 'Box auto', 'Piscina',
         'Aria condizionata', 'Ascensore', 'Cantina', 'Mansarda', 'Taverna',
-        'Arredato', 'Vista mare', 'Impianto fotovoltaico', 'Camino',
+        'Arredato', 'Vista mare', 'Impianto fotovoltaico', 'Camino', 'Allarme',
     ];
 
     /** Stati del lead nel funnel commerciale. */

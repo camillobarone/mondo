@@ -36,17 +36,41 @@ final class Uploader
             throw new RuntimeException('File troppo grande: massimo 12 MB.');
         }
 
+        return self::process($file['tmp_name'], $file['name'], $subdir);
+    }
+
+    /**
+     * Stessa lavorazione, ma su un file già presente su disco: la usa
+     * l'importatore da WordPress, che le foto se le trova in wp-content.
+     *
+     * @return array{path:string,thumb:string,width:int,height:int}
+     */
+    public static function fromFile(string $path, string $originalName = '', string $subdir = 'immobili'): array
+    {
+        if (!is_file($path)) {
+            throw new RuntimeException("File non trovato: {$path}");
+        }
+        if (filesize($path) > self::MAX_BYTES) {
+            throw new RuntimeException('File troppo grande: massimo 12 MB.');
+        }
+
+        return self::process($path, $originalName !== '' ? $originalName : basename($path), $subdir);
+    }
+
+    /** @return array{path:string,thumb:string,width:int,height:int} */
+    private static function process(string $sourcePath, string $originalName, string $subdir): array
+    {
         // Il tipo si determina dal contenuto, mai dall'estensione dichiarata.
-        $info = @getimagesize($file['tmp_name']);
+        $info = @getimagesize($sourcePath);
         if ($info === false || !isset(self::ALLOWED[$info[2]])) {
             throw new RuntimeException('Formato non supportato. Usa JPG, PNG o WebP.');
         }
 
         [$width, $height, $imageType] = $info;
         $source = match ($imageType) {
-            IMAGETYPE_JPEG => @imagecreatefromjpeg($file['tmp_name']),
-            IMAGETYPE_PNG => @imagecreatefrompng($file['tmp_name']),
-            IMAGETYPE_WEBP => @imagecreatefromwebp($file['tmp_name']),
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($sourcePath),
+            IMAGETYPE_PNG => @imagecreatefrompng($sourcePath),
+            IMAGETYPE_WEBP => @imagecreatefromwebp($sourcePath),
             default => false,
         };
         if ($source === false) {
@@ -58,7 +82,7 @@ final class Uploader
             throw new RuntimeException("Impossibile creare la cartella {$dir}.");
         }
 
-        $stem = slugify(pathinfo($file['name'], PATHINFO_FILENAME)) ?: 'foto';
+        $stem = slugify(pathinfo($originalName, PATHINFO_FILENAME)) ?: 'foto';
         $name = $stem . '-' . bin2hex(random_bytes(4));
 
         $full = self::resize($source, $width, $height, self::MAX_WIDTH);

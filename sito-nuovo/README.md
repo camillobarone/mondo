@@ -25,6 +25,8 @@ Usa SQLite, non serve installare un database. In produzione si usa MySQL:
 è lo stesso codice, cambia solo una riga in `config.php`.
 
 Per metterlo online: **[docs/INSTALL-SITEGROUND.md](docs/INSTALL-SITEGROUND.md)**.
+Per portarci dentro gli immobili che stanno su WordPress:
+**[docs/IMPORT-DA-WORDPRESS.md](docs/IMPORT-DA-WORDPRESS.md)**.
 
 ⚠️ Prima di puntarci il dominio vero, leggi
 **[docs/MIGRAZIONE-SEO.md](docs/MIGRAZIONE-SEO.md)**: il sito attuale vale un
@@ -80,6 +82,9 @@ fa senza mappa dei redirect.
 - **Agenda** — appuntamenti legati a immobile, cliente e agente
 - **Articoli e pagine** — con risposta diretta, autore, campi SEO
 - **Reindirizzamenti 301** — con import in blocco, per la migrazione
+- **Importazione da WordPress** — legge gli immobili dal database del sito
+  attuale, foto comprese, conservando gli slug. Rilanciabile: aggiorna invece
+  di duplicare. Vedi `docs/IMPORT-DA-WORDPRESS.md`
 - **Utenti** — ruoli amministratore e agente
 - **Impostazioni** — nome, indirizzo, logo, email di destinazione
 
@@ -142,7 +147,7 @@ sito-nuovo/
 ├── views/             template PHP puri: layout/, site/, admin/
 ├── public/            document root — index.php, install.php, assets, uploads
 ├── db/                schema.sql (dialetto neutro), migrations/, seed.php
-├── bin/               installazione locale e aggiornamento del database
+├── bin/               installazione locale, aggiornamento DB, import da WP
 └── docs/              installazione su SiteGround, migrazione SEO
 ```
 
@@ -175,15 +180,15 @@ Non è un elenco di scuse: è quello che va deciso prima di considerarlo finito.
 
 - **Mappa e canonical degli immobili sono manuali** — latitudine e longitudine
   si inseriscono a mano nella scheda; non c'è geocoding automatico.
-- **Nessun import automatico da WordPress.** I 34 immobili pubblicati e le 15
-  bozze vanno reinseriti, oppure serve uno script di importazione dedicato:
-  è un lavoro fattibile ma non è in questa consegna.
 - **Nessun export verso i portali** (Immobiliare.it, Idealista). Oggi passa da
   WordPress; va verificato come il portale riceve i feed prima di rifarlo.
 - **Editor testuale semplice**, senza formattazione ricca. I testi vengono
   stampati con escape e `nl2br`: sicuro, ma senza grassetti e liste.
-- **Nessun import CSV** dell'anagrafica esistente: i clienti si inseriscono
-  a mano o serve uno script dedicato.
+- **Nessun import CSV** dell'anagrafica clienti: gli immobili si importano da
+  WordPress, i clienti no — in WordPress non ci sono.
+- **La mappatura dei campi WP-Residence non è verificata sul database vero**:
+  il connettore del sito era irraggiungibile. Per questo l'importatore ha un
+  comando `--campi` che stampa i nomi reali prima di importare.
 - **Report ridotti all'osso**: provenienza dei contatti, rogiti e provvigioni
   dell'anno, tempo medio fino al rogito. Niente grafici.
 - **Nessun virtual tour**, nessun calcolatore imposte, nessun tool OMI: tre
