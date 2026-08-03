@@ -59,14 +59,9 @@ class ComfyClient:
         invece di lasciare che ComfyUI restituisca un errore di validazione opaco.
         """
         try:
-            info = self.object_info()[node]["input"]
-            for section in ("required", "optional"):
-                spec = info.get(section, {}).get(field)
-                if spec and isinstance(spec[0], list):
-                    return list(spec[0])
-        except (requests.RequestException, KeyError, IndexError, TypeError):
-            pass
-        return []
+            return combo_options(self.object_info()[node]["input"], field)
+        except (requests.RequestException, KeyError, TypeError):
+            return []
 
     # ----------------------------------------------------------------- upload
 
@@ -146,6 +141,32 @@ class ComfyClient:
         with open(destination, "wb") as handle:
             handle.write(response.content)
         return destination
+
+
+def combo_options(node_input: dict[str, Any], field: str) -> list[str]:
+    """Estrae le scelte di un input a tendina da /object_info.
+
+    ComfyUI descrive lo stesso input in due forme, a seconda di come il nodo e'
+    dichiarato, e vanno gestite entrambe:
+
+      legacy    "ckpt_name":  (["a.safetensors", "b.safetensors"], {...})
+      schema V3 "model_name": ("COMBO", {"options": ["a.pth"], ...})
+
+    Leggere solo la prima faceva risultare vuoti i nodi in schema V3 — fra cui
+    UpscaleModelLoader — e il comando upscale rifiutava di partire sostenendo
+    che mancasse un modello in realta' installato.
+    """
+    for section in ("required", "optional"):
+        spec = node_input.get(section, {}).get(field)
+        if not spec:
+            continue
+        if isinstance(spec[0], list):
+            return [str(option) for option in spec[0]]
+        if len(spec) > 1 and isinstance(spec[1], dict):
+            options = spec[1].get("options")
+            if isinstance(options, list):
+                return [str(option) for option in options]
+    return []
 
 
 def _collect_images(outputs: dict[str, Any]) -> list[GeneratedImage]:
