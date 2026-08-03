@@ -6,9 +6,18 @@ REM       nativa di PyTorch e' l'implementazione corretta e piu' veloce.
 REM   --reserve-vram 0.6 : lascia mezzo giga alla grafica di Windows, che sulla
 REM       stessa scheda continua a disegnare il desktop. Senza questo margine si
 REM       vedono crash per esaurimento VRAM proprio a fine generazione.
+REM   --fp32-vae : lo stadio che converte il risultato in pixel visibili, su Arc,
+REM       in precisione ridotta produce valori non numerici e l'immagine esce
+REM       tutta nera. Osservato su B580 con torch 2.13+xpu: la generazione
+REM       completa i suoi passi senza errori e solo alla conversione finale
+REM       compare "invalid value encountered in cast". In precisione piena il
+REM       problema sparisce; costa circa 2 secondi a immagine e 170 MB di VRAM,
+REM       un prezzo trascurabile per un'immagine che si vede.
 REM
 REM Se ti capitano errori di memoria passando da un tipo di modello a un altro
 REM nella stessa sessione, aggiungi --disable-smart-memory alla riga sotto.
+REM Se anche con --fp32-vae uscissero immagini nere, sostituiscilo con
+REM --cpu-vae: sposta quello stadio sul processore, piu' lento ma infallibile.
 
 setlocal
 cd /d "%~dp0"
@@ -38,6 +47,6 @@ echo.
 REM ComfyUI ricava i propri percorsi da __file__, ma alcuni componenti danno per
 REM scontata la working directory: ci spostiamo nella sua cartella prima di partire.
 cd /d "%COMFY%"
-"%PYTHON%" main.py --use-pytorch-cross-attention --reserve-vram 0.6 %*
+"%PYTHON%" main.py --use-pytorch-cross-attention --reserve-vram 0.6 --fp32-vae %*
 
 endlocal

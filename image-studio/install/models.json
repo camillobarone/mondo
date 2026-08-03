@@ -53,7 +53,8 @@
       "source": {
         "type": "hf",
         "repo": "madebyollin/sdxl-vae-fp16-fix",
-        "pattern": "(?i)^(sdxl[._]vae|diffusion_pytorch_model)\\.safetensors$"
+        "pattern": "(?i)^(sdxl[._]vae|diffusion_pytorch_model)\\.safetensors$",
+        "rename_to": "sdxl-vae-fp16-fix.safetensors"
       }
     },
     {

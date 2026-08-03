@@ -27,22 +27,32 @@ from .client import ComfyClient, ComfyError, DEFAULT_SERVER
 # A parita' di risultato preferiamo i checkpoint fotorealistici: sono quelli
 # che reggono il confronto su un annuncio immobiliare.
 CHECKPOINT_PREFERENCE = ("juggernaut", "realvis", "epicrealism", "sd_xl_base", "sdxl")
-VAE_PREFERENCE = ("fp16", "sdxl")
+VAE_PREFERENCE = ("fp16-fix", "fp16", "sdxl", "vae")
 CONTROLNET_PREFERENCE = ("union", "canny")
 UPSCALER_PREFERENCE = ("ultrasharp", "realesrgan_x4plus", "esrgan")
+
+# Estensioni dei pesi che ComfyUI sa caricare.
+MODEL_EXTENSIONS = (".safetensors", ".ckpt", ".pt", ".pth", ".sft", ".bin")
 
 MAX_SEED = 2**32 - 1
 
 
 def _pick(options: Sequence[str], preference: Sequence[str]) -> str | None:
-    """Sceglie l'opzione migliore fra quelle installate, in ordine di preferenza."""
+    """Sceglie l'opzione migliore fra quelle installate, in ordine di preferenza.
+
+    Negli elenchi di ComfyUI si trovano anche voci che non sono file: fra i VAE
+    compare `pixel_space`, che e' una modalita' interna. Sceglierla al posto di
+    un VAE vero produrrebbe un errore difficile da ricondurre alla causa, quindi
+    si considerano prima le voci che sono davvero pesi su disco.
+    """
     if not options:
         return None
+    candidates = [o for o in options if o.lower().endswith(MODEL_EXTENSIONS)] or list(options)
     for token in preference:
-        for option in options:
+        for option in candidates:
             if token in option.lower():
                 return option
-    return options[0]
+    return candidates[0]
 
 
 def _resolve_model(

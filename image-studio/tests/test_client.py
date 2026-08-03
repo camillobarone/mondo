@@ -74,3 +74,36 @@ def test_forme_impreviste_non_esplodono():
 def test_valori_non_stringa_diventano_stringhe():
     spec = {"required": {"n": ["COMBO", {"options": [1, 2]}]}}
     assert combo_options(spec, "n") == ["1", "2"]
+
+
+# --------------------------------------------------------- selezione modelli
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+from mondo_image.cli import _pick, VAE_PREFERENCE, CHECKPOINT_PREFERENCE  # noqa: E402
+
+
+def test_scarta_le_voci_che_non_sono_file():
+    """`pixel_space` e' una modalita' interna di ComfyUI, non un VAE su disco."""
+    opzioni = ["pixel_space", "sdxl-vae-fp16-fix.safetensors"]
+    assert _pick(opzioni, VAE_PREFERENCE) == "sdxl-vae-fp16-fix.safetensors"
+    # Anche quando la voce spuria viene prima e nessuna preferenza combacia.
+    assert _pick(["pixel_space", "diffusion_pytorch_model.safetensors"], ()) == \
+        "diffusion_pytorch_model.safetensors"
+
+
+def test_rispetta_l_ordine_di_preferenza():
+    opzioni = ["sd_xl_base_1.0.safetensors", "juggernautXL_v9.safetensors"]
+    assert _pick(opzioni, CHECKPOINT_PREFERENCE) == "juggernautXL_v9.safetensors"
+
+
+def test_ripiega_sul_primo_quando_nessuna_preferenza_combacia():
+    assert _pick(["ignoto.safetensors"], VAE_PREFERENCE) == "ignoto.safetensors"
+
+
+def test_nessuna_opzione():
+    assert _pick([], VAE_PREFERENCE) is None
+
+
+def test_solo_voci_spurie_meglio_di_niente():
+    """Se non c'e' nessun file, restituire comunque qualcosa da mostrare."""
+    assert _pick(["pixel_space"], VAE_PREFERENCE) == "pixel_space"

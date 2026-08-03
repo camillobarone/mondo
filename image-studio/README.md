@@ -168,8 +168,8 @@ risultato a parità di prompt: utile per cambiare una sola cosa alla volta.
 
 | Operazione                    | Tempo indicativo |
 |-------------------------------|------------------|
-| `text` 1024×1024, 28 passi    | 6–9 secondi      |
-| `staging` (con ControlNet)    | 10–15 secondi    |
+| `text` 1024×1024, 28 passi    | 12–14 secondi    |
+| `staging` (con ControlNet)    | 18–25 secondi    |
 | `upscale` 2×                  | 2–4 secondi      |
 | Primo avvio dopo l'accensione | 30–60 secondi (caricamento del modello) |
 
@@ -226,6 +226,13 @@ ComfyUI non è acceso. Apri `avvia-comfyui.bat` e lascialo aperto.
 **L'installer dice che PyTorch non vede la GPU**
 Driver Arc troppo vecchi, nel 90% dei casi. Aggiornali dal sito Intel, riavvia il
 PC, rilancia `1-installa.ps1`.
+
+**L'immagine esce tutta nera**
+Su Arc lo stadio che converte il risultato in pixel, in precisione ridotta,
+produce valori non numerici. `avvia-comfyui.bat` passa già `--fp32-vae` per
+evitarlo. Se dovesse succedere lo stesso, sostituiscilo con `--cpu-vae`: sposta
+quello stadio sul processore, più lento ma infallibile. Il sintomo nel log del
+motore è `invalid value encountered in cast`.
 
 **Errore di memoria (out of memory) a metà generazione**
 Windows usa la stessa scheda per il desktop. Chiudi il browser, oppure aumenta il
