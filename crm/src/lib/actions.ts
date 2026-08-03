@@ -629,7 +629,25 @@ export async function importClients(
     return { imported: 0, skipped: 0, requirements: 0, errors: ["Nessun file selezionato."] };
   }
 
-  const { rows } = parseCsv(decodeText(await file.arrayBuffer()));
+  const bytes = await file.arrayBuffer();
+
+  // Un .xlsx e' un archivio compresso: comincia per "PK". Riconoscerlo qui
+  // evita la schermata piu' frustrante di tutte, quella che non importa
+  // niente e non dice perche'.
+  const firma = new Uint8Array(bytes.slice(0, 2));
+  if (firma[0] === 0x50 && firma[1] === 0x4b) {
+    return {
+      imported: 0,
+      skipped: 0,
+      requirements: 0,
+      errors: [
+        "Questo è un file Excel (.xlsx), non un CSV. Aprilo con Excel e salvalo " +
+          "con File → Salva con nome, scegliendo CSV come tipo di file.",
+      ],
+    };
+  }
+
+  const { rows } = parseCsv(decodeText(bytes));
   if (!rows.length) {
     return { imported: 0, skipped: 0, requirements: 0, errors: ["Il file non contiene righe."] };
   }
@@ -772,9 +790,17 @@ export async function importClients(
   try {
     transaction(rows);
   } catch (error) {
-    result.errors.push(
-      `Importazione interrotta: ${error instanceof Error ? error.message : "errore sconosciuto"}`,
-    );
+    // La transazione e' stata annullata: in archivio non e' entrato niente.
+    // I contatori vanno azzerati, altrimenti la schermata direbbe "1.108
+    // importati" di schede che non esistono.
+    result.imported = 0;
+    result.requirements = 0;
+    result.skipped = 0;
+    result.errors = [
+      `Importazione annullata, nessun cliente inserito: ${
+        error instanceof Error ? error.message : "errore sconosciuto"
+      }`,
+    ];
   }
 
   audit(
