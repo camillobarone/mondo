@@ -1,0 +1,13 @@
+# Percorso dell'installazione ComfyUI: dipende dalla macchina
+comfy-path.txt
+
+# Immagini generate
+output/
+
+# Temporanei della dashboard e registro del motore
+.lavoro/
+motore.log
+
+__pycache__/
+*.pyc
+.pytest_cache/
