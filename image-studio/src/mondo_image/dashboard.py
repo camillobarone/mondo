@@ -37,7 +37,12 @@ from .cli import (
     _pick,
 )
 
-PORT = 8765
+# Windows riserva interi intervalli di porte a Hyper-V, WSL e servizi di
+# sistema: chi ci finisce sopra riceve un rifiuto (WinError 10013) anche senza
+# che nessun programma le stia usando. Si prova una lista di candidate e, se
+# nessuna e' libera, si lascia scegliere al sistema: tanto il browser lo
+# apriamo noi, l'indirizzo non deve essere memorizzato a mano.
+PORTE = (8765, 8766, 8899, 9765, 7321)
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
@@ -439,6 +444,21 @@ def _esegui(engine: Engine, jobs: Jobs, job_id: str, payload: dict) -> None:
             pass
 
 
+def apri_server(handler, porte=PORTE) -> ThreadingHTTPServer:
+    """Occupa la prima porta utilizzabile, altrimenti una qualsiasi libera.
+
+    Su Windows il rifiuto puo' arrivare anche per una porta che nessuno sta
+    usando, perche' rientra in un intervallo riservato dal sistema: l'unica
+    difesa e' provarne altre.
+    """
+    for porta in porte:
+        try:
+            return ThreadingHTTPServer(("127.0.0.1", porta), handler)
+        except OSError:
+            continue
+    return ThreadingHTTPServer(("127.0.0.1", 0), handler)
+
+
 def main() -> int:
     engine = Engine()
     try:
@@ -449,8 +469,13 @@ def main() -> int:
 
     Handler.engine = engine
     Handler.jobs = Jobs()
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    indirizzo = f"http://127.0.0.1:{PORT}"
+    try:
+        server = apri_server(Handler)
+    except OSError as exc:
+        print(f"\nErrore: nessuna porta disponibile ({exc})\n", file=sys.stderr)
+        engine.stop()
+        return 1
+    indirizzo = f"http://127.0.0.1:{server.server_port}"
 
     print(f"\nDashboard pronta su {indirizzo}")
     print("Chiudi questa finestra per spegnere tutto.\n")

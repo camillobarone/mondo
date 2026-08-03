@@ -250,6 +250,12 @@ evitarlo. Se dovesse succedere lo stesso, sostituiscilo con `--cpu-vae`: sposta
 quello stadio sul processore, più lento ma infallibile. Il sintomo nel log del
 motore è `invalid value encountered in cast`.
 
+**`avvia.bat` si chiude con `WinError 10013`**
+Windows riserva interi intervalli di porte a Hyper-V e WSL, e le rifiuta anche
+se nessuno le sta usando. La dashboard ne prova diverse e in ultima istanza ne
+fa scegliere una al sistema, quindi basta rilanciare. L'indirizzo esatto è
+scritto nella finestra nera e il browser ci arriva da solo.
+
 **Memoria video esaurita** — nel log compare `UR_RESULT_ERROR_OUT_OF_RESOURCES`
 Succede sul `staging`, che tiene in VRAM il modello e il ControlNet insieme.
 Prima cosa da provare: chiudi il browser, che sulla stessa scheda consuma

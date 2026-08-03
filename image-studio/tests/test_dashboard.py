@@ -247,3 +247,40 @@ def test_non_si_esce_dalla_cartella_output(app):
     """Il percorso richiesto va ridotto al solo nome del file."""
     fuori = requests.get(f"{app}/immagini/..%2F..%2Fcomfy-path.txt", timeout=10)
     assert fuori.status_code == 404
+
+
+# ------------------------------------------------------- scelta della porta
+
+
+def test_ripiega_sulla_porta_successiva():
+    """Se la prima e' occupata deve passare alla seguente, non arrendersi."""
+    occupata = ThreadingHTTPServer(("127.0.0.1", 0), FakeComfy)
+    presa = occupata.server_port
+    libera = presa + 1
+    try:
+        server = dashboard.apri_server(FakeComfy, porte=(presa, libera))
+        assert server.server_port == libera
+        server.server_close()
+    finally:
+        occupata.server_close()
+
+
+def test_ripiega_su_una_porta_qualsiasi():
+    """Con tutte le candidate inutilizzabili si lascia scegliere al sistema.
+
+    Windows rifiuta le porte riservate a Hyper-V anche se nessuno le usa
+    (WinError 10013): senza questo ripiego la dashboard non partirebbe.
+    """
+    occupata = ThreadingHTTPServer(("127.0.0.1", 0), FakeComfy)
+    try:
+        server = dashboard.apri_server(FakeComfy, porte=(occupata.server_port,))
+        assert server.server_port not in (0, occupata.server_port)
+        server.server_close()
+    finally:
+        occupata.server_close()
+
+
+def test_la_prima_porta_libera_ha_la_precedenza():
+    server = dashboard.apri_server(FakeComfy, porte=(0,))
+    assert server.server_port > 0
+    server.server_close()
