@@ -16,7 +16,7 @@ import { linkOwner } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
 import { deleteProperty } from "@/lib/actions";
-import { euro, shortDate, dateTime, relative, label, fullName } from "@/lib/format";
+import { euro, shortDate, dateTime, relative, label, fullName, whatsappHref } from "@/lib/format";
 import {
   PageHeader,
   Card,
@@ -356,9 +356,35 @@ export default async function PropertyPage({
                           <p className="text-xs text-amber-700">{match.warnings.join(" · ")}</p>
                         ) : null}
                       </div>
-                      <Chip tone={match.warnings.length === 0 ? "green" : "amber"}>
-                        {match.score}/{match.total}
-                      </Chip>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {whatsappHref(match.client_phone) ? (
+                          <a
+                            href={
+                              whatsappHref(
+                                match.client_phone,
+                                `Buongiorno${(match.client_name.split(" ")[0] ?? "") ? ` ${match.client_name.split(" ")[0]}` : ""}, sono ${user.name} di Mondo Immobiliare. ` +
+                                  `È arrivato un immobile in linea con la sua ricerca: ${[
+                                    property.title,
+                                    [property.zone, property.city].filter(Boolean).join(", "),
+                                    property.sqm ? `${property.sqm} mq` : "",
+                                    property.price ? euro(property.price) : "",
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ")}. Se le interessa possiamo organizzare una visita.`,
+                              ) ?? "#"
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-secondary px-2.5 py-1 text-xs"
+                            title="Apre WhatsApp con la proposta già scritta"
+                          >
+                            Proponi
+                          </a>
+                        ) : null}
+                        <Chip tone={match.warnings.length === 0 ? "green" : "amber"}>
+                          {match.score}/{match.total}
+                        </Chip>
+                      </div>
                     </div>
                   </li>
                 ))}

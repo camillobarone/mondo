@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { all } from "@/lib/db";
 import { agenda, activeUserOptions, upcomingBirthdays } from "@/lib/queries";
-import { dateTime, relative, fullName, shortDate, phoneHref } from "@/lib/format";
+import { dateTime, relative, fullName, shortDate, phoneHref, whatsappHref } from "@/lib/format";
 import { PageHeader, Card, EmptyState, Chip } from "@/components/ui";
 import { CompleteButton } from "./complete-button";
 import { ActivityForm } from "./activity-form";
@@ -194,9 +194,12 @@ export default async function AgendaPage({
                           Chiama
                         </a>
                         <a
-                          href={`https://wa.me/${cellulare.replace(/^\+/, "")}?text=${encodeURIComponent(
-                            `Tanti auguri ${cliente.first_name || ""}!`.trim(),
-                          )}`}
+                          href={
+                            whatsappHref(
+                              cellulare,
+                              `Tanti auguri ${cliente.first_name || ""}!`.trim(),
+                            ) ?? "#"
+                          }
                           target="_blank"
                           rel="noreferrer"
                           className="btn-secondary px-2.5 py-1 text-xs"

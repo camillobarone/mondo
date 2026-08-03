@@ -126,6 +126,26 @@ export default async function UsersPage({
             </tbody>
           </table>
         </Card>
+
+        <Card title="Copia di sicurezza" className="lg:col-span-3">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="max-w-2xl text-sm text-slate-600">
+              <p>
+                Il server fa da sé una copia ogni notte, ma resta sullo stesso disco: se
+                quel disco muore, muore con lui. <strong>Una volta a settimana</strong>{" "}
+                scarica da qui l&apos;archivio e salvalo sul disco esterno
+                (<code className="rounded bg-slate-100 px-1">F:\Gestionale backup</code>).
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Il file contiene tutto tranne le foto. Lo scaricamento viene annotato nel
+                registro accessi.
+              </p>
+            </div>
+            <a href="/backup" className="btn-primary shrink-0">
+              Scarica l&apos;archivio
+            </a>
+          </div>
+        </Card>
       </div>
     </>
   );

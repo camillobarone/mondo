@@ -233,13 +233,23 @@ export function SelectField({
     typeof option === "string" ? { value: option, label: option } : option,
   );
 
+  // Un valore fuori vocabolario (tipico dell'archivio importato: una
+  // "masseria" che non sta nella tendina) deve restare visibile e salvabile.
+  // Senza questa option il select ripiegherebbe sul segnaposto vuoto, e al
+  // primo salvataggio della scheda il valore sparirebbe in silenzio.
+  const attuale =
+    defaultValue === null || defaultValue === undefined ? "" : String(defaultValue);
+  if (attuale && !normalised.some((option) => String(option.value) === attuale)) {
+    normalised.unshift({ value: attuale, label: attuale });
+  }
+
   return (
     <Field label={label} name={name} className={className} hint={hint}>
       <select
         id={name}
         name={name}
         required={required}
-        defaultValue={defaultValue === null || defaultValue === undefined ? "" : String(defaultValue)}
+        defaultValue={attuale}
         className="field"
       >
         {placeholder !== null ? <option value="">{placeholder}</option> : null}

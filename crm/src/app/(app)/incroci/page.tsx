@@ -1,17 +1,38 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { matchesByClient } from "@/lib/matching";
-import { euro } from "@/lib/format";
+import { matchesByClient, type Match } from "@/lib/matching";
+import { euro, whatsappHref } from "@/lib/format";
 import { PageHeader, Card, EmptyState, Chip, Pagination } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Il messaggio con cui si propone l'immobile, gia' scritto. L'incrocio da
+ * solo non vende niente: vende il messaggio mandato entro dieci minuti.
+ * Prima di inviare si puo' comunque ritoccare, e' testo normale in WhatsApp.
+ */
+function proposta(clientName: string, agente: string, match: Match): string {
+  const nome = clientName.split(" ")[0] || "";
+  const dove = [match.property.zone, match.property.city].filter(Boolean).join(", ");
+  const pezzi = [
+    match.property.title,
+    dove,
+    match.property.sqm ? `${match.property.sqm} mq` : "",
+    match.property.price ? euro(match.property.price) : "",
+  ].filter(Boolean);
+  return (
+    `Buongiorno${nome ? ` ${nome}` : ""}, sono ${agente} di Mondo Immobiliare. ` +
+    `È arrivato un immobile in linea con la sua ricerca: ${pezzi.join(", ")}. ` +
+    `Se le interessa possiamo organizzare una visita. Rimango a disposizione.`
+  );
+}
 
 export default async function MatchesPage({
   searchParams,
 }: {
   searchParams: Promise<{ soloPerfetti?: string; page?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
   const onlyPerfect = params.soloPerfetti === "1";
 
@@ -97,9 +118,27 @@ export default async function MatchesPage({
                         <p className="text-xs text-amber-700">{match.warnings.join(" · ")}</p>
                       ) : null}
                     </div>
-                    <Chip tone={match.warnings.length === 0 ? "green" : "amber"}>
-                      {match.score}/{match.total}
-                    </Chip>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {whatsappHref(group.clientPhone) ? (
+                        <a
+                          href={
+                            whatsappHref(
+                              group.clientPhone,
+                              proposta(group.clientName, user.name, match),
+                            ) ?? "#"
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-secondary px-2.5 py-1 text-xs"
+                          title="Apre WhatsApp con la proposta già scritta"
+                        >
+                          Proponi su WhatsApp
+                        </a>
+                      ) : null}
+                      <Chip tone={match.warnings.length === 0 ? "green" : "amber"}>
+                        {match.score}/{match.total}
+                      </Chip>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -24,6 +24,8 @@ export interface ClientFilters {
   tag?: string;
   /** Non sentiti da almeno N giorni. */
   silentDays?: string;
+  /** Filtri "da sistemare": richiesta | privacy | aml. */
+  senza?: string;
   page?: string;
 }
 
@@ -83,6 +85,25 @@ function clientWhere(filters: ClientFilters): { sql: string; params: unknown[] }
       );
       params.push(`-${days} days`);
     }
+  }
+
+  // I filtri del riquadro "Da sistemare" sul cruscotto: ognuno isola una
+  // mancanza che nel lavoro quotidiano non si vede, finche' non fa danno.
+  if (filters.senza === "richiesta") {
+    // Stessa condizione del conteggio sul cruscotto: il numero cliccato e
+    // l'elenco che si apre devono dire la stessa cosa.
+    clauses.push(`(
+      c.status IN ('attivo','in_trattativa')
+      AND ((',' || c.roles || ',') LIKE '%,acquirente,%' OR (',' || c.roles || ',') LIKE '%,conduttore,%')
+      AND NOT EXISTS (SELECT 1 FROM requirements r
+                       WHERE r.client_id = c.id AND r.status = 'aperta')
+    )`);
+  } else if (filters.senza === "privacy") {
+    clauses.push(`c.privacy_consent = 0 AND c.status IN ('attivo','in_trattativa')`);
+  } else if (filters.senza === "aml") {
+    clauses.push(
+      `c.aml_doc_expiry IS NOT NULL AND date(c.aml_doc_expiry) < date('now','localtime')`,
+    );
   }
 
   return { sql: clauses.join(" AND "), params };
@@ -542,21 +563,21 @@ export function agenda(userId: number | null) {
     overdue: all<ActivityRow>(
       `${ACTIVITY_SELECT}
         WHERE a.done_at IS NULL AND a.due_at IS NOT NULL
-          AND date(a.due_at) < date('now') ${scope}
+          AND date(a.due_at) < date('now','localtime') ${scope}
         ORDER BY a.due_at`,
       params([]),
     ),
     today: all<ActivityRow>(
       `${ACTIVITY_SELECT}
-        WHERE a.done_at IS NULL AND date(a.due_at) = date('now') ${scope}
+        WHERE a.done_at IS NULL AND date(a.due_at) = date('now','localtime') ${scope}
         ORDER BY a.due_at`,
       params([]),
     ),
     upcoming: all<ActivityRow>(
       `${ACTIVITY_SELECT}
         WHERE a.done_at IS NULL
-          AND date(a.due_at) > date('now')
-          AND date(a.due_at) <= date('now', '+14 days') ${scope}
+          AND date(a.due_at) > date('now','localtime')
+          AND date(a.due_at) <= date('now','localtime','+14 days') ${scope}
         ORDER BY a.due_at`,
       params([]),
     ),
@@ -591,8 +612,8 @@ export function calendarActivities(userId: number): ActivityRow[] {
     `${ACTIVITY_SELECT}
       WHERE a.user_id = ?
         AND a.due_at IS NOT NULL
-        AND date(a.due_at) >= date('now', '-30 days')
-        AND date(a.due_at) <= date('now', '+365 days')
+        AND date(a.due_at) >= date('now','localtime','-30 days')
+        AND date(a.due_at) <= date('now','localtime','+365 days')
       ORDER BY a.due_at`,
     [userId],
   );
@@ -781,6 +802,43 @@ export function countPropertiesWithoutOwner(): number {
 }
 
 /**
+ * Le mancanze che non si vedono finche' non fanno danno: l'acquirente che non
+ * entra negli incroci perche' nessuno ha scritto cosa cerca, il consenso
+ * privacy mai raccolto, il documento antiriciclaggio scaduto, l'immobile di
+ * cui non si sa chi chiamare. Ogni numero ha il suo filtro nell'elenco.
+ */
+export function daSistemare(): {
+  senzaProprietario: number;
+  senzaRichiesta: number;
+  senzaPrivacy: number;
+  amlScaduti: number;
+} {
+  return {
+    senzaProprietario: countPropertiesWithoutOwner(),
+    senzaRichiesta: count(
+      `SELECT COUNT(*) AS n FROM clients c
+        WHERE c.deleted_at IS NULL
+          AND c.status IN ('attivo','in_trattativa')
+          AND ((',' || c.roles || ',') LIKE '%,acquirente,%'
+            OR (',' || c.roles || ',') LIKE '%,conduttore,%')
+          AND NOT EXISTS (SELECT 1 FROM requirements r
+                           WHERE r.client_id = c.id AND r.status = 'aperta')`,
+    ),
+    senzaPrivacy: count(
+      `SELECT COUNT(*) AS n FROM clients
+        WHERE deleted_at IS NULL AND privacy_consent = 0
+          AND status IN ('attivo','in_trattativa')`,
+    ),
+    amlScaduti: count(
+      `SELECT COUNT(*) AS n FROM clients
+        WHERE deleted_at IS NULL
+          AND aml_doc_expiry IS NOT NULL
+          AND date(aml_doc_expiry) < date('now','localtime')`,
+    ),
+  };
+}
+
+/**
  * Chi proporre come proprietario di un immobile.
  *
  * Senza ricerca mostra solo chi e' gia' segnato come venditore o locatore:
@@ -885,10 +943,23 @@ export function upcomingBirthdays(days = 7): BirthdayRow[] {
     .map((client) => {
       const mancano = giorniAlCompleanno(client.birth_date);
       const nascita = client.birth_date ? new Date(client.birth_date) : null;
-      const anni =
-        nascita && !Number.isNaN(nascita.getTime())
-          ? new Date().getFullYear() - nascita.getFullYear() + (mancano === 0 ? 0 : 1)
-          : 0;
+      // Gli anni che compie SONO l'anno del prossimo compleanno meno l'anno
+      // di nascita: il "+1 se non e' oggi" li sbagliava per tutti i
+      // compleanni che cadono entro fine anno (quasi tutti, con una
+      // finestra di 7 giorni).
+      let anni = 0;
+      if (nascita && !Number.isNaN(nascita.getTime()) && mancano !== null) {
+        const oggi = new Date();
+        const questAnno = new Date(
+          oggi.getFullYear(),
+          nascita.getMonth(),
+          nascita.getDate(),
+        );
+        const inizioOggi = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate());
+        const annoDelCompleanno =
+          questAnno >= inizioOggi ? oggi.getFullYear() : oggi.getFullYear() + 1;
+        anni = annoDelCompleanno - nascita.getFullYear();
+      }
       return { ...client, birthdayIn: mancano ?? 9999, age: anni };
     })
     .filter((client) => client.birthdayIn <= days)
@@ -964,7 +1035,7 @@ export function dashboard(userId: number) {
       WHERE p.deleted_at IS NULL
         AND p.mandate_end IS NOT NULL
         AND p.status IN ('acquisizione','in_vendita','proposta')
-        AND date(p.mandate_end) <= date('now', '+45 days')
+        AND date(p.mandate_end) <= date('now','localtime','+45 days')
       ORDER BY p.mandate_end`,
   );
 
@@ -990,7 +1061,7 @@ export function dashboard(userId: number) {
        JOIN properties p ON p.id = o.property_id
       WHERE o.status = 'in_attesa'
         AND o.valid_until IS NOT NULL
-        AND date(o.valid_until) <= date('now','+7 days')
+        AND date(o.valid_until) <= date('now','localtime','+7 days')
       ORDER BY o.valid_until`,
   );
 
@@ -1017,17 +1088,17 @@ export function dashboard(userId: number) {
       `SELECT COUNT(*) AS n FROM properties
         WHERE deleted_at IS NULL AND status = 'venduto'
           AND deed_date IS NOT NULL
-          AND strftime('%Y', deed_date) = strftime('%Y','now')`,
+          AND strftime('%Y', deed_date) = strftime('%Y','now','localtime')`,
     ),
     overdueCount: count(
       `SELECT COUNT(*) AS n FROM activities
         WHERE done_at IS NULL AND due_at IS NOT NULL
-          AND date(due_at) < date('now') AND user_id = ?`,
+          AND date(due_at) < date('now','localtime') AND user_id = ?`,
       [userId],
     ),
     todayCount: count(
       `SELECT COUNT(*) AS n FROM activities
-        WHERE done_at IS NULL AND date(due_at) = date('now') AND user_id = ?`,
+        WHERE done_at IS NULL AND date(due_at) = date('now','localtime') AND user_id = ?`,
       [userId],
     ),
     mandatesExpiring,

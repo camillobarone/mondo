@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listSellers } from "@/lib/queries";
-import { euro, fullName, shortDate, phoneHref, daysSince } from "@/lib/format";
+import { euro, fullName, shortDate, phoneHref, daysSince, whatsappHref } from "@/lib/format";
 import { PageHeader, Card, EmptyState, StatusChip, Chip, Pagination } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -114,7 +114,7 @@ export default async function SellersPage({
                           Chiama
                         </a>
                         <a
-                          href={`https://wa.me/${mobile.replace(/^\+/, "")}`}
+                          href={whatsappHref(mobile) ?? "#"}
                           target="_blank"
                           rel="noreferrer"
                           className="btn-secondary px-2.5 py-1 text-xs"

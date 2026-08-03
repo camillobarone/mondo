@@ -65,6 +65,33 @@ npm run dev          # ricarica da solo a ogni modifica, su http://localhost:300
 
 ---
 
+## La ricerca, il cruscotto e WhatsApp
+
+**Cerca** — nella colonna a sinistra (e nel menu, dal telefono) c'è un campo di
+ricerca unico: clienti e immobili insieme. Il caso tipico è il telefono che
+squilla: scrivi il numero che vedi sul display — anche solo un pezzo, anche
+scritto con gli spazi — e arrivi alla scheda prima di rispondere. Funziona
+anche con nome, email, riferimento (`MI-2041`) e zona.
+
+**Da sistemare** — sul cruscotto c'è un riquadro con le mancanze che non si
+vedono finché non fanno danno: acquirenti senza una richiesta aperta (che
+quindi gli incroci non vedono), immobili senza proprietario collegato,
+documenti antiriciclaggio scaduti, clienti senza consenso privacy. Ogni numero
+si clicca e apre l'elenco già filtrato. Quando è tutto a posto, il riquadro
+sparisce.
+
+**Proponi su WhatsApp** — negli **Incroci**, e nella scheda immobile sotto *A
+chi proporlo*, accanto a ogni abbinamento c'è un pulsante che apre WhatsApp con
+la proposta **già scritta**: nome del cliente, immobile, zona, metri e prezzo.
+La si può ritoccare prima di inviare, è testo normale. L'incrocio da solo non
+vende: vende il messaggio mandato entro dieci minuti.
+
+I numeri di telefono vengono messi in formato internazionale da soli: i numeri
+dell'archivio sono quasi tutti senza +39, e senza questa correzione WhatsApp
+aprirebbe una chat vuota o sbagliata.
+
+---
+
 ## Portare dentro i clienti che hai già
 
 1. Esporta l'archivio attuale dal gestionale che usi oggi. **Il file va bene
@@ -132,6 +159,12 @@ compreso. Massimo 30 foto per immobile, 25 MB per foto.
 ## Copie di sicurezza
 
 Tutto il programma vive in **un solo file**: `data/mondo.db`.
+
+**La strada semplice, dal browser:** il titolare trova in **Utenti** il
+pulsante *Scarica l'archivio*. Fa una copia coerente (anche mentre qualcuno
+lavora) e la scarica sul computer: salvala sul disco esterno, una volta a
+settimana. Lo scaricamento finisce nel registro accessi. Le foto non sono
+comprese — quelle viaggiano con la copia notturna sul server.
 
 ```bash
 npm run backup       # crea una copia in backup/, coerente anche a programma acceso

@@ -74,6 +74,14 @@ export function Nav({
 
       {open ? (
         <nav className="border-b border-slate-800 bg-slate-900 px-3 pb-3 lg:hidden">
+          <form action="/cerca" className="mb-2" onSubmit={() => setOpen(false)}>
+            <input
+              name="q"
+              placeholder="Cerca nome, telefono, immobile…"
+              className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
+              aria-label="Cerca in tutto l'archivio"
+            />
+          </form>
           <div className="space-y-1">{links}</div>
         </nav>
       ) : null}
@@ -88,6 +96,17 @@ export function Nav({
             </span>
           </Link>
         </div>
+
+        {/* Il telefono squilla e il nome va trovato prima di rispondere:
+            la ricerca sta sotto il logo, sempre alla stessa distanza. */}
+        <form action="/cerca" className="px-3 pb-3">
+          <input
+            name="q"
+            placeholder="Cerca…"
+            className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
+            aria-label="Cerca in tutto l'archivio"
+          />
+        </form>
 
         <nav className="flex-1 space-y-1 px-3">{links}</nav>
 

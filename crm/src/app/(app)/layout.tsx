@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const todo = count(
     `SELECT COUNT(*) AS n FROM activities
       WHERE done_at IS NULL AND due_at IS NOT NULL
-        AND date(due_at) <= date('now') AND user_id = ?`,
+        AND date(due_at) <= date('now','localtime') AND user_id = ?`,
     [user.id],
   );
 

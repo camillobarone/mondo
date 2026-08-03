@@ -25,6 +25,7 @@ import {
   fromCsv,
   label,
   phoneHref,
+  whatsappHref,
   daysSince,
 } from "@/lib/format";
 import {
@@ -125,7 +126,7 @@ export default async function ClientPage({
             ) : null}
             {mobile ? (
               <a
-                href={`https://wa.me/${mobile.replace(/^\+/, "")}`}
+                href={whatsappHref(mobile) ?? "#"}
                 target="_blank"
                 rel="noreferrer"
                 className="btn-secondary"

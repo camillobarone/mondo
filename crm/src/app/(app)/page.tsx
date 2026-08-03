@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { agenda, dashboard } from "@/lib/queries";
+import { agenda, dashboard, daSistemare } from "@/lib/queries";
 import { euro, shortDate, relative, fullName, daysSince } from "@/lib/format";
 import { PageHeader, Card, Stat, EmptyState, Chip, Banner } from "@/components/ui";
 import { CompleteButton } from "./agenda/complete-button";
@@ -11,6 +11,32 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const stats = dashboard(user.id);
   const { overdue, today } = agenda(user.id);
+
+  // Le quattro mancanze silenziose. Ognuna, lasciata li', costa qualcosa di
+  // concreto: un incrocio mai proposto, una sanzione, una telefonata a vuoto.
+  const cure = daSistemare();
+  const daFare = [
+    {
+      quanti: cure.senzaRichiesta,
+      testo: "acquirenti senza una richiesta aperta: invisibili agli incroci",
+      href: "/clienti?senza=richiesta",
+    },
+    {
+      quanti: cure.senzaProprietario,
+      testo: "immobili senza proprietario collegato",
+      href: "/immobili?noOwner=1",
+    },
+    {
+      quanti: cure.amlScaduti,
+      testo: "documenti antiriciclaggio scaduti",
+      href: "/clienti?senza=aml",
+    },
+    {
+      quanti: cure.senzaPrivacy,
+      testo: "clienti attivi senza consenso privacy",
+      href: "/clienti?senza=privacy",
+    },
+  ].filter((riga) => riga.quanti > 0);
 
   return (
     <>
@@ -149,6 +175,26 @@ export default async function DashboardPage() {
 
         {/* --------------------------------------------------- colonna lato */}
         <div className="space-y-5">
+          {daFare.length > 0 ? (
+            <Card title="Da sistemare" bodyClassName="">
+              <ul className="divide-y divide-slate-100">
+                {daFare.map((riga) => (
+                  <li key={riga.href}>
+                    <Link
+                      href={riga.href}
+                      className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50"
+                    >
+                      <span className="min-w-[2rem] text-right text-sm font-semibold text-amber-700">
+                        {riga.quanti}
+                      </span>
+                      <span className="text-sm text-slate-700">{riga.testo}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+
           <Card title="Incarichi in scadenza" bodyClassName="">
             {stats.mandatesExpiring.length === 0 ? (
               <EmptyState title="Nessun incarico in scadenza nei prossimi 45 giorni." />

@@ -279,16 +279,22 @@ const availableProperties = cache((): ReadyProperty[] =>
   ).map(prepareProperty),
 );
 
-const openRequirements = cache((): (ReadyRequirement & { clientName: string })[] =>
-  all<Requirement & { client_name: string }>(
-    `SELECT r.*,
-            TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name
-       FROM requirements r
-       JOIN clients c ON c.id = r.client_id
-      WHERE r.status = 'aperta'
-        AND c.deleted_at IS NULL
-      ORDER BY r.updated_at DESC`,
-  ).map((row) => ({ ...prepareRequirement(row), clientName: row.client_name })),
+const openRequirements = cache(
+  (): (ReadyRequirement & { clientName: string; clientPhone: string | null })[] =>
+    all<Requirement & { client_name: string; client_phone: string | null }>(
+      `SELECT r.*,
+              TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
+              COALESCE(c.mobile, c.phone) AS client_phone
+         FROM requirements r
+         JOIN clients c ON c.id = r.client_id
+        WHERE r.status = 'aperta'
+          AND c.deleted_at IS NULL
+        ORDER BY r.updated_at DESC`,
+    ).map((row) => ({
+      ...prepareRequirement(row),
+      clientName: row.client_name,
+      clientPhone: row.client_phone,
+    })),
 );
 
 function scoreAgainstPortfolio(requirement: Requirement): Scored[] {
@@ -329,9 +335,9 @@ export function requirementSummary(
 export function matchesForProperty(
   property: Property,
   limit = 12,
-): (Match & { client_name: string })[] {
+): (Match & { client_name: string; client_phone: string | null })[] {
   const ready = prepareProperty(property);
-  const scored: (Scored & { client_name: string })[] = [];
+  const scored: (Scored & { client_name: string; client_phone: string | null })[] = [];
 
   for (const requirement of openRequirements()) {
     const outcome = score(requirement, ready);
@@ -341,6 +347,7 @@ export function matchesForProperty(
         requirement: requirement.source,
         ...outcome,
         client_name: requirement.clientName,
+        client_phone: requirement.clientPhone,
       });
     }
   }
@@ -348,7 +355,11 @@ export function matchesForProperty(
   return scored
     .sort(byQuality)
     .slice(0, limit)
-    .map((item) => ({ ...explain(item), client_name: item.client_name }));
+    .map((item) => ({
+      ...explain(item),
+      client_name: item.client_name,
+      client_phone: item.client_phone,
+    }));
 }
 
 /** Quanti clienti aspettano un immobile come questo. */
@@ -451,6 +462,8 @@ export function priceInterest(property: Property): PriceInterest {
 export interface ClientMatches {
   clientId: number;
   clientName: string;
+  /** Cellulare (o fisso) del cliente: serve al pulsante WhatsApp. */
+  clientPhone: string | null;
   total: number;
   matches: Match[];
 }
@@ -473,7 +486,7 @@ export function matchesByClient({
   clientsPerPage?: number;
 } = {}): { groups: ClientMatches[]; total: number; clients: number; page: number; pages: number } {
   const properties = availableProperties();
-  const byClient = new Map<number, { name: string; scored: Scored[] }>();
+  const byClient = new Map<number, { name: string; phone: string | null; scored: Scored[] }>();
   let total = 0;
 
   for (const requirement of openRequirements()) {
@@ -488,7 +501,7 @@ export function matchesByClient({
       total++;
       let group = byClient.get(requirement.source.client_id);
       if (!group) {
-        group = { name: requirement.clientName, scored: [] };
+        group = { name: requirement.clientName, phone: requirement.clientPhone, scored: [] };
         byClient.set(requirement.source.client_id, group);
       }
       group.scored.push({
@@ -504,7 +517,7 @@ export function matchesByClient({
   const ordered = [...byClient.entries()]
     .map(([clientId, group]) => {
       const scored = group.scored.sort(byQuality);
-      return { clientId, name: group.name, scored, best: scored[0]! };
+      return { clientId, name: group.name, phone: group.phone, scored, best: scored[0]! };
     })
     .sort(
       (a, b) =>
@@ -521,6 +534,7 @@ export function matchesByClient({
     .map((entry) => ({
       clientId: entry.clientId,
       clientName: entry.name,
+      clientPhone: entry.phone,
       total: entry.scored.length,
       matches: entry.scored.slice(0, perClient).map(explain),
     }));

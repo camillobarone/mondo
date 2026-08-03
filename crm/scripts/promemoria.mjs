@@ -82,7 +82,7 @@ const candidati = db
         AND a.reminded_at IS NULL
         AND u.active = 1
         AND u.email IS NOT NULL AND u.email != ''
-        AND date(a.due_at) BETWEEN date('now', '-1 day') AND date('now', '+2 days')`,
+        AND date(a.due_at) BETWEEN date('now','localtime','-1 day') AND date('now','localtime','+2 days')`,
   )
   .all();
 

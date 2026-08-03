@@ -68,7 +68,12 @@ export function dateTime(value: string | null | undefined): string {
 export function relative(value: string | null | undefined): string {
   const date = toDate(value);
   if (!date) return "—";
-  const days = Math.round((date.getTime() - Date.now()) / 864e5);
+  // Giorni di calendario, non blocchi di 24 ore: alle dieci di sera,
+  // l'appuntamento di domattina alle nove e' "domani", non "oggi".
+  const mezzanotte = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const days = Math.round(
+    (mezzanotte(date).getTime() - mezzanotte(new Date()).getTime()) / 864e5,
+  );
   if (days === 0) return "oggi";
   if (days === 1) return "domani";
   if (days === -1) return "ieri";
@@ -137,4 +142,37 @@ export function phoneHref(value: string | null | undefined): string | null {
   if (!value) return null;
   const digits = value.replace(/[^\d+]/g, "");
   return digits.length >= 6 ? digits : null;
+}
+
+/**
+ * Collegamento wa.me pronto, con l'eventuale messaggio gia' scritto.
+ *
+ * WhatsApp vuole il numero in formato internazionale. Nell'archivio pero' i
+ * numeri sono quasi tutti "3401112233", senza +39: passarli cosi' a wa.me
+ * apre una chat sbagliata o vuota. Un numero italiano si riconosce: dieci
+ * cifre che cominciano per 3 (cellulare) — a quello il prefisso lo mettiamo
+ * noi. I numeri gia' internazionali (+39..., 0039...) passano come sono.
+ */
+export function whatsappHref(
+  value: string | null | undefined,
+  text?: string,
+): string | null {
+  const pulito = phoneHref(value);
+  if (!pulito) return null;
+
+  let cifre = pulito.replace(/\D/g, "");
+  if (pulito.startsWith("+")) {
+    // gia' internazionale
+  } else if (cifre.startsWith("00")) {
+    cifre = cifre.slice(2);
+  } else if (cifre.length === 10 && cifre.startsWith("3")) {
+    cifre = "39" + cifre;
+  } else if (cifre.startsWith("0")) {
+    // Fisso italiano: WhatsApp li' non c'e' quasi mai, ma il numero almeno
+    // e' giusto.
+    cifre = "39" + cifre;
+  }
+
+  const coda = text ? `?text=${encodeURIComponent(text)}` : "";
+  return `https://wa.me/${cifre}${coda}`;
 }

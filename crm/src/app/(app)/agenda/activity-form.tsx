@@ -177,6 +177,16 @@ export function ActivityForm({
         />
       </div>
 
+      {/* Quando il blocco esito non e' visibile, i valori gia' registrati
+          viaggiano comunque: senza, togliere la spunta "Fatto" per rimettere
+          l'attivita' in agenda cancellerebbe il commento della visita. */}
+      {!chiediEsito && activity?.outcome ? (
+        <input type="hidden" name="outcome" value={activity.outcome} />
+      ) : null}
+      {!chiediEsito && activity?.interest ? (
+        <input type="hidden" name="interest" value={activity.interest} />
+      ) : null}
+
       {chiediEsito ? (
         <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 sm:grid-cols-3">
           <div className="sm:col-span-2">

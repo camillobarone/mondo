@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listClients, activeUserOptions, clientTags, type ClientFilters } from "@/lib/queries";
 import { fullName, shortDate, daysSince, phoneHref, euro, fromCsv } from "@/lib/format";
-import { PageHeader, Card, EmptyState, StatusChip, Chip, Pagination } from "@/components/ui";
+import { PageHeader, Card, EmptyState, StatusChip, Chip, Pagination, Banner } from "@/components/ui";
 import { CLIENT_ROLES, CLIENT_SOURCES, CLIENT_STATUSES } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +42,28 @@ export default async function ClientsPage({
           </>
         }
       />
+
+      {/* Il filtro speciale arriva dal cruscotto e non ha un controllo suo nel
+          modulo qui sotto: senza questa fascia sembrerebbe un elenco monco. */}
+      {filters.senza ? (
+        <div className="mb-4">
+          <Banner tone="amber">
+            Stai vedendo solo{" "}
+            <strong>
+              {filters.senza === "richiesta"
+                ? "gli acquirenti senza una richiesta aperta"
+                : filters.senza === "privacy"
+                  ? "i clienti attivi senza consenso privacy"
+                  : "i clienti con il documento antiriciclaggio scaduto"}
+            </strong>
+            .{" "}
+            <Link href="/clienti" className="font-medium underline">
+              Torna a tutti i clienti
+            </Link>
+            .
+          </Banner>
+        </div>
+      ) : null}
 
       {/* ------------------------------------------------------------ filtri */}
       <Card className="mb-5">

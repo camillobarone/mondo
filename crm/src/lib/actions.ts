@@ -544,7 +544,10 @@ export async function saveActivity(form: FormData) {
   // "adesso" un lavoro finito la settimana scorsa.
   const fatto = Boolean(form.get("done"));
   const gia = text(form, "done_at");
-  const doneNow = fatto ? gia || new Date().toISOString() : null;
+  // Stesso formato di datetime('now') di SQLite: mischiare "2026-08-03T10:45Z"
+  // e "2026-08-03 10:45:30" fa ordinare male le cronologie dello stesso giorno.
+  const adesso = new Date().toISOString().slice(0, 19).replace("T", " ");
+  const doneNow = fatto ? gia || adesso : null;
 
   if (id) {
     run(
@@ -574,8 +577,10 @@ export async function saveActivity(form: FormData) {
   revalidatePath("/agenda");
   revalidatePath("/");
 
+  // Solo percorsi interni: "//dominio.est" passerebbe il controllo su "/"
+  // e porterebbe fuori dal gestionale.
   const dove = text(form, "redirect_to");
-  if (dove.startsWith("/")) redirect(dove);
+  if (dove.startsWith("/") && !dove.startsWith("//")) redirect(dove);
 }
 
 export async function completeActivity(form: FormData) {
@@ -620,7 +625,7 @@ export async function deleteActivity(form: FormData) {
   revalidatePath("/");
 
   const dove = text(form, "redirect_to");
-  redirect(dove.startsWith("/") ? dove : "/agenda");
+  redirect(dove.startsWith("/") && !dove.startsWith("//") ? dove : "/agenda");
 }
 
 /* ============================================================= proposte */
@@ -726,6 +731,9 @@ export async function saveUser(form: FormData) {
       [email, name, role, office, active, id],
     );
     if (password) {
+      // Stesso requisito della creazione: senza, da qui si poteva impostare
+      // una password di una lettera a un utente esistente.
+      if (password.length < 8) throw new Error("La password deve avere almeno 8 caratteri.");
       run(`UPDATE users SET password_hash = ? WHERE id = ?`, [hashPassword(password), id]);
     }
     audit(owner.id, "modifica", "utente", id);

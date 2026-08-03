@@ -193,7 +193,10 @@ ssh root@77.81.234.151 "journalctl -u mondo-crm -n 50"
 ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
 ```
 
-**Portare le copie sul PC** — da fare una volta a settimana, su disco esterno:
+**Portare le copie sul PC** — da fare una volta a settimana, su disco esterno.
+La strada semplice: nel gestionale, **Utenti → Scarica l'archivio** (solo
+titolare), e salvare il file su `F:\Gestionale backup`. In alternativa, da
+PowerShell (questa porta anche le copie storiche):
 ```
 scp root@77.81.234.151:/opt/mondo-crm/backup/*.db "F:\Gestionale backup"
 ```
@@ -375,6 +378,40 @@ Si è scelto il formato iCalendar invece delle API di Google perché funziona co
 qualsiasi calendario, non richiede credenziali sul server, e non si rompe quando
 Google cambia le regole delle applicazioni non verificate — con un account Gmail
 normale l'autorizzazione andrebbe rinnovata ogni sette giorni.
+
+### Ricerca, WhatsApp, cruscotto, copia dal browser
+
+11. **Ricerca globale** — campo unico nella colonna di sinistra: clienti e
+    immobili insieme, numeri di telefono confrontati ignorando spazi e punti.
+12. **Proponi su WhatsApp** — negli Incroci e nella scheda immobile, il
+    messaggio di proposta arriva già scritto. Corretto anche un difetto reale:
+    i pulsanti WhatsApp passavano i numeri **senza +39** (i numeri importati
+    sono quasi tutti così), e wa.me apriva una chat vuota o sbagliata. Ora il
+    prefisso lo mette `whatsappHref()` in `format.ts`, ovunque.
+13. **«Da sistemare» sul cruscotto** — acquirenti senza richiesta aperta,
+    immobili senza proprietario, documenti antiriciclaggio scaduti, clienti
+    senza consenso privacy. Ogni voce apre l'elenco già filtrato
+    (`/clienti?senza=…`).
+14. **Copia di sicurezza dal browser** — Utenti → *Scarica l'archivio* (solo
+    titolare, annotato nel registro). Usa l'API di backup di SQLite: coerente
+    anche a programma in uso.
+15. **Correzioni di revisione** (revisione incrociata a più passaggi):
+    - i confronti fra `due_at` (ora locale) e `date('now')` (UTC in SQLite)
+      usano `date('now','localtime')`: intorno alla mezzanotte agenda, badge e
+      cruscotto sbagliavano giorno;
+    - «oggi/domani» calcolati sui giorni di calendario, non su blocchi di 24
+      ore (alle 22 l'appuntamento di domattina risultava «oggi»);
+    - l'età nei compleanni era di un anno in più per quasi tutti;
+    - togliendo la spunta *Fatto* a una visita si perdeva il commento del
+      visitatore; ora sopravvive;
+    - le tendine troncate della pagina di modifica potevano scollegare
+      cliente/immobile in silenzio; il collegato è sempre fra le opzioni;
+    - un valore fuori vocabolario (es. tipologia importata) non si azzera più
+      al primo salvataggio della scheda;
+    - `done_at` in un formato solo (ordinamenti dello stesso giorno sballati);
+    - minimo di 8 caratteri per le password anche in modifica utente;
+    - chiuso un redirect aperto su `redirect_to` (`//dominio` passava il
+      controllo su `/`).
 
 ---
 

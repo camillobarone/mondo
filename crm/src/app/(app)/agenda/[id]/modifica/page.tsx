@@ -42,6 +42,38 @@ export default async function EditActivityPage({
       ORDER BY updated_at DESC LIMIT 300`,
   );
 
+  const clientOptions = clients.map((client) => ({
+    value: String(client.id),
+    label: client.name || `Cliente #${client.id}`,
+  }));
+  const propertyOptions = properties.map((property) => ({
+    value: String(property.id),
+    label: property.title,
+  }));
+
+  // Le tendine sono troncate (500 clienti, 300 immobili): se il collegamento
+  // dell'attivita' sta oltre il taglio, il select ripiegherebbe su "—" e il
+  // salvataggio scollegherebbe cliente o immobile in silenzio. Chi c'e' gia',
+  // in cima e sempre presente.
+  if (
+    activity.client_id &&
+    !clientOptions.some((option) => option.value === String(activity.client_id))
+  ) {
+    clientOptions.unshift({
+      value: String(activity.client_id),
+      label: activity.client_name || `Cliente #${activity.client_id}`,
+    });
+  }
+  if (
+    activity.property_id &&
+    !propertyOptions.some((option) => option.value === String(activity.property_id))
+  ) {
+    propertyOptions.unshift({
+      value: String(activity.property_id),
+      label: activity.property_title || `Immobile #${activity.property_id}`,
+    });
+  }
+
   // Da dove si e' arrivati: si torna li'. Solo percorsi interni, per non
   // trasformare il campo in un rimbalzo verso l'esterno.
   const ritorno = da && da.startsWith("/") && !da.startsWith("//") ? da : "/agenda";
@@ -68,14 +100,8 @@ export default async function EditActivityPage({
         <ActivityForm
           userOptions={users}
           defaultUserId={user.id}
-          clientOptions={clients.map((client) => ({
-            value: String(client.id),
-            label: client.name || `Cliente #${client.id}`,
-          }))}
-          propertyOptions={properties.map((property) => ({
-            value: String(property.id),
-            label: property.title,
-          }))}
+          clientOptions={clientOptions}
+          propertyOptions={propertyOptions}
           activity={activity}
           redirectTo={ritorno}
         />
