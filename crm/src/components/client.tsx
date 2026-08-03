@@ -51,7 +51,8 @@ export function ConfirmButton({
 }: {
   children: ReactNode;
   message: string;
-  variant?: "primary" | "secondary" | "danger";
+  /** "nudo" toglie l'aspetto da pulsante: serve per i comandi minori. */
+  variant?: "primary" | "secondary" | "danger" | "nudo";
   className?: string;
 }) {
   const { pending } = useFormStatus();
@@ -59,6 +60,7 @@ export function ConfirmButton({
     primary: "btn-primary",
     secondary: "btn-secondary",
     danger: "btn-danger",
+    nudo: "",
   }[variant];
 
   return (

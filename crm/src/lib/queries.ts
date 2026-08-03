@@ -332,6 +332,38 @@ export function propertiesOfClient(clientId: number): Property[] {
   );
 }
 
+export interface Photo {
+  id: number;
+  property_id: number;
+  file: string;
+  caption: string | null;
+  position: number;
+}
+
+export function photosOfProperty(propertyId: number): Photo[] {
+  return all<Photo>(
+    `SELECT id, property_id, file, caption, position FROM photos
+      WHERE property_id = ? ORDER BY position, id`,
+    [propertyId],
+  );
+}
+
+/** La prima foto di ogni immobile, per mostrarla negli elenchi. */
+export function coverPhotos(propertyIds: number[]): Map<number, string> {
+  if (!propertyIds.length) return new Map();
+  const segnaposto = propertyIds.map(() => "?").join(",");
+  const rows = all<{ property_id: number; file: string }>(
+    `SELECT property_id, file FROM photos
+      WHERE property_id IN (${segnaposto})
+      ORDER BY property_id, position, id`,
+    propertyIds,
+  );
+
+  const cover = new Map<number, string>();
+  for (const row of rows) if (!cover.has(row.property_id)) cover.set(row.property_id, row.file);
+  return cover;
+}
+
 export function priceHistory(propertyId: number) {
   return all<{ id: number; price: number; changed_at: string; user_name: string | null }>(
     `SELECT h.id, h.price, h.changed_at, u.name AS user_name

@@ -15,7 +15,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 |---|---|
 | **Clienti** | Anagrafica completa, tipo di cliente (venditore, acquirente, locatore…), provenienza del contatto, etichette, storico di ogni telefonata ed email |
 | **Richieste** | Cosa cerca ogni acquirente: zona, budget, metratura, requisiti irrinunciabili |
-| **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite e feedback |
+| **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback e **foto** |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
 | **Agenda** | Cose da fare, appuntamenti, promemoria per i clienti trascurati e gli incarichi in scadenza |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
@@ -93,6 +93,28 @@ Vengono capiti anche i tracciati degli altri gestionali immobiliari:
 
 I doppioni vengono riconosciuti dal cellulare o dall'email e saltati, a meno che
 non chiedi esplicitamente di importarli.
+
+---
+
+## Foto degli immobili
+
+Si caricano dalla scheda dell'immobile, anche più d'una alla volta. Dal telefono
+puoi scattarle sul momento.
+
+Vengono **ridotte da sole** appena caricate: una foto da 10 MB scende sotto il
+megabyte senza differenze visibili. Senza questo, cento immobili occuperebbero
+decine di gigabyte e le schede impiegherebbero mezzo minuto ad aprirsi da
+cellulare.
+
+La prima foto è la **copertina**: è quella che compare nell'elenco immobili. Per
+cambiarla, usa *Metti per prima* sotto la foto che preferisci.
+
+Le foto si vedono **solo dopo l'accesso**: non sono in una cartella pubblica.
+I file stanno in `data/foto/`, accanto al database, e finiscono nelle copie di
+sicurezza insieme all'archivio.
+
+Formati accettati: quelli delle fotocamere e dei telefoni, HEIC degli iPhone
+compreso. Massimo 30 foto per immobile, 25 MB per foto.
 
 ---
 
@@ -247,6 +269,7 @@ src/
     actions.ts    tutte le scritture (Server Actions)
     matching.ts   il motore che incrocia richieste e immobili
     csv.ts        lettura e scrittura dei file CSV
+    photos.ts     foto degli immobili: ridimensionamento e archiviazione
     xlsx.ts       lettura dei file Excel (senza dipendenze: lo ZIP lo apre zlib)
     import-map.ts i tracciati degli altri gestionali riportati ai nostri campi
     format.ts     date, euro, etichette

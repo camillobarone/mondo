@@ -11,6 +11,8 @@ import {
   activeUserOptions,
 } from "@/lib/queries";
 import { matchesForProperty, countMatchesForProperty, nearMissesForProperty } from "@/lib/matching";
+import { photosOfProperty } from "@/lib/queries";
+import { PhotoGallery } from "./photo-gallery";
 import { deleteProperty } from "@/lib/actions";
 import { euro, shortDate, dateTime, relative, label } from "@/lib/format";
 import {
@@ -41,6 +43,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const matches = matchesForProperty(property);
   const matchCount = countMatchesForProperty(property);
   const missed = nearMissesForProperty(property);
+  const photos = photosOfProperty(property.id);
   const offers = offersOfProperty(propertyId);
   const activities = activitiesOfProperty(propertyId);
   const prices = priceHistory(propertyId);
@@ -216,6 +219,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
         {/* --------------------------------------------------- colonna destra */}
         <div className="space-y-5 lg:col-span-2">
+          {/* ------------------------------------------------------------ foto */}
+          <Card title={`Foto (${photos.length})`}>
+            <PhotoGallery propertyId={property.id} photos={photos} />
+          </Card>
+
           {/* -------------------------------------------------- a chi proporlo */}
           <Card
             title={`A chi proporlo (${matchCount})`}

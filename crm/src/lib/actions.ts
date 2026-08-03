@@ -6,6 +6,7 @@ import { db, run, one, audit } from "./db";
 import { requireUser, requireOwner, hashPassword, login as doLogin, logout as doLogout } from "./auth";
 import { parseCsv, decodeText } from "./csv";
 import { readXlsx, looksLikeXlsx } from "./xlsx";
+import { salvaFoto, cancellaFile, MAX_FOTO_PER_IMMOBILE } from "./photos";
 import { splitName, splitPhones, parseRequirements } from "./import-map";
 import type { Property } from "./types";
 
@@ -289,6 +290,95 @@ export async function saveProperty(form: FormData) {
   revalidatePath("/incroci");
   revalidatePath("/richieste");
   redirect(`/immobili/${newId}`);
+}
+
+/* ------------------------------------------------------------------ foto */
+
+export interface PhotoResult {
+  caricate: number;
+  errori: string[];
+}
+
+/** Carica una o piu' foto su un immobile. */
+export async function uploadPhotos(
+  _prev: PhotoResult | null,
+  form: FormData,
+): Promise<PhotoResult> {
+  const user = await requireUser();
+  const propertyId = Number(form.get("property_id"));
+  if (!propertyId) return { caricate: 0, errori: ["Immobile non indicato."] };
+
+  const files = form.getAll("foto").filter((f): f is File => f instanceof File && f.size > 0);
+  if (!files.length) return { caricate: 0, errori: ["Non hai scelto nessuna foto."] };
+
+  const gia = one<{ n: number }>(`SELECT COUNT(*) AS n FROM photos WHERE property_id = ?`, [
+    propertyId,
+  ])!.n;
+
+  const errori: string[] = [];
+  let caricate = 0;
+  let posizione = one<{ n: number }>(
+    `SELECT COALESCE(MAX(position), -1) AS n FROM photos WHERE property_id = ?`,
+    [propertyId],
+  )!.n;
+
+  for (const file of files) {
+    if (gia + caricate >= MAX_FOTO_PER_IMMOBILE) {
+      errori.push(`Massimo ${MAX_FOTO_PER_IMMOBILE} foto per immobile: le altre non sono state caricate.`);
+      break;
+    }
+
+    const esito = await salvaFoto(propertyId, file.name, await file.arrayBuffer());
+    if (esito.errore) {
+      if (errori.length < 8) errori.push(esito.errore);
+      continue;
+    }
+
+    posizione++;
+    run(`INSERT INTO photos (property_id, file, position) VALUES (?,?,?)`, [
+      propertyId, esito.file, posizione,
+    ]);
+    caricate++;
+  }
+
+  if (caricate) audit(user.id, "modifica", "immobile", propertyId, `${caricate} foto caricate`);
+  revalidatePath(`/immobili/${propertyId}`);
+  revalidatePath("/immobili");
+  return { caricate, errori };
+}
+
+export async function deletePhoto(form: FormData) {
+  const user = await requireUser();
+  const id = Number(form.get("id"));
+  const foto = one<{ property_id: number; file: string }>(
+    `SELECT property_id, file FROM photos WHERE id = ?`,
+    [id],
+  );
+  if (!foto) return;
+
+  run(`DELETE FROM photos WHERE id = ?`, [id]);
+  cancellaFile(foto.property_id, foto.file);
+  audit(user.id, "elimina", "immobile", foto.property_id, "foto eliminata");
+  revalidatePath(`/immobili/${foto.property_id}`);
+  revalidatePath("/immobili");
+}
+
+/** Porta una foto in cima: e' quella che si vede negli elenchi. */
+export async function setCoverPhoto(form: FormData) {
+  const user = await requireUser();
+  const id = Number(form.get("id"));
+  const foto = one<{ property_id: number }>(`SELECT property_id FROM photos WHERE id = ?`, [id]);
+  if (!foto) return;
+
+  const minima = one<{ n: number }>(
+    `SELECT COALESCE(MIN(position), 0) AS n FROM photos WHERE property_id = ?`,
+    [foto.property_id],
+  )!.n;
+  run(`UPDATE photos SET position = ? WHERE id = ?`, [minima - 1, id]);
+
+  audit(user.id, "modifica", "immobile", foto.property_id, "foto di copertina cambiata");
+  revalidatePath(`/immobili/${foto.property_id}`);
+  revalidatePath("/immobili");
 }
 
 /** Chiusura della trattativa: rogito, prezzo finale e provvigioni. */

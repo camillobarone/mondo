@@ -4,6 +4,7 @@ import {
   listProperties,
   activeUserOptions,
   distinctCities,
+  coverPhotos,
   type PropertyFilters,
 } from "@/lib/queries";
 import { euro, shortDate, relative } from "@/lib/format";
@@ -22,6 +23,7 @@ export default async function PropertiesPage({
   const { rows, total, page, pages } = listProperties(filters);
   const users = activeUserOptions();
   const cities = distinctCities();
+  const copertine = coverPhotos(rows.map((property) => property.id));
 
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, value]) => Boolean(value)) as [string, string][],
@@ -188,6 +190,7 @@ export default async function PropertiesPage({
             <table className="tbl">
               <thead>
                 <tr>
+                  <th className="w-14"></th>
                   <th>Immobile</th>
                   <th>Zona</th>
                   <th>Caratteristiche</th>
@@ -202,8 +205,27 @@ export default async function PropertiesPage({
                     property.mandate_end &&
                     new Date(property.mandate_end).getTime() - Date.now() < 45 * 864e5;
 
+                  const cover = copertine.get(property.id);
+
                   return (
                     <tr key={property.id}>
+                      <td>
+                        <Link href={`/immobili/${property.id}`} className="block">
+                          {cover ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={`/foto/${property.id}/${cover.replace(/\.jpg$/, "-min.jpg")}`}
+                              alt=""
+                              loading="lazy"
+                              className="h-10 w-14 rounded border border-slate-200 object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-10 w-14 items-center justify-center rounded border border-dashed border-slate-200 text-[10px] text-slate-300">
+                              foto
+                            </span>
+                          )}
+                        </Link>
+                      </td>
                       <td>
                         <Link
                           href={`/immobili/${property.id}`}

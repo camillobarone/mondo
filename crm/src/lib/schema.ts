@@ -178,6 +178,21 @@ CREATE TABLE IF NOT EXISTS price_history (
 
 CREATE INDEX IF NOT EXISTS idx_price_history_property ON price_history(property_id);
 
+-- ---------------------------------------------------------------- foto
+-- I file stanno su disco, in data/foto/: qui restano solo i nomi e l'ordine.
+-- Tenere le immagini dentro il database lo farebbe gonfiare da 2 MB a qualche
+-- gigabyte, e ogni copia di sicurezza diventerebbe lentissima.
+CREATE TABLE IF NOT EXISTS photos (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  property_id INTEGER NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+  file        TEXT    NOT NULL,   -- nome del file, senza percorso
+  caption     TEXT,
+  position    INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_photos_property ON photos(property_id, position);
+
 -- ---------------------------------------------------------------- valutazioni
 CREATE TABLE IF NOT EXISTS valuations (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,

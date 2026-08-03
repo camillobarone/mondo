@@ -1,11 +1,16 @@
 /**
- * Copia di sicurezza del database.
+ * Copia di sicurezza dell'archivio.
  *
  *   npm run backup
  *
- * Usa l'API di backup di SQLite: la copia è coerente anche se qualcuno sta
- * lavorando sul programma in quel momento. I file finiscono in backup/ e i più
- * vecchi di 60 giorni vengono eliminati.
+ * Il database viene copiato con l'API di backup di SQLite: la copia è coerente
+ * anche se qualcuno sta lavorando sul programma in quel momento. Le foto degli
+ * immobili vengono rispecchiate a parte — sono file che non cambiano mai una
+ * volta scritti, quindi si copiano solo quelle nuove.
+ *
+ * Le copie del database più vecchie di 60 giorni vengono eliminate. Le foto no:
+ * cancellarle vorrebbe dire perdere per sempre l'unica copia di un'immagine
+ * tolta per sbaglio dalla scheda.
  */
 
 import Database from "better-sqlite3";
@@ -46,3 +51,25 @@ for (const file of fs.readdirSync(backupDir)) {
   }
 }
 if (removed) console.log(`Rimosse ${removed} copie più vecchie di 60 giorni.`);
+
+// ------------------------------------------------------------------- foto
+const photoDir = path.join(path.dirname(dbPath), "foto");
+const photoBackup = path.join(backupDir, "foto");
+
+if (fs.existsSync(photoDir)) {
+  let copied = 0;
+  for (const property of fs.readdirSync(photoDir)) {
+    const from = path.join(photoDir, property);
+    if (!fs.statSync(from).isDirectory()) continue;
+
+    const to = path.join(photoBackup, property);
+    fs.mkdirSync(to, { recursive: true });
+    for (const file of fs.readdirSync(from)) {
+      const target = path.join(to, file);
+      if (fs.existsSync(target)) continue;   // gia' copiata in una notte passata
+      fs.copyFileSync(path.join(from, file), target);
+      copied++;
+    }
+  }
+  console.log(copied ? `Copiate ${copied} nuove foto.` : "Nessuna foto nuova da copiare.");
+}
