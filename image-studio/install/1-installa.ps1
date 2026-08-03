@@ -28,12 +28,28 @@ param(
     [switch]$Nightly
 )
 
-$ErrorActionPreference = "Stop"
+# NON usare "Stop": con quella impostazione PowerShell trasforma in errore fatale
+# qualsiasi riga che un programma esterno scrive sul canale di errore, anche se
+# e' un semplice avviso e il programma termina con successo. Sia py.exe che pip
+# lo fanno di continuo, e l'installazione si interromperebbe senza un vero
+# motivo. Gli errori veri li intercettiamo dove contano, controllando il codice
+# di uscita dopo ogni comando esterno; `throw` termina comunque lo script.
+$ErrorActionPreference = "Continue"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 
 function Write-Step { param([string]$Text) Write-Host "`n=== $Text ===" -ForegroundColor Cyan }
 function Write-Ok   { param([string]$Text) Write-Host "  [ok] $Text" -ForegroundColor Green }
 function Write-Warn { param([string]$Text) Write-Host "  [!]  $Text" -ForegroundColor Yellow }
+
+function Invoke-Checked {
+    <#
+        Esegue un comando esterno e fallisce solo se il codice di uscita non e' zero.
+        Serve a distinguere un errore reale dal rumore sul canale di errore.
+    #>
+    param([scriptblock]$Command, [string]$FailureMessage)
+    & $Command
+    if ($LASTEXITCODE -ne 0) { throw "$FailureMessage (codice di uscita $LASTEXITCODE)" }
+}
 
 # --------------------------------------------------------------- prerequisiti
 
@@ -56,23 +72,40 @@ Write-Ok "git presente"
 
 # Il launcher 'py' e' il modo affidabile di scegliere la versione su Windows.
 # Comando e argomenti restano separati per poterli splattare senza indici fragili.
+# Quando la versione richiesta non c'e', py.exe stampa l'elenco di quelle
+# installate sul canale di errore: e' rumore, non un guasto. Conta solo il
+# codice di uscita.
 $pythonCmd = $null
 $pythonArgs = @()
 if (Get-Command py -ErrorAction SilentlyContinue) {
     foreach ($version in @("3.12", "3.11", "3.13", "3.10")) {
-        & py "-$version" --version *> $null
+        & py "-$version" --version 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) { $pythonCmd = "py"; $pythonArgs = @("-$version"); break }
     }
 }
 if (-not $pythonCmd -and (Get-Command python -ErrorAction SilentlyContinue)) {
-    $reported = (& python --version 2>&1)
-    if ($reported -match "3\.(1[0-3])\b") { $pythonCmd = "python" }
+    # Su Windows 11 'python' senza Python installato e' un segnaposto che apre
+    # il Microsoft Store: esce con codice diverso da zero e non stampa versioni.
+    $reported = (& python --version 2>&1 | Out-String)
+    if ($LASTEXITCODE -eq 0 -and $reported -match "3\.(1[0-3])\b") { $pythonCmd = "python" }
 }
 if (-not $pythonCmd) {
+    $installed = ""
+    if (Get-Command py -ErrorAction SilentlyContinue) {
+        $installed = (& py --list 2>&1 | Out-String).Trim()
+    }
     throw @"
 Python 3.10-3.13 non trovato.
-Installalo da https://www.python.org/downloads/ (spunta 'Add python.exe to PATH')
-oppure con:  winget install Python.Python.3.12
+
+Installalo da https://www.python.org/downloads/
+IMPORTANTE: nella prima schermata dell'installer spunta 'Add python.exe to PATH'.
+Non usare la versione del Microsoft Store: ha restrizioni sui permessi delle
+cartelle che creano problemi a ComfyUI.
+
+Poi chiudi e riapri PowerShell e rilancia questo script.
+
+Versioni che il launcher vede adesso:
+$(if ($installed) { $installed } else { "  nessuna" })
 "@
 }
 Write-Ok "Python: $(& $pythonCmd @pythonArgs --version 2>&1)"
@@ -81,14 +114,17 @@ Write-Ok "Python: $(& $pythonCmd @pythonArgs --version 2>&1)"
 
 Write-Step "Installazione di ComfyUI in $ComfyPath"
 
+# git scrive l'avanzamento sul canale di errore anche quando va tutto bene:
+# solo il codice di uscita dice se e' andata davvero male.
 if (Test-Path (Join-Path $ComfyPath ".git")) {
     Write-Ok "gia' presente, aggiorno"
-    git -C $ComfyPath pull --ff-only
+    Invoke-Checked { git -C $ComfyPath pull --ff-only } "aggiornamento di ComfyUI fallito"
 } else {
     if ((Test-Path $ComfyPath) -and (Get-ChildItem $ComfyPath -Force | Measure-Object).Count -gt 0) {
         throw "$ComfyPath esiste e non e' vuota. Scegli un'altra cartella con -ComfyPath."
     }
-    git clone https://github.com/comfyanonymous/ComfyUI.git $ComfyPath
+    Invoke-Checked { git clone https://github.com/comfyanonymous/ComfyUI.git $ComfyPath } `
+        "download di ComfyUI fallito: controlla la connessione"
 }
 Write-Ok "sorgente pronto"
 

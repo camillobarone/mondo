@@ -25,7 +25,10 @@ param(
     [switch]$Force
 )
 
-$ErrorActionPreference = "Stop"
+# Come nell'installer: "Stop" farebbe fallire lo script per un semplice
+# avviso scritto sul canale di errore da un programma esterno. Il codice di
+# uscita di download_models.py e' l'unico segnale che conta.
+$ErrorActionPreference = "Continue"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $pathFile = Join-Path $RepoRoot "comfy-path.txt"
 
