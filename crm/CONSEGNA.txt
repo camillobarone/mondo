@@ -1,0 +1,416 @@
+﻿=======================================
+CONSEGNA — GESTIONALE MONDO IMMOBILIARE
+=======================================
+
+Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
+un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
+fatto e cosa è rimasto fuori.
+
+Aggiornato al 3 agosto 2026. Esiste anche come CONSEGNA.txt, stessa cosa
+in testo semplice, da aprire con il Blocco note senza bisogno di niente.
+
+  | Nessuna password è scritta qui, di proposito: questo file sta dentro il
+  | repository. Dove sono conservate è indicato di volta in volta.
+
+
+1 · IN UNA RIGA
+---------------
+
+CRM per Studio RCS Srls (Mondo Immobiliare Lecce, FIMAA dal 1994, uffici Lecce e
+Porto Cesareo). Gestisce clienti, richieste d'acquisto, portafoglio immobili,
+incroci automatici, venditori, trattative e adempimenti. Si usa dal browser, in
+italiano, anche da telefono. Online su server proprio, con HTTPS e copia
+notturna automatica.
+
+Indirizzo: https://gestionale.mondoimmobiliarelecce.it
+
+
+2 · GLI INDIRIZZI E CHI LI GESTISCE
+-----------------------------------
+
+  mondoimmobiliarelecce.it (il sito)
+      SiteGround · invariato, non è stato toccato
+
+  gestionale.mondoimmobiliarelecce.it (il CRM)
+      Aruba Cloud VPS · aggiunto in questa sessione
+
+
+Il DNS del dominio è su SiteGround — i name server sono ns1.siteground.net e
+ns2.siteground.net. Il sottodominio è stato creato lì, come record A nella
+zona DNS (Site Tools → Domain → DNS Zone Editor), non con lo strumento
+"Subdomains" (che avrebbe creato una cartella sull'hosting del sito, cosa
+diversa).
+
+    Tipo: A    Nome: gestionale    Valore: 77.81.234.151
+
+Sono due macchine diverse: il sito resta su SiteGround, il gestionale sta su
+Aruba. Se un giorno si cambia server, si cambia solo quel valore.
+
+
+SiteGround
+
+- pannello: siteground.com → Websites → mondoimmobiliarelecce.it → Site Tools
+- credenziali: quelle del sito, in possesso di chi lo segue
+- serve solo se si cambia l'IP del server o si aggiungono altri sottodomini
+
+
+Aruba Cloud
+
+- pannello: Cloud Management Platform di Aruba (cloud.aruba.it)
+- account cloud: ARU-352439
+- prodotto: Bare Metal e VPS → Cloud VPS, taglia O2A4
+  — 2 vCPU, 4 GB RAM, 40 GB disco, 6,29 €/mese + IVA
+- sistema: Ubuntu 24.04
+- IP pubblico: 77.81.234.151 (IPv4, indispensabile)
+- accesso: SSH come root, con la chiave caricata alla creazione
+
+  | Attenzione a non confonderlo con "Public Cloud → Cloud Server PRO", che è un
+  | prodotto diverso e costa più del doppio (13,70 €/mese) per le stesse esigenze.
+  | Il piano giusto sta sotto Bare Metal e VPS.
+
+Perché almeno 2 GB di RAM: la compilazione del programma tocca i 900 MB e su
+un piano da 1 GB viene interrotta a metà. Lo script di installazione, sotto i
+3 GB, aggiunge da sé 2 GB di memoria di scambio.
+
+Perché IPv4: i piani solo-IPv6 costano meno ma non sono raggiungibili dalla
+maggior parte delle connessioni italiane.
+
+GDPR: Aruba è nell'Unione Europea e fornisce l'accordo sul trattamento dei
+dati (art. 28 GDPR) da tenere agli atti — loro responsabili del trattamento, tu
+titolare.
+
+
+3 · IL CODICE
+-------------
+
+- repository GitHub: camillobarone/mondo
+- ramo di lavoro: claude/real-estate-client-management-app-xl7dnx
+- pull request aperta: #2
+- il programma sta nella cartella crm/
+
+Il server scarica direttamente da questo ramo: se si cambia ramo, vanno
+aggiornati gli URL dentro crm/deploy/installa.sh e crm/deploy/aggiorna.sh.
+
+
+Documentazione già nel repository
+
+  crm/README.md
+      come si usa, funzione per funzione — è il manuale
+
+  crm/deploy/README.md
+      come si mette online da zero, aggiornamenti, ripristini
+
+  crm/CONSEGNA.md
+      questo documento
+
+
+4 · COME È FATTO DENTRO
+-----------------------
+
+  Framework    Next.js 16.2.4 (App Router, Server Components, Server Actions)
+  Linguaggio   TypeScript, React 19.2.4
+  Grafica      Tailwind CSS v4
+  Archivio     SQLite con better-sqlite3 v13, modalità WAL
+  Immagini     sharp (ridimensiona a 1920 px + miniatura 480 px)
+  Accesso      password con scrypt, cookie di sessione firmato in HMAC
+
+Nessun database esterno, nessun servizio a pagamento, nessuna dipendenza da
+terzi oltre l'hosting. Non ci sono chiamate verso l'esterno: l'archivio
+resta sulla macchina.
+
+
+File chiave
+
+  src/lib/schema.ts
+      lo schema del database, unica fonte di verità, applicato all'avvio
+
+  src/lib/queries.ts
+      tutte le letture
+
+  src/lib/actions.ts
+      tutte le scritture (Server Actions)
+
+  src/lib/matching.ts
+      il motore degli incroci
+
+  src/lib/auth.ts
+      accesso, password, sessioni
+
+  src/lib/xlsx.ts
+      lettore di file Excel scritto a mano, senza librerie
+
+  src/lib/import-map.ts
+      riconoscimento dei tracciati del gestionale precedente
+
+  src/lib/photos.ts
+      salvataggio e ridimensionamento delle foto
+
+
+Due dettagli che sembrano scelte estetiche e invece non lo sono
+
+1. serverExternalPackages: ["better-sqlite3"] in next.config.ts. Senza,
+   la compilazione fallisce: è un modulo nativo e non va impacchettato.
+2. Il cookie di sessione mette secure in base a x-forwarded-proto, non a
+   NODE_ENV. Con NODE_ENV l'accesso funzionava sul computer dove girava il
+   programma e falliva silenziosamente su tutti gli altri dell'ufficio.
+
+
+5 · SUL SERVER, DOVE STA COSA
+-----------------------------
+
+  Cartella del programma
+      /opt/mondo-crm
+
+  Archivio
+      /opt/mondo-crm/data/mondo.db
+
+  Foto
+      /opt/mondo-crm/data/foto/<id immobile>/
+
+  Chiave delle sessioni
+      /opt/mondo-crm/data/secret.key (generata da sola, 0600)
+
+  Copie di sicurezza
+      /opt/mondo-crm/backup/
+
+  Utente di sistema
+      mondo (non amministratore)
+
+  Servizio
+      mondo-crm (systemd)
+
+  Porta interna
+      3000, solo su 127.0.0.1
+
+  Reverse proxy
+      nginx, /etc/nginx/sites-available/mondo-crm
+
+  Certificato
+      Let's Encrypt via certbot, si rinnova da sé
+
+  Firewall
+      ufw: aperte solo 22, 80, 443
+
+  Copia notturna
+      cron, /etc/cron.d/mondo-crm, ogni notte alle 02:00
+
+
+Il programma può scrivere soltanto in data/, backup/ e .next/
+(ProtectSystem=strict nel servizio systemd).
+
+
+Due impostazioni nginx da non perdere
+
+    client_max_body_size 32M;                        # senza, l'importazione fallisce
+    proxy_set_header X-Forwarded-Proto $scheme;      # senza, non si entra
+
+Il valore predefinito di nginx è 1 MB: un file Excel dell'archivio lo supera
+e l'importazione muore con un errore che non spiega niente.
+
+
+6 · I COMANDI CHE SERVONO DAVVERO
+---------------------------------
+
+Tutti da PowerShell sul PC, o da qualunque terminale.
+
+Aggiornare dopo una modifica al codice:
+    ssh root@77.81.234.151 "bash /opt/mondo-crm/deploy/aggiorna.sh"
+Fa una copia prima di toccare qualsiasi cosa, e se il programma non riparte lo
+dice invece di lasciare al buio.
+
+Vedere se sta bene:
+    ssh root@77.81.234.151 "systemctl status mondo-crm"
+    ssh root@77.81.234.151 "journalctl -u mondo-crm -n 50"
+
+Fare subito una copia (senza aspettare la notte):
+    ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
+
+Portare le copie sul PC — da fare una volta a settimana, su disco esterno:
+    scp root@77.81.234.151:/opt/mondo-crm/backup/*.db "F:\Gestionale backup"
+
+Ripristinare una copia (l'ordine conta: prima si ferma il programma):
+    systemctl stop mondo-crm
+    cp /opt/mondo-crm/backup/<copia>.db /opt/mondo-crm/data/mondo.db
+    chown mondo:mondo /opt/mondo-crm/data/mondo.db
+    systemctl start mondo-crm
+
+Creare un nuovo utente dalla riga di comando (di solito si fa da Utenti
+nel programma):
+    cd /opt/mondo-crm && sudo -u mondo npm run seed -- --email nome@dominio.it --password "una password lunga"
+
+Installazione da zero su un server nuovo:
+    curl -fsSL https://raw.githubusercontent.com/camillobarone/mondo/claude/real-estate-client-management-app-xl7dnx/crm/deploy/installa.sh \
+      | bash -s -- gestionale.mondoimmobiliarelecce.it tua@email.it
+
+
+Nota per PowerShell
+
+Le virgolette annidate non funzionano come su Linux. Questo perde il cd e
+dà Cannot find module:
+    ssh root@IP 'sudo -u mondo bash -c "cd /opt/mondo-crm && node scripts/backup.mjs"'
+Va scritto così:
+    ssh root@IP "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
+
+
+7 · LE COPIE DI SICUREZZA
+-------------------------
+
+- una a notte alle 02:00, in /opt/mondo-crm/backup/
+- si usa l'API di backup di SQLite: la copia è coerente anche se qualcuno
+  sta scrivendo in quel momento
+- quelle oltre i 60 giorni si cancellano da sole
+- vengono copiate anche le foto
+
+  | Una copia sullo stesso server non è una copia. Se quel disco muore, muore
+  | con lui. Va portata fuori — su F:\Gestionale backup, una volta a settimana,
+  | con il comando scp sopra.
+
+
+8 · L'ARCHIVIO DENTRO ADESSO
+----------------------------
+
+Migrato dai file esportati dal gestionale precedente:
+
+  clienti_export.xlsx (1.111 righe)
+      1.108 clienti importati, 3 doppioni saltati
+
+  nelle note degli stessi clienti
+      206 richieste d'acquisto riconosciute e ricostruite
+
+  lista_immobili03_08_2026.xls (53 righe)
+      53 immobili
+
+
+I clienti vanno dal 22/03/2023 al 31/07/2026.
+
+L'importazione legge il file Excel direttamente, senza conversione in CSV.
+La prima versione passava per il CSV e perdeva dati; è stato scritto un lettore
+.xlsx senza librerie (ZIP + inflateRawSync di Node), verificato cella per
+cella contro openpyxl: 8.896 celle, zero differenze.
+
+Il tracciato del gestionale precedente è riconosciuto da solo: nomi e cognomi
+divisi correttamente (comprese le particelle tipo De, Di, Lo), telefoni
+separati fra fisso e cellulare (in Italia i cellulari iniziano per 3), e le
+richieste estratte dal testo libero delle note.
+
+I venditori sono ancora da inserire — era rimasto in sospeso.
+
+
+9 · COSA È STATO FATTO, IN ORDINE
+---------------------------------
+
+21 commit. In sintesi:
+
+1. Il programma — clienti, richieste, immobili, incroci, agenda, trattative,
+   report, adempimenti, accesso e permessi.
+2. Prestazioni — regge l'archivio reale; provato con 3.000 clienti, gli
+   incroci restano sotto i 2,5 secondi.
+3. Tre incroci mancati, tre cause diverse trovate e risolte: la soglia di
+   punteggio troppo alta, il confronto delle zone letterale (ora accento- e
+   punteggiatura-insensibile, e "Torre Lapillo" incrocia "Porto Cesareo · Torre
+   Lapillo"), e il budget minimo che escludeva. Una quarta era un budget minimo
+   invisibile nell'interfaccia: ora l'elenco mostra la fascia intera e
+   segnala le combinazioni contraddittorie.
+4. Importazione — dal file Excel diretto, con riconoscimento del tracciato.
+5. Accesso dagli altri computer dell'ufficio (il bug del cookie).
+6. Messa online con un comando solo: installa.sh fa tutto, e si può
+   rilanciare senza danni.
+7. Foto sugli immobili.
+8. Venditori — sezione separata, con gli immobili di ciascuno e l'avviso
+   compleanni in Agenda, con gli auguri WhatsApp già scritti.
+9. Legame venditore–immobile da entrambe le parti, con ricerca invece di
+   una tendina con dentro tutto l'archivio.
+10. Resoconto per il proprietario — l'ultima cosa fatta, vedi sotto.
+
+
+Il resoconto per il proprietario
+
+Su ogni scheda immobile, in alto: una pagina sola, da stampare o salvare in PDF
+(dalla finestra di stampa, scegliendo "Salva come PDF") e mandare su WhatsApp.
+
+Serve alla conversazione più difficile del mestiere — dire che il prezzo è fuori
+mercato. A parole è opinione contro opinione; con i numeri della sua casa in
+mano è un fatto. Mostra quanti clienti in archivio cercano davvero una casa
+così, quanti contatti e visite ci sono stati, **chi si è fermato soltanto sul
+prezzo** e a quali cifre l'immobile tornerebbe nel loro raggio (con quanti
+acquirenti a ciascuna), le frasi scritte dai visitatori, la storia dei ribassi e
+le proposte.
+
+Nel conteggio degli acquirenti c'è un margine dell'8% sul budget dichiarato,
+perché in trattativa quel margine c'è quasi sempre.
+
+
+10 · COSA NON C'È
+-----------------
+
+Escluso d'accordo, non dimenticato:
+
+- invio annunci ai portali
+- firma digitale
+- invii massivi di email/WhatsApp
+- generazione automatica dei contratti
+- app da scaricare (si usa dal browser, anche dal telefono)
+- fatturazione
+
+
+11 · PRIVACY E ADEMPIMENTI
+--------------------------
+
+- consenso privacy con data e ambito, su ogni scheda cliente
+- adeguata verifica antiriciclaggio (D.lgs 231/2007): tipo e numero
+  documento, scadenza, data del controllo
+- registro accessi: chi ha fatto cosa e quando
+- cancellazione logica: i clienti eliminati restano nell'archivio con la
+  data di cancellazione, non spariscono
+- l'accordo art. 28 GDPR con Aruba va tenuto agli atti
+
+
+12 · SE QUALCOSA NON VA
+-----------------------
+
+  Il sito non si apre
+      systemctl status mondo-crm, poi journalctl -u mondo-crm -n 50
+
+  Non si entra da un altro computer
+      proxy_set_header X-Forwarded-Proto in nginx
+
+  L'importazione di un file grosso fallisce
+      client_max_body_size in nginx (il valore normale, 1 MB, è troppo
+      poco)
+
+  La compilazione si ferma a metà
+      RAM insufficiente — serve la memoria di scambio
+
+  not found: make durante l'installazione
+      mancano build-essential e python3
+
+  Un cliente non compare negli incroci
+      il programma incrocia le richieste, non i clienti: senza una
+      richiesta registrata non appare. La scheda immobile ha il riquadro
+      Richieste scartate che dice il motivo di ogni esclusione
+
+  Il certificato è scaduto
+      certbot renew — normalmente si rinnova da solo
+
+
+13 · DOVE STANNO LE PASSWORD
+----------------------------
+
+Nessuna è in questo file né nel repository.
+
+  Accesso al gestionale
+      creato all'installazione, stampato a schermo; poi si gestisce da
+      Utenti
+
+  SSH al server
+      chiave SSH sul PC
+
+  Pannello Aruba
+      account ARU-352439, credenziali personali
+
+  Pannello SiteGround
+      credenziali del sito
+
+  Chiave delle sessioni
+      generata dal programma in data/secret.key — non va cancellata:
+      cancellarla fa uscire tutti
