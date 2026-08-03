@@ -13,13 +13,11 @@ import type { Property } from "@/lib/types";
 export function PropertyForm({
   property,
   userOptions,
-  clientOptions,
   defaultAgentId,
   zoneOptions,
 }: {
   property?: Property;
   userOptions: { value: string; label: string }[];
-  clientOptions: { value: string; label: string }[];
   defaultAgentId: number;
   /** Zone gia' in archivio: suggerimenti, non un elenco chiuso. */
   zoneOptions: string[];
@@ -137,14 +135,20 @@ export function PropertyForm({
             defaultValue={property?.min_price}
             hint="Riservato: non compare negli annunci"
           />
-          <SelectField
-            label="Proprietario"
+          {/* Il proprietario si collega dalla scheda dell'immobile, dove c'e'
+              una ricerca: una tendina con tutto l'archivio clienti dentro non
+              e' utilizzabile. Qui viaggia nascosto per non perderlo. */}
+          <input
+            type="hidden"
             name="owner_client_id"
-            options={clientOptions}
-            defaultValue={property?.owner_client_id}
-            placeholder="Non collegato"
-            hint="Scegli una scheda cliente"
+            value={property?.owner_client_id ?? ""}
           />
+          <div className="text-xs text-slate-400 sm:col-span-2 lg:col-span-1">
+            <span className="field-label">Proprietario</span>
+            {property?.owner_client_id
+              ? "Collegato. Si cambia dalla scheda dell'immobile."
+              : "Si collega dalla scheda dell'immobile, dopo aver salvato: lì c'è la ricerca fra i clienti."}
+          </div>
 
           <TextField
             label="Inizio incarico"

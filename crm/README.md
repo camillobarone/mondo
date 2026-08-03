@@ -185,7 +185,12 @@ stata compilata la scheda.
 è lo stesso legame e lo si cerca da dove ci si trova in quel momento:
 
 - dalla **scheda dell'immobile**, quando manca il proprietario compare un
-  riquadro per sceglierlo fra i clienti in archivio;
+  riquadro con una **ricerca**: scrivi cognome o numero di telefono e compaiono
+  i clienti che corrispondono, ognuno con il suo pulsante *Collega*. Senza
+  scrivere niente propone chi è già segnato come venditore. Una tendina con
+  tutto l'archivio dentro non sarebbe utilizzabile, e filtrarla per ruolo
+  renderebbe introvabile proprio chi serve: nelle schede importate quel ruolo
+  non c'è quasi mai;
 - dalla **scheda del cliente**, in fondo agli immobili di proprietà, si sceglie
   fra quelli ancora senza intestatario — così non si porta via per sbaglio
   l'immobile di qualcun altro.

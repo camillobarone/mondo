@@ -670,19 +670,63 @@ export function countPropertiesWithoutOwner(): number {
 }
 
 /**
- * Clienti da proporre come proprietario. Il cellulare nell'etichetta serve a
- * distinguere gli omonimi, che in un archivio da mille schede ci sono sempre.
+ * Chi proporre come proprietario di un immobile.
+ *
+ * Senza ricerca mostra solo chi e' gia' segnato come venditore o locatore:
+ * di solito sono pochi e c'e' subito quello giusto. Con la ricerca cerca in
+ * tutto l'archivio, perche' il proprietario spesso e' una scheda che quel
+ * ruolo non ce l'ha — in un archivio importato non ce l'ha quasi nessuno,
+ * e filtrare per ruolo lo renderebbe introvabile.
+ *
+ * In nessun caso si riversano mille nomi in una tendina.
  */
-export function ownerCandidates(): { value: string; label: string }[] {
-  return all<{ id: number; label: string }>(
-    `SELECT id,
-            TRIM(COALESCE(last_name,'') || ' ' || COALESCE(first_name,'')) ||
-            CASE WHEN company IS NOT NULL AND company != '' THEN ' (' || company || ')' ELSE '' END ||
-            CASE WHEN mobile IS NOT NULL AND mobile != '' THEN ' — ' || mobile ELSE '' END AS label
-       FROM clients
-      WHERE deleted_at IS NULL
-      ORDER BY last_name COLLATE NOCASE, first_name COLLATE NOCASE`,
-  ).map((row) => ({ value: String(row.id), label: row.label || `Cliente #${row.id}` }));
+export function searchOwnerCandidates(q: string | undefined, limit = 15): {
+  rows: Client[];
+  total: number;
+  searched: boolean;
+} {
+  const cerca = q?.trim();
+
+  if (!cerca) {
+    return {
+      rows: all<Client>(
+        `SELECT * FROM clients
+          WHERE deleted_at IS NULL
+            AND ((',' || roles || ',') LIKE '%,venditore,%'
+                 OR (',' || roles || ',') LIKE '%,locatore,%')
+          ORDER BY last_name COLLATE NOCASE, first_name COLLATE NOCASE
+          LIMIT ?`,
+        [limit],
+      ),
+      total: count(
+        `SELECT COUNT(*) AS n FROM clients
+          WHERE deleted_at IS NULL
+            AND ((',' || roles || ',') LIKE '%,venditore,%'
+                 OR (',' || roles || ',') LIKE '%,locatore,%')`,
+      ),
+      searched: false,
+    };
+  }
+
+  const like = `%${cerca}%`;
+  const where = `deleted_at IS NULL AND (
+      first_name LIKE ? OR last_name LIKE ? OR company LIKE ?
+      OR mobile LIKE ? OR phone LIKE ? OR email LIKE ?
+      OR (last_name || ' ' || first_name) LIKE ?
+      OR (first_name || ' ' || last_name) LIKE ?
+    )`;
+  const params = [like, like, like, like, like, like, like, like];
+
+  return {
+    rows: all<Client>(
+      `SELECT * FROM clients WHERE ${where}
+        ORDER BY last_name COLLATE NOCASE, first_name COLLATE NOCASE
+        LIMIT ?`,
+      [...params, limit],
+    ),
+    total: count(`SELECT COUNT(*) AS n FROM clients WHERE ${where}`, params),
+    searched: true,
+  };
 }
 
 /* =========================================================== compleanni */

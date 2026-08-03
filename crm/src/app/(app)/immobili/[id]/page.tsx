@@ -11,13 +11,12 @@ import {
   activeUserOptions,
 } from "@/lib/queries";
 import { matchesForProperty, countMatchesForProperty, nearMissesForProperty } from "@/lib/matching";
-import { photosOfProperty, ownerCandidates } from "@/lib/queries";
+import { photosOfProperty, searchOwnerCandidates } from "@/lib/queries";
 import { linkOwner } from "@/lib/actions";
-import { SelectField } from "@/components/ui";
 import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
 import { deleteProperty } from "@/lib/actions";
-import { euro, shortDate, dateTime, relative, label } from "@/lib/format";
+import { euro, shortDate, dateTime, relative, label, fullName } from "@/lib/format";
 import {
   PageHeader,
   Card,
@@ -35,9 +34,16 @@ import { PROPERTY_STATUSES, OFFER_STATUSES } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PropertyPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ proprietario?: string }>;
+}) {
   const user = await requireUser();
   const { id } = await params;
+  const query = await searchParams;
   const propertyId = Number(id);
 
   const property = getProperty(propertyId);
@@ -47,7 +53,9 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const matchCount = countMatchesForProperty(property);
   const missed = nearMissesForProperty(property);
   const photos = photosOfProperty(property.id);
-  const proprietari = property.owner_client_id ? [] : ownerCandidates();
+  const proprietari = property.owner_client_id
+    ? { rows: [], total: 0, searched: false }
+    : searchOwnerCandidates(query.proprietario);
   const offers = offersOfProperty(propertyId);
   const activities = activitiesOfProperty(propertyId);
   const prices = priceHistory(propertyId);
@@ -139,19 +147,68 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           </Card>
 
           {!property.owner_client_id ? (
-            <Card title="Collega il proprietario">
-              <form action={linkOwner} className="space-y-3">
-                <input type="hidden" name="property_id" value={property.id} />
-                <SelectField
-                  label="Chi è il proprietario"
-                  name="client_id"
-                  options={proprietari}
-                  placeholder="Scegli dall'archivio clienti…"
-                  hint="Scrivi le prime lettere del cognome per trovarlo in fretta."
-                />
-                <SubmitButton>Collega</SubmitButton>
+            <Card title="Collega il proprietario" bodyClassName="">
+              <form method="get" className="flex flex-wrap items-end gap-2 p-4 pb-3">
+                <div className="min-w-0 flex-1">
+                  <label className="field-label" htmlFor="proprietario">
+                    Cerca il proprietario
+                  </label>
+                  <input
+                    id="proprietario"
+                    name="proprietario"
+                    defaultValue={query.proprietario ?? ""}
+                    placeholder="Cognome, nome o numero di telefono"
+                    className="field"
+                    autoComplete="off"
+                  />
+                </div>
+                <button type="submit" className="btn-secondary">
+                  Cerca
+                </button>
               </form>
-              <p className="mt-2 text-xs text-slate-400">
+
+              {proprietari.rows.length === 0 ? (
+                <p className="px-4 pb-4 text-sm text-slate-500">
+                  {proprietari.searched
+                    ? "Nessun cliente trovato con questo nome."
+                    : "Nessun cliente è ancora segnato come venditore: cerca per cognome qui sopra."}
+                </p>
+              ) : (
+                <>
+                  <p className="px-4 pb-1 text-xs text-slate-400">
+                    {proprietari.searched
+                      ? `${proprietari.total} trovati${
+                          proprietari.total > proprietari.rows.length
+                            ? `, mostrati i primi ${proprietari.rows.length} — restringi la ricerca`
+                            : ""
+                        }`
+                      : "Clienti già segnati come venditori. Se non c'è, cercalo qui sopra."}
+                  </p>
+                  <ul className="divide-y divide-slate-100 border-t border-slate-100">
+                    {proprietari.rows.map((candidato) => (
+                      <li
+                        key={candidato.id}
+                        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm text-slate-800">{fullName(candidato)}</p>
+                          <p className="text-xs text-slate-500">
+                            {candidato.mobile ?? candidato.phone ?? "nessun recapito"}
+                            {candidato.city ? ` · ${candidato.city}` : ""}
+                          </p>
+                        </div>
+                        <form action={linkOwner}>
+                          <input type="hidden" name="property_id" value={property.id} />
+                          <input type="hidden" name="client_id" value={candidato.id} />
+                          <SubmitButton>Collega</SubmitButton>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              <p className="px-4 py-3 text-xs text-slate-400">
                 Se non è ancora in archivio,{" "}
                 <Link href="/clienti/nuovo" className="text-brand-700 hover:underline">
                   creagli prima la scheda

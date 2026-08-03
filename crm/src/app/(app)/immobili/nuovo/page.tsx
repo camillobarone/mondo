@@ -25,10 +25,6 @@ export default async function NewPropertyPage() {
       <PropertyForm
         zoneOptions={knownZones()}
         userOptions={activeUserOptions()}
-        clientOptions={clients.map((client) => ({
-          value: String(client.id),
-          label: client.name || `Cliente #${client.id}`,
-        }))}
         defaultAgentId={user.id}
       />
     </>

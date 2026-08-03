@@ -30,10 +30,6 @@ export default async function EditPropertyPage({
         zoneOptions={knownZones()}
         property={property}
         userOptions={activeUserOptions()}
-        clientOptions={clients.map((client) => ({
-          value: String(client.id),
-          label: client.name || `Cliente #${client.id}`,
-        }))}
         defaultAgentId={user.id}
       />
     </>
