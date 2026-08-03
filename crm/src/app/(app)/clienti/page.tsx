@@ -207,7 +207,8 @@ export default async function ClientsPage({
                         </Link>
                         {client.open_requirements > 0 ? (
                           <span className="ml-2 text-xs text-brand-700">
-                            {client.open_requirements} richieste
+                            {client.open_requirements}{" "}
+                            {client.open_requirements === 1 ? "richiesta" : "richieste"}
                           </span>
                         ) : null}
                         {client.city ? (
