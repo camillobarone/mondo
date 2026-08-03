@@ -390,3 +390,42 @@ def test_cpu_vae_sostituisce_fp32_vae():
 
 def test_il_motore_riceve_i_parametri():
     assert dashboard.Engine(extra=["--lowvram"]).flags[-1] == "--lowvram"
+
+
+# ------------------------------------------------ causa di un motore che muore
+#
+# Quando ComfyUI viene ucciso a meta' generazione, la dashboard vede solo una
+# connessione caduta. Il motivo sta nel registro del motore, che al riavvio
+# successivo viene sovrascritto: va allegato all'errore subito.
+
+
+def test_il_registro_si_allega_a_un_motore_caduto(tmp_path, monkeypatch):
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(tmp_path))
+    (tmp_path / "motore.log").write_text(
+        "caricamento\n\nUR_RESULT_ERROR_OUT_OF_RESOURCES\n", encoding="utf-8"
+    )
+    esito = dashboard.con_causa("Il server ComfyUI non risponde piu': Connection aborted.")
+    assert "UR_RESULT_ERROR_OUT_OF_RESOURCES" in esito
+    assert "registro" in esito
+
+
+def test_gli_altri_errori_restano_puliti(tmp_path, monkeypatch):
+    """Allegare il registro a "Descrivi cosa vuoi generare" sarebbe rumore."""
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(tmp_path))
+    (tmp_path / "motore.log").write_text("roba\n", encoding="utf-8")
+    assert dashboard.con_causa("Serve una foto di partenza.") == "Serve una foto di partenza."
+
+
+def test_senza_registro_il_messaggio_non_peggiora(tmp_path, monkeypatch):
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(tmp_path))
+    assert dashboard.con_causa("Il motore non risponde.") == "Il motore non risponde."
+
+
+def test_del_registro_si_tiene_solo_la_coda(tmp_path, monkeypatch):
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(tmp_path))
+    righe = "\n".join(f"riga {n}" for n in range(100))
+    (tmp_path / "motore.log").write_text(righe, encoding="utf-8")
+    esito = dashboard.coda_registro()
+    assert "riga 99" in esito
+    assert "riga 0\n" not in esito
+    assert len(esito.splitlines()) == dashboard.RIGHE_REGISTRO

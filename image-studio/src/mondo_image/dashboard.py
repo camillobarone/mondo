@@ -77,6 +77,42 @@ def flag_motore(extra: list[str]) -> list[str]:
 # ampiamente sotto, e impedisce che una richiesta malformata occupi la memoria.
 MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 
+# Quando ComfyUI muore durante una generazione, dalla dashboard si vede solo una
+# connessione caduta: il motivo sta nel registro del motore. Allegarne la coda
+# all'errore evita di dover chiedere all'utente di andarlo a leggere a mano —
+# e il registro viene sovrascritto al riavvio successivo, quindi chi non lo
+# guarda subito lo perde.
+SEGNALI_MOTORE_MORTO = (
+    "non risponde",
+    "connection aborted",
+    "connectionreset",
+    "remotedisconnected",
+    "connessione",
+)
+RIGHE_REGISTRO = 12
+
+
+def coda_registro(percorso: str | None = None, righe: int = RIGHE_REGISTRO) -> str:
+    """Ultime righe non vuote del registro del motore, o stringa vuota."""
+    percorso = percorso or os.path.join(PROJECT_ROOT, "motore.log")
+    try:
+        with open(percorso, encoding="utf-8", errors="replace") as handle:
+            lette = [riga.rstrip() for riga in handle if riga.strip()]
+    except OSError:
+        return ""
+    return "\n".join(lette[-righe:])
+
+
+def con_causa(messaggio: str) -> str:
+    """Arricchisce col registro i soli errori che indicano un motore morto."""
+    basso = messaggio.lower()
+    if not any(segnale in basso for segnale in SEGNALI_MOTORE_MORTO):
+        return messaggio
+    coda = coda_registro()
+    if not coda:
+        return messaggio
+    return f"{messaggio}\n\nUltime righe del registro del motore:\n{coda}"
+
 
 # ------------------------------------------------------------------- motore
 
@@ -427,7 +463,10 @@ def _esegui(engine: Engine, jobs: Jobs, job_id: str, payload: dict) -> None:
     try:
         client = engine.client
         if not client.is_up():
-            raise ComfyError("Il motore non risponde. Riavvia avvia.bat.")
+            raise ComfyError(
+                "Il motore non risponde. Chiudi la finestra dei comandi e "
+                "rilancia il comando con cui hai avviato il programma."
+            )
 
         prompt = build_graph(payload, client, workdir)
         prompt_id = client.queue(prompt)
@@ -453,9 +492,9 @@ def _esegui(engine: Engine, jobs: Jobs, job_id: str, payload: dict) -> None:
             immagini=salvate,
         )
     except ComfyError as exc:
-        jobs.update(job_id, stato="errore", errore=str(exc))
+        jobs.update(job_id, stato="errore", errore=con_causa(str(exc)))
     except Exception as exc:  # imprevisti: meglio mostrarli che lasciare la pagina in attesa
-        jobs.update(job_id, stato="errore", errore=f"{type(exc).__name__}: {exc}")
+        jobs.update(job_id, stato="errore", errore=con_causa(f"{type(exc).__name__}: {exc}"))
     finally:
         for nome in ("foto.png", "maschera.png"):
             try:

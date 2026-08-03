@@ -550,11 +550,16 @@
       suggerimento = "<p>Memoria video esaurita. Chiudi la finestra dei comandi da cui hai " +
         "avviato il programma e riavvialo aggiungendo <code>--lowvram</code> in fondo al comando. " +
         "Se non basta, aggiungi anche <code>--cpu-vae</code>.</p>";
-    } else if (/non risponde|Riavvia avvia/i.test(testo)) {
-      suggerimento = "<p>Chiudi la finestra nera e riapri <code>avvia.bat</code>.</p>";
+    } else if (/non risponde|Connection aborted|ConnectionReset|Connessione/i.test(testo)) {
+      suggerimento = "<p>Il motore si &egrave; spento durante il lavoro. Chiudi la finestra dei " +
+        "comandi e rilancia lo stesso comando con cui hai avviato il programma. Se qui sopra " +
+        "compaiono le righe del registro, la causa &egrave; scritta l&igrave;.</p>";
     }
+    // Il registro allegato arriva su piu' righe: senza questa conversione
+    // finirebbe tutto appiattito su una riga sola e illeggibile.
+    var corpo = testo.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>");
     return '<div class="errore"><h3>Non &egrave; riuscita</h3><p>' +
-      testo.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</p>" + suggerimento + "</div>";
+      corpo + "</p>" + suggerimento + "</div>";
   }
 
   el("genera").onclick = function () {
