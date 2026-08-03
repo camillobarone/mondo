@@ -119,6 +119,13 @@ Windows con `GetFolderPath('Desktop')`.
 **Fra i VAE ComfyUI elenca `pixel_space`**, che è una modalità interna e non un
 file: la selezione automatica scarta le voci senza estensione di modello.
 
+**Sul suo PC l'estensione `.bat` è associata a un editor di testo.** Il doppio
+clic su `avvia.bat` ne mostra il contenuto invece di eseguirlo. I collegamenti
+creati dal progetto puntano quindi a `cmd.exe /c "…\avvia.bat"`, così
+l'associazione non viene consultata. **Conseguenza pratica: nessun `.bat` gli
+si può far eseguire con un doppio clic** finché non sistema l'associazione —
+vanno lanciati da PowerShell o tramite un collegamento a `cmd.exe`.
+
 ---
 
 ## Misure reali sull'hardware
@@ -157,9 +164,15 @@ Foto di prova che aveva usato:
 
 ## Altri punti in sospeso
 
-- **La dashboard non è mai stata provata sul suo PC.** È verificata solo contro
-  un finto ComfyUI (13 test). L'ultimo tentativo si è fermato su `WinError 10013`,
-  corretto ma non riprovato.
+- **La dashboard non è mai stata avviata sul suo PC.** È verificata solo contro
+  un finto ComfyUI. Due tentativi falliti, entrambi corretti ma non riprovati:
+  prima `WinError 10013` sulla porta, poi il doppio clic che apriva il file nel
+  Blocco note.
+- **Il collegamento sul Desktop deve crearlo a mano**, perché anche
+  `crea-collegamento.bat` è un `.bat` e sul suo PC non parte. Ricetta data:
+  tasto destro sul Desktop → Nuovo → Collegamento → percorso
+  `cmd.exe /c "C:\Users\P.S.Assemblato\mondo\image-studio\avvia.bat"`.
+  **Da verificare se l'ha fatto e se la dashboard si è aperta.**
 - **Il checkpoint fotorealistico non è scaricato.** Sta usando SDXL base, che
   sugli interni rende poco. Comando:
   `.\install\2-scarica-modelli.ps1 -Only juggernaut-xl` (7 GB).
