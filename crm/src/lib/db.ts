@@ -25,7 +25,42 @@ function connect(): Database.Database {
   database.pragma("journal_mode = WAL");
   database.pragma("foreign_keys = ON");
   database.exec(SCHEMA);
+  aggiungiColonneMancanti(database);
   return database;
+}
+
+/**
+ * Colonne aggiunte dopo che il programma era gia' in esercizio.
+ *
+ * `CREATE TABLE IF NOT EXISTS` non tocca una tabella che esiste gia': su un
+ * archivio vero, che non si puo' ricreare da zero, le colonne nuove vanno
+ * aggiunte una per una. `ALTER TABLE ADD COLUMN` non e' ripetibile, quindi
+ * prima si guarda cosa c'e'.
+ */
+const COLONNE_AGGIUNTE: { tabella: string; colonna: string; definizione: string }[] = [
+  // Chiave dell'abbonamento al calendario: sta nell'indirizzo del feed, quindi
+  // vale come password e si genera solo quando serve.
+  { tabella: "users", colonna: "calendar_token", definizione: "TEXT" },
+  // Quando e' partito il promemoria dei 30 minuti: senza, ripartirebbe a ogni
+  // giro del cron.
+  { tabella: "activities", colonna: "reminded_at", definizione: "TEXT" },
+];
+
+function aggiungiColonneMancanti(database: Database.Database) {
+  for (const { tabella, colonna, definizione } of COLONNE_AGGIUNTE) {
+    const presenti = database
+      .prepare(`PRAGMA table_info(${tabella})`)
+      .all() as { name: string }[];
+    if (presenti.some((campo) => campo.name === colonna)) continue;
+    try {
+      database.exec(`ALTER TABLE ${tabella} ADD COLUMN ${colonna} ${definizione}`);
+    } catch (errore) {
+      // In compilazione Next apre il database da piu' processi insieme: due
+      // possono vedere la colonna mancante e provare ad aggiungerla entrambi.
+      // Il secondo trova che c'e' gia', ed e' esattamente quello che voleva.
+      if (!String(errore).includes("duplicate column name")) throw errore;
+    }
+  }
 }
 
 // In sviluppo Next ricarica i moduli a ogni modifica: senza il globale

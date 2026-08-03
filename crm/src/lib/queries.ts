@@ -1,5 +1,6 @@
 import "server-only";
-import { all, one, count } from "./db";
+import crypto from "node:crypto";
+import { all, one, count, run } from "./db";
 import { fromCsv } from "./format";
 import { ZONES } from "./types";
 import type {
@@ -570,6 +571,67 @@ export function agenda(userId: number | null) {
   };
 }
 
+/** Una singola attivita', per la pagina di modifica. */
+export function getActivity(id: number): ActivityRow | undefined {
+  return one<ActivityRow>(`${ACTIVITY_SELECT} WHERE a.id = ?`, [id]);
+}
+
+/* ==================================================================== calendario */
+
+/**
+ * Gli appuntamenti da mettere nel calendario di una persona.
+ *
+ * Solo quelli con una data: una nota o una telefonata gia' fatta non e' un
+ * appuntamento. Si tiene un mese indietro perche' un calendario che dimentica
+ * subito il passato e' scomodo da consultare, e un anno avanti perche' oltre
+ * non si prende appuntamento.
+ */
+export function calendarActivities(userId: number): ActivityRow[] {
+  return all<ActivityRow>(
+    `${ACTIVITY_SELECT}
+      WHERE a.user_id = ?
+        AND a.due_at IS NOT NULL
+        AND date(a.due_at) >= date('now', '-30 days')
+        AND date(a.due_at) <= date('now', '+365 days')
+      ORDER BY a.due_at`,
+    [userId],
+  );
+}
+
+/**
+ * La chiave che sta nell'indirizzo del calendario. Vale come una password —
+ * chi ce l'ha vede gli appuntamenti — quindi e' lunga e casuale, e si genera
+ * la prima volta che serve invece di darne una a tutti fin dall'inizio.
+ */
+export function calendarToken(userId: number): string {
+  const riga = one<{ calendar_token: string | null }>(
+    `SELECT calendar_token FROM users WHERE id = ?`,
+    [userId],
+  );
+  if (riga?.calendar_token) return riga.calendar_token;
+
+  const token = crypto.randomBytes(24).toString("base64url");
+  run(`UPDATE users SET calendar_token = ? WHERE id = ?`, [token, userId]);
+  return token;
+}
+
+/** Genera una chiave nuova: la precedente smette di funzionare. */
+export function resetCalendarToken(userId: number): string {
+  const token = crypto.randomBytes(24).toString("base64url");
+  run(`UPDATE users SET calendar_token = ? WHERE id = ?`, [token, userId]);
+  return token;
+}
+
+export function userByCalendarToken(
+  token: string,
+): { id: number; name: string; email: string } | undefined {
+  if (!token || token.length < 20) return undefined;
+  return one<{ id: number; name: string; email: string }>(
+    `SELECT id, name, email FROM users WHERE calendar_token = ? AND active = 1`,
+    [token],
+  );
+}
+
 /* ============================================== report per il proprietario */
 
 export interface PropertyReport {
@@ -603,11 +665,16 @@ export function propertyReport(property: Property): PropertyReport {
     [property.id],
   );
 
+  // Solo l'esito, mai le note. Le note sono i promemoria dell'agente ("portare
+  // la planimetria", "chiedere lo sconto"): finirebbero virgolettate in un
+  // foglio che si consegna al proprietario, come se le avesse dette il
+  // visitatore. L'esito e' il campo che si compila apposta, quando la visita
+  // si segna come fatta.
   const feedback = visits
-    .filter((visit) => (visit.outcome ?? "").trim() || (visit.notes ?? "").trim())
+    .filter((visit) => visit.done_at && (visit.outcome ?? "").trim())
     .map((visit) => ({
-      date: visit.done_at ?? visit.due_at,
-      text: (visit.outcome ?? "").trim() || (visit.notes ?? "").trim(),
+      date: visit.done_at,
+      text: (visit.outcome ?? "").trim(),
       client: visit.client_name || null,
     }));
 

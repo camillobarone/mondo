@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { all } from "@/lib/db";
 import {
   getClient,
   activitiesOfClient,
@@ -63,6 +64,10 @@ export default async function ClientPage({
   const offers = offersOfClient(clientId);
   const activities = activitiesOfClient(clientId);
   const users = activeUserOptions();
+  const propertyOptions = all<{ id: number; title: string }>(
+    `SELECT id, title FROM properties WHERE deleted_at IS NULL
+      ORDER BY updated_at DESC LIMIT 300`,
+  ).map((property) => ({ value: String(property.id), label: property.title }));
 
   const editing = query.modifica_richiesta
     ? requirements.find((r) => r.id === Number(query.modifica_richiesta))
@@ -478,10 +483,14 @@ export default async function ClientPage({
 
           {/* --------------------------------------------------------- storico */}
           <Card title="Registra un contatto">
+            {/* L'immobile si sceglie anche da qui: una visita registrata dalla
+                scheda del cliente, senza casa collegata, sparisce dal resoconto
+                che poi si consegna al proprietario. */}
             <ActivityForm
               clientId={client.id}
               userOptions={users}
               defaultUserId={user.id}
+              propertyOptions={propertyOptions}
               compact
             />
           </Card>
@@ -527,7 +536,15 @@ export default async function ClientPage({
                         </p>
                       ) : null}
                     </div>
-                    {!activity.done_at ? <CompleteButton id={activity.id} /> : null}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Link
+                        href={`/agenda/${activity.id}/modifica?da=/clienti/${client.id}`}
+                        className="text-xs text-slate-400 hover:text-brand-700 hover:underline"
+                      >
+                        Modifica
+                      </Link>
+                      {!activity.done_at ? <CompleteButton id={activity.id} /> : null}
+                    </div>
                   </li>
                 ))}
               </ul>

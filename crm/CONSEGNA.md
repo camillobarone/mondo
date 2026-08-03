@@ -124,6 +124,7 @@ resta sulla macchina.
 | `src/lib/xlsx.ts` | lettore di file Excel scritto a mano, senza librerie |
 | `src/lib/import-map.ts` | riconoscimento dei tracciati del gestionale precedente |
 | `src/lib/photos.ts` | salvataggio e ridimensionamento delle foto |
+| `src/lib/calendar.ts` | generazione dei file di calendario (iCalendar) |
 
 ### Due dettagli che sembrano scelte estetiche e invece non lo sono
 
@@ -151,6 +152,9 @@ resta sulla macchina.
 | Certificato | Let's Encrypt via certbot, si rinnova da sé |
 | Firewall | ufw: aperte solo 22, 80, 443 |
 | Copia notturna | cron, `/etc/cron.d/mondo-crm`, ogni notte alle **02:00** |
+| Avvisi email | stesso cron, ogni **5 minuti**, `scripts/promemoria.mjs` |
+| Configurazione posta | `/etc/mondo-crm.env` (fuori dal programma, sopravvive agli aggiornamenti) |
+| Fuso orario | `TZ=Europe/Rome` nel servizio e nel cron |
 
 Il programma può scrivere soltanto in `data/`, `backup/` e `.next/`
 (`ProtectSystem=strict` nel servizio systemd).
@@ -228,6 +232,47 @@ ssh root@IP "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
 
 ---
 
+## 6-bis · Far partire gli avvisi per email
+
+Trenta minuti prima di ogni appuntamento parte un'email a chi ce l'ha in agenda.
+Il meccanismo è già installato e gira ogni 5 minuti; manca solo dirgli da quale
+casella spedire. **Si fa una volta sola.**
+
+```
+ssh root@77.81.234.151 "nano /etc/mondo-crm.env"
+```
+
+Compila le cinque righe (esempio con una casella Aruba):
+
+```
+SMTP_HOST=smtps.aruba.it
+SMTP_PORT=465
+SMTP_USER=info@mondoimmobiliarelecce.it
+SMTP_PASS=la-password-della-casella
+SMTP_FROM=info@mondoimmobiliarelecce.it
+```
+
+Salva con `Ctrl+O`, `Invio`, poi esci con `Ctrl+X`. Quindi:
+
+```
+ssh root@77.81.234.151 "systemctl restart mondo-crm"
+```
+
+**Per provare senza spedire niente:**
+
+```
+ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo node scripts/promemoria.mjs --prova"
+```
+
+Stampa cosa manderebbe. Senza configurazione dice «Posta non configurata» ed
+esce: il calendario funziona lo stesso, è solo l'email che non parte.
+
+Il file contiene una password, quindi lo leggono solo `root` e il programma
+(`chmod 640`). Sta fuori dalla cartella del gestionale apposta: un
+aggiornamento non lo tocca.
+
+---
+
 ## 7 · Le copie di sicurezza
 
 - una a notte alle **02:00**, in `/opt/mondo-crm/backup/`
@@ -270,7 +315,7 @@ richieste estratte dal testo libero delle note.
 
 ## 9 · Cosa è stato fatto, in ordine
 
-21 commit. In sintesi:
+23 commit. In sintesi:
 
 1. **Il programma** — clienti, richieste, immobili, incroci, agenda, trattative,
    report, adempimenti, accesso e permessi.
@@ -308,6 +353,28 @@ le proposte.
 
 Nel conteggio degli acquirenti c'è un **margine dell'8%** sul budget dichiarato,
 perché in trattativa quel margine c'è quasi sempre.
+
+Il resoconto virgolette **solo il campo «Cosa ha detto il cliente»**, mai le
+*Note*: quelle sono i promemoria dell'agente e in un foglio consegnato al
+proprietario sembrerebbero frasi del visitatore.
+
+### Agenda: modifica, calendario, avvisi
+
+- Ogni riga dell'agenda ha **Modifica** (anche per le attività già svolte:
+  spostare, correggere, aggiungere il commento, togliere la spunta *Fatto*,
+  eliminare) e **Calendario**, che scarica quell'appuntamento con la sveglia a
+  30 minuti già impostata.
+- **Agenda → Calendario e avvisi** dà l'indirizzo a cui abbonare Google, iPhone
+  o Outlook. È un feed iCalendar con una chiave nell'indirizzo, non un account
+  collegato: niente da autorizzare, ma quell'indirizzo vale come una password ed
+  è rigenerabile dalla stessa pagina.
+- **L'avviso per email** parte da `scripts/promemoria.mjs`, cron ogni 5 minuti.
+  Vedi il capitolo 6-bis per la configurazione.
+
+Si è scelto il formato iCalendar invece delle API di Google perché funziona con
+qualsiasi calendario, non richiede credenziali sul server, e non si rompe quando
+Google cambia le regole delle applicazioni non verificate — con un account Gmail
+normale l'autorizzazione andrebbe rinnovata ogni sette giorni.
 
 ---
 

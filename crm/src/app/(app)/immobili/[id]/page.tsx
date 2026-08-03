@@ -561,7 +561,15 @@ export default async function PropertyPage({
                         </p>
                       ) : null}
                     </div>
-                    {!activity.done_at ? <CompleteButton id={activity.id} /> : null}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Link
+                        href={`/agenda/${activity.id}/modifica?da=/immobili/${property.id}`}
+                        className="text-xs text-slate-400 hover:text-brand-700 hover:underline"
+                      >
+                        Modifica
+                      </Link>
+                      {!activity.done_at ? <CompleteButton id={activity.id} /> : null}
+                    </div>
                   </li>
                 ))}
               </ul>

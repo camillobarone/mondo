@@ -19,7 +19,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
 | **Resoconto** | Una pagina da stampare per il proprietario: quanti lo cercano, chi si è fermato sul prezzo, cosa hanno detto i visitatori |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
-| **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza |
+| **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza. Si modificano e si eliminano, entrano nel tuo calendario e avvisano 30 minuti prima |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
 | **Report** | Da dove arrivano i clienti che comprano davvero, tempi medi di vendita, rendimento per collaboratore |
 | **Adempimenti** | Consenso privacy con data, dati per l'adeguata verifica antiriciclaggio, registro di chi ha fatto cosa |
@@ -228,6 +228,20 @@ registrati — un immobile senza visite annotate e senza richieste collegate
 produce un resoconto a zeri, che è a sua volta un'informazione, ma sul lavoro
 fatto e non sulla casa.
 
+Perché una visita ci finisca servono due cose, tutte e due nella riga della
+visita:
+
+1. **l'immobile collegato** — si sceglie dal menù *Immobile*, che c'è sia sulla
+   scheda dell'immobile (già compilato), sia in agenda, sia sulla scheda del
+   cliente;
+2. **la visita segnata come fatta, con il commento**. Mettendo la spunta
+   *Fatto* compare il campo **«Cosa ha detto il cliente»**: quello che scrivi lì
+   finisce nel resoconto, virgolettato.
+
+Il resoconto riporta **solo quel campo**, mai le *Note*. Le note sono i tuoi
+promemoria — «portare la planimetria», «chiedere se scende» — e in un foglio
+che si consegna al proprietario sembrerebbero frasi dette dal visitatore.
+
 **I compleanni** compaiono in **Agenda**, in cima, da una settimana prima. Per
 ognuno c'è il pulsante per chiamare e quello per mandare gli auguri su WhatsApp
 **con il messaggio già scritto**. Basta compilare la data di nascita nella
@@ -235,6 +249,49 @@ scheda cliente.
 
 È la telefonata che costa meno di tutte e vale più di molte altre. Se non
 compare da sola il giorno giusto, però, non la fa nessuno.
+
+---
+
+## L'agenda nel tuo calendario, e l'avviso mezz'ora prima
+
+Ogni riga dell'agenda ha ora **Modifica** e **Calendario**.
+
+**Modifica** apre l'attività per intero — anche quelle già svolte. Si sposta
+l'orario, si cambia il cliente o l'immobile, si aggiunge il commento che ci si
+ricorda mezz'ora dopo, si toglie la spunta *Fatto* per rimetterla fra le cose da
+fare, o si elimina. Prima l'unica strada era cancellare e riscrivere.
+
+**Calendario** scarica quell'appuntamento e lo apre nel calendario del telefono
+o del computer, con la sveglia già impostata **30 minuti prima**. È il modo più
+affidabile di avere l'avviso: entra subito e suona anche a gestionale chiuso.
+
+Da **Agenda → Calendario e avvisi** ci sono le altre due strade.
+
+### Abbonare il calendario
+
+C'è un indirizzo, uno per persona, che il calendario ricontrolla da solo:
+Google, iPhone e Outlook lo capiscono allo stesso modo. Nella pagina c'è il
+percorso esatto per ciascuno, e il pulsante per copiarlo.
+
+Non è un account collegato: è un indirizzo. Vuol dire che non c'è niente da
+autorizzare, ma anche che **quell'indirizzo vale come una password** — chi ce
+l'ha vede i tuoi appuntamenti. Se finisce dove non doveva, dalla stessa pagina
+se ne genera uno nuovo e il vecchio smette di rispondere.
+
+> **Google ricontrolla quando decide lui**, anche dopo diverse ore: un
+> appuntamento appena inserito può non comparire subito. Apple e Outlook sono
+> più svelti. Per l'appuntamento di oggi usa **Calendario** sulla riga
+> dell'agenda, che è immediato.
+
+### L'avviso per email
+
+Trenta minuti prima di ogni appuntamento parte un'email a chi ce l'ha in agenda,
+con l'ora, il cliente, il suo numero e l'indirizzo dell'immobile. Non c'è niente
+da attivare per singolo appuntamento: parte da sé.
+
+Serve però che il server sappia spedire posta — è **una configurazione da fare
+una volta sola**, spiegata in `CONSEGNA.md`. Finché non c'è, l'avviso per email
+semplicemente non parte e tutto il resto funziona lo stesso.
 
 ---
 

@@ -38,7 +38,21 @@ if ! sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm install --no-audit --no-fu
   exit 1
 fi
 
-echo "== 4/4  Riavvio ============================================================"
+echo "== 4/4  Servizio, avvisi e riavvio ========================================="
+# Anche il servizio e il cron vanno riallineati: quando una versione nuova
+# aggiunge un lavoro schedulato o cambia il fuso orario, aggiornare solo il
+# programma lo lascerebbe fuori. Il file della posta, se c'e' gia', non si tocca.
+DOMINIO="$(awk '/server_name/ {print $2}' /etc/nginx/sites-available/mondo-crm | tr -d ';' | head -1)"
+if [[ -n "$DOMINIO" ]]; then
+  # shellcheck source=servizi.sh
+  source "$CARTELLA/deploy/servizi.sh"
+  scrivi_servizio
+  scrivi_posta
+  scrivi_cron
+else
+  echo "   Dominio non ricavabile da nginx: servizio e cron lasciati come sono."
+fi
+
 systemctl restart mondo-crm
 sleep 3
 systemctl is-active --quiet mondo-crm && echo "   Il gestionale e' ripartito." || {

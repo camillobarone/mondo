@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   role          TEXT    NOT NULL DEFAULT 'agente',   -- titolare | agente
   office        TEXT    NOT NULL DEFAULT 'Lecce',    -- Lecce | Porto Cesareo
   active        INTEGER NOT NULL DEFAULT 1,
+  calendar_token TEXT,                            -- chiave del feed calendario
   created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -143,6 +144,7 @@ CREATE TABLE IF NOT EXISTS activities (
   done_at     TEXT,                            -- quando e' stata completata
   outcome     TEXT,                            -- esito / feedback della visita
   interest    TEXT,                            -- alto|medio|basso  (per le visite)
+  reminded_at TEXT,                            -- quando e' partito il promemoria
   created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

@@ -102,34 +102,13 @@ if ! sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm run build" >> "$REGISTRO" 
 fi
 
 echo "== 6/9  Avvio automatico ==================================================="
-cat > /etc/systemd/system/mondo-crm.service <<SERVICE
-[Unit]
-Description=Mondo Immobiliare - gestionale clienti
-After=network.target
-
-[Service]
-Type=simple
-User=$UTENTE
-WorkingDirectory=$CARTELLA
-Environment=NODE_ENV=production
-Environment=PORT=3000
-Environment=HOSTNAME=127.0.0.1
-ExecStart=$CARTELLA/node_modules/.bin/next start
-Restart=always
-RestartSec=5
-
-# Il programma vede solo la propria cartella.
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=$CARTELLA/data $CARTELLA/backup $CARTELLA/.next
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
-
-systemctl daemon-reload
+# Servizio, posta e cron stanno in servizi.sh: li usa anche aggiorna.sh.
+# Si prende dalla copia appena scaricata al passo 5, non da accanto a questo
+# file: l'installazione si lancia con `curl | bash`, e in quel caso una
+# cartella accanto non esiste.
+# shellcheck source=servizi.sh
+source "$CARTELLA/deploy/servizi.sh"
+scrivi_servizio
 systemctl enable --now mondo-crm >/dev/null
 sleep 3
 
@@ -184,13 +163,9 @@ else
   HTTPS=0
 fi
 
-echo "== 9/9  Copia di sicurezza notturna ========================================"
-cat > /etc/cron.d/mondo-crm <<CRON
-# Copia dell'archivio ogni notte alle 2. Le copie oltre i 60 giorni si
-# cancellano da sole.
-0 2 * * * $UTENTE cd $CARTELLA && /usr/bin/node scripts/backup.mjs >> $CARTELLA/backup/backup.log 2>&1
-CRON
-chmod 644 /etc/cron.d/mondo-crm
+echo "== 9/9  Copia notturna e avvisi ============================================"
+scrivi_posta
+scrivi_cron
 
 echo
 echo "==========================================================================="

@@ -68,11 +68,28 @@ function Section({
                   <p className="mt-1 text-xs whitespace-pre-line text-slate-600">{item.notes}</p>
                 ) : null}
               </div>
-              {item.done_at ? (
-                <span className="shrink-0 text-xs text-emerald-600">fatto</span>
-              ) : (
-                <CompleteButton id={item.id} />
-              )}
+              <div className="flex shrink-0 items-center gap-2">
+                {item.due_at ? (
+                  <a
+                    href={`/agenda/${item.id}/ics`}
+                    className="text-xs text-slate-400 hover:text-brand-700 hover:underline"
+                    title="Aggiungi al tuo calendario, con l'avviso 30 minuti prima"
+                  >
+                    Calendario
+                  </a>
+                ) : null}
+                <Link
+                  href={`/agenda/${item.id}/modifica?da=/agenda`}
+                  className="text-xs text-slate-400 hover:text-brand-700 hover:underline"
+                >
+                  Modifica
+                </Link>
+                {item.done_at ? (
+                  <span className="text-xs text-emerald-600">fatto</span>
+                ) : (
+                  <CompleteButton id={item.id} />
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -112,9 +129,14 @@ export default async function AgendaPage({
         title="Agenda"
         subtitle="Telefonate, appuntamenti e cose da fare."
         actions={
-          <Link href={everyone ? "/agenda" : "/agenda?tutti=1"} className="btn-secondary">
-            {everyone ? "Solo le mie" : "Tutta l'agenzia"}
-          </Link>
+          <>
+            <Link href="/agenda/calendario" className="btn-secondary">
+              Calendario e avvisi
+            </Link>
+            <Link href={everyone ? "/agenda" : "/agenda?tutti=1"} className="btn-secondary">
+              {everyone ? "Solo le mie" : "Tutta l'agenzia"}
+            </Link>
+          </>
         }
       />
 

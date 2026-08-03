@@ -1,5 +1,6 @@
 "use server";
 
+import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, run, one, audit } from "./db";
@@ -538,16 +539,20 @@ export async function saveActivity(form: FormData) {
   ];
 
   // Una nota o una telefonata gia' fatta si registrano subito come completate.
-  const doneNow = form.get("done") ? new Date().toISOString() : null;
+  // In modifica la spunta racconta lo stato attuale: toglierla rimette
+  // l'appuntamento fra le cose da fare, e rimetterla non deve spostare a
+  // "adesso" un lavoro finito la settimana scorsa.
+  const fatto = Boolean(form.get("done"));
+  const gia = text(form, "done_at");
+  const doneNow = fatto ? gia || new Date().toISOString() : null;
 
   if (id) {
     run(
       `UPDATE activities SET
          type = ?, title = ?, notes = ?, client_id = ?, property_id = ?, user_id = ?,
-         due_at = ?, outcome = ?, interest = ?,
-         done_at = CASE WHEN ? IS NOT NULL THEN ? ELSE done_at END
+         due_at = ?, outcome = ?, interest = ?, done_at = ?
        WHERE id = ?`,
-      [...values, doneNow, doneNow, id],
+      [...values, doneNow, id],
     );
     audit(user.id, "modifica", "attivita", id);
   } else {
@@ -568,6 +573,9 @@ export async function saveActivity(form: FormData) {
   if (propertyId) revalidatePath(`/immobili/${propertyId}`);
   revalidatePath("/agenda");
   revalidatePath("/");
+
+  const dove = text(form, "redirect_to");
+  if (dove.startsWith("/")) redirect(dove);
 }
 
 export async function completeActivity(form: FormData) {
@@ -598,16 +606,21 @@ export async function completeActivity(form: FormData) {
 }
 
 export async function deleteActivity(form: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const id = Number(form.get("id"));
   const activity = one<{ client_id: number | null; property_id: number | null }>(
     `SELECT client_id, property_id FROM activities WHERE id = ?`,
     [id],
   );
   run(`DELETE FROM activities WHERE id = ?`, [id]);
+  audit(user.id, "elimina", "attivita", id);
   if (activity?.client_id) revalidatePath(`/clienti/${activity.client_id}`);
   if (activity?.property_id) revalidatePath(`/immobili/${activity.property_id}`);
   revalidatePath("/agenda");
+  revalidatePath("/");
+
+  const dove = text(form, "redirect_to");
+  redirect(dove.startsWith("/") ? dove : "/agenda");
 }
 
 /* ============================================================= proposte */
@@ -1122,4 +1135,19 @@ export async function importClients(
   );
   revalidatePath("/clienti");
   return result;
+}
+
+/* ============================================================ calendario */
+
+/**
+ * Genera una chiave nuova per il feed del calendario. Serve quando
+ * l'indirizzo e' finito dove non doveva: da quel momento il vecchio non
+ * risponde piu'.
+ */
+export async function rigeneraCalendario() {
+  const user = await requireUser();
+  const token = crypto.randomBytes(24).toString("base64url");
+  run(`UPDATE users SET calendar_token = ? WHERE id = ?`, [token, user.id]);
+  audit(user.id, "modifica", "utente", user.id, "nuovo indirizzo del calendario");
+  revalidatePath("/agenda/calendario");
 }
