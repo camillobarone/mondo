@@ -58,7 +58,7 @@ export function Nav({
   return (
     <>
       {/* Barra superiore su telefono */}
-      <div className="sticky top-0 z-30 flex items-center justify-between bg-slate-900 px-4 py-3 text-white lg:hidden">
+      <div className="no-print sticky top-0 z-30 flex items-center justify-between bg-slate-900 px-4 py-3 text-white lg:hidden">
         <Link href="/" className="text-sm font-semibold tracking-tight">
           Mondo Immobiliare
         </Link>

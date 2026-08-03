@@ -100,8 +100,36 @@ body {
          font-medium whitespace-nowrap;
 }
 
+/* Stampa ------------------------------------------------------------------
+   Il resoconto per il proprietario nasce per finire su carta: in stampa
+   spariscono navigazione e comandi, e resta solo il documento. */
 @media print {
-  .no-print {
+  .no-print,
+  nav,
+  aside,
+  header.app-bar {
     display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Un riquadro spezzato a metà fra due fogli è illeggibile. */
+  section,
+  li,
+  .card {
+    break-inside: avoid;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
   }
 }

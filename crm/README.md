@@ -17,6 +17,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | **Richieste** | Cosa cerca ogni acquirente: zona, budget, metratura, requisiti irrinunciabili |
 | **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback e **foto** |
 | **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
+| **Resoconto** | Una pagina da stampare per il proprietario: quanti lo cercano, chi si è fermato sul prezzo, cosa hanno detto i visitatori |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
 | **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
@@ -198,6 +199,34 @@ stata compilata la scheda.
 Non è obbligatorio: un venditore che ha già venduto tutto resta in elenco senza
 immobili collegati. Ma un immobile senza proprietario sì che è un problema, e
 l'elenco immobili lo segnala in cima con il collegamento per vedere quali sono.
+
+---
+
+## Il resoconto per il proprietario
+
+Sulla scheda di ogni immobile, in alto, c'è **Resoconto per il proprietario**:
+una pagina sola, fatta per essere stampata e lasciata sul tavolo. Il pulsante
+*Stampa o salva in PDF* apre la finestra di stampa; scegliendo "Salva come PDF"
+invece della stampante si ottiene il file da mandare su WhatsApp.
+
+Serve alla conversazione più difficile del mestiere: dire a chi vende che il
+prezzo è fuori mercato. A parole è la tua opinione contro la sua. Con i numeri
+della sua casa in mano è un fatto:
+
+- **quanti clienti in archivio cercano davvero una casa così**, quanti contatti
+  sono arrivati, quante visite sono state fatte, quante proposte;
+- **chi si è fermato soltanto sul prezzo**: persone che cercavano quella
+  tipologia in quella zona e il cui budget dichiarato non arriva alla cifra.
+  Sotto, i prezzi a cui l'immobile rientrerebbe nel loro raggio, con **quanti
+  acquirenti** ci sono a ciascuno, confrontati con quelli di oggi. Il
+  proprietario sceglie fra numeri concreti invece di sentirsi dire "è caro";
+- **le frasi dei visitatori**, come sono state scritte dopo il sopralluogo;
+- **la storia del prezzo** e le proposte ricevute.
+
+Sono tutti dati che già hai: nessun campo nuovo da compilare. Ma vanno
+registrati — un immobile senza visite annotate e senza richieste collegate
+produce un resoconto a zeri, che è a sua volta un'informazione, ma sul lavoro
+fatto e non sulla casa.
 
 **I compleanni** compaiono in **Agenda**, in cima, da una settimana prima. Per
 ognuno c'è il pulsante per chiamare e quello per mandare gli auguri su WhatsApp

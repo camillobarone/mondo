@@ -92,9 +92,14 @@ export default async function PropertyPage({
           </span>
         }
         actions={
-          <Link href={`/immobili/${property.id}/modifica`} className="btn-primary">
-            Modifica
-          </Link>
+          <>
+            <Link href={`/immobili/${property.id}/report`} className="btn-secondary">
+              Resoconto per il proprietario
+            </Link>
+            <Link href={`/immobili/${property.id}/modifica`} className="btn-primary">
+              Modifica
+            </Link>
+          </>
         }
       />
 
