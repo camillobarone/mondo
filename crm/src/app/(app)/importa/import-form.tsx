@@ -52,6 +52,14 @@ export function ImportForm() {
             {result.skipped ? `, ${result.skipped} saltati` : ""}.
           </p>
 
+          {result.requirements ? (
+            <p className="mt-1 text-sm text-emerald-700">
+              Riconosciute anche {result.requirements}{" "}
+              {result.requirements === 1 ? "richiesta" : "richieste"}: quei clienti entrano
+              subito negli incroci.
+            </p>
+          ) : null}
+
           {result.errors.length > 0 ? (
             <ul className="mt-2 space-y-0.5 text-xs text-amber-800">
               {result.errors.map((error, index) => (

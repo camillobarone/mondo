@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db, run, one, audit } from "./db";
 import { requireUser, requireOwner, hashPassword, login as doLogin, logout as doLogout } from "./auth";
 import { parseCsv } from "./csv";
+import { splitName, splitPhones, parseRequirements } from "./import-map";
 import type { Property } from "./types";
 
 /* ------------------------------------------------------------- utilita' */
@@ -609,6 +610,8 @@ export async function saveUser(form: FormData) {
 export interface ImportResult {
   imported: number;
   skipped: number;
+  /** Richieste ricavate dal file: sono quelle che alimentano gli incroci. */
+  requirements: number;
   errors: string[];
 }
 
@@ -623,12 +626,12 @@ export async function importClients(
   const user = await requireUser();
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return { imported: 0, skipped: 0, errors: ["Nessun file selezionato."] };
+    return { imported: 0, skipped: 0, requirements: 0, errors: ["Nessun file selezionato."] };
   }
 
   const { rows } = parseCsv(await file.text());
   if (!rows.length) {
-    return { imported: 0, skipped: 0, errors: ["Il file non contiene righe."] };
+    return { imported: 0, skipped: 0, requirements: 0, errors: ["Il file non contiene righe."] };
   }
 
   const pick = (row: Record<string, string>, ...names: string[]): string => {
@@ -643,7 +646,7 @@ export async function importClients(
     return "";
   };
 
-  const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
+  const result: ImportResult = { imported: 0, skipped: 0, requirements: 0, errors: [] };
   const skipDuplicates = !form.get("allow_duplicates");
 
   const insert = db.prepare(
@@ -651,6 +654,13 @@ export async function importClients(
       (first_name, last_name, company, phone, mobile, email, address, city,
        tax_code, roles, source, status, owner_id, tags, notes)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  );
+
+  const insertRequirement = db.prepare(
+    `INSERT INTO requirements
+      (client_id, contract, kind, city, zones, budget_min, budget_max, sqm_min,
+       rooms_min, needs, urgency, status, notes)
+     VALUES (?,?,?,?,?,?,?,?,?,'','media','aperta',?)`,
   );
 
   const findExisting = db.prepare(
@@ -663,11 +673,31 @@ export async function importClients(
 
   const transaction = db.transaction((list: Record<string, string>[]) => {
     list.forEach((row, index) => {
-      const firstName = pick(row, "nome", "first_name", "firstname");
-      const lastName = pick(row, "cognome", "last_name", "lastname", "surname");
+      // Molti gestionali esportano cognome e nome in una colonna sola.
+      const insieme = pick(row, "cognome/nome", "nome e cognome", "nominativo", "cliente");
+      const separato = insieme ? splitName(insieme) : null;
+
+      const firstName = pick(row, "nome", "first_name", "firstname") || (separato?.firstName ?? "");
+      const lastName =
+        pick(row, "cognome", "last_name", "lastname", "surname") || (separato?.lastName ?? "");
       const company = pick(row, "ragione sociale", "azienda", "company");
-      const mobile = pick(row, "cellulare", "mobile", "cell");
-      const email = pick(row, "email", "e-mail", "mail");
+      const email = pick(row, "email", "e-mail", "mail", "email stampa");
+
+      // Nella stessa cella possono esserci piu' numeri, separati da "/".
+      const telefoni = splitPhones(
+        [pick(row, "cellulare", "mobile", "cell"), pick(row, "telefono", "phone", "tel")]
+          .filter(Boolean)
+          .join("/"),
+      );
+      const mobile = telefoni.mobile;
+
+      const richieste = parseRequirements(pick(row, "richieste", "richiesta", "cosa cerca"));
+      const noteExtra = [
+        pick(row, "note", "notes", "note cliente"),
+        telefoni.extra.length ? `Altri numeri: ${telefoni.extra.join(", ")}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
 
       if (!firstName && !lastName && !company) {
         result.skipped++;
@@ -690,23 +720,51 @@ export async function importClients(
         }
       }
 
-      insert.run(
-        firstName,
-        lastName,
-        company || null,
-        pick(row, "telefono", "phone", "tel") || null,
-        mobile || null,
-        email || null,
-        pick(row, "indirizzo", "address") || null,
-        pick(row, "citta", "città", "comune", "city") || null,
-        pick(row, "codice fiscale", "cf", "tax_code") || null,
-        pick(row, "ruolo", "ruoli", "tipo", "roles").toLowerCase(),
-        pick(row, "provenienza", "fonte", "source") || null,
-        "attivo",
-        user.id,
-        pick(row, "etichette", "tag", "tags"),
-        pick(row, "note", "notes") || null,
+      // Chi arriva con una richiesta e' un acquirente: dirlo subito evita di
+      // doverlo scoprire cliente per cliente.
+      const ruoli =
+        pick(row, "ruolo", "ruoli", "tipo", "roles").toLowerCase() ||
+        (richieste.length
+          ? richieste.every((r) => r.contract === "affitto")
+            ? "conduttore"
+            : "acquirente"
+          : "");
+
+      const clientId = Number(
+        insert.run(
+          firstName,
+          lastName,
+          company || null,
+          telefoni.phone || null,
+          mobile || null,
+          email || null,
+          pick(row, "indirizzo", "address") || null,
+          pick(row, "citta", "città", "comune", "city") || null,
+          pick(row, "codice fiscale", "cf", "tax_code") || null,
+          ruoli,
+          pick(row, "provenienza", "fonte", "source") || null,
+          "attivo",
+          user.id,
+          pick(row, "etichette", "tag", "tags"),
+          noteExtra || null,
+        ).lastInsertRowid,
       );
+
+      for (const richiesta of richieste) {
+        insertRequirement.run(
+          clientId,
+          richiesta.contract,
+          richiesta.kind,
+          richiesta.city,
+          richiesta.zones,
+          richiesta.budgetMin,
+          richiesta.budgetMax,
+          richiesta.sqmMin,
+          richiesta.roomsMin,
+          richiesta.notes || null,
+        );
+        result.requirements++;
+      }
       result.imported++;
     });
   });
@@ -724,7 +782,7 @@ export async function importClients(
     "crea",
     "cliente",
     null,
-    `importazione CSV: ${result.imported} inseriti, ${result.skipped} saltati`,
+    `importazione CSV: ${result.imported} inseriti, ${result.requirements} richieste, ${result.skipped} saltati`,
   );
   revalidatePath("/clienti");
   return result;

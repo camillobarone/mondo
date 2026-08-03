@@ -74,6 +74,19 @@ Le colonne riconosciute (in qualsiasi ordine, le altre vengono ignorate):
 `Nome`, `Cognome`, `Ragione sociale`, `Cellulare`, `Telefono`, `Email`,
 `Indirizzo`, `Città`, `Codice fiscale`, `Ruolo`, `Provenienza`, `Etichette`, `Note`.
 
+Vengono capiti anche i tracciati degli altri gestionali immobiliari:
+
+- **`Cognome/Nome` in una colonna sola** viene diviso da solo, tenendo insieme
+  i cognomi composti (*De Santis Anna* → cognome *De Santis*).
+- **Più numeri nella stessa cella** (`3401112233/ 0832123456/`) finiscono uno
+  nel cellulare e uno nel telefono; gli altri restano nelle note.
+- **La colonna `Richieste`**, se contiene i blocchi `DETTAGLI RICHIESTA`, viene
+  letta e trasformata in richieste vere: contratto, comune, zone, budget,
+  metratura. Chi ne ha una diventa *acquirente* e **entra subito negli
+  incroci**. Un cliente con più richieste ne ottiene una per ciascuna.
+  Quello che non ha una casella corrispondente (camere, bagni, stato) finisce
+  nelle note della richiesta, non si perde.
+
 I doppioni vengono riconosciuti dal cellulare o dall'email e saltati, a meno che
 non chiedi esplicitamente di importarli.
 
