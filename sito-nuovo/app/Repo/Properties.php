@@ -38,8 +38,18 @@ final class Properties
                 ORDER BY {$order}
                 LIMIT {$perPage} OFFSET " . (($page - 1) * $perPage);
 
+        $items = Db::all($sql, $params);
+
+        // Il prezzo minimo del proprietario non esce da qui. search() alimenta
+        // anche le pagine pubbliche: toglierlo alla fonte vale più che
+        // ricordarsi di non stamparlo in ogni template. Chi ne ha diritto lo
+        // legge con find(), che è usato solo dal gestionale.
+        foreach ($items as $i => $item) {
+            unset($items[$i]['min_price']);
+        }
+
         return [
-            'items' => Db::all($sql, $params),
+            'items' => $items,
             'total' => $total,
             'pages' => $pages,
             'page' => $page,
@@ -68,6 +78,7 @@ final class Properties
             'contract' => 'p.contract = :contract',
             'type' => 'p.type = :type',
             'city' => 'p.city = :city',
+            'deal_stage' => 'p.deal_stage = :deal_stage',
         ];
         foreach ($simple as $key => $clause) {
             if (!empty($filters[$key])) {
@@ -135,14 +146,79 @@ final class Properties
         return Db::insert('properties', $data);
     }
 
-    /** @param array<string,mixed> $data */
-    public static function update(int $id, array $data): void
+    /**
+     * @param array<string,mixed> $data
+     * @param string $reason motivo della variazione di prezzo, se c'è
+     */
+    public static function update(int $id, array $data, string $reason = ''): void
     {
         if (isset($data['slug'])) {
             $data['slug'] = self::uniqueSlug((string) $data['slug'], $id);
         }
+
+        // Il prezzo non si sovrascrive in silenzio: ogni variazione lascia
+        // una riga nello storico, con il valore da cui si è partiti.
+        if (array_key_exists('price', $data)) {
+            $before = Db::value('SELECT price FROM properties WHERE id = :id', ['id' => $id]);
+            $old = $before === null ? null : (float) $before;
+            $new = $data['price'] === null ? null : (float) $data['price'];
+
+            if ($old !== $new) {
+                Db::insert('price_history', [
+                    'property_id' => $id,
+                    'price' => $new,
+                    'previous_price' => $old,
+                    'reason' => mb_substr($reason, 0, 255),
+                    'user_id' => \Mil\Core\Auth::id(),
+                    'created_at' => Db::now(),
+                ]);
+            }
+        }
+
         $data['updated_at'] = Db::now();
         Db::update('properties', $id, $data);
+    }
+
+    /** @return array<int,array<string,mixed>> storico prezzi, dal più recente */
+    public static function priceHistory(int $propertyId): array
+    {
+        return Db::all(
+            'SELECT h.*, u.name AS user_name
+             FROM price_history h LEFT JOIN users u ON u.id = h.user_id
+             WHERE h.property_id = :id ORDER BY h.created_at DESC, h.id DESC',
+            ['id' => $propertyId]
+        );
+    }
+
+    /**
+     * Incarichi in scadenza entro N giorni. È la domanda che nessuno si
+     * ricorda di fare finché l'immobile non è già andato a un'altra agenzia.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function mandatesExpiring(int $days = 45): array
+    {
+        return Db::all(
+            "SELECT p.*, u.name AS agent_name
+             FROM properties p LEFT JOIN users u ON u.id = p.agent_id
+             WHERE p.mandate_end IS NOT NULL
+               AND p.mandate_end <> ''
+               AND p.mandate_end <= :limite
+               AND p.deal_stage NOT IN ('rogitato','ritirato')
+             ORDER BY p.mandate_end",
+            ['limite' => date('Y-m-d', strtotime('+' . $days . ' days'))]
+        );
+    }
+
+    /** @return array<string,int> conteggi per stato della trattativa */
+    public static function stageCounters(): array
+    {
+        $out = [];
+        foreach (Db::all('SELECT deal_stage, COUNT(*) AS n FROM properties GROUP BY deal_stage') as $row) {
+            $out[(string) $row['deal_stage']] = (int) $row['n'];
+        }
+
+        return $out;
     }
 
     public static function delete(int $id): void

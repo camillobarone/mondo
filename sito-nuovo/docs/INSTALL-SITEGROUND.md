@@ -134,9 +134,15 @@ Il sito sta in due posti, e servono entrambi:
 ## Aggiornare il codice
 
 Non c'è un aggiornamento automatico ed è voluto: nessun plugin che si aggiorna
-da solo, nessuna rottura a sorpresa il giorno sbagliato. Per aggiornare si
-sostituiscono i file di `app/`, `views/` e `public/assets/`, lasciando stare
-`config.php` e `public/uploads/`.
+da solo, nessuna rottura a sorpresa il giorno sbagliato. Per aggiornare:
+
+1. Backup del database (phpMyAdmin → Esporta) e della cartella `public/uploads/`.
+2. Sostituisci i file di `app/`, `views/`, `db/` e `public/assets/`, lasciando
+   stare `config.php` e `public/uploads/`.
+3. Se la versione nuova porta migrazioni, applicale:
+   `php bin/aggiorna-db.php` da SSH, oppure aprendo una sessione shell da
+   Site Tools → Devs → SSH. Lo script dice cosa ha applicato; rilanciarlo due
+   volte non fa danni, le migrazioni già fatte vengono saltate.
 
 ## Se qualcosa non va
 

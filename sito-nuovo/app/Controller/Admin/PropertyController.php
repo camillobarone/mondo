@@ -13,6 +13,7 @@ use Mil\Core\Uploader;
 use Mil\Core\View;
 use Mil\Core\Vocab;
 use Mil\Repo\Contacts;
+use Mil\Repo\Deals;
 use Mil\Repo\Log;
 use Mil\Repo\Properties;
 use Mil\Repo\Redirects;
@@ -54,7 +55,10 @@ final class PropertyController
             'p' => self::blank(),
             'images' => [],
             'agenti' => Users::active(),
+            'clienti' => Contacts::search(['active' => 'any'], 1, 300)['items'],
             'abbinamenti' => [],
+            'proposte' => [],
+            'storicoPrezzi' => [],
         ], 'layout/admin');
     }
 
@@ -78,7 +82,7 @@ final class PropertyController
                 Redirects::put('/immobili/' . $property['slug'], '/immobili/' . $data['slug']);
             }
 
-            Properties::update((int) $id, $data);
+            Properties::update((int) $id, $data, trim((string) ($_POST['price_reason'] ?? '')));
             Log::write('modifica', 'immobile', (int) $id, (string) $data['title']);
             Session::flash('Modifiche salvate.');
             Router::redirect('/gestionale/immobili/' . $id . '/');
@@ -89,7 +93,10 @@ final class PropertyController
             'p' => $property,
             'images' => Properties::images((int) $id),
             'agenti' => Users::active(),
+            'clienti' => Contacts::search(['active' => 'any'], 1, 300)['items'],
             'abbinamenti' => Contacts::contactsFor($property, 5),
+            'proposte' => Deals::offersFor((int) $id),
+            'storicoPrezzi' => Properties::priceHistory((int) $id),
         ], 'layout/admin');
     }
 
@@ -195,6 +202,74 @@ final class PropertyController
         Router::redirect('/gestionale/immobili/');
     }
 
+    /** Registra una proposta d'acquisto ricevuta sull'immobile. */
+    public static function addOffer(string $id): void
+    {
+        Auth::required();
+        Csrf::check();
+
+        $property = Properties::find((int) $id);
+        if ($property === null) {
+            Router::redirect('/gestionale/immobili/');
+        }
+
+        $amount = float_or_null($_POST['amount'] ?? null);
+        if ($amount === null || $amount <= 0) {
+            Session::flash('Serve l’importo della proposta.', 'error');
+            Router::redirect('/gestionale/immobili/' . $id . '/');
+        }
+
+        $contactId = int_or_null($_POST['contact_id'] ?? null) ?: null;
+
+        Deals::createOffer([
+            'property_id' => (int) $id,
+            'contact_id' => $contactId,
+            'amount' => $amount,
+            'status' => 'presentata',
+            'deposit' => float_or_null($_POST['deposit'] ?? null),
+            'valid_until' => self::date($_POST['valid_until'] ?? null),
+            'notes' => mb_substr(trim((string) ($_POST['notes'] ?? '')), 0, 2000),
+        ]);
+
+        if ($contactId !== null) {
+            Contacts::touch($contactId);
+        }
+
+        Log::write('proposta', 'immobile', (int) $id, euro($amount));
+        Session::flash('Proposta registrata.');
+        Router::redirect('/gestionale/immobili/' . $id . '/');
+    }
+
+    public static function offerStatus(string $id, string $offerId): void
+    {
+        Auth::required();
+        Csrf::check();
+
+        $status = (string) ($_POST['status'] ?? '');
+        if (!array_key_exists($status, Vocab::OFFER_STATUSES)) {
+            Session::flash('Stato proposta non valido.', 'error');
+            Router::redirect('/gestionale/immobili/' . $id . '/');
+        }
+
+        Deals::setOfferStatus((int) $offerId, $status);
+        Log::write('proposta-' . $status, 'immobile', (int) $id);
+
+        Session::flash($status === 'accettata'
+            ? 'Proposta accettata: l’immobile è passato a "sotto proposta".'
+            : 'Proposta aggiornata.');
+        Router::redirect('/gestionale/immobili/' . $id . '/');
+    }
+
+    public static function deleteOffer(string $id, string $offerId): void
+    {
+        Auth::adminRequired();
+        Csrf::check();
+
+        Deals::deleteOffer((int) $offerId);
+        Session::flash('Proposta eliminata.');
+        Router::redirect('/gestionale/immobili/' . $id . '/');
+    }
+
     public static function matches(string $id): void
     {
         Auth::required();
@@ -270,6 +345,21 @@ final class PropertyController
             'seo_description' => mb_substr(trim((string) ($_POST['seo_description'] ?? '')), 0, 160),
             'agent_id' => int_or_null($_POST['agent_id'] ?? null) ?: null,
             'featured' => isset($_POST['featured']) ? 1 : 0,
+            // Incarico e trattativa.
+            'deal_stage' => array_key_exists((string) ($_POST['deal_stage'] ?? ''), Vocab::DEAL_STAGES)
+                ? (string) $_POST['deal_stage'] : 'acquisizione',
+            'min_price' => float_or_null($_POST['min_price'] ?? null),
+            'owner_contact_id' => int_or_null($_POST['owner_contact_id'] ?? null) ?: null,
+            'mandate_start' => self::date($_POST['mandate_start'] ?? null),
+            'mandate_end' => self::date($_POST['mandate_end'] ?? null),
+            'exclusive' => isset($_POST['exclusive']) ? 1 : 0,
+            'commission_pct' => float_or_null($_POST['commission_pct'] ?? null),
+            'sold_price' => float_or_null($_POST['sold_price'] ?? null),
+            'preliminary_date' => self::date($_POST['preliminary_date'] ?? null),
+            'deed_date' => self::date($_POST['deed_date'] ?? null),
+            'commission_seller' => float_or_null($_POST['commission_seller'] ?? null),
+            'commission_buyer' => float_or_null($_POST['commission_buyer'] ?? null),
+            'commission_paid' => isset($_POST['commission_paid']) ? 1 : 0,
         ];
 
         if ($status === 'published') {
@@ -279,18 +369,36 @@ final class PropertyController
         return $data;
     }
 
+    /** Data in formato Y-m-d, oppure null se il campo è vuoto o illeggibile. */
+    private static function date(mixed $value): ?string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+        $ts = strtotime($raw);
+
+        return $ts === false ? null : date('Y-m-d', $ts);
+    }
+
     /** @return array<string,mixed> */
     private static function blank(): array
     {
         return [
             'id' => 0, 'ref' => '', 'title' => '', 'slug' => '', 'status' => 'draft',
+            'deal_stage' => 'acquisizione',
             'contract' => 'vendita', 'type' => 'appartamento', 'city' => 'Lecce', 'area' => '',
             'address' => '', 'postal_code' => '', 'lat' => '', 'lng' => '', 'price' => null,
-            'price_hidden' => 0, 'condo_fees' => null, 'sqm' => 0, 'lot_sqm' => 0, 'rooms' => 0,
+            'price_hidden' => 0, 'min_price' => null, 'condo_fees' => null, 'sqm' => 0,
+            'lot_sqm' => 0, 'rooms' => 0,
             'bedrooms' => 0, 'bathrooms' => 0, 'floor' => '', 'floors_total' => 0, 'year_built' => 0,
             'energy_class' => '', 'condition_state' => '', 'heating' => '', 'features' => '',
             'excerpt' => '', 'description' => '', 'seo_title' => '', 'seo_description' => '',
-            'agent_id' => null, 'featured' => 0, 'views' => 0, 'published_at' => null,
+            'agent_id' => null, 'owner_contact_id' => null,
+            'mandate_start' => null, 'mandate_end' => null, 'exclusive' => 0, 'commission_pct' => null,
+            'sold_price' => null, 'preliminary_date' => null, 'deed_date' => null,
+            'commission_seller' => null, 'commission_buyer' => null, 'commission_paid' => 0,
+            'featured' => 0, 'views' => 0, 'published_at' => null,
             'created_at' => Db::now(), 'updated_at' => null,
         ];
     }

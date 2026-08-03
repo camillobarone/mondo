@@ -12,6 +12,7 @@ use Mil\Core\Vocab;
 $isNew = (int) $c['id'] === 0;
 $types = array_filter(explode(',', (string) $c['types']));
 $cities = array_filter(explode(',', (string) $c['cities']));
+$ruoli = array_filter(explode(',', (string) ($c['roles'] ?? '')));
 ?>
 <div class="due-colonne">
   <form method="post" class="form pannello">
@@ -22,6 +23,54 @@ $cities = array_filter(explode(',', (string) $c['cities']));
       <label>Nome<input type="text" name="name" value="<?= e((string) $c['name']) ?>" required></label>
       <label>Telefono<input type="tel" name="phone" value="<?= e((string) $c['phone']) ?>"></label>
       <label>Email<input type="email" name="email" value="<?= e((string) $c['email']) ?>"></label>
+    </div>
+
+    <div class="form-row">
+      <label>Comune di residenza<input type="text" name="city" value="<?= e((string) ($c['city'] ?? '')) ?>"></label>
+      <label>Codice fiscale<input type="text" name="tax_code" maxlength="20" value="<?= e((string) ($c['tax_code'] ?? '')) ?>"></label>
+      <label>Stato
+        <select name="status">
+          <?php foreach (Vocab::CLIENT_STATUSES as $slug => $label): ?>
+            <option value="<?= e($slug) ?>" <?= ($c['status'] ?? '') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+    </div>
+
+    <h3>Ruoli <small>si può essere più cose insieme</small></h3>
+    <div class="checkbox-griglia">
+      <?php foreach (Vocab::CLIENT_ROLES as $slug => $label): ?>
+        <label class="check">
+          <input type="checkbox" name="roles[]" value="<?= e($slug) ?>" <?= in_array($slug, $ruoli, true) ? 'checked' : '' ?>>
+          <?= e($label) ?>
+        </label>
+      <?php endforeach; ?>
+    </div>
+
+    <div class="form-row">
+      <label>Da dove arriva
+        <select name="source">
+          <option value="">—</option>
+          <?php foreach (Vocab::CLIENT_SOURCES as $slug => $label): ?>
+            <option value="<?= e($slug) ?>" <?= ($c['source'] ?? '') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label>Come paga
+        <select name="financing">
+          <option value="">—</option>
+          <?php foreach (Vocab::FINANCING as $slug => $label): ?>
+            <option value="<?= e($slug) ?>" <?= ($c['financing'] ?? '') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label>Urgenza
+        <select name="urgency">
+          <?php foreach (Vocab::URGENCY as $slug => $label): ?>
+            <option value="<?= e($slug) ?>" <?= ($c['urgency'] ?? 'media') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
     </div>
 
     <div class="form-row">
@@ -73,6 +122,41 @@ $cities = array_filter(explode(',', (string) $c['cities']));
       <textarea name="notes" rows="4" placeholder="Vincoli, tempi, mutuo già deliberato, cosa ha già visto…"><?= e((string) $c['notes']) ?></textarea>
     </label>
 
+    <h3>Adempimenti</h3>
+    <p class="muto">Privacy e antiriciclaggio si registrano qui. Le date le scrive il
+      sistema al momento della spunta: una data messa a mano non prova niente.</p>
+
+    <input type="hidden" name="privacy_date_esistente" value="<?= e((string) ($c['privacy_date'] ?? '')) ?>">
+    <input type="hidden" name="aml_checked_esistente" value="<?= e((string) ($c['aml_checked_at'] ?? '')) ?>">
+
+    <label class="check">
+      <input type="checkbox" name="privacy_consent" value="1" <?= (int) ($c['privacy_consent'] ?? 0) === 1 ? 'checked' : '' ?>>
+      Consenso privacy raccolto
+      <?php if (!empty($c['privacy_date'])): ?>
+        <small>Registrato il <?= e(data_it((string) $c['privacy_date'], true)) ?></small>
+      <?php endif; ?>
+    </label>
+    <label>A cosa ha acconsentito
+      <input type="text" name="privacy_scope" value="<?= e((string) ($c['privacy_scope'] ?? '')) ?>"
+             placeholder="es. gestione della richiesta e ricontatto telefonico">
+    </label>
+
+    <div class="form-row">
+      <label>Documento
+        <select name="aml_doc_type">
+          <option value="">—</option>
+          <?php foreach (Vocab::AML_DOCS as $slug => $label): ?>
+            <option value="<?= e($slug) ?>" <?= ($c['aml_doc_type'] ?? '') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label>Numero<input type="text" name="aml_doc_number" value="<?= e((string) ($c['aml_doc_number'] ?? '')) ?>"></label>
+      <label>Scadenza<input type="date" name="aml_doc_expiry" value="<?= e((string) ($c['aml_doc_expiry'] ?? '')) ?>"></label>
+    </div>
+    <?php if (!empty($c['aml_checked_at'])): ?>
+      <p class="muto">Identificazione registrata il <?= e(data_it((string) $c['aml_checked_at'], true)) ?>.</p>
+    <?php endif; ?>
+
     <label class="check">
       <input type="checkbox" name="active" value="1" <?= (int) $c['active'] === 1 ? 'checked' : '' ?>>
       Ricerca ancora attiva
@@ -84,6 +168,34 @@ $cities = array_filter(explode(',', (string) $c['cities']));
 
   <div>
     <?php if (!$isNew): ?>
+      <div class="pannello">
+        <h2>In sintesi</h2>
+        <dl class="dati">
+          <div><dt>Ultimo contatto</dt>
+            <dd><?= e(!empty($c['last_contact_at']) ? data_it((string) $c['last_contact_at']) : 'mai registrato') ?></dd></div>
+          <div><dt>Consenso privacy</dt>
+            <dd><?= (int) ($c['privacy_consent'] ?? 0) === 1 ? 'sì' : '<span class="pill pill-nuovo">manca</span>' ?></dd></div>
+          <div><dt>Identificazione</dt>
+            <dd><?= !empty($c['aml_checked_at']) ? 'fatta' : '<span class="pill pill-nuovo">manca</span>' ?></dd></div>
+        </dl>
+      </div>
+
+      <?php if ($proposte !== []): ?>
+        <div class="pannello">
+          <h2>Proposte fatte</h2>
+          <ul class="lista">
+            <?php foreach ($proposte as $o): ?>
+              <li>
+                <strong><?= e(euro((float) $o['amount'])) ?></strong>
+                <span class="pill pill-<?= e((string) $o['status']) ?>"><?= e(Vocab::label('offer_status', (string) $o['status'])) ?></span><br>
+                <small><a href="<?= e(url('/gestionale/immobili/' . $o['property_id'] . '/')) ?>"><?= e((string) $o['property_title']) ?></a>
+                  — <?= e(data_it((string) $o['presented_at'])) ?></small>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
+
       <div class="pannello">
         <h2>Cosa possiamo proporgli</h2>
         <?php if ($abbinamenti === []): ?>

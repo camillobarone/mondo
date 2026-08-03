@@ -57,6 +57,9 @@ $router->post('/gestionale/immobili/{id}/foto', [PropertyController::class, 'upl
 $router->post('/gestionale/immobili/{id}/foto/{imageId}/elimina', [PropertyController::class, 'deletePhoto']);
 $router->post('/gestionale/immobili/{id}/elimina', [PropertyController::class, 'destroy']);
 $router->get('/gestionale/immobili/{id}/abbinamenti', [PropertyController::class, 'matches']);
+$router->post('/gestionale/immobili/{id}/proposte', [PropertyController::class, 'addOffer']);
+$router->post('/gestionale/immobili/{id}/proposte/{offerId}/stato', [PropertyController::class, 'offerStatus']);
+$router->post('/gestionale/immobili/{id}/proposte/{offerId}/elimina', [PropertyController::class, 'deleteOffer']);
 
 $router->get('/gestionale/richieste', [LeadController::class, 'index']);
 $router->any('/gestionale/richieste/{id}', [LeadController::class, 'show']);

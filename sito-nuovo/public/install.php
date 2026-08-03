@@ -71,6 +71,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if ($errori === []) {
         try {
             Db::runScript(MIL_ROOT . '/db/schema.sql');
+            // schema.sql è già allineato: le migrazioni si segnano, non si eseguono.
+            Db::migrate(true);
 
             Users::create([
                 'name' => $adminNome !== '' ? $adminNome : 'Amministratore',

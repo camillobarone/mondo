@@ -28,7 +28,104 @@ use Mil\Core\Vocab;
   <div class="kpi-box">
     <strong><?= (int) ($lead['ultimi7'] ?? 0) ?></strong><span>richieste negli ultimi 7 giorni</span>
   </div>
+  <div class="kpi-box">
+    <strong><?= (int) $anno['rogiti'] ?></strong><span>rogiti nel <?= (int) $anno['anno'] ?></span>
+  </div>
 </div>
+
+<?php if ($incarichi !== [] || $proposteAperte !== []): ?>
+<div class="due-colonne">
+  <section class="pannello">
+    <h2>Incarichi in scadenza <span class="muto">(entro 45 giorni)</span></h2>
+    <?php if ($incarichi === []): ?>
+      <p class="vuoto">Nessun incarico in scadenza.</p>
+    <?php else: ?>
+      <table class="tabella">
+        <thead><tr><th>Scade</th><th>Immobile</th><th>Agente</th></tr></thead>
+        <tbody>
+        <?php foreach ($incarichi as $i): ?>
+          <?php $scaduto = strtotime((string) $i['mandate_end']) < strtotime('today'); ?>
+          <tr>
+            <td><?= e(data_it((string) $i['mandate_end'])) ?>
+              <?php if ($scaduto): ?><br><span class="pill pill-nuovo">scaduto</span><?php endif; ?></td>
+            <td><a href="<?= e(url('/gestionale/immobili/' . $i['id'] . '/')) ?>"><?= e((string) $i['title']) ?></a><br>
+              <small><?= (int) $i['exclusive'] === 1 ? 'esclusiva' : 'non esclusiva' ?></small></td>
+            <td><?= e((string) ($i['agent_name'] ?? '—')) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    <?php endif; ?>
+  </section>
+
+  <section class="pannello">
+    <h2>Proposte in attesa di risposta</h2>
+    <?php if ($proposteAperte === []): ?>
+      <p class="vuoto">Nessuna proposta aperta.</p>
+    <?php else: ?>
+      <ul class="lista">
+        <?php foreach ($proposteAperte as $o): ?>
+          <li>
+            <strong><?= e(euro((float) $o['amount'])) ?></strong>
+            su <a href="<?= e(url('/gestionale/immobili/' . $o['property_id'] . '/')) ?>"><?= e((string) $o['property_title']) ?></a><br>
+            <small class="muto"><?= e(data_it((string) $o['presented_at'])) ?>
+              <?php if (!empty($o['contact_name'])): ?>— <?= e((string) $o['contact_name']) ?><?php endif; ?></small>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+  </section>
+</div>
+<?php endif; ?>
+
+<?php if ($daRichiamare !== [] || $adempimenti !== []): ?>
+<div class="due-colonne">
+  <section class="pannello">
+    <h2>Da richiamare <span class="muto">(non sentiti da oltre 45 giorni)</span></h2>
+    <?php if ($daRichiamare === []): ?>
+      <p class="vuoto">Tutti i clienti attivi sono stati sentiti di recente.</p>
+    <?php else: ?>
+      <ul class="lista">
+        <?php foreach ($daRichiamare as $c): ?>
+          <li>
+            <a href="<?= e(url('/gestionale/clienti/' . $c['id'] . '/')) ?>"><?= e((string) $c['name']) ?></a>
+            <?php if (!empty($c['phone'])): ?><span class="muto"><?= e((string) $c['phone']) ?></span><?php endif; ?><br>
+            <small class="muto"><?= e(!empty($c['last_contact_at'])
+                ? 'ultimo contatto ' . data_it((string) $c['last_contact_at'])
+                : 'mai registrato un contatto') ?></small>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+  </section>
+
+  <section class="pannello">
+    <h2>Adempimenti da completare</h2>
+    <?php if ($adempimenti === []): ?>
+      <p class="vuoto">Privacy e identificazione a posto su tutti i clienti attivi.</p>
+    <?php else: ?>
+      <p class="muto">Consenso privacy o identificazione antiriciclaggio mancanti.</p>
+      <ul class="lista">
+        <?php foreach ($adempimenti as $c): ?>
+          <li>
+            <a href="<?= e(url('/gestionale/clienti/' . $c['id'] . '/')) ?>"><?= e((string) $c['name']) ?></a><br>
+            <small class="muto"><?php
+              $mancano = [];
+              if ((int) $c['privacy_consent'] === 0 || empty($c['privacy_date'])) {
+                  $mancano[] = 'consenso privacy';
+              }
+              if (empty($c['aml_checked_at'])) {
+                  $mancano[] = 'identificazione';
+              }
+              echo e('manca: ' . implode(', ', $mancano));
+            ?></small>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+  </section>
+</div>
+<?php endif; ?>
 
 <div class="due-colonne">
   <section class="pannello">

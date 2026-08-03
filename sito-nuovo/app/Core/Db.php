@@ -187,9 +187,73 @@ final class Db
         }
     }
 
+    /**
+     * Concatenazione di stringhe nel dialetto del driver: SQLite usa `||`,
+     * MySQL vuole CONCAT() (`||` lì significa OR, salvo sql_mode particolari).
+     */
+    public static function concat(string ...$parts): string
+    {
+        if (self::driver() === 'sqlite') {
+            return '(' . implode(' || ', $parts) . ')';
+        }
+
+        return 'CONCAT(' . implode(', ', $parts) . ')';
+    }
+
     /** Espressione "adesso" utilizzabile nelle query, per driver. */
     public static function now(): string
     {
         return date('Y-m-d H:i:s');
+    }
+
+    /**
+     * Applica le migrazioni di db/migrations/ non ancora eseguite.
+     *
+     * `$markOnly` serve alle installazioni nuove: schema.sql è già aggiornato,
+     * quindi le migrazioni vanno segnate come fatte senza rieseguirle — un
+     * ALTER TABLE su una colonna che esiste già fallirebbe.
+     *
+     * @return array<int,string> nomi delle migrazioni trattate in questo giro
+     */
+    public static function migrate(bool $markOnly = false): array
+    {
+        $dir = MIL_ROOT . '/db/migrations';
+        if (!is_dir($dir)) {
+            return [];
+        }
+
+        $files = glob($dir . '/*.sql') ?: [];
+        sort($files);
+
+        // Le installazioni fatte prima che esistessero le migrazioni non hanno
+        // questa tabella: si crea al volo, altrimenti la prima lettura fallisce
+        // e l'aggiornamento è impossibile proprio dove serve di più.
+        self::pdo()->exec(self::dialect(
+            'CREATE TABLE IF NOT EXISTS schema_migrations (
+               id {PK},
+               name VARCHAR(191) NOT NULL UNIQUE,
+               applied_at DATETIME NOT NULL DEFAULT {NOW}
+             ){SUFFIX}'
+        ));
+
+        $applied = [];
+        foreach (Db::all('SELECT name FROM schema_migrations') as $row) {
+            $applied[(string) $row['name']] = true;
+        }
+
+        $done = [];
+        foreach ($files as $file) {
+            $name = basename($file);
+            if (isset($applied[$name])) {
+                continue;
+            }
+            if (!$markOnly) {
+                self::runScript($file);
+            }
+            self::insert('schema_migrations', ['name' => $name, 'applied_at' => self::now()]);
+            $done[] = $name;
+        }
+
+        return $done;
     }
 }

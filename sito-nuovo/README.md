@@ -52,12 +52,30 @@ fa senza mappa dei redirect.
 - **Riepilogo** — immobili online, bozze, richieste da lavorare, clienti in
   ricerca, prossimi appuntamenti, immobili più visti
 - **Immobili** — scheda completa, foto multiple con ridimensionamento e
-  conversione WebP automatici, stato (bozza / online / sotto proposta / venduto),
-  campi SEO per pagina
+  conversione WebP automatici, campi SEO per pagina, e **due stati distinti**:
+  quello di pubblicazione (cosa vede il pubblico) e quello della trattativa
+  (a che punto è il lavoro)
+- **Incarico** — proprietario, date di inizio e scadenza, esclusiva,
+  provvigione; gli incarichi in scadenza finiscono in evidenza sul riepilogo
+- **Prezzo minimo riservato** — quanto il proprietario accetta davvero. Non
+  esce mai dal gestionale: viene tolto alla fonte dalle query che alimentano
+  anche il sito pubblico, non solo omesso dai template
+- **Storico dei prezzi** — ogni variazione resta scritta, con il valore
+  precedente e il motivo
+- **Proposte d'acquisto** — importo, caparra, validità, esito. Accettarne una
+  porta l'immobile a "sotto proposta" anche in vetrina, così nessun collega
+  fissa una visita su un immobile già impegnato
+- **Trattativa fino in fondo** — compromesso, rogito, provvigioni venditore e
+  acquirente, incassato sì/no
 - **Richieste dal sito** — ogni modulo diventa una richiesta tracciata: stato,
   agente assegnato, note, appuntamento in un clic
-- **Richieste di acquisto** — chi cerca cosa, con budget, zone, tipologie e
-  metratura minima
+- **Richieste di acquisto** — chi cerca cosa, con budget, zone, tipologie,
+  metratura minima, come paga e quanto ha fretta
+- **Anagrafica** — ruoli multipli (chi vende oggi compra domani), provenienza
+  del contatto, stato, data dell'ultimo contatto
+- **Adempimenti** — consenso privacy con data messa dal sistema e
+  identificazione antiriciclaggio; chi non li ha completati compare sul
+  riepilogo
 - **Abbinamento automatico** — vedi sotto
 - **Agenda** — appuntamenti legati a immobile, cliente e agente
 - **Articoli e pagine** — con risposta diretta, autore, campi SEO
@@ -123,8 +141,8 @@ sito-nuovo/
 │   └── helpers.php
 ├── views/             template PHP puri: layout/, site/, admin/
 ├── public/            document root — index.php, install.php, assets, uploads
-├── db/                schema.sql (dialetto neutro) e seed.php (dati demo)
-├── bin/               installazione da riga di comando per la prova locale
+├── db/                schema.sql (dialetto neutro), migrations/, seed.php
+├── bin/               installazione locale e aggiornamento del database
 └── docs/              installazione su SiteGround, migrazione SEO
 ```
 
@@ -145,6 +163,9 @@ Scelte prese e perché:
 - **Un solo schema SQL** per MySQL e SQLite, con i dialetti risolti a runtime:
   si prova in locale senza installare niente e si va in produzione senza
   cambiare una riga.
+- **Migrazioni tracciate** in `db/migrations/`, applicate da
+  `php bin/aggiorna-db.php` e registrate a database. Su un'installazione nuova
+  vengono solo marcate come fatte, perché `schema.sql` le contiene già.
 
 ---
 
@@ -161,6 +182,10 @@ Non è un elenco di scuse: è quello che va deciso prima di considerarlo finito.
   WordPress; va verificato come il portale riceve i feed prima di rifarlo.
 - **Editor testuale semplice**, senza formattazione ricca. I testi vengono
   stampati con escape e `nl2br`: sicuro, ma senza grassetti e liste.
+- **Nessun import CSV** dell'anagrafica esistente: i clienti si inseriscono
+  a mano o serve uno script dedicato.
+- **Report ridotti all'osso**: provenienza dei contatti, rogiti e provvigioni
+  dell'anno, tempo medio fino al rogito. Niente grafici.
 - **Nessun virtual tour**, nessun calcolatore imposte, nessun tool OMI: tre
   funzioni che sul sito attuale esistono e qui no.
 - **Le FAQ della pagina valutazione sono scritte nel codice**, non modificabili

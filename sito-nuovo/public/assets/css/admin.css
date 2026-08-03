@@ -97,6 +97,9 @@ img { max-width: 100%; height: auto; display: block; }
 .pill-draft, .pill-nuovo { background: #fdf3dd; color: var(--warn); }
 .pill-reserved, .pill-in-trattativa, .pill-appuntamento { background: #fdf0e6; color: var(--accent-dark); }
 .pill-sold, .pill-archived, .pill-chiuso-perso { background: #eef1f4; color: var(--ink-soft); }
+.pill-accettata, .pill-rogitato { background: #e6f2ec; color: var(--ok); }
+.pill-presentata, .pill-proposta, .pill-compromesso { background: #fdf0e6; color: var(--accent-dark); }
+.pill-rifiutata, .pill-ritirata, .pill-scaduta { background: #eef1f4; color: var(--ink-soft); }
 
 .score {
   display: inline-block; background: #e6f2ec; color: var(--ok);
@@ -123,6 +126,7 @@ img { max-width: 100%; height: auto; display: block; }
 .form label small { display: block; font-weight: 400; color: var(--ink-soft); }
 .form input[type=text], .form input[type=email], .form input[type=tel], .form input[type=password],
 .form input[type=number], .form input[type=search], .form input[type=datetime-local],
+.form input[type=date],
 .form select, .form textarea {
   width: 100%; padding: 9px 11px; margin-top: 5px; border: 1px solid var(--line);
   border-radius: 7px; font: inherit; background: #fff;

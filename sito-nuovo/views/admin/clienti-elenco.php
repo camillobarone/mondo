@@ -12,6 +12,18 @@ use Mil\Core\Vocab;
       <option value="0" <?= q('attivi') === '0' ? 'selected' : '' ?>>Archiviati</option>
       <option value="any" <?= q('attivi') === 'any' ? 'selected' : '' ?>>Tutti</option>
     </select>
+    <select name="ruolo">
+      <option value="">Ogni ruolo</option>
+      <?php foreach (Vocab::CLIENT_ROLES as $slug => $label): ?>
+        <option value="<?= e($slug) ?>" <?= q('ruolo') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+      <?php endforeach; ?>
+    </select>
+    <select name="stato">
+      <option value="">Ogni stato</option>
+      <?php foreach (Vocab::CLIENT_STATUSES as $slug => $label): ?>
+        <option value="<?= e($slug) ?>" <?= q('stato') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+      <?php endforeach; ?>
+    </select>
     <button class="btn btn-ghost">Filtra</button>
   </form>
   <a class="btn btn-primary" href="<?= e(url('/gestionale/clienti/nuovo/')) ?>">+ Nuova richiesta</a>

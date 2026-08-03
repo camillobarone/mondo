@@ -49,8 +49,11 @@ final class Router
     {
         $pattern = self::normalize($pattern);
         $keys = [];
+        // I nomi dei segnaposto ammettono maiuscole e cifre: con il vecchio
+        // `[a-z_]+` un `{offerId}` restava letterale nella regex e la rotta
+        // non si agganciava mai, rispondendo 404 senza spiegazioni.
         $regex = preg_replace_callback(
-            '/\{([a-z_]+)\}/',
+            '/\{([A-Za-z_][A-Za-z0-9_]*)\}/',
             static function (array $m) use (&$keys): string {
                 $keys[] = $m[1];
                 return '([^/]+)';

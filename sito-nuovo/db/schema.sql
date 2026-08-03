@@ -17,12 +17,18 @@ CREATE TABLE users (
   created_at DATETIME NOT NULL DEFAULT {NOW}
 ){SUFFIX};
 
+-- `status` è lo stato di PUBBLICAZIONE (cosa si vede online), `deal_stage` è
+-- lo stato della TRATTATIVA (a che punto è il lavoro). Sono due assi diversi:
+-- un immobile può essere online e già sotto proposta, oppure rogitato e
+-- archiviato. Tenerli separati evita di dover scegliere fra dire la verità al
+-- pubblico e dire la verità agli agenti.
 CREATE TABLE properties (
   id {PK},
   ref VARCHAR(30) NOT NULL UNIQUE,
   title VARCHAR(191) NOT NULL,
   slug VARCHAR(191) NOT NULL UNIQUE,
   status VARCHAR(20) NOT NULL DEFAULT 'draft',
+  deal_stage VARCHAR(20) NOT NULL DEFAULT 'acquisizione',
   contract VARCHAR(20) NOT NULL DEFAULT 'vendita',
   type VARCHAR(40) NOT NULL DEFAULT 'appartamento',
   city VARCHAR(120) NOT NULL DEFAULT '',
@@ -33,6 +39,9 @@ CREATE TABLE properties (
   lng VARCHAR(20) NOT NULL DEFAULT '',
   price {MONEY} NULL,
   price_hidden INTEGER NOT NULL DEFAULT 0,
+  -- Prezzo minimo accettato dal proprietario. Non esce MAI dal gestionale:
+  -- nessuna query del sito pubblico lo legge, nessun template lo stampa.
+  min_price {MONEY} NULL,
   condo_fees {MONEY} NULL,
   sqm INTEGER NOT NULL DEFAULT 0,
   lot_sqm INTEGER NOT NULL DEFAULT 0,
@@ -51,6 +60,21 @@ CREATE TABLE properties (
   seo_title VARCHAR(191) NOT NULL DEFAULT '',
   seo_description VARCHAR(255) NOT NULL DEFAULT '',
   agent_id INTEGER NULL,
+  -- Proprietario dell'immobile, come voce dell'anagrafica contatti.
+  owner_contact_id INTEGER NULL,
+  -- Incarico: senza la scadenza a database non c'è modo di accorgersi che
+  -- sta per scadere, ed è il momento in cui si perde un immobile.
+  mandate_start DATE NULL,
+  mandate_end DATE NULL,
+  exclusive INTEGER NOT NULL DEFAULT 0,
+  commission_pct REAL NULL,
+  -- Chiusura della trattativa.
+  sold_price {MONEY} NULL,
+  preliminary_date DATE NULL,
+  deed_date DATE NULL,
+  commission_seller {MONEY} NULL,
+  commission_buyer {MONEY} NULL,
+  commission_paid INTEGER NOT NULL DEFAULT 0,
   featured INTEGER NOT NULL DEFAULT 0,
   views INTEGER NOT NULL DEFAULT 0,
   published_at DATETIME NULL,
@@ -59,9 +83,66 @@ CREATE TABLE properties (
 ){SUFFIX};
 
 CREATE INDEX idx_properties_status ON properties (status);
+CREATE INDEX idx_properties_stage ON properties (deal_stage);
 CREATE INDEX idx_properties_city ON properties (city);
 CREATE INDEX idx_properties_type ON properties (type);
 CREATE INDEX idx_properties_price ON properties (price);
+CREATE INDEX idx_properties_mandate ON properties (mandate_end);
+CREATE INDEX idx_properties_owner ON properties (owner_contact_id);
+
+-- Storico dei prezzi: ogni variazione resta scritta. Serve a rispondere alla
+-- domanda che il proprietario fa sempre — "da quanto è a questo prezzo?" —
+-- e a capire, sugli immobili fermi, se il problema è il prezzo o altro.
+CREATE TABLE price_history (
+  id {PK},
+  property_id INTEGER NOT NULL,
+  price {MONEY} NULL,
+  previous_price {MONEY} NULL,
+  reason VARCHAR(255) NOT NULL DEFAULT '',
+  user_id INTEGER NULL,
+  created_at DATETIME NOT NULL DEFAULT {NOW}
+){SUFFIX};
+
+CREATE INDEX idx_price_history_property ON price_history (property_id, created_at);
+
+-- Proposte di acquisto ricevute su un immobile.
+CREATE TABLE offers (
+  id {PK},
+  property_id INTEGER NOT NULL,
+  contact_id INTEGER NULL,
+  amount {MONEY} NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'presentata',
+  deposit {MONEY} NULL,
+  valid_until DATE NULL,
+  presented_at DATETIME NOT NULL DEFAULT {NOW},
+  replied_at DATETIME NULL,
+  notes TEXT,
+  user_id INTEGER NULL,
+  created_at DATETIME NOT NULL DEFAULT {NOW}
+){SUFFIX};
+
+CREATE INDEX idx_offers_property ON offers (property_id, presented_at);
+CREATE INDEX idx_offers_status ON offers (status);
+
+-- Valutazioni fatte, anche su immobili non ancora in portafoglio: è il
+-- registro di cosa è stato promesso al proprietario, e a che numero.
+CREATE TABLE valuations (
+  id {PK},
+  property_id INTEGER NULL,
+  contact_id INTEGER NULL,
+  lead_id INTEGER NULL,
+  address VARCHAR(191) NOT NULL DEFAULT '',
+  city VARCHAR(120) NOT NULL DEFAULT '',
+  sqm INTEGER NOT NULL DEFAULT 0,
+  value_min {MONEY} NULL,
+  value_max {MONEY} NULL,
+  method VARCHAR(120) NOT NULL DEFAULT '',
+  notes TEXT,
+  user_id INTEGER NULL,
+  created_at DATETIME NOT NULL DEFAULT {NOW}
+){SUFFIX};
+
+CREATE INDEX idx_valuations_when ON valuations (created_at);
 
 CREATE TABLE property_images (
   id {PK},
@@ -112,6 +193,12 @@ CREATE TABLE contacts (
   name VARCHAR(120) NOT NULL,
   phone VARCHAR(40) NOT NULL DEFAULT '',
   email VARCHAR(191) NOT NULL DEFAULT '',
+  -- Un contatto può essere più cose insieme: chi vende oggi compra domani.
+  roles VARCHAR(191) NOT NULL DEFAULT 'acquirente',
+  source VARCHAR(60) NOT NULL DEFAULT '',
+  status VARCHAR(30) NOT NULL DEFAULT 'attivo',
+  city VARCHAR(120) NOT NULL DEFAULT '',
+  tax_code VARCHAR(20) NOT NULL DEFAULT '',
   contract VARCHAR(20) NOT NULL DEFAULT 'vendita',
   budget_min {MONEY} NULL,
   budget_max {MONEY} NULL,
@@ -119,7 +206,19 @@ CREATE TABLE contacts (
   bedrooms_min INTEGER NOT NULL DEFAULT 0,
   types VARCHAR(255) NOT NULL DEFAULT '',
   cities VARCHAR(255) NOT NULL DEFAULT '',
+  financing VARCHAR(30) NOT NULL DEFAULT '',
+  urgency VARCHAR(20) NOT NULL DEFAULT 'media',
   notes TEXT,
+  -- Consenso privacy: senza data non vale niente in caso di contestazione.
+  privacy_consent INTEGER NOT NULL DEFAULT 0,
+  privacy_date DATETIME NULL,
+  privacy_scope VARCHAR(191) NOT NULL DEFAULT '',
+  -- Antiriciclaggio: identificazione del cliente prima della trattativa.
+  aml_doc_type VARCHAR(40) NOT NULL DEFAULT '',
+  aml_doc_number VARCHAR(60) NOT NULL DEFAULT '',
+  aml_doc_expiry DATE NULL,
+  aml_checked_at DATETIME NULL,
+  last_contact_at DATETIME NULL,
   active INTEGER NOT NULL DEFAULT 1,
   assigned_to INTEGER NULL,
   created_at DATETIME NOT NULL DEFAULT {NOW},
@@ -127,6 +226,8 @@ CREATE TABLE contacts (
 ){SUFFIX};
 
 CREATE INDEX idx_contacts_active ON contacts (active);
+CREATE INDEX idx_contacts_status ON contacts (status);
+CREATE INDEX idx_contacts_lastcontact ON contacts (last_contact_at);
 
 CREATE TABLE appointments (
   id {PK},
@@ -138,6 +239,10 @@ CREATE TABLE appointments (
   user_id INTEGER NULL,
   notes TEXT,
   done INTEGER NOT NULL DEFAULT 0,
+  -- Compilati DOPO la visita: com'è andata e quanto interesse c'era.
+  -- È il dato che permette di dire al proprietario perché non si vende.
+  outcome TEXT,
+  interest VARCHAR(20) NOT NULL DEFAULT '',
   created_at DATETIME NOT NULL DEFAULT {NOW}
 ){SUFFIX};
 
@@ -189,6 +294,15 @@ CREATE TABLE settings (
   id {PK},
   name VARCHAR(100) NOT NULL UNIQUE,
   value TEXT
+){SUFFIX};
+
+-- Registro delle migrazioni già applicate. Su un'installazione nuova questo
+-- file è già aggiornato, quindi le migrazioni vengono solo marcate come fatte;
+-- su un'installazione esistente vengono eseguite davvero. Vedi Db::migrate().
+CREATE TABLE schema_migrations (
+  id {PK},
+  name VARCHAR(191) NOT NULL UNIQUE,
+  applied_at DATETIME NOT NULL DEFAULT {NOW}
 ){SUFFIX};
 
 CREATE TABLE activity_log (

@@ -40,6 +40,20 @@ final class Vocab
         'archived' => 'Archiviato',
     ];
 
+    /**
+     * Stato della trattativa, indipendente dalla pubblicazione: un immobile
+     * può essere online e già sotto proposta, o rogitato e ancora visibile
+     * come venduto.
+     */
+    public const DEAL_STAGES = [
+        'acquisizione' => 'In acquisizione',
+        'in_vendita' => 'In vendita',
+        'proposta' => 'Proposta ricevuta',
+        'compromesso' => 'Compromesso firmato',
+        'rogitato' => 'Rogitato',
+        'ritirato' => 'Incarico ritirato',
+    ];
+
     public const CONDITIONS = [
         'nuovo' => 'Nuovo / in costruzione',
         'ristrutturato' => 'Ristrutturato',
@@ -79,6 +93,71 @@ final class Vocab
         'contatto' => 'Modulo contatti',
     ];
 
+    /** Un contatto può avere più ruoli insieme: chi vende oggi compra domani. */
+    public const CLIENT_ROLES = [
+        'acquirente' => 'Acquirente',
+        'venditore' => 'Venditore',
+        'locatore' => 'Locatore',
+        'conduttore' => 'Inquilino',
+        'segnalatore' => 'Segnalatore',
+        'collega' => 'Collega',
+    ];
+
+    public const CLIENT_STATUSES = [
+        'attivo' => 'Attivo',
+        'in_trattativa' => 'In trattativa',
+        'dormiente' => 'Dormiente',
+        'chiuso' => 'Chiuso',
+        'non_interessato' => 'Non più interessato',
+    ];
+
+    /** Da dove arriva il contatto. Alimenta il report sulle provenienze. */
+    public const CLIENT_SOURCES = [
+        'sito' => 'Sito',
+        'portale' => 'Portale (Immobiliare, Idealista)',
+        'passaparola' => 'Passaparola',
+        'vetrina' => 'Vetrina / passaggio',
+        'social' => 'Social',
+        'cliente_storico' => 'Cliente storico',
+        'collega' => 'Segnalazione di un collega',
+    ];
+
+    /** Come paga: cambia i tempi della trattativa più di ogni altro dato. */
+    public const FINANCING = [
+        'contanti' => 'Contanti / senza mutuo',
+        'mutuo_deliberato' => 'Mutuo già deliberato',
+        'mutuo_da_valutare' => 'Mutuo da valutare',
+        'vende_prima' => 'Deve prima vendere',
+    ];
+
+    public const URGENCY = [
+        'alta' => 'Alta',
+        'media' => 'Media',
+        'bassa' => 'Bassa',
+    ];
+
+    public const OFFER_STATUSES = [
+        'presentata' => 'Presentata',
+        'accettata' => 'Accettata',
+        'rifiutata' => 'Rifiutata',
+        'ritirata' => 'Ritirata',
+        'scaduta' => 'Scaduta',
+    ];
+
+    /** Documenti ammessi per l'identificazione antiriciclaggio. */
+    public const AML_DOCS = [
+        'carta_identita' => 'Carta d’identità',
+        'patente' => 'Patente',
+        'passaporto' => 'Passaporto',
+    ];
+
+    /** Interesse rilevato dopo una visita. */
+    public const INTEREST = [
+        'alto' => 'Alto',
+        'medio' => 'Medio',
+        'basso' => 'Basso',
+    ];
+
     public static function label(string $group, string $key, string $fallback = ''): string
     {
         /** @var array<string,string> $map */
@@ -86,9 +165,18 @@ final class Vocab
             'contract' => self::CONTRACTS,
             'type' => self::TYPES,
             'status' => self::STATUSES,
+            'deal_stage' => self::DEAL_STAGES,
             'condition' => self::CONDITIONS,
             'lead_status' => self::LEAD_STATUSES,
             'lead_source' => self::LEAD_SOURCES,
+            'client_role' => self::CLIENT_ROLES,
+            'client_status' => self::CLIENT_STATUSES,
+            'client_source' => self::CLIENT_SOURCES,
+            'financing' => self::FINANCING,
+            'urgency' => self::URGENCY,
+            'offer_status' => self::OFFER_STATUSES,
+            'aml_doc' => self::AML_DOCS,
+            'interest' => self::INTEREST,
             default => [],
         };
 

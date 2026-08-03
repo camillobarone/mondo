@@ -35,10 +35,17 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
       </div>
 
       <div class="form-row">
-        <label>Stato
+        <label>Stato di pubblicazione <small>cosa vede chi arriva sul sito</small>
           <select name="status">
             <?php foreach (Vocab::STATUSES as $slug => $label): ?>
               <option value="<?= e($slug) ?>" <?= $p['status'] === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label>Stato della trattativa <small>a che punto è il lavoro</small>
+          <select name="deal_stage">
+            <?php foreach (Vocab::DEAL_STAGES as $slug => $label): ?>
+              <option value="<?= e($slug) ?>" <?= ($p['deal_stage'] ?? '') === $slug ? 'selected' : '' ?>><?= e($label) ?></option>
             <?php endforeach; ?>
           </select>
         </label>
@@ -70,6 +77,57 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
         <label class="check">
           <input type="checkbox" name="featured" value="1" <?= (int) $p['featured'] === 1 ? 'checked' : '' ?>>
           In evidenza in home
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>Prezzo minimo accettato €
+          <input type="text" name="min_price" inputmode="numeric" value="<?= e(!empty($p['min_price']) ? (string) (int) $p['min_price'] : '') ?>">
+          <small>Solo interno. Non esce dal gestionale in nessuna pagina pubblica.</small>
+        </label>
+        <label>Motivo del cambio prezzo
+          <input type="text" name="price_reason" placeholder="es. ribasso concordato col proprietario">
+          <small>Compilato solo quando cambi il prezzo: finisce nello storico.</small>
+        </label>
+      </div>
+
+      <h3>Incarico</h3>
+      <div class="form-row">
+        <label>Proprietario
+          <select name="owner_contact_id">
+            <option value="">—</option>
+            <?php foreach ($clienti as $cl): ?>
+              <option value="<?= (int) $cl['id'] ?>" <?= (int) ($p['owner_contact_id'] ?? 0) === (int) $cl['id'] ? 'selected' : '' ?>><?= e((string) $cl['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label>Inizio incarico<input type="date" name="mandate_start" value="<?= e((string) ($p['mandate_start'] ?? '')) ?>"></label>
+        <label>Scadenza incarico<input type="date" name="mandate_end" value="<?= e((string) ($p['mandate_end'] ?? '')) ?>"></label>
+        <label>Provvigione %<input type="text" name="commission_pct" inputmode="decimal" value="<?= e(!empty($p['commission_pct']) ? (string) $p['commission_pct'] : '') ?>"></label>
+      </div>
+      <label class="check">
+        <input type="checkbox" name="exclusive" value="1" <?= (int) ($p['exclusive'] ?? 0) === 1 ? 'checked' : '' ?>>
+        Incarico in esclusiva
+      </label>
+
+      <h3>Chiusura</h3>
+      <div class="form-row">
+        <label>Prezzo di vendita €
+          <input type="text" name="sold_price" inputmode="numeric" value="<?= e(!empty($p['sold_price']) ? (string) (int) $p['sold_price'] : '') ?>">
+        </label>
+        <label>Data compromesso<input type="date" name="preliminary_date" value="<?= e((string) ($p['preliminary_date'] ?? '')) ?>"></label>
+        <label>Data rogito<input type="date" name="deed_date" value="<?= e((string) ($p['deed_date'] ?? '')) ?>"></label>
+      </div>
+      <div class="form-row">
+        <label>Provvigione venditore €
+          <input type="text" name="commission_seller" inputmode="numeric" value="<?= e(!empty($p['commission_seller']) ? (string) (int) $p['commission_seller'] : '') ?>">
+        </label>
+        <label>Provvigione acquirente €
+          <input type="text" name="commission_buyer" inputmode="numeric" value="<?= e(!empty($p['commission_buyer']) ? (string) (int) $p['commission_buyer'] : '') ?>">
+        </label>
+        <label class="check">
+          <input type="checkbox" name="commission_paid" value="1" <?= (int) ($p['commission_paid'] ?? 0) === 1 ? 'checked' : '' ?>>
+          Provvigioni incassate
         </label>
       </div>
 
@@ -228,6 +286,91 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
   <?php else: ?>
     <p class="vuoto">Nessuna foto caricata. La prima diventa l’immagine principale, anche nello schema.</p>
   <?php endif; ?>
+</div>
+
+<div class="due-colonne">
+  <div class="pannello">
+    <h2>Proposte ricevute</h2>
+
+    <?php if ($proposte === []): ?>
+      <p class="vuoto">Nessuna proposta registrata su questo immobile.</p>
+    <?php else: ?>
+      <table class="tabella">
+        <thead><tr><th>Quando</th><th>Da</th><th>Importo</th><th>Stato</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($proposte as $o): ?>
+          <tr>
+            <td><?= e(data_it((string) $o['presented_at'])) ?></td>
+            <td>
+              <?php if (!empty($o['contact_id'])): ?>
+                <a href="<?= e(url('/gestionale/clienti/' . $o['contact_id'] . '/')) ?>"><?= e((string) $o['contact_name']) ?></a>
+              <?php else: ?>
+                <span class="muto">non collegata</span>
+              <?php endif; ?>
+              <?php if (!empty($o['notes'])): ?><br><small><?= e(tronca((string) $o['notes'], 90)) ?></small><?php endif; ?>
+            </td>
+            <td><strong><?= e(euro((float) $o['amount'])) ?></strong>
+              <?php if (!empty($o['deposit'])): ?><br><small>caparra <?= e(euro((float) $o['deposit'])) ?></small><?php endif; ?>
+            </td>
+            <td><span class="pill pill-<?= e((string) $o['status']) ?>"><?= e(Vocab::label('offer_status', (string) $o['status'])) ?></span></td>
+            <td class="destra">
+              <?php if ($o['status'] === 'presentata'): ?>
+                <?php foreach (['accettata' => 'Accetta', 'rifiutata' => 'Rifiuta', 'ritirata' => 'Ritirata'] as $stato => $etichetta): ?>
+                  <form method="post" action="<?= e(url('/gestionale/immobili/' . $p['id'] . '/proposte/' . $o['id'] . '/stato/')) ?>" class="inline">
+                    <?= Csrf::field() ?>
+                    <input type="hidden" name="status" value="<?= e($stato) ?>">
+                    <button class="mini"><?= e($etichetta) ?></button>
+                  </form>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    <?php endif; ?>
+
+    <h3>Registra una proposta</h3>
+    <form method="post" action="<?= e(url('/gestionale/immobili/' . $p['id'] . '/proposte/')) ?>" class="form">
+      <?= Csrf::field() ?>
+      <div class="form-row">
+        <label>Importo €<input type="text" name="amount" inputmode="numeric" required></label>
+        <label>Caparra €<input type="text" name="deposit" inputmode="numeric"></label>
+        <label>Valida fino al<input type="date" name="valid_until"></label>
+      </div>
+      <label>Da quale cliente
+        <select name="contact_id">
+          <option value="">—</option>
+          <?php foreach ($clienti as $cl): ?>
+            <option value="<?= (int) $cl['id'] ?>"><?= e((string) $cl['name']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label>Note<textarea name="notes" rows="2"></textarea></label>
+      <button class="btn btn-ghost">Registra proposta</button>
+    </form>
+  </div>
+
+  <div class="pannello">
+    <h2>Storico dei prezzi</h2>
+    <?php if ($storicoPrezzi === []): ?>
+      <p class="vuoto">Il prezzo non è mai cambiato da quando l’immobile è a sistema.</p>
+    <?php else: ?>
+      <ul class="lista">
+        <?php foreach ($storicoPrezzi as $h): ?>
+          <li>
+            <strong><?= e(euro(isset($h['price']) ? (float) $h['price'] : null)) ?></strong>
+            <?php if (!empty($h['previous_price'])): ?>
+              <span class="muto">da <?= e(euro((float) $h['previous_price'])) ?></span>
+            <?php endif; ?><br>
+            <small class="muto"><?= e(data_it((string) $h['created_at'], true)) ?>
+              <?php if (!empty($h['user_name'])): ?>— <?= e((string) $h['user_name']) ?><?php endif; ?></small>
+            <?php if (!empty($h['reason'])): ?><br><small><?= e((string) $h['reason']) ?></small><?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+  </div>
 </div>
 
 <div class="pannello pannello-pericolo">

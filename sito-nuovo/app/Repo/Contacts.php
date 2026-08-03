@@ -33,6 +33,17 @@ final class Contacts
             $clauses[] = '(c.name LIKE :q OR c.phone LIKE :q OR c.email LIKE :q OR c.notes LIKE :q)';
             $params['q'] = '%' . $data['q'] . '%';
         }
+        if (!empty($data['status'])) {
+            $clauses[] = 'c.status = :status';
+            $params['status'] = $data['status'];
+        }
+        if (!empty($data['role'])) {
+            // I ruoli stanno in una lista separata da virgole: si cerca il
+            // ruolo circondato da virgole, così "collega" non pesca
+            // "segnalatore_collega" e simili.
+            $clauses[] = Db::concat("','", 'c.roles', "','") . ' LIKE :role';
+            $params['role'] = '%,' . $data['role'] . ',%';
+        }
 
         $where = $clauses === [] ? '1 = 1' : implode(' AND ', $clauses);
         $total = (int) Db::value("SELECT COUNT(*) FROM contacts c WHERE {$where}", $params);
@@ -78,6 +89,55 @@ final class Contacts
     public static function countActive(): int
     {
         return (int) Db::value('SELECT COUNT(*) FROM contacts WHERE active = 1');
+    }
+
+    /** Segna che il cliente è stato sentito adesso. */
+    public static function touch(int $id): void
+    {
+        Db::run(
+            'UPDATE contacts SET last_contact_at = :now WHERE id = :id',
+            ['now' => Db::now(), 'id' => $id]
+        );
+    }
+
+    /**
+     * Clienti attivi non sentiti da troppo tempo. Un cliente che non senti
+     * per due mesi non è più un tuo cliente: è di chi lo richiama.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function notContactedSince(int $days = 45, int $limit = 20): array
+    {
+        $soglia = date('Y-m-d H:i:s', strtotime('-' . $days . ' days'));
+
+        return Db::all(
+            "SELECT c.*, u.name AS agent_name
+             FROM contacts c LEFT JOIN users u ON u.id = c.assigned_to
+             WHERE c.active = 1
+               AND c.status IN ('attivo','in_trattativa')
+               AND (c.last_contact_at IS NULL OR c.last_contact_at < :soglia)
+             ORDER BY CASE WHEN c.last_contact_at IS NULL THEN 0 ELSE 1 END,
+                      c.last_contact_at
+             LIMIT {$limit}",
+            ['soglia' => $soglia]
+        );
+    }
+
+    /**
+     * Contatti senza consenso privacy datato o senza identificazione
+     * antiriciclaggio, fra quelli in trattativa. Sono gli adempimenti che
+     * si scoprono mancanti sempre nel momento sbagliato.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function missingCompliance(int $limit = 20): array
+    {
+        return Db::all(
+            "SELECT * FROM contacts
+             WHERE active = 1 AND status IN ('attivo','in_trattativa')
+               AND (privacy_consent = 0 OR privacy_date IS NULL OR aml_checked_at IS NULL)
+             ORDER BY status DESC, name LIMIT {$limit}"
+        );
     }
 
     // --------------------------------------------------------- abbinamento

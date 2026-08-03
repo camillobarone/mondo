@@ -46,6 +46,7 @@ foreach ($valori as $chiave => $valore) {
 Db::reset();
 
 Db::runScript(MIL_ROOT . '/db/schema.sql');
+Db::migrate(true);
 echo "Schema creato.\n";
 
 Users::create([
