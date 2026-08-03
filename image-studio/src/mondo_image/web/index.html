@@ -354,7 +354,12 @@
 (function () {
   "use strict";
 
-  var stato = { modo: "arreda", foto: null, maschera: false };
+  var stato = { modo: "arreda", foto: null, maschera: false, presetPerModo: {} };
+
+  // Lo stile giusto dipende dalla scheda: su "Crea" quello d'interni riscrive
+  // qualunque soggetto come una stanza — chi chiedeva una spiaggia otteneva una
+  // stanza con vista mare. Ogni scheda parte dal proprio, poi si puo' cambiare.
+  var PRESET_MODO = { arreda: "interior", ritocca: "interior", testo: "photo" };
 
   var el = function (id) { return document.getElementById(id); };
   var mostra = function (nodo, visibile) { nodo.classList.toggle("nascosto", !visibile); };
@@ -384,11 +389,23 @@
 
   // ------------------------------------------------------------- schede
 
+  // Il menu degli stili si riempie quando il motore risponde, che puo' essere
+  // dopo il primo cambio di scheda: va riapplicato anche di li'.
+  function applicaPreset() {
+    var select = el("preset");
+    if (!select.options.length) return;
+    var voluto = stato.presetPerModo[stato.modo] || PRESET_MODO[stato.modo];
+    for (var i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === voluto) { select.value = voluto; return; }
+    }
+  }
+
   function scegliModo(modo) {
     stato.modo = modo;
     document.querySelectorAll(".scheda").forEach(function (b) {
       b.setAttribute("aria-selected", String(b.dataset.modo === modo));
     });
+    applicaPreset();
 
     var serveFoto = modo !== "testo";
     var maschera = modo === "ritocca";
@@ -425,6 +442,12 @@
   document.querySelectorAll(".scheda").forEach(function (b) {
     b.onclick = function () { scegliModo(b.dataset.modo); };
   });
+
+  // Uno stile scelto a mano vale per quella scheda: tornandoci lo si ritrova,
+  // senza pero' seguirti nelle altre.
+  el("preset").onchange = function () {
+    stato.presetPerModo[stato.modo] = el("preset").value;
+  };
 
   // ------------------------------------------------------------- la foto
 
@@ -662,7 +685,7 @@
             o.textContent = p.descrizione;
             select.appendChild(o);
           });
-          select.value = "interior";
+          applicaPreset();
         }
       })
       .catch(function () {

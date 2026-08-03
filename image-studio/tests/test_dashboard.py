@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import re
 import os
 import sys
 import tempfile
@@ -429,3 +430,52 @@ def test_del_registro_si_tiene_solo_la_coda(tmp_path, monkeypatch):
     assert "riga 99" in esito
     assert "riga 0\n" not in esito
     assert len(esito.splitlines()) == dashboard.RIGHE_REGISTRO
+
+
+# ------------------------------------------------- stile iniziale per scheda
+
+
+def _preset_per_modo() -> dict[str, str]:
+    """Legge la mappa scheda -> stile dalla pagina.
+
+    La pagina non e' importabile: si estrae l'unica dichiarazione che conta,
+    cosi' il test fallisce se qualcuno la rinomina o la toglie.
+    """
+    pagina = os.path.join(os.path.dirname(__file__), "..", "src", "mondo_image", "web", "index.html")
+    with open(pagina, encoding="utf-8") as f:
+        testo = f.read()
+    corpo = re.search(r"var PRESET_MODO = \{(.*?)\};", testo, re.S)
+    assert corpo, "PRESET_MODO sparita dalla pagina"
+    return dict(re.findall(r"(\w+):\s*\"(\w+)\"", corpo.group(1)))
+
+
+def test_ogni_scheda_parte_da_uno_stile_esistente():
+    from mondo_image import presets
+
+    mappa = _preset_per_modo()
+    assert set(mappa) == {"arreda", "ritocca", "testo"}
+    for modo, nome in mappa.items():
+        assert nome in presets.PRESETS, f"la scheda {modo} punta a uno stile inesistente: {nome}"
+
+
+def test_la_scheda_crea_non_parte_dallo_stile_interni():
+    """Su "Crea" lo stile d'interni riscriveva ogni soggetto come una stanza.
+
+    Chi chiedeva una spiaggia otteneva una stanza con vista mare, perche' il
+    menu restava su 'interior' anche cambiando scheda.
+    """
+    from mondo_image import presets
+
+    scelto = _preset_per_modo()["testo"]
+    assert scelto != "interior"
+    suffisso = presets.get(scelto).positive_suffix
+    assert "interior" not in suffisso
+    assert "windows" not in suffisso
+
+
+def test_la_pagina_non_forza_piu_uno_stile_fisso():
+    pagina = os.path.join(os.path.dirname(__file__), "..", "src", "mondo_image", "web", "index.html")
+    with open(pagina, encoding="utf-8") as f:
+        testo = f.read()
+    assert 'select.value = "interior"' not in testo
+    assert "applicaPreset()" in testo
