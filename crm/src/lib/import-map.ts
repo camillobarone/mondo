@@ -61,20 +61,6 @@ export function splitPhones(raw: string): { mobile: string; phone: string; extra
   };
 }
 
-/* --------------------------------------------------------------- richieste */
-
-export interface ParsedRequirement {
-  contract: string;
-  kind: string | null;
-  city: string | null;
-  zones: string;
-  budgetMin: number | null;
-  budgetMax: number | null;
-  sqmMin: number | null;
-  roomsMin: number | null;
-  notes: string;
-}
-
 /** Le tipologie degli altri gestionali riportate al nostro vocabolario. */
 const TIPOLOGIE: Record<string, string> = {
   "appartamento": "Appartamento",
@@ -99,6 +85,72 @@ const TIPOLOGIE: Record<string, string> = {
   "garage": "Box / Garage",
   "terreno": "Terreno",
 };
+
+/* ---------------------------------------------------------------- immobili */
+
+export interface ParsedProperty {
+  ref: string;
+  title: string;
+  kind: string | null;
+  contract: string;
+  city: string | null;
+  zone: string | null;
+  rooms: number | null;
+  sqm: number | null;
+  price: number | null;
+  exclusive: number;
+  mandateEnd: string | null;
+  ownerName: string;
+  ownerPhone: string;
+  notes: string;
+}
+
+/** "€ 1.050.000" -> 1050000 ; "720 mq" -> 720 ; "3.0" -> 3 */
+export function numero(text: string): number | null {
+  const pulito = String(text).replace(/[^\d.,]/g, "").replace(/\.(?=\d{3}\b)/g, "");
+  const valore = Number(pulito.replace(",", "."));
+  return Number.isFinite(valore) && valore > 0 ? Math.round(valore) : null;
+}
+
+/** "15/08/2025" -> "2025-08-15", il formato che capisce il database. */
+export function dataItaliana(text: string): string | null {
+  const m = String(text).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2]!.padStart(2, "0")}-${m[1]!.padStart(2, "0")}`;
+}
+
+/**
+ * "Torre lapillo - Porto Cesareo (LE)" -> zona e comune separati.
+ * Senza trattino c'e' solo il comune: "Lecce (LE)".
+ */
+export function zonaEComune(text: string): { city: string | null; zone: string | null } {
+  const pulito = String(text).replace(/\s*\([A-Za-z]{2}\)\s*$/, "").trim();
+  if (!pulito) return { city: null, zone: null };
+
+  const taglio = pulito.lastIndexOf(" - ");
+  if (taglio < 0) return { city: pulito, zone: null };
+  return { zone: pulito.slice(0, taglio).trim() || null, city: pulito.slice(taglio + 3).trim() || null };
+}
+
+export function tipologia(text: string): string | null {
+  const pulito = String(text).trim();
+  if (!pulito) return null;
+  return TIPOLOGIE[pulito.toLowerCase()] ?? pulito;
+}
+
+/* --------------------------------------------------------------- richieste */
+
+export interface ParsedRequirement {
+  contract: string;
+  kind: string | null;
+  city: string | null;
+  zones: string;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  sqmMin: number | null;
+  roomsMin: number | null;
+  notes: string;
+}
 
 /** Zone che non sono zone: indicano "tutto il comune". */
 const NON_ZONE = new Set(["capoluogo", "tutte le zone", "qualsiasi zona"]);

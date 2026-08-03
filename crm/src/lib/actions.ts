@@ -7,7 +7,10 @@ import { requireUser, requireOwner, hashPassword, login as doLogin, logout as do
 import { parseCsv, decodeText } from "./csv";
 import { readXlsx, looksLikeXlsx } from "./xlsx";
 import { salvaFoto, cancellaFile, MAX_FOTO_PER_IMMOBILE } from "./photos";
-import { splitName, splitPhones, parseRequirements } from "./import-map";
+import {
+  splitName, splitPhones, parseRequirements,
+  numero, dataItaliana, zonaEComune, tipologia,
+} from "./import-map";
 import type { Property } from "./types";
 
 /* ------------------------------------------------------------- utilita' */
@@ -699,11 +702,161 @@ export async function saveUser(form: FormData) {
 /* ========================================================= importazione */
 
 export interface ImportResult {
+  /** "clienti" | "immobili": cosa e' stato riconosciuto nel file. */
+  kind?: "clienti" | "immobili";
   imported: number;
   skipped: number;
   /** Richieste ricavate dal file: sono quelle che alimentano gli incroci. */
   requirements: number;
   errors: string[];
+}
+
+/**
+ * Capisce da solo se il file contiene clienti o immobili, guardando le
+ * intestazioni. Meglio che chiederlo: una scelta sbagliata in un menu a
+ * tendina riempirebbe l'archivio di schede senza senso.
+ */
+function riconosciTipo(headers: string[]): "clienti" | "immobili" | null {
+  const normali = headers.map((h) => h.toLowerCase().trim());
+  const ha = (...nomi: string[]) => nomi.some((n) => normali.includes(n));
+
+  const immobili = [
+    ha("riferimento", "rif", "codice"),
+    ha("tipologia"),
+    ha("prezzo"),
+    ha("contratto"),
+  ].filter(Boolean).length;
+
+  const clienti = [
+    ha("cognome/nome", "cognome", "nome", "nominativo", "cliente"),
+    ha("cellulare", "telefono", "tel"),
+    ha("email", "email stampa", "e-mail"),
+    ha("richieste", "richiesta"),
+  ].filter(Boolean).length;
+
+  if (immobili >= 3 && immobili > clienti) return "immobili";
+  if (clienti >= 2) return "clienti";
+  return null;
+}
+
+/**
+ * Importa il portafoglio immobili.
+ *
+ * I doppioni si riconoscono dal riferimento interno: reimportare lo stesso
+ * elenco non crea copie. Il proprietario viene collegato alla sua scheda
+ * cliente quando il telefono corrisponde a una gia' in archivio; altrimenti
+ * nome e recapito restano nelle note, che e' meglio che perderli.
+ */
+function importaImmobili(rows: Record<string, string>[], userId: number): ImportResult {
+  const result: ImportResult = {
+    kind: "immobili", imported: 0, skipped: 0, requirements: 0, errors: [],
+  };
+
+  const leggi = (row: Record<string, string>, ...nomi: string[]): string => {
+    for (const nome of nomi) {
+      for (const chiave of Object.keys(row)) {
+        if (chiave.toLowerCase().trim() === nome) {
+          const valore = row[chiave]?.trim();
+          if (valore) return valore;
+        }
+      }
+    }
+    return "";
+  };
+
+  const esistente = db.prepare(
+    `SELECT id FROM properties WHERE ref = ? AND ref != '' AND deleted_at IS NULL LIMIT 1`,
+  );
+  const proprietario = db.prepare(
+    `SELECT id FROM clients
+      WHERE deleted_at IS NULL
+        AND REPLACE(REPLACE(COALESCE(mobile,''),' ',''),'.','') = ?
+      LIMIT 1`,
+  );
+  const inserisci = db.prepare(
+    `INSERT INTO properties
+      (ref, title, kind, contract, city, zone, sqm, rooms, price, status,
+       owner_client_id, agent_id, mandate_end, exclusive, notes)
+     VALUES (?,?,?,?,?,?,?,?,?,'in_vendita',?,?,?,?,?)`,
+  );
+
+  const transazione = db.transaction((elenco: Record<string, string>[]) => {
+    elenco.forEach((row, indice) => {
+      const ref = leggi(row, "riferimento", "rif", "codice");
+      const tipo = leggi(row, "tipologia");
+      const zonaGrezza = leggi(row, "zona", "comune", "località", "localita");
+      const { city, zone } = zonaEComune(zonaGrezza);
+      const sqm = numero(leggi(row, "mq", "metri", "superficie"));
+      const price = numero(leggi(row, "prezzo"));
+
+      if (!ref && !tipo && !zonaGrezza) {
+        result.skipped++;
+        return;
+      }
+
+      if (ref && esistente.get(ref)) {
+        result.skipped++;
+        return;
+      }
+
+      // Il titolo non c'e' in questi tracciati: si compone da cosa e dove,
+      // che e' l'unica cosa che serve per riconoscerlo in un elenco.
+      const titolo =
+        [tipo, sqm ? `${sqm} mq` : "", zone || city ? `a ${zone ?? city}` : ""]
+          .filter(Boolean)
+          .join(" ") || ref || `Immobile riga ${indice + 2}`;
+
+      const telefono = leggi(row, "tel", "telefono", "cellulare").replace(/[\s.]/g, "");
+      const nomeProprietario = leggi(row, "proprietario", "venditore");
+      const collegato = telefono
+        ? (proprietario.get(telefono) as { id: number } | undefined)
+        : undefined;
+
+      const note = [
+        collegato ? "" : nomeProprietario ? `Proprietario: ${nomeProprietario}` : "",
+        collegato || !telefono ? "" : `Tel: ${telefono}`,
+        /s[iì]/i.test(leggi(row, "asta")) ? "Immobile all'asta" : "",
+        leggi(row, "status", "stato"),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+
+      inserisci.run(
+        ref,
+        titolo,
+        tipologia(tipo),
+        /affitt|locaz/i.test(leggi(row, "contratto")) ? "affitto" : "vendita",
+        city,
+        zone,
+        sqm,
+        numero(leggi(row, "vani", "locali")),
+        price,
+        collegato?.id ?? null,
+        userId,
+        dataItaliana(leggi(row, "esclusiva termine", "scadenza incarico")),
+        /s[iì]/i.test(leggi(row, "esclusiva")) ? 1 : 0,
+        note || null,
+      );
+      result.imported++;
+    });
+  });
+
+  try {
+    transazione(rows);
+  } catch (error) {
+    result.imported = 0;
+    result.skipped = 0;
+    result.errors = [
+      `Importazione annullata, nessun immobile inserito: ${
+        error instanceof Error ? error.message : "errore sconosciuto"
+      }`,
+    ];
+  }
+
+  audit(userId, "crea", "immobile", null, `importazione: ${result.imported} immobili`);
+  revalidatePath("/immobili");
+  revalidatePath("/incroci");
+  return result;
 }
 
 /** Le celle di un foglio Excel diventano righe con intestazione, come dal CSV. */
@@ -762,6 +915,22 @@ export async function importClients(
     return { imported: 0, skipped: 0, requirements: 0, errors: ["Il file non contiene righe."] };
   }
 
+  const tipo = riconosciTipo(Object.keys(rows[0]!));
+  if (!tipo) {
+    return {
+      imported: 0,
+      skipped: 0,
+      requirements: 0,
+      errors: [
+        "Non riconosco cosa contiene questo file. Per i clienti servono almeno " +
+          "le colonne del nome e di un recapito; per gli immobili riferimento, " +
+          "tipologia e prezzo.",
+      ],
+    };
+  }
+
+  if (tipo === "immobili") return importaImmobili(rows, user.id);
+
   const pick = (row: Record<string, string>, ...names: string[]): string => {
     for (const name of names) {
       for (const key of Object.keys(row)) {
@@ -774,7 +943,7 @@ export async function importClients(
     return "";
   };
 
-  const result: ImportResult = { imported: 0, skipped: 0, requirements: 0, errors: [] };
+  const result: ImportResult = { kind: "clienti", imported: 0, skipped: 0, requirements: 0, errors: [] };
   const skipDuplicates = !form.get("allow_duplicates");
 
   const insert = db.prepare(

@@ -78,6 +78,15 @@ Le colonne riconosciute (in qualsiasi ordine, le altre vengono ignorate):
 `Nome`, `Cognome`, `Ragione sociale`, `Cellulare`, `Telefono`, `Email`,
 `Indirizzo`, `Città`, `Codice fiscale`, `Ruolo`, `Provenienza`, `Etichette`, `Note`.
 
+**Lo stesso posto importa anche gli immobili.** Il tipo di file viene
+riconosciuto dalle intestazioni: se ci sono riferimento, tipologia e prezzo è
+un portafoglio, altrimenti sono clienti. Dell'elenco immobili vengono letti
+riferimento, contratto, tipologia, zona e comune, vani, metri, prezzo,
+esclusiva e scadenza dell'incarico; il proprietario viene collegato alla sua
+scheda cliente quando il telefono corrisponde a una già in archivio, altrimenti
+nome e recapito restano nelle note. I doppioni si riconoscono dal riferimento
+interno: reimportare lo stesso elenco non crea copie.
+
 Vengono capiti anche i tracciati degli altri gestionali immobiliari:
 
 - **`Cognome/Nome` in una colonna sola** viene diviso da solo, tenendo insieme

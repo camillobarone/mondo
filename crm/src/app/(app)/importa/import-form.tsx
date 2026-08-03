@@ -25,6 +25,7 @@ export function ImportForm() {
           />
           <p className="mt-1 text-xs text-slate-400">
             Il file esportato dal tuo gestionale va bene com&apos;è: non serve convertirlo.
+            Riconosce da solo se contiene <strong>clienti</strong> o <strong>immobili</strong>.
           </p>
         </div>
 
@@ -48,7 +49,7 @@ export function ImportForm() {
       {result ? (
         <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-medium text-slate-800">
-            {result.imported} clienti importati
+            {result.imported} {result.kind === "immobili" ? "immobili importati" : "clienti importati"}
             {result.skipped ? `, ${result.skipped} saltati` : ""}.
           </p>
 
@@ -69,8 +70,11 @@ export function ImportForm() {
           ) : null}
 
           {result.imported > 0 ? (
-            <Link href="/clienti" className="btn-primary mt-3">
-              Vai all&apos;elenco clienti
+            <Link
+              href={result.kind === "immobili" ? "/immobili" : "/clienti"}
+              className="btn-primary mt-3"
+            >
+              {result.kind === "immobili" ? "Vai al portafoglio" : "Vai all'elenco clienti"}
             </Link>
           ) : null}
         </div>
