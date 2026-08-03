@@ -249,6 +249,46 @@ def _image_size(path: str) -> tuple[int, int]:
         return (1024, 1024)
 
 
+def tutta_nera(path: str) -> bool:
+    """Vero se il file non contiene un solo pixel acceso.
+
+    Su Arc capita che il calcolo arrivi in fondo senza errori ma produca
+    valori non numerici: convertiti in pixel diventano un rettangolo nero.
+    Una foto vera con tutti i canali a zero non esiste nella pratica, quindi
+    il criterio non genera falsi allarmi.
+    """
+    try:
+        from PIL import Image
+
+        with Image.open(path) as img:
+            estremi = img.convert("RGB").getextrema()
+    except Exception:
+        return False
+    return all(canale[1] == 0 for canale in estremi)
+
+
+def diagnosi_nera(flags: list[str]) -> str:
+    """Spiega l'immagine nera e indica il rimedio buono per quella configurazione."""
+    testo = (
+        "L'immagine e' uscita completamente nera.\n\n"
+        "Non dipende da cosa hai chiesto: il calcolo e' arrivato in fondo, ma la "
+        "scheda video ha prodotto valori non validi e sullo schermo si vedono neri. "
+        "E' un difetto noto delle GPU Intel Arc in precisione ridotta."
+    )
+    if "--lowvram" in flags:
+        return (
+            f"{testo}\n\nIl motore e' avviato con --lowvram, che e' la causa piu' "
+            "frequente: in modalita' ridotta i pesi vengono convertiti mentre "
+            "vengono caricati, ed e' li' che il conto si rompe. Riavvia senza "
+            "--lowvram. Serviva solo per il virtual staging; per generare da testo "
+            "non e' necessario."
+        )
+    return (
+        f"{testo}\n\nRiavvia aggiungendo --cpu-vae al comando di avvio: sposta sulla "
+        "CPU l'ultimo passaggio, quello che converte il risultato in pixel."
+    )
+
+
 def build_graph(payload: dict, client: ComfyClient, workdir: str) -> dict:
     """Traduce la richiesta della pagina in un grafo, come fa la CLI."""
     modo = payload.get("modo", "testo")
@@ -484,6 +524,11 @@ def _esegui(engine: Engine, jobs: Jobs, job_id: str, payload: dict) -> None:
             nome = f"{stamp}-{etichetta}{suffisso}.png"
             client.download(immagine, os.path.join(OUTPUT_DIR, nome))
             salvate.append({"nome": nome, "url": f"/immagini/{nome}"})
+
+        # I file restano su disco: se il giudizio fosse sbagliato, l'utente
+        # deve poterli guardare comunque.
+        if salvate and all(tutta_nera(os.path.join(OUTPUT_DIR, s["nome"])) for s in salvate):
+            raise ComfyError(diagnosi_nera(engine.flags))
 
         jobs.update(
             job_id,

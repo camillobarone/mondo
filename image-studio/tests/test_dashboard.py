@@ -479,3 +479,61 @@ def test_la_pagina_non_forza_piu_uno_stile_fisso():
         testo = f.read()
     assert 'select.value = "interior"' not in testo
     assert "applicaPreset()" in testo
+
+
+# ------------------------------------------------------- immagini tutte nere
+
+
+def _png(colore: tuple[int, int, int], dimensione: tuple[int, int] = (8, 8)) -> str:
+    from PIL import Image
+
+    path = os.path.join(tempfile.mkdtemp(), "p.png")
+    Image.new("RGB", dimensione, colore).save(path)
+    return path
+
+
+def test_riconosce_un_fotogramma_tutto_nero():
+    assert dashboard.tutta_nera(_png((0, 0, 0))) is True
+
+
+def test_un_solo_pixel_acceso_basta_a_salvarla():
+    from PIL import Image
+
+    path = _png((0, 0, 0))
+    with Image.open(path) as img:
+        quadro = img.convert("RGB")
+    quadro.putpixel((0, 0), (0, 0, 1))
+    quadro.save(path)
+    assert dashboard.tutta_nera(path) is False
+
+
+def test_una_notte_scura_non_e_considerata_rotta():
+    assert dashboard.tutta_nera(_png((3, 2, 6))) is False
+
+
+def test_un_file_illeggibile_non_fa_scattare_l_allarme():
+    path = os.path.join(tempfile.mkdtemp(), "rotto.png")
+    with open(path, "wb") as f:
+        f.write(b"non sono un png")
+    assert dashboard.tutta_nera(path) is False
+
+
+def test_con_lowvram_la_diagnosi_indica_lowvram():
+    testo = dashboard.diagnosi_nera(["--lowvram", "--cpu-vae"])
+    assert "--lowvram" in testo
+    assert "senza" in testo
+
+
+def test_senza_lowvram_la_diagnosi_propone_il_gradino_dopo():
+    testo = dashboard.diagnosi_nera(["--fp32-vae"])
+    assert "--cpu-vae" in testo
+    assert "--lowvram" not in testo
+
+
+def test_un_risultato_nero_diventa_un_errore_spiegato(app, monkeypatch):
+    """Il file nero veniva salvato e dato per riuscito, senza dire nulla."""
+    monkeypatch.setattr(dashboard, "tutta_nera", lambda path: True)
+    job = genera(app, {"modo": "testo", "prompt": "una spiaggia al tramonto", "preset": "photo"})
+    assert job["stato"] == "errore", job
+    assert "nera" in job["errore"]
+    assert "Intel Arc" in job["errore"]
