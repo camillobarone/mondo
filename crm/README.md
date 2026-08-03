@@ -153,6 +153,30 @@ nome per nome chi è stato escluso e di quanto.
 
 ---
 
+## Usarlo da più computer
+
+Il programma gira su **un** computer e gli altri lo aprono dal browser: non va
+installato su ognuno, e l'archivio resta uno solo.
+
+**In ufficio, sulla stessa rete.** All'avvio il programma stampa due indirizzi:
+
+```
+- Local:    http://localhost:3000        <- il computer su cui gira
+- Network:  http://192.168.1.7:3000      <- gli altri computer dell'ufficio
+```
+
+Il secondo si apre da qualsiasi computer, tablet o telefono collegato alla
+stessa rete. Perché funzioni servono tre cose: il computer che lo ospita
+acceso e con la finestra aperta, la porta 3000 aperta nel firewall di Windows,
+e **un utente a testa** (si creano da *Utenti*) — non la stessa password per
+tutti, altrimenti il registro accessi non dice più chi ha fatto cosa.
+
+**Fra sedi diverse, o da casa.** La rete locale non basta: serve un server
+raggiungibile da internet, con un indirizzo e un certificato HTTPS. È il
+passaggio successivo, e cambia poco del programma: sposta soltanto dove gira.
+
+---
+
 ## Chi vede cosa
 
 Due ruoli:

@@ -2,7 +2,7 @@ import "server-only";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { one, run, audit } from "./db";
 import type { SessionUser, User } from "./types";
@@ -98,7 +98,11 @@ export async function login(email: string, password: string): Promise<string | n
   store.set(COOKIE, encode(user.id), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // Il cookie va marcato "solo HTTPS" quando la connessione lo e' davvero,
+    // non quando il programma e' compilato per la produzione: in ufficio gira
+    // su http in rete locale, e un cookie Secure li' il browser lo scarta —
+    // l'accesso fallirebbe senza dire perche'.
+    secure: await isHttps(),
     path: "/",
     maxAge: DURATION_DAYS * 86400,
   });
@@ -106,6 +110,17 @@ export async function login(email: string, password: string): Promise<string | n
   run(`UPDATE users SET id = id WHERE id = ?`, [user.id]);
   audit(user.id, "accesso", "utente", user.id, "login");
   return null;
+}
+
+/**
+ * Vero solo se la pagina e' arrivata via HTTPS. Dietro un proxy (il caso di un
+ * server con certificato) lo dice l'intestazione `x-forwarded-proto`.
+ */
+async function isHttps(): Promise<boolean> {
+  const head = await headers();
+  const forwarded = head.get("x-forwarded-proto");
+  if (forwarded) return forwarded.split(",")[0]!.trim() === "https";
+  return false;
 }
 
 export async function logout() {
