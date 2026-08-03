@@ -3,9 +3,12 @@ REM Avvia il motore ComfyUI con i parametri giusti per una Intel Arc.
 REM
 REM   --use-pytorch-cross-attention : su Intel non esiste xformers, l'attenzione
 REM       nativa di PyTorch e' l'implementazione corretta e piu' veloce.
-REM   --reserve-vram 0.6 : lascia mezzo giga alla grafica di Windows, che sulla
-REM       stessa scheda continua a disegnare il desktop. Senza questo margine si
-REM       vedono crash per esaurimento VRAM proprio a fine generazione.
+REM   --reserve-vram 1.5 : margine tenuto libero. Serve a due cose: Windows
+REM       disegna il desktop sulla stessa scheda, e un margine piu' ampio spinge
+REM       ComfyUI a spostare da solo parte dei pesi fuori dalla VRAM invece di
+REM       tentare il caricamento completo e fallire. Con 0.6 il virtual staging
+REM       esauriva la memoria (UR_RESULT_ERROR_OUT_OF_RESOURCES) perche' modello
+REM       e ControlNet insieme superano lo spazio disponibile su 12 GB.
 REM   --fp32-vae : lo stadio che converte il risultato in pixel visibili, su Arc,
 REM       in precisione ridotta produce valori non numerici e l'immagine esce
 REM       tutta nera. Osservato su B580 con torch 2.13+xpu: la generazione
@@ -14,10 +17,16 @@ REM       compare "invalid value encountered in cast". In precisione piena il
 REM       problema sparisce; costa circa 2 secondi a immagine e 170 MB di VRAM,
 REM       un prezzo trascurabile per un'immagine che si vede.
 REM
-REM Se ti capitano errori di memoria passando da un tipo di modello a un altro
-REM nella stessa sessione, aggiungi --disable-smart-memory alla riga sotto.
-REM Se anche con --fp32-vae uscissero immagini nere, sostituiscilo con
-REM --cpu-vae: sposta quello stadio sul processore, piu' lento ma infallibile.
+REM Questo file inoltra al motore gli argomenti che gli passi, quindi puoi
+REM provare un'impostazione senza modificarlo:  avvia-comfyui.bat --lowvram
+REM
+REM Se la memoria si esaurisce comunque, in ordine di severita':
+REM   --lowvram              tiene in VRAM solo la parte di modello in uso.
+REM                          Piu' lento ma regge qualsiasi combinazione.
+REM   --cpu-vae              sposta sul processore lo stadio finale, liberando
+REM                          altra VRAM. Da usare al posto di --fp32-vae.
+REM   --disable-smart-memory serve quando l'errore compare passando da un tipo
+REM                          di modello a un altro nella stessa sessione.
 
 setlocal
 cd /d "%~dp0"
@@ -47,6 +56,6 @@ echo.
 REM ComfyUI ricava i propri percorsi da __file__, ma alcuni componenti danno per
 REM scontata la working directory: ci spostiamo nella sua cartella prima di partire.
 cd /d "%COMFY%"
-"%PYTHON%" main.py --use-pytorch-cross-attention --reserve-vram 0.6 --fp32-vae %*
+"%PYTHON%" main.py --use-pytorch-cross-attention --reserve-vram 1.5 --fp32-vae %*
 
 endlocal

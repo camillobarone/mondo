@@ -234,9 +234,19 @@ evitarlo. Se dovesse succedere lo stesso, sostituiscilo con `--cpu-vae`: sposta
 quello stadio sul processore, più lento ma infallibile. Il sintomo nel log del
 motore è `invalid value encountered in cast`.
 
-**Errore di memoria (out of memory) a metà generazione**
-Windows usa la stessa scheda per il desktop. Chiudi il browser, oppure aumenta il
-margine modificando `avvia-comfyui.bat`: `--reserve-vram 1.2`.
+**Memoria video esaurita** — nel log compare `UR_RESULT_ERROR_OUT_OF_RESOURCES`
+Succede sul `staging`, che tiene in VRAM il modello e il ControlNet insieme.
+Prima cosa da provare: chiudi il browser, che sulla stessa scheda consuma
+parecchia memoria. Se non basta, riavvia il motore passandogli l'opzione senza
+modificare niente:
+
+```powershell
+.\avvia-comfyui.bat --lowvram
+```
+
+Tiene in VRAM solo la parte di modello in uso: più lento, ma regge qualsiasi
+combinazione. Il gradino successivo è `--cpu-vae`, che libera altra memoria
+spostando lo stadio finale sul processore.
 
 **Errori di memoria quando cambi tipo di modello**
 Aggiungi `--disable-smart-memory` alla riga di comando in `avvia-comfyui.bat`.
