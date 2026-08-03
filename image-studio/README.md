@@ -63,13 +63,36 @@ puoi aggiungerlo in qualsiasi momento senza rifare nulla.
 Per installare ComfyUI altrove:
 `.\install\1-installa.ps1 -ComfyPath D:\AI\ComfyUI`
 
-### Verifica
+---
 
-```powershell
-.\avvia-comfyui.bat        # lascia questa finestra aperta
-```
+## Uso quotidiano: la dashboard
 
-In un **secondo** terminale:
+Doppio clic su **`avvia.bat`**. Accende il motore, apre il browser e ti presenta
+la pagina di lavoro. Non serve il terminale.
+
+Quattro schede:
+
+| Scheda | Cosa fa |
+|---|---|
+| **Arreda** | Virtual staging: carichi la foto della stanza vuota e descrivi l'arredamento |
+| **Ritocca** | Dipingi col mouse sulla foto la zona da rigenerare — niente maschere da preparare in Paint |
+| **Crea** | Genera dal nulla: copertine, grafiche social |
+| **Ingrandisci** | Porta una foto a risoluzione da stampa |
+
+I risultati compaiono nella pagina e restano nella galleria in basso. I file
+finiscono comunque in `output/`.
+
+Chiudendo la finestra nera si spegne tutto.
+
+---
+
+## Uso da terminale
+
+La riga di comando resta disponibile, ed è più comoda per il lavoro ripetitivo:
+stessa logica, stessi grafi, stessi preset. Il motore va acceso una volta
+(`avvia-comfyui.bat`) e lasciato aperto, poi generi da un altro terminale.
+
+### Verifica dell'installazione
 
 ```powershell
 .\genera.bat doctor
@@ -77,13 +100,6 @@ In un **secondo** terminale:
 
 Devi vedere `Stato: attivo` e l'elenco dei modelli, con un asterisco su quelli
 scelti automaticamente.
-
----
-
-## Uso quotidiano
-
-Il motore va acceso una volta (`avvia-comfyui.bat`) e lasciato aperto. Poi generi
-quanto vuoi da un altro terminale.
 
 ### Virtual staging — arredare una stanza vuota
 
@@ -269,7 +285,8 @@ bisogno del server acceso.
 
 ```
 image-studio/
-├── avvia-comfyui.bat        avvia il motore con i flag giusti per Arc
+├── avvia.bat                doppio clic: motore + dashboard nel browser
+├── avvia-comfyui.bat        solo il motore, per l'uso da terminale
 ├── genera.bat               wrapper della CLI
 ├── install/
 │   ├── 1-installa.ps1       ComfyUI + venv + PyTorch XPU
@@ -278,6 +295,8 @@ image-studio/
 │   └── models.json          manifest dei modelli
 ├── src/mondo_image/
 │   ├── cli.py               comandi e selezione automatica dei modelli
+│   ├── dashboard.py         server locale della dashboard
+│   ├── web/index.html       la pagina
 │   ├── graphs.py            costruzione dei grafi ComfyUI
 │   ├── client.py            client HTTP verso ComfyUI
 │   └── presets.py           prompt e parametri per tipo di lavoro

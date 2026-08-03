@@ -1,0 +1,470 @@
+"""Dashboard web locale: stesso motore della CLI, senza terminale.
+
+Fa tre cose: accende ComfyUI e lo sorveglia, serve una pagina web, e traduce le
+richieste della pagina nei grafi gia' definiti in `graphs`. La logica di
+generazione non e' duplicata: se un difetto viene corretto nella CLI, la
+dashboard lo eredita.
+
+    python -m mondo_image.dashboard
+
+Il server sta in ascolto solo su 127.0.0.1: non e' raggiungibile dalla rete.
+"""
+
+from __future__ import annotations
+
+import base64
+import binascii
+import json
+import mimetypes
+import os
+import subprocess
+import sys
+import threading
+import time
+import uuid
+import webbrowser
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlparse
+
+from . import graphs, presets
+from .client import ComfyClient, ComfyError, DEFAULT_SERVER
+from .cli import (
+    CHECKPOINT_PREFERENCE,
+    CONTROLNET_PREFERENCE,
+    MAX_SEED,
+    UPSCALER_PREFERENCE,
+    VAE_PREFERENCE,
+    _pick,
+)
+
+PORT = 8765
+WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
+
+# Gli stessi parametri di avvia-comfyui.bat: la dashboard non deve comportarsi
+# diversamente dal lancio manuale.
+ENGINE_FLAGS = ["--use-pytorch-cross-attention", "--reserve-vram", "1.5", "--fp32-vae"]
+
+# Limite di sicurezza sul caricamento delle foto: una foto da agenzia sta
+# ampiamente sotto, e impedisce che una richiesta malformata occupi la memoria.
+MAX_UPLOAD_BYTES = 40 * 1024 * 1024
+
+
+# ------------------------------------------------------------------- motore
+
+
+class Engine:
+    """Avvia ComfyUI se non e' gia' in esecuzione, e lo spegne all'uscita."""
+
+    def __init__(self, server: str = DEFAULT_SERVER) -> None:
+        self.client = ComfyClient(server)
+        self.process: subprocess.Popen | None = None
+        self.log_path = os.path.join(PROJECT_ROOT, "motore.log")
+
+    def comfy_path(self) -> str:
+        path_file = os.path.join(PROJECT_ROOT, "comfy-path.txt")
+        if not os.path.exists(path_file):
+            raise RuntimeError(
+                "comfy-path.txt non trovato: esegui prima install\\1-installa.ps1"
+            )
+        with open(path_file, encoding="utf-8") as handle:
+            return handle.read().strip()
+
+    def start(self, timeout: float = 180.0) -> bool:
+        if self.client.is_up():
+            return True  # gia' acceso a mano: non ne avviamo un secondo
+
+        comfy = self.comfy_path()
+        python = os.path.join(comfy, "venv", "Scripts", "python.exe")
+        if not os.path.exists(python):  # fuori da Windows, per i test
+            python = os.path.join(comfy, "venv", "bin", "python")
+        if not os.path.exists(python):
+            raise RuntimeError(f"Ambiente Python non trovato in {comfy}")
+
+        print(f"Avvio del motore da {comfy}", flush=True)
+        log = open(self.log_path, "w", encoding="utf-8", errors="replace")
+        self.process = subprocess.Popen(
+            [python, "main.py", *ENGINE_FLAGS],
+            cwd=comfy,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+        )
+
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self.client.is_up():
+                print("Motore pronto.", flush=True)
+                return True
+            if self.process.poll() is not None:
+                raise RuntimeError(
+                    f"Il motore si e' chiuso subito. Dettagli in {self.log_path}"
+                )
+            time.sleep(1.0)
+        raise RuntimeError(f"Il motore non risponde dopo {int(timeout)}s")
+
+    def stop(self) -> None:
+        if not self.process or self.process.poll() is not None:
+            return
+        self.process.terminate()
+        try:
+            self.process.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            self.process.kill()
+
+
+# -------------------------------------------------------------------- lavori
+
+
+class Jobs:
+    """Stato delle generazioni in corso, condiviso fra i thread del server."""
+
+    def __init__(self) -> None:
+        self._jobs: dict[str, dict] = {}
+        self._lock = threading.Lock()
+
+    def create(self) -> str:
+        job_id = uuid.uuid4().hex
+        with self._lock:
+            self._jobs[job_id] = {"stato": "in_corso", "secondi": 0.0, "immagini": []}
+        return job_id
+
+    def update(self, job_id: str, **fields) -> None:
+        with self._lock:
+            if job_id in self._jobs:
+                self._jobs[job_id].update(fields)
+
+    def get(self, job_id: str) -> dict | None:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            return dict(job) if job else None
+
+
+# ------------------------------------------------------- costruzione grafi
+
+
+def _sampling(payload: dict, preset: presets.Preset, denoise: float) -> graphs.SamplingParams:
+    seed = payload.get("seed")
+    return graphs.SamplingParams(
+        steps=int(payload.get("steps") or preset.steps),
+        cfg=float(payload.get("cfg") or preset.cfg),
+        sampler=preset.sampler,
+        scheduler=preset.scheduler,
+        seed=int(seed) if seed not in (None, "") else int.from_bytes(os.urandom(4), "big") % MAX_SEED,
+        denoise=float(payload.get("denoise") or denoise),
+    )
+
+
+def _decode_image(data_url: str, destination: str) -> str:
+    """Salva su disco un'immagine arrivata dalla pagina come data URL."""
+    _, _, encoded = data_url.partition(",")
+    try:
+        raw = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise ComfyError("Immagine non leggibile: invio interrotto o file corrotto") from exc
+    if not raw:
+        raise ComfyError("Immagine vuota")
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise ComfyError(
+            f"Immagine troppo grande ({len(raw) // 1024 // 1024} MB). "
+            f"Il limite e' {MAX_UPLOAD_BYTES // 1024 // 1024} MB."
+        )
+    with open(destination, "wb") as handle:
+        handle.write(raw)
+    return destination
+
+
+def _image_size(path: str) -> tuple[int, int]:
+    try:
+        from PIL import Image
+
+        with Image.open(path) as img:
+            return img.size
+    except Exception:
+        return (1024, 1024)
+
+
+def build_graph(payload: dict, client: ComfyClient, workdir: str) -> dict:
+    """Traduce la richiesta della pagina in un grafo, come fa la CLI."""
+    modo = payload.get("modo", "testo")
+    preset = presets.get(payload.get("preset") or presets.DEFAULT_PRESET)
+    soggetto = (payload.get("prompt") or "").strip()
+
+    checkpoint = _pick(
+        client.available("CheckpointLoaderSimple", "ckpt_name"), CHECKPOINT_PREFERENCE
+    )
+    vae = _pick(client.available("VAELoader", "vae_name"), VAE_PREFERENCE)
+
+    if modo == "ingrandisci":
+        modello = _pick(client.available("UpscaleModelLoader", "model_name"), UPSCALER_PREFERENCE)
+        if not modello:
+            raise ComfyError("Nessun modello di ingrandimento installato.")
+        foto = _decode_image(payload["immagine"], os.path.join(workdir, "foto.png"))
+        return graphs.upscale(
+            image_name=client.upload_image(foto),
+            model_name=modello,
+            scale_back_to=0.5 if int(payload.get("fattore", 2)) == 2 else None,
+        )
+
+    if not checkpoint:
+        raise ComfyError("Nessun checkpoint installato: esegui 2-scarica-modelli.ps1")
+
+    if modo == "testo":
+        if not soggetto:
+            raise ComfyError("Descrivi cosa vuoi generare.")
+        larghezza, altezza = graphs.best_sdxl_size(
+            *ASPETTI.get(payload.get("formato", "landscape"), (4, 3))
+        )
+        return graphs.text_to_image(
+            checkpoint=checkpoint,
+            positive=preset.build_positive(soggetto),
+            negative=preset.build_negative(payload.get("negativo", "")),
+            width=larghezza,
+            height=altezza,
+            batch_size=max(1, min(4, int(payload.get("quantita", 1)))),
+            params=_sampling(payload, preset, denoise=1.0),
+            vae_name=vae,
+        )
+
+    if not payload.get("immagine"):
+        raise ComfyError("Serve una foto di partenza.")
+    foto = _decode_image(payload["immagine"], os.path.join(workdir, "foto.png"))
+    larghezza, altezza = graphs.best_sdxl_size(*_image_size(foto))
+    nome_foto = client.upload_image(foto)
+
+    if modo == "arreda":
+        controlnet = _pick(
+            client.available("ControlNetLoader", "control_net_name"), CONTROLNET_PREFERENCE
+        )
+        if not controlnet:
+            raise ComfyError("ControlNet non installato: serve per il virtual staging.")
+        if not soggetto:
+            raise ComfyError("Descrivi come vuoi che diventi la stanza.")
+        return graphs.virtual_staging(
+            checkpoint=checkpoint,
+            image_name=nome_foto,
+            positive=preset.build_positive(soggetto),
+            negative=preset.build_negative(payload.get("negativo", "")),
+            width=larghezza,
+            height=altezza,
+            controlnet_name=controlnet,
+            control_strength=float(payload.get("controllo") or preset.control_strength),
+            is_union="union" in controlnet.lower(),
+            params=_sampling(payload, preset, denoise=preset.denoise),
+            vae_name=vae,
+        )
+
+    if modo == "ritocca":
+        if not payload.get("maschera"):
+            raise ComfyError("Disegna sulla foto la zona da rigenerare.")
+        maschera = _decode_image(payload["maschera"], os.path.join(workdir, "maschera.png"))
+        return graphs.retouch(
+            checkpoint=checkpoint,
+            image_name=nome_foto,
+            mask_name=client.upload_image(maschera),
+            positive=preset.build_positive(soggetto or "coerente con il resto della stanza"),
+            negative=preset.build_negative(payload.get("negativo", "")),
+            width=larghezza,
+            height=altezza,
+            params=_sampling(payload, preset, denoise=0.85),
+            vae_name=vae,
+        )
+
+    raise ComfyError(f"Modalita' sconosciuta: {modo}")
+
+
+ASPETTI = {
+    "square": (1, 1),
+    "landscape": (4, 3),
+    "wide": (16, 9),
+    "portrait": (3, 4),
+    "story": (9, 16),
+}
+
+
+# -------------------------------------------------------------------- server
+
+
+class Handler(BaseHTTPRequestHandler):
+    engine: Engine
+    jobs: Jobs
+
+    def log_message(self, format: str, *args) -> None:  # meno rumore in console
+        pass
+
+    # ------------------------------------------------------------ risposte
+
+    def _json(self, payload: dict, status: int = 200) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _file(self, path: str, content_type: str | None = None) -> None:
+        if not os.path.isfile(path):
+            self._json({"errore": "non trovato"}, 404)
+            return
+        content_type = content_type or (mimetypes.guess_type(path)[0] or "application/octet-stream")
+        with open(path, "rb") as handle:
+            body = handle.read()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    # --------------------------------------------------------------- GET
+
+    def do_GET(self) -> None:
+        route = urlparse(self.path).path
+
+        if route in ("/", "/index.html"):
+            self._file(os.path.join(WEB_DIR, "index.html"), "text/html; charset=utf-8")
+            return
+
+        if route == "/api/stato":
+            client = self.engine.client
+            attivo = client.is_up()
+            self._json({
+                "motore": attivo,
+                "checkpoint": client.available("CheckpointLoaderSimple", "ckpt_name") if attivo else [],
+                "controlnet": client.available("ControlNetLoader", "control_net_name") if attivo else [],
+                "upscaler": client.available("UpscaleModelLoader", "model_name") if attivo else [],
+                "preset": [
+                    {"nome": p.name, "descrizione": p.description}
+                    for p in presets.PRESETS.values()
+                ],
+            })
+            return
+
+        if route.startswith("/api/lavoro/"):
+            job = self.jobs.get(route.rsplit("/", 1)[-1])
+            self._json(job or {"errore": "lavoro sconosciuto"}, 200 if job else 404)
+            return
+
+        if route == "/api/galleria":
+            self._json({"immagini": _galleria()})
+            return
+
+        if route.startswith("/immagini/"):
+            # Solo il nome del file: impedisce di risalire fuori da output/.
+            nome = os.path.basename(route.rsplit("/", 1)[-1])
+            self._file(os.path.join(OUTPUT_DIR, nome))
+            return
+
+        self._json({"errore": "non trovato"}, 404)
+
+    # -------------------------------------------------------------- POST
+
+    def do_POST(self) -> None:
+        if urlparse(self.path).path != "/api/genera":
+            self._json({"errore": "non trovato"}, 404)
+            return
+
+        length = int(self.headers.get("Content-Length") or 0)
+        if length > MAX_UPLOAD_BYTES * 2:
+            self._json({"errore": "richiesta troppo grande"}, 413)
+            return
+        try:
+            payload = json.loads(self.rfile.read(length) or b"{}")
+        except json.JSONDecodeError:
+            self._json({"errore": "richiesta non valida"}, 400)
+            return
+
+        job_id = self.jobs.create()
+        threading.Thread(
+            target=_esegui, args=(self.engine, self.jobs, job_id, payload), daemon=True
+        ).start()
+        self._json({"lavoro": job_id})
+
+
+def _galleria(limite: int = 24) -> list[dict]:
+    if not os.path.isdir(OUTPUT_DIR):
+        return []
+    files = [f for f in os.listdir(OUTPUT_DIR) if f.lower().endswith(".png")]
+    files.sort(key=lambda f: os.path.getmtime(os.path.join(OUTPUT_DIR, f)), reverse=True)
+    return [{"nome": f, "url": f"/immagini/{f}"} for f in files[:limite]]
+
+
+def _esegui(engine: Engine, jobs: Jobs, job_id: str, payload: dict) -> None:
+    """Genera in un thread separato, cosi' la pagina puo' seguire l'avanzamento."""
+    workdir = os.path.join(PROJECT_ROOT, ".lavoro", job_id)
+    os.makedirs(workdir, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    inizio = time.monotonic()
+    try:
+        client = engine.client
+        if not client.is_up():
+            raise ComfyError("Il motore non risponde. Riavvia avvia.bat.")
+
+        prompt = build_graph(payload, client, workdir)
+        prompt_id = client.queue(prompt)
+
+        def battito(secondi: float) -> None:
+            jobs.update(job_id, secondi=round(secondi, 1))
+
+        immagini = client.wait(prompt_id, on_tick=battito)
+
+        salvate = []
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        etichetta = payload.get("modo", "testo")
+        for indice, immagine in enumerate(immagini, start=1):
+            suffisso = f"-{indice}" if len(immagini) > 1 else ""
+            nome = f"{stamp}-{etichetta}{suffisso}.png"
+            client.download(immagine, os.path.join(OUTPUT_DIR, nome))
+            salvate.append({"nome": nome, "url": f"/immagini/{nome}"})
+
+        jobs.update(
+            job_id,
+            stato="completato",
+            secondi=round(time.monotonic() - inizio, 1),
+            immagini=salvate,
+        )
+    except ComfyError as exc:
+        jobs.update(job_id, stato="errore", errore=str(exc))
+    except Exception as exc:  # imprevisti: meglio mostrarli che lasciare la pagina in attesa
+        jobs.update(job_id, stato="errore", errore=f"{type(exc).__name__}: {exc}")
+    finally:
+        for nome in ("foto.png", "maschera.png"):
+            try:
+                os.remove(os.path.join(workdir, nome))
+            except OSError:
+                pass
+        try:
+            os.rmdir(workdir)
+        except OSError:
+            pass
+
+
+def main() -> int:
+    engine = Engine()
+    try:
+        engine.start()
+    except RuntimeError as exc:
+        print(f"\nErrore: {exc}\n", file=sys.stderr)
+        return 1
+
+    Handler.engine = engine
+    Handler.jobs = Jobs()
+    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    indirizzo = f"http://127.0.0.1:{PORT}"
+
+    print(f"\nDashboard pronta su {indirizzo}")
+    print("Chiudi questa finestra per spegnere tutto.\n")
+    threading.Timer(1.0, lambda: webbrowser.open(indirizzo)).start()
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nChiusura in corso...")
+    finally:
+        server.shutdown()
+        engine.stop()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

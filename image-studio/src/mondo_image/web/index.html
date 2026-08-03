@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mondo Image Studio</title>
+<style>
+  /* Stessi caratteri del sistema su cui gira: nessun font da scaricare, e la
+     pagina resta identica anche senza rete. */
+  :root {
+    --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --font-display: "Segoe UI Variable Display", "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Cascadia Code", "Cascadia Mono", Consolas, ui-monospace, monospace;
+
+    --bg: #f6f8f9;
+    --surface: #ffffff;
+    --surface-2: #eef2f3;
+    --ink: #131a1c;
+    --ink-soft: #4a585c;
+    --ink-faint: #75858a;
+    --rule: #dbe3e5;
+    --rule-firm: #c3ced1;
+    --accent: #0b6e75;
+    --accent-deep: #084c51;
+    --accent-wash: #e2eff0;
+    --warn: #9a5a06;
+    --warn-wash: #fbefdc;
+    --ok: #26694a;
+    --ok-wash: #e0efe7;
+    --shadow: 0 1px 2px rgba(19,26,28,.05), 0 10px 30px -20px rgba(19,26,28,.4);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1214; --surface: #141c1e; --surface-2: #1b2427;
+      --ink: #e3ebec; --ink-soft: #a4b4b7; --ink-faint: #78898d;
+      --rule: #263134; --rule-firm: #354448;
+      --accent: #5cc2c9; --accent-deep: #8ad9de; --accent-wash: #14292b;
+      --warn: #e0a24a; --warn-wash: #2b2114; --ok: #6cc196; --ok-wash: #14261d;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -20px rgba(0,0,0,.9);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1214; --surface: #141c1e; --surface-2: #1b2427;
+    --ink: #e3ebec; --ink-soft: #a4b4b7; --ink-faint: #78898d;
+    --rule: #263134; --rule-firm: #354448;
+    --accent: #5cc2c9; --accent-deep: #8ad9de; --accent-wash: #14292b;
+    --warn: #e0a24a; --warn-wash: #2b2114; --ok: #6cc196; --ok-wash: #14261d;
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f8f9; --surface: #ffffff; --surface-2: #eef2f3;
+    --ink: #131a1c; --ink-soft: #4a585c; --ink-faint: #75858a;
+    --rule: #dbe3e5; --rule-firm: #c3ced1;
+    --accent: #0b6e75; --accent-deep: #084c51; --accent-wash: #e2eff0;
+    --warn: #9a5a06; --warn-wash: #fbefdc; --ok: #26694a; --ok-wash: #e0efe7;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font-ui); font-size: 15.5px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap;
+    padding: 18px 28px; background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .marchio { display: flex; align-items: baseline; gap: 12px; }
+  .marchio h1 {
+    font-family: var(--font-display); font-size: 19px; font-weight: 640;
+    letter-spacing: -.01em; margin: 0;
+  }
+  .marchio span { font-size: 12.5px; color: var(--ink-faint); }
+
+  .stato { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--ink-soft); }
+  .spia { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-faint); flex-shrink: 0; }
+  .spia.acceso { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-wash); }
+  .spia.spento { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-wash); }
+
+  .impaginato {
+    max-width: 1280px; margin: 0 auto; padding: 26px 28px 80px;
+    display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 30px;
+    align-items: start;
+  }
+  @media (max-width: 980px) { .impaginato { grid-template-columns: minmax(0,1fr); } }
+
+  .pannello {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 20px; box-shadow: var(--shadow);
+  }
+  .pannello + .pannello { margin-top: 20px; }
+
+  /* --------------------------------------------------------------- schede */
+  .schede { display: flex; gap: 4px; margin-bottom: 22px; flex-wrap: wrap; }
+  .scheda {
+    flex: 1 1 auto; min-width: 92px;
+    padding: 9px 12px; border: 1px solid var(--rule); background: var(--surface-2);
+    border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px;
+    font-weight: 560; color: var(--ink-soft); transition: .15s;
+  }
+  .scheda:hover { border-color: var(--rule-firm); color: var(--ink); }
+  .scheda[aria-selected="true"] {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  :root[data-theme="dark"] .scheda[aria-selected="true"],
+  @media (prefers-color-scheme: dark) { .scheda[aria-selected="true"] { color: #08181a; } }
+
+  /* ---------------------------------------------------------------- campi */
+  label { display: block; font-size: 12.5px; font-weight: 650; letter-spacing: .04em;
+          text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+  .campo { margin-bottom: 18px; }
+  textarea, input[type="text"], input[type="number"], select {
+    width: 100%; padding: 10px 12px; font-family: inherit; font-size: 15px;
+    color: var(--ink); background: var(--bg);
+    border: 1px solid var(--rule-firm); border-radius: 6px; resize: vertical;
+  }
+  textarea { min-height: 92px; line-height: 1.5; }
+  textarea:focus, input:focus, select:focus {
+    outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent);
+  }
+  .aiuto { font-size: 13px; color: var(--ink-faint); margin-top: 6px; }
+
+  .suggerimenti { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .suggerimento {
+    font-family: inherit; font-size: 12.5px; padding: 5px 10px; cursor: pointer;
+    background: var(--accent-wash); color: var(--accent-deep);
+    border: 1px solid transparent; border-radius: 20px;
+  }
+  .suggerimento:hover { border-color: var(--accent); }
+
+  .griglia2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ------------------------------------------------------------ immagine */
+  .zona {
+    border: 2px dashed var(--rule-firm); border-radius: 8px; padding: 26px 18px;
+    text-align: center; cursor: pointer; background: var(--bg); transition: .15s;
+  }
+  .zona:hover, .zona.sopra { border-color: var(--accent); background: var(--accent-wash); }
+  .zona p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+  .zona strong { color: var(--accent); }
+
+  .tela-wrap { position: relative; line-height: 0; border-radius: 8px; overflow: hidden;
+               border: 1px solid var(--rule); background: #000; }
+  .tela-wrap img, .tela-wrap canvas { width: 100%; height: auto; display: block; }
+  .tela-wrap canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; }
+
+  .strumenti { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .strumenti input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+
+  /* -------------------------------------------------------------- bottoni */
+  button.azione {
+    width: 100%; padding: 13px; font-family: inherit; font-size: 16px; font-weight: 640;
+    color: #fff; background: var(--accent); border: none; border-radius: 7px; cursor: pointer;
+    transition: .15s;
+  }
+  button.azione:hover:not(:disabled) { background: var(--accent-deep); }
+  button.azione:disabled { opacity: .55; cursor: not-allowed; }
+  :root[data-theme="dark"] button.azione { color: #08181a; }
+
+  button.minore {
+    padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 580;
+    color: var(--ink-soft); background: var(--surface-2);
+    border: 1px solid var(--rule-firm); border-radius: 5px; cursor: pointer;
+  }
+  button.minore:hover { color: var(--ink); border-color: var(--accent); }
+
+  details.avanzate { margin-bottom: 18px; }
+  details.avanzate summary {
+    cursor: pointer; font-size: 13px; font-weight: 620; color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: .05em; padding: 6px 0;
+  }
+  details.avanzate summary:hover { color: var(--accent); }
+  details.avanzate > div { padding-top: 12px; }
+
+  /* ------------------------------------------------------------ risultato */
+  .esito { min-height: 220px; display: flex; align-items: center; justify-content: center; }
+  .vuoto { text-align: center; color: var(--ink-faint); font-size: 14.5px; padding: 40px 20px; }
+  .vuoto h3 { font-family: var(--font-display); color: var(--ink-soft); margin: 0 0 8px; font-size: 17px; }
+
+  .lavorazione { text-align: center; padding: 40px 20px; }
+  .cronometro { font-family: var(--font-mono); font-size: 34px; color: var(--accent);
+                font-variant-numeric: tabular-nums; }
+  .barra { height: 3px; background: var(--surface-2); border-radius: 2px; overflow: hidden; margin-top: 18px; }
+  .barra i { display: block; height: 100%; width: 30%; background: var(--accent);
+             animation: scorre 1.4s ease-in-out infinite; }
+  @keyframes scorre { 0% { transform: translateX(-100%);} 100% { transform: translateX(400%);} }
+
+  .risultati { display: grid; gap: 14px; width: 100%; }
+  .risultati img { width: 100%; border-radius: 8px; border: 1px solid var(--rule); display: block; }
+
+  .errore {
+    background: var(--warn-wash); border-left: 3px solid var(--warn);
+    padding: 14px 16px; border-radius: 0 6px 6px 0; width: 100%;
+  }
+  .errore h3 { margin: 0 0 6px; font-size: 14px; color: var(--warn); text-transform: uppercase;
+               letter-spacing: .05em; }
+  .errore p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+  .errore code { font-family: var(--font-mono); font-size: 13px; }
+
+  .galleria { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .galleria a { display: block; line-height: 0; border-radius: 6px; overflow: hidden;
+                border: 1px solid var(--rule); }
+  .galleria a:hover { border-color: var(--accent); }
+  .galleria img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+
+  h2.titolo {
+    font-family: var(--font-display); font-size: 15px; font-weight: 640; margin: 0 0 14px;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint);
+  }
+  .nascosto { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="marchio">
+    <h1>Mondo Image Studio</h1>
+    <span>generazione in locale · Intel Arc</span>
+  </div>
+  <div class="stato">
+    <span class="spia" id="spia"></span>
+    <span id="testoStato">verifico il motore…</span>
+  </div>
+</header>
+
+<div class="impaginato">
+
+  <!-- ------------------------------------------------------------ comandi -->
+  <div>
+    <div class="pannello">
+      <div class="schede" role="tablist">
+        <button class="scheda" role="tab" data-modo="arreda" aria-selected="true">Arreda</button>
+        <button class="scheda" role="tab" data-modo="ritocca" aria-selected="false">Ritocca</button>
+        <button class="scheda" role="tab" data-modo="testo" aria-selected="false">Crea</button>
+        <button class="scheda" role="tab" data-modo="ingrandisci" aria-selected="false">Ingrandisci</button>
+      </div>
+
+      <!-- foto -->
+      <div class="campo" id="campoFoto">
+        <label>Foto di partenza</label>
+        <div class="zona" id="zona">
+          <p>Trascina qui una foto, oppure <strong>scegli un file</strong></p>
+        </div>
+        <input type="file" id="file" accept="image/*" class="nascosto">
+        <div id="anteprima" class="nascosto" style="margin-top:12px">
+          <div class="tela-wrap">
+            <img id="foto" alt="foto scelta">
+            <canvas id="tela" class="nascosto"></canvas>
+          </div>
+          <div class="strumenti">
+            <button class="minore" id="cambiaFoto" type="button">Cambia foto</button>
+            <span id="strumentiMaschera" class="nascosto" style="display:contents">
+              <button class="minore" id="pulisci" type="button">Cancella tratti</button>
+              <input type="range" id="pennello" min="10" max="160" value="60" title="Dimensione pennello">
+            </span>
+          </div>
+          <p class="aiuto nascosto" id="aiutoMaschera">
+            Passa il mouse tenendo premuto sulle zone da rigenerare: il mobile da togliere,
+            la parete da rifare. Il resto della foto non viene toccato.
+          </p>
+        </div>
+      </div>
+
+      <!-- descrizione -->
+      <div class="campo" id="campoPrompt">
+        <label for="prompt">Cosa vuoi ottenere</label>
+        <textarea id="prompt" placeholder="soggiorno arredato in stile moderno, divano grigio in tessuto, tavolino in legno chiaro, tappeto beige"></textarea>
+        <div class="suggerimenti" id="suggerimenti"></div>
+      </div>
+
+      <div class="campo" id="campoPreset">
+        <label for="preset">Stile</label>
+        <select id="preset"></select>
+      </div>
+
+      <div class="campo nascosto" id="campoFormato">
+        <label for="formato">Formato</label>
+        <select id="formato">
+          <option value="landscape">Orizzontale 4:3</option>
+          <option value="wide">Panoramico 16:9</option>
+          <option value="square">Quadrato 1:1</option>
+          <option value="portrait">Verticale 3:4</option>
+          <option value="story">Storia 9:16</option>
+        </select>
+      </div>
+
+      <div class="campo nascosto" id="campoFattore">
+        <label for="fattore">Ingrandimento</label>
+        <select id="fattore">
+          <option value="2">2× — per il web e i portali</option>
+          <option value="4">4× — per la stampa</option>
+        </select>
+      </div>
+
+      <details class="avanzate">
+        <summary>Regolazioni fini</summary>
+        <div>
+          <div class="campo" id="campoControllo">
+            <label for="controllo">Fedeltà alla stanza originale <span id="valControllo"></span></label>
+            <input type="range" id="controllo" min="0.4" max="1" step="0.05" value="0.8" style="width:100%">
+            <p class="aiuto">Più alto tiene muri e finestre più fermi. Alzalo se sposta le aperture.</p>
+          </div>
+          <div class="campo" id="campoDenoise">
+            <label for="denoise">Libertà di modifica <span id="valDenoise"></span></label>
+            <input type="range" id="denoise" min="0.3" max="1" step="0.05" value="0.72" style="width:100%">
+            <p class="aiuto">Più alto cambia di più. Alzalo se l'arredamento risulta timido.</p>
+          </div>
+          <div class="griglia2">
+            <div class="campo">
+              <label for="quantita">Varianti</label>
+              <input type="number" id="quantita" min="1" max="4" value="1">
+            </div>
+            <div class="campo">
+              <label for="seed">Seed (vuoto = casuale)</label>
+              <input type="text" id="seed" placeholder="casuale">
+            </div>
+          </div>
+          <div class="campo">
+            <label for="negativo">Da evitare</label>
+            <input type="text" id="negativo" placeholder="es. tende, moquette">
+          </div>
+        </div>
+      </details>
+
+      <button class="azione" id="genera">Genera</button>
+    </div>
+  </div>
+
+  <!-- ----------------------------------------------------------- risultato -->
+  <div>
+    <div class="pannello">
+      <h2 class="titolo">Risultato</h2>
+      <div class="esito" id="esito">
+        <div class="vuoto">
+          <h3>Nessuna immagine ancora</h3>
+          <p>Scegli una foto, descrivi cosa vuoi e premi Genera.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pannello">
+      <h2 class="titolo">Generate di recente</h2>
+      <div class="galleria" id="galleria"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var stato = { modo: "arreda", foto: null, maschera: false };
+
+  var el = function (id) { return document.getElementById(id); };
+  var mostra = function (nodo, visibile) { nodo.classList.toggle("nascosto", !visibile); };
+
+  // Suggerimenti pensati sul lavoro di un'agenzia: sono i casi che ricorrono.
+  var SUGGERIMENTI = {
+    arreda: [
+      "soggiorno moderno, divano grigio, tavolino in legno chiaro, tappeto beige",
+      "camera matrimoniale, letto con testiera imbottita, comodini in noce",
+      "cucina abitabile arredata, mobili bianchi opachi, top in gres",
+      "studio con scrivania in legno, libreria a parete, poltrona da lettura"
+    ],
+    ritocca: [
+      "parete intonacata bianca, pulita, senza oggetti",
+      "pavimento in parquet rovere chiaro",
+      "pavimento in gres effetto pietra",
+      "soffitto bianco liscio"
+    ],
+    testo: [
+      "masseria in pietra nella campagna salentina al tramonto",
+      "vicolo del centro storico di Lecce in pietra leccese",
+      "villa con piscina vista mare a Porto Cesareo",
+      "trullo restaurato circondato da ulivi secolari"
+    ],
+    ingrandisci: []
+  };
+
+  // ------------------------------------------------------------- schede
+
+  function scegliModo(modo) {
+    stato.modo = modo;
+    document.querySelectorAll(".scheda").forEach(function (b) {
+      b.setAttribute("aria-selected", String(b.dataset.modo === modo));
+    });
+
+    var serveFoto = modo !== "testo";
+    var maschera = modo === "ritocca";
+
+    mostra(el("campoFoto"), serveFoto);
+    mostra(el("campoPrompt"), modo !== "ingrandisci");
+    mostra(el("campoPreset"), modo !== "ingrandisci");
+    mostra(el("campoFormato"), modo === "testo");
+    mostra(el("campoFattore"), modo === "ingrandisci");
+    mostra(el("campoControllo"), modo === "arreda");
+    mostra(el("campoDenoise"), modo === "arreda" || modo === "ritocca");
+
+    mostra(el("tela"), maschera);
+    mostra(el("aiutoMaschera"), maschera && !!stato.foto);
+    el("strumentiMaschera").classList.toggle("nascosto", !maschera);
+
+    el("prompt").placeholder = maschera
+      ? "cosa deve comparire nella zona che hai dipinto"
+      : "soggiorno arredato in stile moderno, divano grigio in tessuto, tappeto beige";
+
+    var box = el("suggerimenti");
+    box.innerHTML = "";
+    (SUGGERIMENTI[modo] || []).forEach(function (testo) {
+      var b = document.createElement("button");
+      b.className = "suggerimento";
+      b.type = "button";
+      b.textContent = testo.length > 46 ? testo.slice(0, 44) + "…" : testo;
+      b.title = testo;
+      b.onclick = function () { el("prompt").value = testo; };
+      box.appendChild(b);
+    });
+  }
+
+  document.querySelectorAll(".scheda").forEach(function (b) {
+    b.onclick = function () { scegliModo(b.dataset.modo); };
+  });
+
+  // ------------------------------------------------------------- la foto
+
+  var tela = el("tela");
+  var ctx = tela.getContext("2d");
+
+  function caricaFoto(file) {
+    if (!file || !file.type.startsWith("image/")) return;
+    var lettore = new FileReader();
+    lettore.onload = function (e) {
+      stato.foto = e.target.result;
+      var img = el("foto");
+      img.onload = function () {
+        tela.width = img.naturalWidth;
+        tela.height = img.naturalHeight;
+        ctx.clearRect(0, 0, tela.width, tela.height);
+        stato.maschera = false;
+        mostra(el("aiutoMaschera"), stato.modo === "ritocca");
+      };
+      img.src = stato.foto;
+      mostra(el("anteprima"), true);
+      mostra(el("zona"), false);
+    };
+    lettore.readAsDataURL(file);
+  }
+
+  el("zona").onclick = function () { el("file").click(); };
+  el("cambiaFoto").onclick = function () { el("file").click(); };
+  el("file").onchange = function (e) { caricaFoto(e.target.files[0]); };
+
+  ["dragenter", "dragover"].forEach(function (evento) {
+    el("zona").addEventListener(evento, function (e) {
+      e.preventDefault(); el("zona").classList.add("sopra");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (evento) {
+    el("zona").addEventListener(evento, function (e) {
+      e.preventDefault(); el("zona").classList.remove("sopra");
+    });
+  });
+  el("zona").addEventListener("drop", function (e) {
+    if (e.dataTransfer.files.length) caricaFoto(e.dataTransfer.files[0]);
+  });
+
+  // -------------------------------------------------- pennello maschera
+
+  var disegna = false;
+
+  function punto(e) {
+    var r = tela.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) * (tela.width / r.width),
+      y: (e.clientY - r.top) * (tela.height / r.height)
+    };
+  }
+
+  function traccia(e) {
+    if (!disegna) return;
+    var p = punto(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    stato.maschera = true;
+  }
+
+  tela.addEventListener("pointerdown", function (e) {
+    disegna = true;
+    tela.setPointerCapture(e.pointerId);
+    ctx.beginPath();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = Number(el("pennello").value) * (tela.width / tela.getBoundingClientRect().width);
+    ctx.strokeStyle = "rgba(255,255,255,.85)";
+    var p = punto(e);
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + 0.1, p.y);
+    ctx.stroke();
+    stato.maschera = true;
+  });
+  tela.addEventListener("pointermove", traccia);
+  tela.addEventListener("pointerup", function () { disegna = false; });
+  tela.addEventListener("pointercancel", function () { disegna = false; });
+
+  el("pulisci").onclick = function () {
+    ctx.clearRect(0, 0, tela.width, tela.height);
+    stato.maschera = false;
+  };
+
+  /* La maschera che il motore si aspetta e' bianco su nero: i tratti disegnati
+     vanno ricopiati su fondo nero, alla risoluzione della foto originale. */
+  function maschieraPng() {
+    var fuori = document.createElement("canvas");
+    fuori.width = tela.width;
+    fuori.height = tela.height;
+    var c = fuori.getContext("2d");
+    c.fillStyle = "#000";
+    c.fillRect(0, 0, fuori.width, fuori.height);
+    c.globalCompositeOperation = "source-over";
+    c.filter = "grayscale(1) brightness(3)";  // i tratti diventano bianco pieno
+    c.drawImage(tela, 0, 0);
+    return fuori.toDataURL("image/png");
+  }
+
+  // ------------------------------------------------------------- cursori
+
+  function legaCursore(idCursore, idValore) {
+    var cursore = el(idCursore), valore = el(idValore);
+    var aggiorna = function () { valore.textContent = "— " + cursore.value; };
+    cursore.oninput = aggiorna;
+    aggiorna();
+  }
+  legaCursore("controllo", "valControllo");
+  legaCursore("denoise", "valDenoise");
+
+  // ------------------------------------------------------------ generare
+
+  function messaggio(html) { el("esito").innerHTML = html; }
+
+  function erroreLeggibile(testo) {
+    var suggerimento = "";
+    if (/OUT_OF_RESOURCES|out of memory|allocat/i.test(testo)) {
+      suggerimento = "<p>Memoria video esaurita. Chiudi il browser e altre applicazioni, " +
+        "oppure riavvia il motore in modalit&agrave; ridotta: <code>avvia-comfyui.bat --lowvram</code></p>";
+    } else if (/non risponde|Riavvia avvia/i.test(testo)) {
+      suggerimento = "<p>Chiudi la finestra nera e riapri <code>avvia.bat</code>.</p>";
+    }
+    return '<div class="errore"><h3>Non &egrave; riuscita</h3><p>' +
+      testo.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</p>" + suggerimento + "</div>";
+  }
+
+  el("genera").onclick = function () {
+    var richiesta = {
+      modo: stato.modo,
+      prompt: el("prompt").value,
+      preset: el("preset").value,
+      negativo: el("negativo").value,
+      formato: el("formato").value,
+      fattore: el("fattore").value,
+      controllo: el("controllo").value,
+      denoise: el("denoise").value,
+      quantita: el("quantita").value,
+      seed: el("seed").value.trim()
+    };
+
+    if (stato.modo !== "testo") {
+      if (!stato.foto) { messaggio(erroreLeggibile("Scegli prima una foto.")); return; }
+      richiesta.immagine = stato.foto;
+    }
+    if (stato.modo === "ritocca") {
+      if (!stato.maschera) {
+        messaggio(erroreLeggibile("Dipingi sulla foto la zona da rigenerare."));
+        return;
+      }
+      richiesta.maschera = maschieraPng();
+    }
+
+    el("genera").disabled = true;
+    messaggio('<div class="lavorazione"><div class="cronometro" id="crono">0.0s</div>' +
+              '<p style="color:var(--ink-faint)">generazione in corso</p>' +
+              '<div class="barra"><i></i></div></div>');
+
+    fetch("/api/genera", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(richiesta)
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.errore) throw new Error(d.errore);
+        segui(d.lavoro);
+      })
+      .catch(function (e) {
+        el("genera").disabled = false;
+        messaggio(erroreLeggibile(e.message));
+      });
+  };
+
+  function segui(id) {
+    var timer = setInterval(function () {
+      fetch("/api/lavoro/" + id)
+        .then(function (r) { return r.json(); })
+        .then(function (job) {
+          var crono = el("crono");
+          if (crono && job.secondi != null) crono.textContent = job.secondi.toFixed(1) + "s";
+
+          if (job.stato === "completato") {
+            clearInterval(timer);
+            el("genera").disabled = false;
+            var html = '<div class="risultati">';
+            job.immagini.forEach(function (im) {
+              html += '<a href="' + im.url + '" target="_blank" rel="noopener">' +
+                      '<img src="' + im.url + '" alt="risultato"></a>';
+            });
+            html += '<p style="color:var(--ink-faint);font-size:13.5px;margin:0">' +
+                    "completata in " + job.secondi + "s &middot; clic sull'immagine per vederla intera</p></div>";
+            messaggio(html);
+            aggiornaGalleria();
+          } else if (job.stato === "errore") {
+            clearInterval(timer);
+            el("genera").disabled = false;
+            messaggio(erroreLeggibile(job.errore || "causa sconosciuta"));
+          }
+        })
+        .catch(function () {
+          clearInterval(timer);
+          el("genera").disabled = false;
+          messaggio(erroreLeggibile("Ho perso il contatto con la dashboard."));
+        });
+    }, 700);
+  }
+
+  // -------------------------------------------------------- stato e galleria
+
+  function aggiornaStato() {
+    fetch("/api/stato")
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        el("spia").className = "spia " + (s.motore ? "acceso" : "spento");
+        el("testoStato").textContent = s.motore
+          ? "motore attivo · " + (s.checkpoint.length || 0) + " modelli"
+          : "motore non raggiungibile";
+
+        var select = el("preset");
+        if (!select.options.length && s.preset) {
+          s.preset.forEach(function (p) {
+            var o = document.createElement("option");
+            o.value = p.nome;
+            o.textContent = p.descrizione;
+            select.appendChild(o);
+          });
+          select.value = "interior";
+        }
+      })
+      .catch(function () {
+        el("spia").className = "spia spento";
+        el("testoStato").textContent = "dashboard non raggiungibile";
+      });
+  }
+
+  function aggiornaGalleria() {
+    fetch("/api/galleria")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        el("galleria").innerHTML = d.immagini.map(function (im) {
+          return '<a href="' + im.url + '" target="_blank" rel="noopener" title="' + im.nome +
+                 '"><img src="' + im.url + '" alt="' + im.nome + '" loading="lazy"></a>';
+        }).join("") || '<p style="color:var(--ink-faint);font-size:14px">Ancora niente.</p>';
+      });
+  }
+
+  scegliModo("arreda");
+  aggiornaStato();
+  aggiornaGalleria();
+  setInterval(aggiornaStato, 8000);
+})();
+</script>
+</body>
+</html>
