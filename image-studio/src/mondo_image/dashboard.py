@@ -49,7 +49,15 @@ OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
 
 # Gli stessi parametri di avvia-comfyui.bat: la dashboard non deve comportarsi
 # diversamente dal lancio manuale.
-ENGINE_FLAGS = ["--use-pytorch-cross-attention", "--reserve-vram", "1.5", "--fp32-vae"]
+#
+# Il margine resta 0.6, che e' il valore con cui su B580 sono uscite immagini
+# vere. Alzarlo a 1.5 per far entrare il virtual staging e' stato un errore:
+# il staging ha esaurito la memoria lo stesso, e in piu' un margine largo
+# convince ComfyUI che il modello non ci sta e glielo fa caricare a pezzi --
+# la stessa strada di --lowvram, che su Arc produce valori non numerici e
+# quindi immagini nere. Costo osservato: due giorni di diagnosi. Chi vuole
+# provare un margine diverso lo passa come argomento, senza toccare il file.
+ENGINE_FLAGS = ["--use-pytorch-cross-attention", "--reserve-vram", "0.6", "--fp32-vae"]
 
 # Alcuni parametri escludono un nostro default invece di aggiungersi: ComfyUI
 # accetterebbe entrambi, ma la combinazione non ha senso e il risultato

@@ -537,3 +537,24 @@ def test_un_risultato_nero_diventa_un_errore_spiegato(app, monkeypatch):
     assert job["stato"] == "errore", job
     assert "nera" in job["errore"]
     assert "Intel Arc" in job["errore"]
+
+
+# --------------------------------------------------------- margine di memoria
+
+
+def test_il_margine_di_memoria_e_quello_provato_sul_campo():
+    """0.6 e' il valore con cui sono uscite immagini vere su B580.
+
+    A 1.5 ComfyUI carica il modello a pezzi e su Arc il risultato e' nero,
+    senza che il virtual staging ci entri comunque. Il test esiste perche'
+    la tentazione di alzarlo davanti a un errore di memoria e' forte.
+    """
+    flags = dashboard.ENGINE_FLAGS
+    assert "--reserve-vram" in flags
+    assert flags[flags.index("--reserve-vram") + 1] == "0.6"
+
+
+def test_il_margine_resta_cambiabile_da_riga_di_comando():
+    flags = dashboard.flag_motore(["--reserve-vram", "2.0"])
+    # ComfyUI tiene l'ultimo valore: il nostro deve precedere quello dell'utente.
+    assert flags.index("2.0") > flags.index("0.6")

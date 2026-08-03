@@ -3,12 +3,12 @@ REM Avvia il motore ComfyUI con i parametri giusti per una Intel Arc.
 REM
 REM   --use-pytorch-cross-attention : su Intel non esiste xformers, l'attenzione
 REM       nativa di PyTorch e' l'implementazione corretta e piu' veloce.
-REM   --reserve-vram 1.5 : margine tenuto libero. Serve a due cose: Windows
-REM       disegna il desktop sulla stessa scheda, e un margine piu' ampio spinge
-REM       ComfyUI a spostare da solo parte dei pesi fuori dalla VRAM invece di
-REM       tentare il caricamento completo e fallire. Con 0.6 il virtual staging
-REM       esauriva la memoria (UR_RESULT_ERROR_OUT_OF_RESOURCES) perche' modello
-REM       e ControlNet insieme superano lo spazio disponibile su 12 GB.
+REM   --reserve-vram 0.6 : margine lasciato alla grafica di Windows, che disegna
+REM       il desktop sulla stessa scheda. E' il valore con cui su B580 escono
+REM       immagini vere. Era stato alzato a 1.5 sperando di far entrare il
+REM       virtual staging: non e' entrato lo stesso, e in piu' un margine largo
+REM       convince ComfyUI che il modello non ci stia, quindi lo carica a pezzi.
+REM       Su Arc quel percorso produce valori non numerici e immagini nere.
 REM   --fp32-vae : lo stadio che converte il risultato in pixel visibili, su Arc,
 REM       in precisione ridotta produce valori non numerici e l'immagine esce
 REM       tutta nera. Osservato su B580 con torch 2.13+xpu: la generazione
@@ -56,6 +56,6 @@ echo.
 REM ComfyUI ricava i propri percorsi da __file__, ma alcuni componenti danno per
 REM scontata la working directory: ci spostiamo nella sua cartella prima di partire.
 cd /d "%COMFY%"
-"%PYTHON%" main.py --use-pytorch-cross-attention --reserve-vram 1.5 --fp32-vae %*
+"%PYTHON%" main.py --use-pytorch-cross-attention --reserve-vram 0.6 --fp32-vae %*
 
 endlocal
