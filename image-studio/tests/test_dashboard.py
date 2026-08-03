@@ -357,3 +357,36 @@ def test_modifiche_locali_non_bloccano_l_avvio(tmp_path, monkeypatch):
     monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(clone / "image-studio"))
     esito = dashboard.aggiorna_progetto()
     assert esito is None or "prosegue" in esito
+
+
+# ------------------------------------------------- parametri passati al motore
+#
+# Chi esaurisce la memoria video deve poter riavviare in modalita' ridotta senza
+# modificare nessun file: sul PC di destinazione i .bat non si eseguono con un
+# doppio clic, e il motore lo accende la dashboard, non avvia-comfyui.bat.
+
+
+def test_senza_parametri_restano_i_default():
+    assert dashboard.flag_motore([]) == dashboard.ENGINE_FLAGS
+
+
+def test_i_parametri_dell_utente_vanno_in_coda():
+    """A parita' di nome ComfyUI tiene l'ultimo: chi scrive --reserve-vram 3
+    deve vincere sul nostro 1.5."""
+    flags = dashboard.flag_motore(["--lowvram", "--reserve-vram", "3"])
+    assert flags[: len(dashboard.ENGINE_FLAGS)] == dashboard.ENGINE_FLAGS
+    assert flags[-3:] == ["--lowvram", "--reserve-vram", "3"]
+
+
+def test_cpu_vae_sostituisce_fp32_vae():
+    """Sono alternativi: lo stadio finale o sta sul processore o sta in VRAM in
+    precisione piena. Tenerli entrambi renderebbe il risultato dipendente
+    dall'ordine degli argomenti."""
+    flags = dashboard.flag_motore(["--cpu-vae"])
+    assert "--fp32-vae" not in flags
+    assert flags[-1] == "--cpu-vae"
+    assert "--use-pytorch-cross-attention" in flags  # gli altri restano
+
+
+def test_il_motore_riceve_i_parametri():
+    assert dashboard.Engine(extra=["--lowvram"]).flags[-1] == "--lowvram"

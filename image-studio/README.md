@@ -269,19 +269,23 @@ scritto nella finestra nera e il browser ci arriva da solo.
 **Memoria video esaurita** — nel log compare `UR_RESULT_ERROR_OUT_OF_RESOURCES`
 Succede sul `staging`, che tiene in VRAM il modello e il ControlNet insieme.
 Prima cosa da provare: chiudi il browser, che sulla stessa scheda consuma
-parecchia memoria. Se non basta, riavvia il motore passandogli l'opzione senza
-modificare niente:
+parecchia memoria. Se non basta, riavvia passando l'opzione al comando di avvio
+che stai già usando — non serve modificare nessun file, perché sia `avvia.bat`
+sia la dashboard inoltrano al motore quello che ricevono:
 
 ```powershell
-.\avvia-comfyui.bat --lowvram
+.\avvia.bat --lowvram                          REM dashboard
+.\avvia-comfyui.bat --lowvram                  REM solo il motore
+python -m mondo_image.dashboard --lowvram      REM dashboard senza .bat
 ```
 
-Tiene in VRAM solo la parte di modello in uso: più lento, ma regge qualsiasi
-combinazione. Il gradino successivo è `--cpu-vae`, che libera altra memoria
-spostando lo stadio finale sul processore.
+`--lowvram` tiene in VRAM solo la parte di modello in uso: più lento, ma regge
+qualsiasi combinazione. Il gradino successivo è `--cpu-vae`, che libera altra
+memoria spostando lo stadio finale sul processore; sostituisce `--fp32-vae`, e
+chi lo passa se lo vede tolto da solo.
 
 **Errori di memoria quando cambi tipo di modello**
-Aggiungi `--disable-smart-memory` alla riga di comando in `avvia-comfyui.bat`.
+Aggiungi `--disable-smart-memory` allo stesso comando di avvio.
 
 **Il download di un modello si blocca**
 Rilancia `2-scarica-modelli.ps1`: riprende dal punto in cui si era interrotto.

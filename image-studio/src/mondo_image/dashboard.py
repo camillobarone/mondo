@@ -51,6 +51,28 @@ OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
 # diversamente dal lancio manuale.
 ENGINE_FLAGS = ["--use-pytorch-cross-attention", "--reserve-vram", "1.5", "--fp32-vae"]
 
+# Alcuni parametri escludono un nostro default invece di aggiungersi: ComfyUI
+# accetterebbe entrambi, ma la combinazione non ha senso e il risultato
+# dipenderebbe dall'ordine. Chi chiede --cpu-vae vuole lo stadio finale sul
+# processore, quindi la precisione piena in VRAM non ha piu' ragione d'essere.
+FLAG_INCOMPATIBILI = {"--cpu-vae": "--fp32-vae"}
+
+
+def flag_motore(extra: list[str]) -> list[str]:
+    """Unisce i nostri parametri a quelli passati a mano dall'utente.
+
+    Serve a provare `--lowvram` e simili senza modificare nessun file: chi ha
+    esaurito la memoria video deve poter cambiare impostazione riavviando con
+    un parametro in piu'. I parametri dell'utente vanno in coda perche' a
+    parita' di nome ComfyUI tiene l'ultimo.
+    """
+    flags = list(ENGINE_FLAGS)
+    for parametro in extra:
+        escluso = FLAG_INCOMPATIBILI.get(parametro)
+        if escluso and escluso in flags:
+            flags.remove(escluso)
+    return [*flags, *extra]
+
 # Limite di sicurezza sul caricamento delle foto: una foto da agenzia sta
 # ampiamente sotto, e impedisce che una richiesta malformata occupi la memoria.
 MAX_UPLOAD_BYTES = 40 * 1024 * 1024
@@ -62,10 +84,11 @@ MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 class Engine:
     """Avvia ComfyUI se non e' gia' in esecuzione, e lo spegne all'uscita."""
 
-    def __init__(self, server: str = DEFAULT_SERVER) -> None:
+    def __init__(self, server: str = DEFAULT_SERVER, extra: list[str] | None = None) -> None:
         self.client = ComfyClient(server)
         self.process: subprocess.Popen | None = None
         self.log_path = os.path.join(PROJECT_ROOT, "motore.log")
+        self.flags = flag_motore(extra or [])
 
     def comfy_path(self) -> str:
         path_file = os.path.join(PROJECT_ROOT, "comfy-path.txt")
@@ -88,9 +111,10 @@ class Engine:
             raise RuntimeError(f"Ambiente Python non trovato in {comfy}")
 
         print(f"Avvio del motore da {comfy}", flush=True)
+        print(f"Impostazioni: {' '.join(self.flags)}", flush=True)
         log = open(self.log_path, "w", encoding="utf-8", errors="replace")
         self.process = subprocess.Popen(
-            [python, "main.py", *ENGINE_FLAGS],
+            [python, "main.py", *self.flags],
             cwd=comfy,
             stdout=log,
             stderr=subprocess.STDOUT,
@@ -493,12 +517,18 @@ def apri_server(handler, porte=PORTE) -> ThreadingHTTPServer:
     return ThreadingHTTPServer(("127.0.0.1", 0), handler)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    # Tutto cio' che segue il nome del modulo va al motore cosi' com'e':
+    # `-m mondo_image.dashboard --lowvram` accende ComfyUI in modalita' ridotta
+    # senza toccare nessun file. E' la via d'uscita quando la memoria video non
+    # basta, e la dashboard e' l'unico modo in cui il motore viene acceso.
+    extra = list(sys.argv[1:] if argv is None else argv)
+
     notizia = aggiorna_progetto()
     if notizia:
         print(f"  {notizia}\n", flush=True)
 
-    engine = Engine()
+    engine = Engine(extra=extra)
     try:
         engine.start()
     except RuntimeError as exc:

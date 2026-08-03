@@ -545,8 +545,11 @@
   function erroreLeggibile(testo) {
     var suggerimento = "";
     if (/OUT_OF_RESOURCES|out of memory|allocat/i.test(testo)) {
-      suggerimento = "<p>Memoria video esaurita. Chiudi il browser e altre applicazioni, " +
-        "oppure riavvia il motore in modalit&agrave; ridotta: <code>avvia-comfyui.bat --lowvram</code></p>";
+      // Il motore lo accende la dashboard, quindi il parametro va aggiunto al
+      // comando con cui e' stata avviata: puntare a un altro file confonde.
+      suggerimento = "<p>Memoria video esaurita. Chiudi la finestra dei comandi da cui hai " +
+        "avviato il programma e riavvialo aggiungendo <code>--lowvram</code> in fondo al comando. " +
+        "Se non basta, aggiungi anche <code>--cpu-vae</code>.</p>";
     } else if (/non risponde|Riavvia avvia/i.test(testo)) {
       suggerimento = "<p>Chiudi la finestra nera e riapri <code>avvia.bat</code>.</p>";
     }

@@ -43,8 +43,10 @@ echo.
 echo   LASCIA APERTA QUESTA FINESTRA mentre lavori.
 echo.
 
+REM Gli argomenti passati qui arrivano al motore: avvia.bat --lowvram accende
+REM ComfyUI in modalita' ridotta quando la memoria video non basta.
 set "PYTHONPATH=%~dp0src"
-"%PYTHON%" -m mondo_image.dashboard
+"%PYTHON%" -m mondo_image.dashboard %*
 
 REM Se si chiude subito c'e' stato un errore: tienilo visibile.
 if errorlevel 1 (

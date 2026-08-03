@@ -147,15 +147,23 @@ nel nodo `KSampler`. Causa: SDXL (~5 GB) più ControlNet Union (~2,5 GB) più le
 attivazioni superano lo spazio libero quando Windows sta già usando parte della
 scheda per il desktop.
 
-Già fatto: margine riservato portato da 0,6 a 1,5 GB. **Non ancora verificato
-sul suo PC.**
+Già fatto: margine riservato portato da 0,6 a 1,5 GB. **Verificato sul suo PC:
+non basta.** L'errore si ripresenta identico dalla dashboard.
 
-Se non basta, la scala dei rimedi — tutti passabili senza modificare file,
-perché `avvia-comfyui.bat` inoltra gli argomenti:
+`avvia-comfyui.bat --lowvram` **non era una risposta utile nel suo caso**: il
+motore lo accende la dashboard, con impostazioni che erano cablate in
+`ENGINE_FLAGS`. Avviare anche `avvia-comfyui.bat` avrebbe prodotto un secondo
+motore, o nessun effetto. Ora la dashboard **inoltra al motore i propri
+argomenti** (`flag_motore` in `dashboard.py`), quindi la scala dei rimedi è
+percorribile dal comando di avvio che sta già usando:
 
-1. `.\avvia-comfyui.bat --lowvram` — tiene in VRAM solo la parte in uso
-2. `--cpu-vae` al posto di `--fp32-vae` — libera altra memoria
+1. `--lowvram` — tiene in VRAM solo la parte in uso
+2. `--cpu-vae` — libera altra memoria; **sostituisce** `--fp32-vae`, che viene
+   tolto da solo perché i due sono alternativi
 3. `--disable-smart-memory` — se l'errore compare cambiando tipo di modello
+
+Il suggerimento che la pagina mostra in caso di memoria esaurita è stato
+riscritto di conseguenza: prima puntava a un file che sul suo PC non parte.
 
 Foto di prova che aveva usato:
 `F:\immobili 2026\Moteroni Mancarella\foto\2.jpg`
@@ -164,10 +172,14 @@ Foto di prova che aveva usato:
 
 ## Altri punti in sospeso
 
-- **La dashboard non è mai stata avviata sul suo PC.** È verificata solo contro
-  un finto ComfyUI. Due tentativi falliti, entrambi corretti ma non riprovati:
-  prima `WinError 10013` sulla porta, poi il doppio clic che apriva il file nel
-  Blocco note.
+- ~~La dashboard non è mai stata avviata sul suo PC.~~ **Risolto: è partita.**
+  La via che ha funzionato aggira del tutto i `.bat` — una riga sola incollata
+  in PowerShell, che legge `comfy-path.txt` e chiama il Python del venv:
+  ```powershell
+  cd "C:\Users\P.S.Assemblato\mondo\image-studio"; $env:PYTHONPATH="$PWD\src"; & "$((Get-Content .\comfy-path.txt -Raw).Trim())\venv\Scripts\python.exe" -m mondo_image.dashboard
+  ```
+  `Get-Content -Raw`, non `Get-Content`: in PowerShell 5.1 senza `-Raw` il
+  risultato è un array e `.Trim()` non è affidabile.
 - **Il collegamento sul Desktop deve crearlo a mano**, perché anche
   `crea-collegamento.bat` è un `.bat` e sul suo PC non parte. Ricetta data:
   tasto destro sul Desktop → Nuovo → Collegamento → percorso
