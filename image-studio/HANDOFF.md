@@ -3,13 +3,17 @@
 Stato del lavoro al momento del passaggio di consegne. Serve a riprendere in una
 conversazione nuova senza rifare le stesse scoperte.
 
+Ultimo aggiornamento: 3 agosto 2026, sera.
+
 ---
 
 ## In una riga
 
 Generazione di immagini in locale per un'agenzia immobiliare, su GPU Intel Arc.
-**Installato e funzionante sul PC dell'utente**: le immagini da testo escono
-correttamente. Resta aperto il virtual staging, che esaurisce la memoria video.
+Installato sul PC dell'utente. La generazione da testo ha già funzionato, poi si
+è rotta per una **mia regressione sul margine di memoria**, ora ripristinata:
+**la conferma che sia tornata a funzionare è il primo punto da chiudere domani.**
+Il virtual staging non è mai riuscito.
 
 ---
 
@@ -25,13 +29,15 @@ rischio professionale in azienda.
 
 | | |
 |---|---|
-| GPU | Intel Arc **B580**, 12 GB VRAM (11,8 usabili) |
+| GPU | Intel Arc **B580**, 12 GB VRAM (11,6 usabili) |
+| RAM di sistema | 31,8 GB |
 | Sistema | Windows 11, utente `P.S.Assemblato` |
-| Python | 3.10.10 e 3.14 installati; si usa la **3.10** (la 3.14 non ha ancora i pacchetti PyTorch) |
+| Python | 3.10.10 e 3.14 installati; si usa la **3.10** |
 | torch | 2.13.0+xpu |
 | ComfyUI | 0.30.0 in `C:\Users\P.S.Assemblato\ComfyUI` |
 | Progetto | `C:\Users\P.S.Assemblato\mondo\image-studio` |
 | OneDrive | **attivo**: il Desktop reale non è `%USERPROFILE%\Desktop` |
+| Modelli | SDXL base, ControlNet Union, VAE, RealESRGAN. **Manca juggernaut-xl.** |
 
 ---
 
@@ -56,11 +62,11 @@ image-studio/
 │   ├── cli.py               comandi da terminale
 │   ├── dashboard.py         server locale della dashboard
 │   └── web/index.html       la pagina
-├── tests/                   51 test, tutti verdi
+├── tests/                   71 test, tutti verdi
 └── tools/extract_comfy_registry.py
 ```
 
-`python -m pytest image-studio/tests/ -q` → **51 passati**.
+`python -m pytest image-studio/tests/ -q` → **71 passati**.
 
 ---
 
@@ -76,25 +82,58 @@ mascherata), `text`, `upscale`.
 
 ---
 
-## Decisioni da non ribaltare senza motivo
+## Il comando con cui lavora
 
-**SDXL, non FLUX.** Su Arc/Windows FLUX non carica in modo affidabile e non
-entrerebbe in 12 GB. SDXL ha anche l'ecosistema ControlNet più maturo.
+Non usa i `.bat` (vedi le trappole). La riga che funziona, incollata in una
+PowerShell nuova:
 
-**PyTorch nativo XPU, non `intel-extension-for-pytorch`.** IPEX è in end-of-life
-da marzo 2026. Torch XPU va installato **prima** dei requisiti di ComfyUI: lì
-`torch` non è pinnato, quindi pip lo considera soddisfatto e non lo sostituisce
-con la build CPU.
+```powershell
+cd "C:\Users\P.S.Assemblato\mondo\image-studio"; git pull
+```
 
-**Zero custom node.** Su Arc sono la prima causa di installazioni che si rompono
-dopo un aggiornamento. Il preprocessore dei contorni è `Canny`, nativo.
+```powershell
+$env:PYTHONPATH="$PWD\src"; & "$((Get-Content .\comfy-path.txt -Raw).Trim())\venv\Scripts\python.exe" -m mondo_image.dashboard
+```
 
-**Formato API, non workflow della UI.** Il formato UI richiede coordinate, id
-dei link e un ordine preciso dei widget: a mano si sbaglia.
+`Get-Content -Raw`, non `Get-Content`: in PowerShell 5.1 senza `-Raw` il
+risultato è un array e `.Trim()` non è affidabile.
 
 ---
 
-## Trappole già pagate — non ripeterle
+## L'errore da cui imparare, se leggi una cosa sola leggi questa
+
+**Il virtual staging esauriva la memoria video. Per farcelo entrare ho alzato
+`--reserve-vram` da 0.6 a 1.5. Il staging non è entrato lo stesso, e la
+generazione da testo — che funzionava — ha cominciato a uscire nera.**
+
+Sono seguiti due giorni di diagnosi in cui ho incolpato, nell'ordine: il VAE,
+`--lowvram`, la dashboard, il soggetto della richiesta. Ho fatto provare
+all'utente `--lowvram`, poi `--lowvram --cpu-vae`, poi il ritorno alla
+configurazione pulita — che però conteneva ancora il margine a 1.5, quindi
+falliva comunque. Nel frattempo lui ha scritto *«lasciamo perdere»*.
+
+Il meccanismo: un margine largo convince ComfyUI che il modello non entri in
+VRAM, e glielo fa caricare a pezzi convertendo i pesi durante il caricamento.
+Su Arc quel percorso produce valori non numerici. È **lo stesso meccanismo di
+`--lowvram`**: per questo toglierlo non bastava.
+
+Tre regole che ne discendono:
+
+1. **Su Arc, non rispondere a un errore di memoria stringendo la memoria.**
+   `--lowvram` e `--reserve-vram` alto portano al nero. La leva giusta è la
+   **risoluzione di lavoro**.
+2. **Un cambiamento che non risolve il problema per cui è stato fatto va
+   annullato subito**, non lasciato lì "che male non fa".
+3. **Quando un sintomo cambia dopo una modifica, sospetta la modifica**, non il
+   componente che il sintomo suggerisce. `git log -S` avrebbe chiuso la
+   questione in cinque minuti: l'ho usato solo al terzo giro.
+
+Il margine è tornato a **0.6** in `dashboard.py` e `avvia-comfyui.bat`, con un
+test che blocca la regressione.
+
+---
+
+## Altre trappole già pagate — non ripeterle
 
 **PowerShell 5.1 con `ErrorActionPreference = "Stop"`** tratta come errore
 fatale qualsiasi riga che un programma esterno scrive sul canale di errore,
@@ -106,8 +145,9 @@ routine. Negli script si usa `Continue` più controllo del codice di uscita.
 per lo schema V3. Vanno lette entrambe, altrimenti i nodi V3 — fra cui
 `UpscaleModelLoader` — risultano privi di modelli.
 
-**Su Arc lo stadio finale in precisione ridotta produce immagini nere.**
-Il sintomo nel log è `invalid value encountered in cast`. Serve `--fp32-vae`.
+**Lo stadio finale in precisione ridotta produce immagini nere.** Sintomo nel
+log: `invalid value encountered in cast`. Serve `--fp32-vae`, già di default.
+Questa è la causa *numero due* del nero: la prima è il caricamento a pezzi.
 
 **Windows rifiuta porte riservate a Hyper-V/WSL** con `WinError 10013`, anche
 se nessuno le usa. La dashboard ne prova diverse e poi ne fa scegliere una al
@@ -120,11 +160,15 @@ Windows con `GetFolderPath('Desktop')`.
 file: la selezione automatica scarta le voci senza estensione di modello.
 
 **Sul suo PC l'estensione `.bat` è associata a un editor di testo.** Il doppio
-clic su `avvia.bat` ne mostra il contenuto invece di eseguirlo. I collegamenti
-creati dal progetto puntano quindi a `cmd.exe /c "…\avvia.bat"`, così
-l'associazione non viene consultata. **Conseguenza pratica: nessun `.bat` gli
-si può far eseguire con un doppio clic** finché non sistema l'associazione —
-vanno lanciati da PowerShell o tramite un collegamento a `cmd.exe`.
+clic su `avvia.bat` ne mostra il contenuto invece di eseguirlo. **Conseguenza
+pratica: nessun `.bat` gli si può far eseguire con un doppio clic.** Vanno
+lanciati da PowerShell o tramite un collegamento a `cmd.exe`.
+
+**Il menu degli stili non seguiva la scheda.** Restava su "interior" anche su
+"Crea", e il suffisso d'interni si attaccava a qualunque soggetto: alla
+richiesta di una spiaggia rispondeva con una stanza con vista mare. L'immagine
+era tecnicamente corretta, il che rendeva il difetto difficile da riconoscere.
+Ora ogni scheda parte dal proprio stile.
 
 ---
 
@@ -135,61 +179,55 @@ vanno lanciati da PowerShell o tramite un collegamento a `cmd.exe`.
 | `text` 1024×1024, 28 passi | 12–14 s (23–26 s la prima, col caricamento) |
 | Avvio del motore | ~40 s |
 
-Le stime iniziali (6–9 s) erano ottimistiche e sono già state corrette nel README.
+Misurate con `--reserve-vram 0.6`. Le stime iniziali (6–9 s) erano ottimistiche
+e sono già state corrette nel README.
 
 ---
 
-## Il punto aperto
+## Da fare domani, in ordine
 
-**Il virtual staging esaurisce la memoria video.** Errore:
-`level_zero backend failed with error: 40 (UR_RESULT_ERROR_OUT_OF_RESOURCES)`
-nel nodo `KSampler`. Causa: SDXL (~5 GB) più ControlNet Union (~2,5 GB) più le
-attivazioni superano lo spazio libero quando Windows sta già usando parte della
-scheda per il desktop.
+1. **Confermare che la generazione da testo è tornata a funzionare.** Gli ho
+   lasciato i tre passi (chiudi, `git pull`, rilancia senza opzioni, Ctrl+F5) e
+   il prompt della coppia sulla spiaggia al tramonto. È l'unica cosa che serve
+   sapere per capire se il ripristino a 0.6 ha chiuso la partita.
+   **Finché non arriva quella conferma, non toccare altro.**
 
-Già fatto: margine riservato portato da 0,6 a 1,5 GB. **Verificato sul suo PC:
-non basta.** L'errore si ripresenta identico dalla dashboard.
+2. **Virtual staging, per l'altra via.** La memoria non va stretta, va chiesta
+   meno: generare a risoluzione più bassa (es. bucket 832×1216 invece di
+   1216×832 a seconda della foto, o un gradino sotto) e riportare su con
+   `upscale`, che gira da solo senza ControlNet in VRAM. Da valutare anche se
+   `graphs.virtual_staging` possa scaricare il ControlNet prima del decode.
+   Foto di prova sua: `F:\immobili 2026\Moteroni Mancarella\foto\2.jpg`
 
-`avvia-comfyui.bat --lowvram` **non era una risposta utile nel suo caso**: il
-motore lo accende la dashboard, con impostazioni che erano cablate in
-`ENGINE_FLAGS`. Avviare anche `avvia-comfyui.bat` avrebbe prodotto un secondo
-motore, o nessun effetto. Ora la dashboard **inoltra al motore i propri
-argomenti** (`flag_motore` in `dashboard.py`), quindi la scala dei rimedi è
-percorribile dal comando di avvio che sta già usando:
+3. **Scaricare `juggernaut-xl`** (7 GB) — SDXL base sugli interni rende poco:
+   `.\install\2-scarica-modelli.ps1 -Only juggernaut-xl`
+   Da fare **dopo** che il staging funziona: non ha senso scaricare 7 GB per un
+   percorso che ancora fallisce.
 
-1. `--lowvram` — tiene in VRAM solo la parte in uso
-2. `--cpu-vae` — libera altra memoria; **sostituisce** `--fp32-vae`, che viene
-   tolto da solo perché i due sono alternativi
-3. `--disable-smart-memory` — se l'errore compare cambiando tipo di modello
-
-Il suggerimento che la pagina mostra in caso di memoria esaurita è stato
-riscritto di conseguenza: prima puntava a un file che sul suo PC non parte.
-
-Foto di prova che aveva usato:
-`F:\immobili 2026\Moteroni Mancarella\foto\2.jpg`
+4. **La scorciatoia sul Desktop esiste** (`C:\Users\P.S.Assemblato\Desktop\Mondo
+   Image Studio.lnk`) e punta a `cmd.exe /c "…\avvia.bat"`. Gli ho detto di non
+   usarla finché stiamo facendo prove, perché congelerebbe opzioni sbagliate.
+   **Quando la configurazione è stabile, il lavoro da chiudere è renderla di
+   nuovo la via normale** — era la sua richiesta esplicita: «vorrei usare questa
+   app senza dovere ogni volta usare PowerShell». Attenzione: se le si passano
+   argomenti serve `cmd.exe /c call "…\avvia.bat" --opzione`, con `call`,
+   altrimenti `cmd` mangia le virgolette.
 
 ---
 
-## Altri punti in sospeso
+## Domande che ha fatto, e cosa gli ho risposto
 
-- ~~La dashboard non è mai stata avviata sul suo PC.~~ **Risolto: è partita.**
-  La via che ha funzionato aggira del tutto i `.bat` — una riga sola incollata
-  in PowerShell, che legge `comfy-path.txt` e chiama il Python del venv:
-  ```powershell
-  cd "C:\Users\P.S.Assemblato\mondo\image-studio"; $env:PYTHONPATH="$PWD\src"; & "$((Get-Content .\comfy-path.txt -Raw).Trim())\venv\Scripts\python.exe" -m mondo_image.dashboard
-  ```
-  `Get-Content -Raw`, non `Get-Content`: in PowerShell 5.1 senza `-Raw` il
-  risultato è un array e `.Trim()` non è affidabile.
-- **Il collegamento sul Desktop deve crearlo a mano**, perché anche
-  `crea-collegamento.bat` è un `.bat` e sul suo PC non parte. Ricetta data:
-  tasto destro sul Desktop → Nuovo → Collegamento → percorso
-  `cmd.exe /c "C:\Users\P.S.Assemblato\mondo\image-studio\avvia.bat"`.
-  **Da verificare se l'ha fatto e se la dashboard si è aperta.**
-- **Il checkpoint fotorealistico non è scaricato.** Sta usando SDXL base, che
-  sugli interni rende poco. Comando:
-  `.\install\2-scarica-modelli.ps1 -Only juggernaut-xl` (7 GB).
-- **Nessuna immagine di virtual staging è ancora uscita.** È il vero criterio
-  per capire se lo strumento gli serve.
+**«Si possono generare video?»** Tecnicamente sì, in pratica gli ho sconsigliato
+di provarci adesso. Su 12 GB entrano solo i modelli piccoli (Wan 2.1 1.3B,
+LTX-Video, SVD); i modelli veri stanno fra 28 e 80 GB. In più il video ha più
+stadi delle immagini e gli stessi punti deboli su Arc — lo stesso meccanismo che
+produce il nero. Gli ho anche fatto notare un problema del suo mestiere, non del
+PC: un video generato *inventa* quello che c'è fuori inquadratura, e mostrare a
+un acquirente stanze che non esistono è pubblicità ingannevole. Il virtual
+staging su foto ferma è difendibile («arredamento simulato»), un video no.
+Alternativa proposta e non ancora sviluppata: **movimento di camera sulle foto
+vere** (carrellate, zoom, parallasse), che non richiede AI, gira su qualsiasi PC
+e mostra l'immobile reale. Se la riprende, è un lavoro di giorni.
 
 ---
 
@@ -198,7 +236,8 @@ Foto di prova che aveva usato:
 - `huggingface.co` non è raggiungibile dalla rete del container. Per questo il
   downloader **risolve i nomi dei file interrogando l'API del repository**
   invece di cablarli.
-- Non c'è GPU Intel: nessuna generazione reale.
+- Non c'è GPU Intel: nessuna generazione reale. Tutto ciò che riguarda la
+  precisione numerica e la memoria si scopre solo sul suo PC.
 - PowerShell si può usare per il controllo di sintassi scaricando
   `PowerShell/PowerShell` da GitHub — è stato utile per riprodurre un difetto
   reale con un finto `py.exe`.
@@ -211,5 +250,10 @@ Un comando alla volta, con i passaggi numerati. Distinguere sempre in modo
 esplicito **quale finestra** e **cosa è un comando da incollare** rispetto a
 **cosa è output da leggere**: ha già provato a eseguire delle righe di output
 scambiandole per comandi, ed è stata colpa di come le avevo presentate.
+
+Quando l'errore è mio, dirlo. Ha investito due giorni su una regressione che
+avevo introdotto io, e sapere che la causa era identificata — non un mistero
+dell'hardware — è ciò che gli ha fatto riprendere in mano la cosa dopo
+«lasciamo perdere».
 
 Scrive in italiano e va risposto in italiano.

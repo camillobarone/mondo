@@ -247,11 +247,21 @@ Driver Arc troppo vecchi, nel 90% dei casi. Aggiornali dal sito Intel, riavvia i
 PC, rilancia `1-installa.ps1`.
 
 **L'immagine esce tutta nera**
-Su Arc lo stadio che converte il risultato in pixel, in precisione ridotta,
-produce valori non numerici. `avvia-comfyui.bat` passa già `--fp32-vae` per
-evitarlo. Se dovesse succedere lo stesso, sostituiscilo con `--cpu-vae`: sposta
-quello stadio sul processore, più lento ma infallibile. Il sintomo nel log del
-motore è `invalid value encountered in cast`.
+Su Arc il calcolo può arrivare in fondo producendo valori non numerici, che
+convertiti in pixel danno un rettangolo nero. Il sintomo nel log del motore è
+`invalid value encountered in cast`. La dashboard se ne accorge da sola e
+dichiara la generazione fallita invece di consegnarti il file.
+
+Le cause sono due, in ordine di frequenza:
+
+1. **Il modello viene caricato a pezzi.** Succede con `--lowvram`, e anche con
+   un `--reserve-vram` largo, che convince ComfyUI che il modello non entri.
+   È la causa più comune e la meno intuitiva: si arriva a queste opzioni per
+   risolvere un errore di memoria, e si finisce col nero. Rimedio: toglierle e
+   tornare al margine predefinito di 0.6.
+2. **Lo stadio finale in precisione ridotta.** `--fp32-vae` è già attivo di
+   default. Se il nero resta anche a modello caricato per intero, sostituiscilo
+   con `--cpu-vae`, che sposta quello stadio sul processore.
 
 **Il doppio clic apre il file nel Blocco note invece di avviarlo**
 L'estensione `.bat` risulta associata a un editor di testo. Il collegamento
@@ -268,21 +278,37 @@ scritto nella finestra nera e il browser ci arriva da solo.
 
 **Memoria video esaurita** — nel log compare `UR_RESULT_ERROR_OUT_OF_RESOURCES`
 Succede sul `staging`, che tiene in VRAM il modello e il ControlNet insieme.
-Prima cosa da provare: chiudi il browser, che sulla stessa scheda consuma
-parecchia memoria. Se non basta, riavvia passando l'opzione al comando di avvio
-che stai già usando — non serve modificare nessun file, perché sia `avvia.bat`
-sia la dashboard inoltrano al motore quello che ricevono:
+
+> ⚠️ **Su Arc non rispondere a questo errore stringendo la memoria.**
+> `--lowvram` e un `--reserve-vram` più largo sembrano la mossa ovvia, ma
+> entrambi fanno caricare il modello a pezzi, e su Arc quel percorso produce
+> immagini nere. Si finisce con due problemi invece di uno — è già successo,
+> ed è costato due giorni.
+
+In ordine, quello che funziona davvero:
+
+1. **Chiudi il browser e gli altri programmi che usano la scheda.** Windows
+   disegna il desktop sulla stessa GPU: un browser con molte schede aperte può
+   valere un paio di giga.
+2. **Lavora a risoluzione più bassa.** È la leva vera: la memoria richiesta
+   cresce con l'area dell'immagine, non con il numero di passi. Una foto di
+   partenza più piccola riduce il consumo in modo lineare, e il risultato si
+   riporta poi alla dimensione voluta con `upscale`, che gira da solo e non ha
+   il ControlNet in memoria.
+3. **Genera una immagine per volta** (`-n 1`): ogni variante in più moltiplica
+   le attivazioni.
+4. **`--disable-smart-memory`**, se l'errore compare passando da un tipo di
+   modello a un altro nella stessa sessione.
+
+Se proprio vuoi provare `--lowvram`, sappi che paghi in lentezza e che il
+risultato va guardato: sia `avvia.bat` sia la dashboard inoltrano al motore
+quello che ricevono, quindi non serve modificare nessun file.
 
 ```powershell
 .\avvia.bat --lowvram                          REM dashboard
 .\avvia-comfyui.bat --lowvram                  REM solo il motore
 python -m mondo_image.dashboard --lowvram      REM dashboard senza .bat
 ```
-
-`--lowvram` tiene in VRAM solo la parte di modello in uso: più lento, ma regge
-qualsiasi combinazione. Il gradino successivo è `--cpu-vae`, che libera altra
-memoria spostando lo stadio finale sul processore; sostituisce `--fp32-vae`, e
-chi lo passa se lo vede tolto da solo.
 
 **Errori di memoria quando cambi tipo di modello**
 Aggiungi `--disable-smart-memory` allo stesso comando di avvio.
