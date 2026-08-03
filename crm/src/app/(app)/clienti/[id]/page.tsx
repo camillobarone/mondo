@@ -14,6 +14,8 @@ import { requirementSummary } from "@/lib/matching";
 import { deleteClient } from "@/lib/actions";
 import {
   euro,
+  budgetRange,
+  budgetIsContradictory,
   shortDate,
   dateTime,
   fullName,
@@ -279,15 +281,26 @@ export default async function ClientPage({
                             {requirement.city ? ` a ${requirement.city}` : ""}
                           </p>
                           <p className="mt-0.5 text-xs text-slate-500">
-                            {requirement.budget_max
-                              ? `Fino a ${euro(requirement.budget_max)}`
-                              : "Budget non indicato"}
+                            {budgetRange(requirement.budget_min, requirement.budget_max)}
                             {requirement.sqm_min ? ` · da ${requirement.sqm_min} mq` : ""}
                             {requirement.rooms_min ? ` · da ${requirement.rooms_min} vani` : ""}
                             {fromCsv(requirement.zones).length
                               ? ` · ${fromCsv(requirement.zones).join(", ")}`
                               : ""}
                           </p>
+                          {budgetIsContradictory(requirement.budget_min, requirement.budget_max) ? (
+                            <p className="mt-1 text-xs font-medium text-red-700">
+                              Il budget minimo è più alto del massimo: così nessun immobile può
+                              rientrare in entrambi.{" "}
+                              <Link
+                                href={`/clienti/${client.id}?modifica_richiesta=${requirement.id}`}
+                                className="underline"
+                              >
+                                Correggi la richiesta
+                              </Link>
+                              .
+                            </p>
+                          ) : null}
                           {requirement.notes ? (
                             <p className="mt-1 text-xs whitespace-pre-line text-slate-600">
                               {requirement.notes}

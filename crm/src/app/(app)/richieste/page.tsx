@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listRequirements } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
-import { euro, fromCsv, shortDate } from "@/lib/format";
+import { euro, budgetRange, budgetIsContradictory, fromCsv, shortDate } from "@/lib/format";
 import { PageHeader, Card, EmptyState, StatusChip, Chip, Pagination } from "@/components/ui";
 import { REQUIREMENT_STATUSES } from "@/lib/types";
 
@@ -107,13 +107,18 @@ export default async function RequirementsPage({
                         </Link>
                         <StatusChip value={requirement.status} kind="requirement" />
                         {requirement.urgency === "alta" ? <Chip tone="red">urgente</Chip> : null}
+                        {budgetIsContradictory(requirement.budget_min, requirement.budget_max) ? (
+                          <Chip tone="red">budget incoerente</Chip>
+                        ) : null}
                       </div>
 
                       <p className="mt-0.5 text-sm text-slate-600">
                         {requirement.contract === "affitto" ? "Affitto" : "Acquisto"}
                         {requirement.kind ? ` · ${requirement.kind}` : ""}
                         {requirement.city ? ` a ${requirement.city}` : ""}
-                        {requirement.budget_max ? ` · fino a ${euro(requirement.budget_max)}` : ""}
+                        {requirement.budget_min || requirement.budget_max
+                          ? ` · ${budgetRange(requirement.budget_min, requirement.budget_max).toLowerCase()}`
+                          : ""}
                         {requirement.sqm_min ? ` · da ${requirement.sqm_min} mq` : ""}
                       </p>
 

@@ -6,6 +6,29 @@ const EUR = new Intl.NumberFormat("it-IT", {
 
 const NUM = new Intl.NumberFormat("it-IT");
 
+/**
+ * Il budget di una richiesta, per intero. Mostrare solo il massimo
+ * nasconderebbe un minimo rimasto li' da una modifica precedente: e' il
+ * genere di dato invisibile che poi fa sparire gli incroci.
+ */
+export function budgetRange(
+  min: number | null | undefined,
+  max: number | null | undefined,
+): string {
+  if (min && max) return `${euro(min)} – ${euro(max)}`;
+  if (max) return `Fino a ${euro(max)}`;
+  if (min) return `Da ${euro(min)}`;
+  return "Budget non indicato";
+}
+
+/** Un minimo sopra il massimo e' sempre un errore di compilazione. */
+export function budgetIsContradictory(
+  min: number | null | undefined,
+  max: number | null | undefined,
+): boolean {
+  return Boolean(min && max && min > max);
+}
+
 /** 250000 -> "250.000 €"  ·  null -> "—" */
 export function euro(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
