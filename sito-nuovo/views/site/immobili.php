@@ -79,8 +79,8 @@ $qs = static function (int $page) use ($filters): string {
       <a href="<?= e(url('/contatti/')) ?>">dicci cosa cerchi</a>: molti immobili non arrivano mai al sito.</p>
   <?php else: ?>
     <div class="griglia">
-      <?php foreach ($result['items'] as $p): ?>
-        <?= View::partial('site/_card', ['p' => $p]) ?>
+      <?php foreach ($result['items'] as $i => $p): ?>
+        <?= View::partial('site/_card', ['p' => $p, 'eager' => $i === 0]) ?>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>

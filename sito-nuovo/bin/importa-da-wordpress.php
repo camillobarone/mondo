@@ -239,6 +239,7 @@ function importaFoto(WpSource $wp, int $propertyId, int $wpId, array $idAllegati
             'wp_id' => $attId,
             'path' => $img['path'],
             'thumb' => $img['thumb'],
+            'srcset' => $img['srcset'],
             'alt' => mb_substr($wp->attachmentAlt($attId), 0, 191),
             'width' => $img['width'],
             'height' => $img['height'],

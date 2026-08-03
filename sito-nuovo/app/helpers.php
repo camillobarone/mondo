@@ -26,6 +26,70 @@ function asset(string $path): string
     return url($rel) . '?v=' . $version;
 }
 
+/**
+ * Rende assoluti i percorsi dentro un `srcset`.
+ *
+ * A database stanno relativi (`/uploads/…-960.webp 960w`), in pagina devono
+ * essere risolvibili anche quando il sito vive in una sottocartella.
+ */
+function srcset_url(string $srcset): string
+{
+    $pezzi = [];
+    foreach (explode(',', $srcset) as $voce) {
+        $voce = trim($voce);
+        if ($voce === '') {
+            continue;
+        }
+        [$percorso, $larghezza] = array_pad(preg_split('/\s+/', $voce, 2) ?: [], 2, '');
+        $pezzi[] = url($percorso) . ($larghezza !== '' ? ' ' . $larghezza : '');
+    }
+
+    return implode(', ', $pezzi);
+}
+
+/**
+ * Favicon come data URI: una casa nei colori dell'agenzia, disegnata in SVG.
+ *
+ * Sta dentro l'HTML per due motivi. Il primo è che risparmia una richiesta.
+ * Il secondo è che senza un `rel="icon"` dichiarato il browser va a cercare
+ * `/favicon.ico` per conto suo, non lo trova e scrive un 404 in console:
+ * un errore che Lighthouse conta, e che nessuno vede finché non lo misura.
+ */
+function favicon_svg(): string
+{
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+        . '<rect width="32" height="32" rx="7" fill="#16202b"/>'
+        . '<path d="M5 15.6 16 6.4l11 9.2v1.9h-2.6V26h-5.6v-6.6h-5.6V26H7.6v-8.5H5z" fill="#a8642a"/>'
+        . '</svg>';
+
+    return 'data:image/svg+xml,' . strtr(rawurlencode($svg), ['%2F' => '/', '%3A' => ':', '%20' => ' ']);
+}
+
+/**
+ * Preload dell'immagine più grande della pagina (la candidata LCP).
+ *
+ * Senza, il browser la scopre solo quando ha finito di leggere l'HTML e di
+ * costruire il layout. Con `imagesrcset` sceglie subito la stessa variante
+ * che sceglierebbe poi il tag `<img>`: se le due `sizes` non coincidono si
+ * finisce a scaricarne due, quindi vanno tenute identiche.
+ */
+function preload_image(string $src, string $srcset = '', string $sizes = ''): string
+{
+    if (trim($src) === '') {
+        return '';
+    }
+
+    $tag = '<link rel="preload" as="image" fetchpriority="high" href="' . e(url($src)) . '"';
+    if ($srcset !== '') {
+        $tag .= ' imagesrcset="' . e(srcset_url($srcset)) . '"';
+        if ($sizes !== '') {
+            $tag .= ' imagesizes="' . e($sizes) . '"';
+        }
+    }
+
+    return $tag . '>';
+}
+
 /** Prezzo in euro, formato italiano. Null o 0 => "Trattativa riservata". */
 function euro(?float $value, string $fallback = 'Trattativa riservata'): string
 {

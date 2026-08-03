@@ -1,18 +1,36 @@
 <?php
 
-/** @var array<string,mixed> $p */
+/**
+ * @var array<string,mixed> $p
+ * @var bool $eager  true solo sulla prima scheda: è l'unica che sta sopra
+ *                   la piega, e caricarla subito accorcia l'LCP. Le altre
+ *                   restano pigre, altrimenti si scaricano foto che nessuno
+ *                   guarderà mai.
+ */
 
+use Mil\Core\Assets;
 use Mil\Core\Vocab;
 
+$eager ??= false;
 $prezzo = (int) ($p['price_hidden'] ?? 0) === 1
     ? 'Trattativa riservata'
     : euro(isset($p['price']) ? (float) $p['price'] : null);
+
+$img = (string) ($p['cover_thumb'] ?: ($p['cover'] ?? ''));
+$srcset = (string) ($p['cover_srcset'] ?? '');
 ?>
 <article class="card">
   <a class="card-media" href="<?= e(url('/immobili/' . $p['slug'] . '/')) ?>">
-    <?php if (!empty($p['cover_thumb'] ?? $p['cover'] ?? '')): ?>
-      <img src="<?= e(url((string) ($p['cover_thumb'] ?: $p['cover']))) ?>"
-           alt="<?= e((string) $p['title']) ?>" loading="lazy" width="640" height="420">
+    <?php if ($img !== ''): ?>
+      <img src="<?= e(url($img)) ?>"
+           <?php if ($srcset !== ''): ?>
+           srcset="<?= e(srcset_url($srcset)) ?>"
+           sizes="<?= e(Assets::SIZES_CARD) ?>"
+           <?php endif; ?>
+           alt="<?= e((string) $p['title']) ?>"
+           width="960" height="640"
+           loading="<?= $eager ? 'eager' : 'lazy' ?>"
+           <?= $eager ? 'fetchpriority="high"' : 'decoding="async"' ?>>
     <?php else: ?>
       <span class="card-noimg">Foto in arrivo</span>
     <?php endif; ?>

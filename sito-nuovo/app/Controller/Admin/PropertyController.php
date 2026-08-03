@@ -138,6 +138,7 @@ final class PropertyController
                         'property_id' => (int) $id,
                         'path' => $img['path'],
                         'thumb' => $img['thumb'],
+                        'srcset' => $img['srcset'],
                         'alt' => (string) $property['title'],
                         'width' => $img['width'],
                         'height' => $img['height'],
@@ -163,6 +164,39 @@ final class PropertyController
         }
 
         Router::redirect('/gestionale/immobili/' . $id . '/');
+    }
+
+    /**
+     * Riordino, copertina e testi alternativi delle foto, con un modulo solo.
+     *
+     * Le descrizioni si salvano a ogni azione, non solo premendo «Salva»:
+     * chi scrive una didascalia e poi sposta la foto non deve ritrovarsi
+     * il testo perso perché ha premuto il bottone sbagliato.
+     */
+    public static function managePhotos(string $id): void
+    {
+        Auth::required();
+        Csrf::check();
+
+        if (Properties::find((int) $id) === null) {
+            Router::redirect('/gestionale/immobili/');
+        }
+
+        /** @var array<int|string,mixed> $alt */
+        $alt = is_array($_POST['alt'] ?? null) ? $_POST['alt'] : [];
+        Properties::saveImageAlts((int) $id, $alt);
+
+        [$azione, $bersaglio] = array_pad(explode(':', (string) ($_POST['azione'] ?? 'salva'), 2), 2, '');
+
+        match ($azione) {
+            'su' => Properties::moveImage((int) $id, (int) $bersaglio, -1),
+            'giu' => Properties::moveImage((int) $id, (int) $bersaglio, 1),
+            'copertina' => Properties::setCoverImage((int) $id, (int) $bersaglio),
+            default => null,
+        };
+
+        Session::flash($azione === 'copertina' ? 'Copertina aggiornata.' : 'Foto aggiornate.');
+        Router::redirect('/gestionale/immobili/' . $id . '/#foto');
     }
 
     public static function deletePhoto(string $id, string $imageId): void

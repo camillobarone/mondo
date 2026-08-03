@@ -42,8 +42,12 @@ fa senza mappa dei redirect.
 - Home con ricerca, immobili in evidenza, dati di fiducia veri (4,9/5 su 58
   recensioni, FIMAA dal 1994, oltre 3.000 compravendite)
 - Elenco immobili con filtri per comune, tipologia, contratto, prezzo, metratura
-- Scheda immobile: galleria, dati tecnici, dotazioni, immobili simili, modulo di
-  richiesta che scrive direttamente nel gestionale
+- Scheda immobile: galleria a schermo intero, dati tecnici, dotazioni, immobili
+  simili, modulo di richiesta che scrive direttamente nel gestionale
+- **Galleria senza JavaScript** — cinque foto in griglia, le altre dietro un
+  «+N foto»; si aprono a tutto schermo, si sfogliano avanti e indietro e si
+  chiudono usando solo `:target`. Funziona da tastiera, non sposta un pixel
+  della pagina e finché non si apre non scarica nemmeno un byte in più
 - Pagina valutazione con FAQ visibili (le stesse dello schema, mai solo nel markup)
 - Blog con firma e data dell'autore
 - Pagine statiche gestibili dal pannello
@@ -53,8 +57,9 @@ fa senza mappa dei redirect.
 
 - **Riepilogo** — immobili online, bozze, richieste da lavorare, clienti in
   ricerca, prossimi appuntamenti, immobili più visti
-- **Immobili** — scheda completa, foto multiple con ridimensionamento e
-  conversione WebP automatici, campi SEO per pagina, e **due stati distinti**:
+- **Immobili** — scheda completa, foto multiple in WebP con tre larghezze
+  generate al caricamento, riordinabili, con copertina scelta a mano e
+  descrizione per ogni foto; campi SEO per pagina, e **due stati distinti**:
   quello di pubblicazione (cosa vede il pubblico) e quello della trattativa
   (a che punto è il lavoro)
 - **Incarico** — proprietario, date di inizio e scadenza, esclusiva,
@@ -130,7 +135,48 @@ costruito secondo le regole già validate sul sito attuale:
 Più: canonical auto-referenziante, `noindex` sui risultati filtrati e sulle
 pagine oltre la prima, sitemap generata dal database, robots.txt che **non**
 blocca i crawler AI, una sola forma di URL (la variante senza slash finale
-risponde 301), immagini convertite in WebP e ridotte a 1600 px.
+risponde 301), immagini convertite in WebP.
+
+---
+
+## Velocità: misurata, non promessa
+
+Lighthouse 12, profilo **mobile** (rete 4G lenta simulata, CPU rallentata 4×),
+misurato sul sito in locale con le foto vere passate dall'importatore:
+
+| Pagina | Prestazioni | Accessibilità | Best practice | SEO | LCP | CLS | TBT |
+|---|---|---|---|---|---|---|---|
+| Home | 100 | 100 | 100 | 100 | 0,7 s | 0 | 0 ms |
+| Elenco immobili | 100 | 100 | 100 | 100 | 0,7 s | 0,001 | 0 ms |
+| Scheda immobile | 100 | 100 | 100 | 100 | 1,3 s | 0 | 0 ms |
+| Contatti | 100 | 100 | 100 | 100 | 0,7 s | 0 | 0 ms |
+| Valutazione | 100 | 100 | 100 | 100 | 0,7 s | 0 | 20 ms |
+| Blog | 100 | 100 | 100 | 100 | 0,7 s | 0,001 | 0 ms |
+
+Come ci si arriva, in concreto:
+
+- **Zero JavaScript** sul sito pubblico. Non «poco»: zero. Menu, filtri e
+  galleria sono HTML e CSS. Per questo il blocco del thread principale è 0 ms
+  e non c'è niente che possa rallentarsi da solo col tempo.
+- **CSS dentro la pagina**, minificato e messo in cache su disco. Un
+  `<link rel=stylesheet>` è una seconda richiesta prima del primo disegno: su
+  rete mobile costa più dei byte che si risparmiano.
+- **Tre larghezze per ogni foto** (480, 960, 1600 px) in WebP, servite con
+  `srcset` e `sizes`. Il telefono scarica quella che gli serve, non quella che
+  serve al monitor dell'ufficio.
+- **Preload della foto grande** con lo stesso `imagesrcset` del tag `<img>`:
+  il browser la mette in coda subito invece di scoprirla a layout finito.
+- **`width` e `height` su ogni immagine** e proporzioni fissate in CSS: la
+  pagina non salta mentre carica. Da qui il CLS a zero.
+- **Favicon in SVG dentro l'HTML**: nessuna richiesta, e soprattutto nessun
+  404 su `/favicon.ico` — l'errore che teneva Best practice a 96.
+
+Una precisazione che conviene fare adesso, perché dopo sembra una scusa:
+**questi sono numeri di laboratorio**. I «3 su 3» di PageSpeed sono un'altra
+cosa — sono i Core Web Vitals raccolti da Chrome sui visitatori veri (CrUX),
+su 28 giorni di traffico. Nessuna riga di codice li può produrre oggi: si
+possono solo creare le condizioni perché arrivino, ed è quello che è stato
+fatto. Si leggeranno quando il sito sarà online e visitato.
 
 ---
 
@@ -147,6 +193,7 @@ sito-nuovo/
 ├── views/             template PHP puri: layout/, site/, admin/
 ├── public/            document root — index.php, install.php, assets, uploads
 ├── db/                schema.sql (dialetto neutro), migrations/, seed.php
+├── storage/cache/     CSS minificato, si rigenera da solo
 ├── bin/               installazione locale, aggiornamento DB, import da WP
 └── docs/              installazione su SiteGround, migrazione SEO
 ```

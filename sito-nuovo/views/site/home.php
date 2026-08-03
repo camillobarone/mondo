@@ -59,6 +59,8 @@ use Mil\Core\Vocab;
     <p class="vuoto">Nessun immobile pubblicato al momento.</p>
   <?php else: ?>
     <div class="griglia">
+      <?php /* Niente `eager` qui: in home la griglia sta sotto l'hero, fuori
+               dalla prima schermata. L'LCP è il titolo, non queste foto. */ ?>
       <?php foreach ($featured as $p): ?>
         <?= View::partial('site/_card', ['p' => $p]) ?>
       <?php endforeach; ?>

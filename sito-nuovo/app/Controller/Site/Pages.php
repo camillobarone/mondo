@@ -215,7 +215,8 @@ final class Pages
         string $description,
         string $canonical,
         string $jsonld = '',
-        string $robots = 'index, follow'
+        string $robots = 'index, follow',
+        string $preload = ''
     ): array {
         return [
             // Limiti Rank Math applicati anche qui: 60 e 160 caratteri.
@@ -224,6 +225,7 @@ final class Pages
             'canonical' => $canonical,
             'jsonld' => $jsonld,
             'robots' => $robots,
+            'preload' => $preload,
         ];
     }
 }

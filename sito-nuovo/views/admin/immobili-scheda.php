@@ -260,29 +260,52 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
 </form>
 
 <?php if (!$isNew): ?>
-<div class="pannello">
+<div class="pannello" id="foto">
   <h2>Foto</h2>
   <form method="post" action="<?= e(url('/gestionale/immobili/' . $p['id'] . '/foto/')) ?>" enctype="multipart/form-data" class="form">
     <?= Csrf::field() ?>
-    <label>Carica una o più immagini <small>JPG, PNG o WebP. Vengono convertite e ridimensionate in automatico.</small>
+    <label>Carica una o più immagini <small>JPG, PNG o WebP. Vengono convertite in WebP e salvate in tre larghezze (480, 960, 1600 px): il telefono scarica la più piccola che gli basta.</small>
       <input type="file" name="foto[]" accept="image/jpeg,image/png,image/webp" multiple required>
     </label>
     <button type="submit" class="btn btn-ghost">Carica</button>
   </form>
 
   <?php if ($images !== []): ?>
-    <div class="foto-griglia">
-      <?php foreach ($images as $img): ?>
-        <figure>
-          <img src="<?= e(url((string) ($img['thumb'] ?: $img['path']))) ?>" alt="" loading="lazy">
-          <form method="post" action="<?= e(url('/gestionale/immobili/' . $p['id'] . '/foto/' . $img['id'] . '/elimina/')) ?>"
-                onsubmit="return confirm('Eliminare questa foto?')">
-            <?= Csrf::field() ?>
-            <button class="mini mini-danger">Elimina</button>
-          </form>
-        </figure>
-      <?php endforeach; ?>
-    </div>
+    <?php /* Un modulo solo per tutto: i bottoni si distinguono con `azione`,
+             così le descrizioni scritte a mano si salvano comunque, qualunque
+             bottone si prema. L'unica eccezione è Elimina, che ha una rotta
+             sua perché cancella anche i file dal disco. */ ?>
+    <form method="post" action="<?= e(url('/gestionale/immobili/' . $p['id'] . '/foto/aggiorna/')) ?>">
+      <?= Csrf::field() ?>
+      <div class="foto-griglia">
+        <?php foreach ($images as $i => $img): ?>
+          <figure<?= $i === 0 ? ' class="foto-copertina"' : '' ?>>
+            <img src="<?= e(url((string) ($img['thumb'] ?: $img['path']))) ?>" alt="" loading="lazy"
+                 width="<?= (int) $img['width'] ?>" height="<?= (int) $img['height'] ?>">
+            <?php if ($i === 0): ?><span class="foto-tag">Copertina</span><?php endif; ?>
+
+            <label class="foto-alt">Descrizione della foto
+              <input type="text" name="alt[<?= (int) $img['id'] ?>]" maxlength="255"
+                     value="<?= e((string) $img['alt']) ?>"
+                     placeholder="Cosa si vede in questa foto">
+            </label>
+
+            <div class="foto-azioni">
+              <button class="mini" name="azione" value="su:<?= (int) $img['id'] ?>"
+                      <?= $i === 0 ? 'disabled' : '' ?> aria-label="Sposta indietro">↑</button>
+              <button class="mini" name="azione" value="giu:<?= (int) $img['id'] ?>"
+                      <?= $i === count($images) - 1 ? 'disabled' : '' ?> aria-label="Sposta avanti">↓</button>
+              <button class="mini" name="azione" value="copertina:<?= (int) $img['id'] ?>"
+                      <?= $i === 0 ? 'disabled' : '' ?>>Copertina</button>
+              <button class="mini mini-danger" name="azione" value="elimina"
+                      formaction="<?= e(url('/gestionale/immobili/' . $p['id'] . '/foto/' . $img['id'] . '/elimina/')) ?>"
+                      onclick="return confirm('Eliminare questa foto?')">Elimina</button>
+            </div>
+          </figure>
+        <?php endforeach; ?>
+      </div>
+      <p><button type="submit" class="btn btn-ghost" name="azione" value="salva">Salva le descrizioni</button></p>
+    </form>
   <?php else: ?>
     <p class="vuoto">Nessuna foto caricata. La prima diventa l’immagine principale, anche nello schema.</p>
   <?php endif; ?>

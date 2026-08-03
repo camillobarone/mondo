@@ -14,8 +14,18 @@ use RuntimeException;
 final class Uploader
 {
     private const MAX_BYTES = 12 * 1024 * 1024;
-    private const MAX_WIDTH = 1600;
-    private const THUMB_WIDTH = 640;
+
+    /**
+     * Larghezze generate a ogni caricamento, dalla più piccola.
+     *
+     * Servono al `srcset`: un telefono non deve scaricare l'immagine da
+     * 1600 px per mostrarla larga 360. È la singola voce che pesa di più
+     * sul caricamento in mobilità, molto più del codice.
+     *
+     * Le larghezze più grandi della foto originale vengono saltate: non si
+     * ingrandisce mai, si otterrebbe un file più pesante e più sfocato.
+     */
+    private const WIDTHS = [480, 960, 1600];
 
     private const ALLOWED = [
         IMAGETYPE_JPEG => 'jpg',
@@ -25,7 +35,7 @@ final class Uploader
 
     /**
      * @param array{name:string,type:string,tmp_name:string,error:int,size:int} $file
-     * @return array{path:string,thumb:string,width:int,height:int}
+     * @return array{path:string,thumb:string,srcset:string,width:int,height:int}
      */
     public static function image(array $file, string $subdir = 'immobili'): array
     {
@@ -43,7 +53,7 @@ final class Uploader
      * Stessa lavorazione, ma su un file già presente su disco: la usa
      * l'importatore da WordPress, che le foto se le trova in wp-content.
      *
-     * @return array{path:string,thumb:string,width:int,height:int}
+     * @return array{path:string,thumb:string,srcset:string,width:int,height:int}
      */
     public static function fromFile(string $path, string $originalName = '', string $subdir = 'immobili'): array
     {
@@ -57,7 +67,7 @@ final class Uploader
         return self::process($path, $originalName !== '' ? $originalName : basename($path), $subdir);
     }
 
-    /** @return array{path:string,thumb:string,width:int,height:int} */
+    /** @return array{path:string,thumb:string,srcset:string,width:int,height:int} */
     private static function process(string $sourcePath, string $originalName, string $subdir): array
     {
         // Il tipo si determina dal contenuto, mai dall'estensione dichiarata.
@@ -84,26 +94,44 @@ final class Uploader
 
         $stem = slugify(pathinfo($originalName, PATHINFO_FILENAME)) ?: 'foto';
         $name = $stem . '-' . bin2hex(random_bytes(4));
-
-        $full = self::resize($source, $width, $height, self::MAX_WIDTH);
-        $thumb = self::resize($source, $width, $height, self::THUMB_WIDTH);
-        imagedestroy($source);
-
-        imagewebp($full, $dir . '/' . $name . '.webp', 82);
-        imagewebp($thumb, $dir . '/' . $name . '-thumb.webp', 78);
-
-        $finalWidth = imagesx($full);
-        $finalHeight = imagesy($full);
-        imagedestroy($full);
-        imagedestroy($thumb);
-
         $urlBase = rtrim((string) Config::get('uploads_url'), '/') . '/' . $subdir . '/' . date('Y/m') . '/' . $name;
 
+        // Si generano solo le larghezze che la foto originale può sostenere,
+        // più — sempre — una versione alla larghezza reale se è più piccola
+        // di tutte, altrimenti un'immagine da 400 px resterebbe senza file.
+        $larghezze = array_values(array_filter(self::WIDTHS, static fn (int $w): bool => $w <= $width));
+        if ($larghezze === []) {
+            $larghezze = [$width];
+        }
+
+        $srcset = [];
+        $piuGrande = null;
+        $piuPiccola = null;
+
+        foreach ($larghezze as $w) {
+            $variante = self::resize($source, $width, $height, $w);
+            $reale = imagesx($variante);
+            $file = $name . '-' . $reale . '.webp';
+
+            // Le larghezze piccole reggono una compressione più aggressiva:
+            // si vedono su schermi dove il dettaglio non si apprezza.
+            imagewebp($variante, $dir . '/' . $file, $reale <= 640 ? 76 : 82);
+
+            $srcset[] = $urlBase . '-' . $reale . '.webp ' . $reale . 'w';
+            $piuPiccola ??= ['url' => $urlBase . '-' . $reale . '.webp'];
+            $piuGrande = ['url' => $urlBase . '-' . $reale . '.webp', 'w' => $reale, 'h' => imagesy($variante)];
+
+            imagedestroy($variante);
+        }
+
+        imagedestroy($source);
+
         return [
-            'path' => $urlBase . '.webp',
-            'thumb' => $urlBase . '-thumb.webp',
-            'width' => $finalWidth,
-            'height' => $finalHeight,
+            'path' => $piuGrande['url'],
+            'thumb' => $piuPiccola['url'],
+            'srcset' => implode(', ', $srcset),
+            'width' => $piuGrande['w'],
+            'height' => $piuGrande['h'],
         ];
     }
 
@@ -129,8 +157,14 @@ final class Uploader
     {
         $base = rtrim((string) Config::get('uploads_dir'), '/');
         $rel = ltrim(str_replace((string) Config::get('uploads_url'), '', $publicPath), '/');
-        foreach ([$rel, str_replace('.webp', '-thumb.webp', $rel)] as $candidate) {
-            $file = $base . '/' . $candidate;
+
+        // Il percorso salvato è quello della variante più grande: le altre
+        // hanno lo stesso nome con una larghezza diversa. Si cancellano tutte,
+        // altrimenti restano file orfani a occupare spazio per sempre.
+        $senzaLarghezza = preg_replace('/-\d+\.webp$/', '', $rel) ?? $rel;
+        $candidati = glob($base . '/' . $senzaLarghezza . '-*.webp') ?: [];
+
+        foreach ($candidati as $file) {
             // Non uscire mai dalla cartella uploads, qualunque cosa arrivi dal DB.
             if (str_starts_with(realpath($file) ?: '', $base) && is_file($file)) {
                 @unlink($file);

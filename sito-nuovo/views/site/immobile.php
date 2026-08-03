@@ -6,6 +6,7 @@
  * @var array<int,array<string,mixed>> $simili
  */
 
+use Mil\Core\Assets;
 use Mil\Core\View;
 use Mil\Core\Vocab;
 
@@ -28,16 +29,63 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
   </header>
 
   <?php if ($images !== []): ?>
-    <div class="galleria wrap">
-      <?php foreach ($images as $i => $img): ?>
-        <figure class="<?= $i === 0 ? 'galleria-main' : '' ?>">
-          <img src="<?= e(url((string) $img['path'])) ?>"
-               alt="<?= e((string) ($img['alt'] ?: $p['title'])) ?>"
+    <?php
+    $totale = count($images);
+    // In griglia ne stanno cinque: una grande e quattro sotto. Le altre non
+    // spariscono, si aprono dal cartello «+N foto» sull'ultima.
+    $inGriglia = array_slice($images, 0, 5, true);
+    $nascoste = $totale - count($inGriglia);
+    $didascalia = static fn (array $img): string => (string) ($img['alt'] ?: $p['title']);
+    ?>
+    <section class="galleria wrap" id="galleria" aria-label="Foto dell’immobile">
+      <?php foreach ($inGriglia as $i => $img): ?>
+        <a class="galleria-cella<?= $i === 0 ? ' galleria-main' : '' ?>" href="#foto-<?= $i ?>">
+          <img src="<?= e(url((string) ($i === 0 ? $img['path'] : ($img['thumb'] ?: $img['path'])))) ?>"
+               <?php if (($img['srcset'] ?? '') !== ''): ?>
+               srcset="<?= e(srcset_url((string) $img['srcset'])) ?>"
+               sizes="<?= e($i === 0 ? Assets::SIZES_GALLERIA : Assets::SIZES_GALLERIA_MINI) ?>"
+               <?php endif; ?>
+               alt="<?= e($didascalia($img)) ?>"
                width="<?= (int) $img['width'] ?>" height="<?= (int) $img['height'] ?>"
-               loading="<?= $i === 0 ? 'eager' : 'lazy' ?>">
-        </figure>
+               loading="<?= $i === 0 ? 'eager' : 'lazy' ?>"
+               <?= $i === 0 ? 'fetchpriority="high"' : 'decoding="async"' ?>>
+          <?php if ($nascoste > 0 && $i === array_key_last($inGriglia)): ?>
+            <span class="galleria-piu">+<?= $nascoste ?> foto</span>
+          <?php endif; ?>
+          <?php /* Testo fuori campo invece di `aria-label`: così il nome
+                   accessibile del link contiene anche la scritta «+N foto»
+                   che si vede sopra la foto, e le due versioni non divergono. */ ?>
+          <span class="sr">Apri la foto <?= $i + 1 ?> di <?= $totale ?> a schermo intero</span>
+        </a>
       <?php endforeach; ?>
-    </div>
+    </section>
+
+    <?php /* Le foto a schermo intero senza una riga di JavaScript: ogni riquadro
+             è un `:target`, quindi è il browser a mostrarlo e a nasconderlo.
+             Fino a quel momento resta `display:none`, così non scarica niente
+             e non sposta di un pixel il resto della pagina. */ ?>
+    <?php foreach ($images as $i => $img): ?>
+      <div class="lente" id="foto-<?= $i ?>">
+        <a class="lente-fondo" href="#galleria" aria-hidden="true" tabindex="-1"></a>
+        <figure class="lente-corpo">
+          <img src="<?= e(url((string) $img['path'])) ?>"
+               <?php if (($img['srcset'] ?? '') !== ''): ?>
+               srcset="<?= e(srcset_url((string) $img['srcset'])) ?>"
+               sizes="<?= e(Assets::SIZES_GALLERIA) ?>"
+               <?php endif; ?>
+               alt="<?= e($didascalia($img)) ?>"
+               width="<?= (int) $img['width'] ?>" height="<?= (int) $img['height'] ?>"
+               loading="lazy" decoding="async">
+          <figcaption><?= e($didascalia($img)) ?></figcaption>
+        </figure>
+        <nav class="lente-barra" aria-label="Sfoglia le foto">
+          <a href="#foto-<?= ($i - 1 + $totale) % $totale ?>" rel="prev">‹ <span>Precedente</span></a>
+          <span class="lente-conta"><?= $i + 1 ?> di <?= $totale ?></span>
+          <a href="#foto-<?= ($i + 1) % $totale ?>" rel="next"><span>Successiva</span> ›</a>
+          <a class="lente-chiudi" href="#galleria">Chiudi</a>
+        </nav>
+      </div>
+    <?php endforeach; ?>
   <?php endif; ?>
 
   <div class="wrap scheda-grid">

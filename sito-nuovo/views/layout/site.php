@@ -5,6 +5,7 @@
  * @var string $content
  */
 
+use Mil\Core\Assets;
 use Mil\Core\Session;
 use Mil\Core\Settings;
 
@@ -26,7 +27,9 @@ $flash = Session::takeFlash();
 <meta property="og:description" content="<?= e($meta['description']) ?>">
 <meta property="og:url" content="<?= e($meta['canonical']) ?>">
 <meta property="og:locale" content="it_IT">
-<link rel="stylesheet" href="<?= e(asset('css/site.css')) ?>">
+<link rel="icon" href="<?= e(favicon_svg()) ?>" type="image/svg+xml">
+<?= $meta['preload'] ?? '' ?>
+<style><?= Assets::css('site.css') ?></style>
 <?= $meta['jsonld'] ?? '' ?>
 </head>
 <body>

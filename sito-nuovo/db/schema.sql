@@ -154,6 +154,8 @@ CREATE TABLE property_images (
   wp_id INTEGER NULL,
   path VARCHAR(255) NOT NULL,
   thumb VARCHAR(255) NOT NULL DEFAULT '',
+  -- `srcset` pronto da stampare, calcolato una volta al caricamento.
+  srcset VARCHAR(500) NOT NULL DEFAULT '',
   alt VARCHAR(191) NOT NULL DEFAULT '',
   width INTEGER NOT NULL DEFAULT 0,
   height INTEGER NOT NULL DEFAULT 0,

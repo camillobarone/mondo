@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mil\Controller\Site;
 
+use Mil\Core\Assets;
 use Mil\Core\Seo;
 use Mil\Core\View;
 use Mil\Core\Vocab;
@@ -58,7 +59,8 @@ final class Listings
                 'Case, ville e appartamenti in vendita a Lecce, Porto Cesareo e provincia, selezionati da Mondo Immobiliare, agenzia FIMAA dal 1994.',
                 $pageUrl,
                 Seo::graph($graph),
-                $isFiltered || $page > 1 ? 'noindex, follow' : 'index, follow'
+                $isFiltered || $page > 1 ? 'noindex, follow' : 'index, follow',
+                self::preloadPrimaScheda($result['items'])
             ),
             'result' => $result,
             'filters' => $filters,
@@ -89,7 +91,8 @@ final class Listings
                 $pageUrl,
                 Seo::graph(Seo::listingNodes($property, $images)),
                 // Un immobile venduto resta online per la storia, ma fuori dall'indice.
-                $property['status'] === 'sold' ? 'noindex, follow' : 'index, follow'
+                $property['status'] === 'sold' ? 'noindex, follow' : 'index, follow',
+                self::preloadCopertina($images)
             ),
             'p' => $property,
             'images' => $images,
@@ -99,6 +102,45 @@ final class Listings
                 'contract' => $property['contract'],
             ], 1, 4)['items'],
         ]);
+    }
+
+    /**
+     * La foto grande della scheda è quasi sempre l'elemento LCP: si annuncia
+     * nell'head così il browser la mette in coda subito, senza aspettare di
+     * aver costruito il layout per accorgersene.
+     *
+     * @param array<int,array<string,mixed>> $images
+     */
+    private static function preloadCopertina(array $images): string
+    {
+        $prima = $images[0] ?? null;
+        if ($prima === null) {
+            return '';
+        }
+
+        return preload_image(
+            (string) $prima['path'],
+            (string) ($prima['srcset'] ?? ''),
+            Assets::SIZES_GALLERIA
+        );
+    }
+
+    /**
+     * Stessa idea per gli elenchi: sopra la piega c'è la prima scheda della
+     * griglia, ed è la sua immagine a fare da LCP.
+     *
+     * @param array<int,array<string,mixed>> $items
+     */
+    public static function preloadPrimaScheda(array $items): string
+    {
+        $prima = $items[0] ?? null;
+        if ($prima === null) {
+            return '';
+        }
+
+        $src = (string) ($prima['cover_thumb'] ?: ($prima['cover'] ?? ''));
+
+        return preload_image($src, (string) ($prima['cover_srcset'] ?? ''), Assets::SIZES_CARD);
     }
 
     /** @param array<int,string> $allowed */

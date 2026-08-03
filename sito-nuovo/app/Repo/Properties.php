@@ -32,7 +32,8 @@ final class Properties
 
         $sql = "SELECT p.*,
                        (SELECT path  FROM property_images i WHERE i.property_id = p.id ORDER BY i.sort, i.id LIMIT 1) AS cover,
-                       (SELECT thumb FROM property_images i WHERE i.property_id = p.id ORDER BY i.sort, i.id LIMIT 1) AS cover_thumb
+                       (SELECT thumb  FROM property_images i WHERE i.property_id = p.id ORDER BY i.sort, i.id LIMIT 1) AS cover_thumb,
+                       (SELECT srcset FROM property_images i WHERE i.property_id = p.id ORDER BY i.sort, i.id LIMIT 1) AS cover_srcset
                 FROM properties p
                 WHERE {$where}
                 ORDER BY {$order}
@@ -133,6 +134,65 @@ final class Properties
             'SELECT * FROM property_images WHERE property_id = :id ORDER BY sort, id',
             ['id' => $propertyId]
         );
+    }
+
+    /**
+     * Testo alternativo delle foto. Non è un dettaglio: è quello che legge
+     * chi non vede l'immagine, ed è anche l'unico testo che Google associa
+     * alla foto. Si aggiorna solo ciò che appartiene a questo immobile.
+     *
+     * @param array<int|string,mixed> $alt descrizioni indicizzate per id immagine
+     */
+    public static function saveImageAlts(int $propertyId, array $alt): void
+    {
+        foreach (self::images($propertyId) as $img) {
+            $id = (int) $img['id'];
+            if (!array_key_exists($id, $alt)) {
+                continue;
+            }
+            $nuovo = mb_substr(trim((string) $alt[$id]), 0, 255);
+            if ($nuovo !== (string) $img['alt']) {
+                Db::update('property_images', $id, ['alt' => $nuovo]);
+            }
+        }
+    }
+
+    /** Sposta una foto di un posto in su (-1) o in giù (+1). */
+    public static function moveImage(int $propertyId, int $imageId, int $delta): void
+    {
+        $ids = array_map(static fn (array $i): int => (int) $i['id'], self::images($propertyId));
+        $posizione = array_search($imageId, $ids, true);
+        $destinazione = $posizione === false ? -1 : $posizione + $delta;
+
+        if ($posizione === false || $destinazione < 0 || $destinazione >= count($ids)) {
+            return;
+        }
+
+        [$ids[$posizione], $ids[$destinazione]] = [$ids[$destinazione], $ids[$posizione]];
+        self::writeImageOrder($ids);
+    }
+
+    /**
+     * Porta una foto in prima posizione. La prima è la copertina ovunque:
+     * nelle schede in griglia, nell'anteprima social e nello schema.
+     */
+    public static function setCoverImage(int $propertyId, int $imageId): void
+    {
+        $ids = array_map(static fn (array $i): int => (int) $i['id'], self::images($propertyId));
+        if (!in_array($imageId, $ids, true)) {
+            return;
+        }
+
+        array_unshift($ids, $imageId);
+        self::writeImageOrder(array_values(array_unique($ids)));
+    }
+
+    /** @param array<int,int> $ids nell'ordine voluto */
+    private static function writeImageOrder(array $ids): void
+    {
+        foreach ($ids as $posizione => $id) {
+            Db::update('property_images', $id, ['sort' => $posizione + 1]);
+        }
     }
 
     /** @param array<string,mixed> $data */

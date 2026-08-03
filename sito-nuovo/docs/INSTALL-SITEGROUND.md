@@ -67,10 +67,12 @@ esporre nulla, perché i file non stanno proprio lì.
 
 ## 4. Permessi
 
-Due sole cartelle devono essere scrivibili da PHP:
+Tre cartelle devono essere scrivibili da PHP:
 
 ```
 public/uploads/   → 755
+storage/cache/    → 755   (CSS minificato; se manca il sito funziona lo stesso,
+                           solo rifà la minificazione a ogni richiesta)
 db/               → 755   (serve solo con SQLite; con MySQL è inutilizzata)
 ```
 

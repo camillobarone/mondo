@@ -70,12 +70,30 @@ foreach ($termini as $id => [$nome, $slug, $tax]) {
     $tt->execute([$id, $id, $tax]);
 }
 
-// Un'immagine vera su disco, così la lavorazione delle foto è reale.
-$img = imagecreatetruecolor(2000, 1400);
-imagefilledrectangle($img, 0, 0, 2000, 1400, imagecolorallocate($img, 170, 150, 120));
-imagejpeg($img, $uploads . '/2026/07/villetta-poggio.jpg', 85);
-imagejpeg($img, $uploads . '/2026/07/villetta-poggio-2.jpg', 85);
-imagedestroy($img);
+// Immagini vere su disco, così la lavorazione delle foto è reale. Sono sette
+// perché la galleria della scheda ne mostra cinque e le altre finiscono
+// dietro il cartello «+N foto»: con due sole quel pezzo non si proverebbe.
+$stanze = [
+    'esterno' => [170, 150, 120],
+    'salone' => [196, 186, 170],
+    'cucina' => [150, 160, 152],
+    'camera' => [186, 172, 176],
+    'bagno' => [172, 182, 192],
+    'giardino' => [140, 158, 118],
+    'terrazza' => [198, 176, 140],
+];
+$allegati = [];
+$idAllegato = 90000;
+foreach ($stanze as $nome => [$r, $g, $b]) {
+    $file = 'villetta-poggio-' . $nome . '.jpg';
+    $img = imagecreatetruecolor(2000, 1400);
+    imagefilledrectangle($img, 0, 0, 2000, 1400, imagecolorallocate($img, $r, $g, $b));
+    // Una scritta grande: nella galleria si vede subito se l'ordine è quello giusto.
+    imagestring($img, 5, 60, 60, strtoupper($nome), imagecolorallocate($img, 30, 40, 50));
+    imagejpeg($img, $uploads . '/2026/07/' . $file, 85);
+    imagedestroy($img);
+    $allegati[++$idAllegato] = [$file, 'Villa a Porto Cesareo, ' . $nome];
+}
 
 $immobili = [
     [
@@ -101,7 +119,7 @@ $immobili = [
             'energy_class' => 'D',
             'property_id' => 'MIL-0042',
             '_thumbnail_id' => '90001',
-            'image_to_attach' => '90001,90002',
+            'image_to_attach' => '90001,90002,90003,90004,90005,90006,90007',
         ],
         'terms' => [1, 4, 6, 8, 9, 10, 11],
     ],
@@ -169,13 +187,13 @@ foreach ($immobili as $i) {
 }
 
 // Allegati, come li registra WordPress.
-foreach ([90001 => 'villetta-poggio.jpg', 90002 => 'villetta-poggio-2.jpg'] as $attId => $file) {
+foreach ($allegati as $attId => [$file, $alt]) {
     $post->execute([$attId, $file, $file, '', '', 'inherit', 'attachment', '2026-07-01 10:00:00', '2026-07-01 10:00:00']);
     $meta->execute([$attId, '_wp_attached_file', '2026/07/' . $file]);
-    $meta->execute([$attId, '_wp_attachment_image_alt', 'Villa a Porto Cesareo, vista del giardino']);
+    $meta->execute([$attId, '_wp_attachment_image_alt', $alt]);
 }
 
 echo "WordPress finto pronto:\n";
 echo "  database: {$dbFile}\n";
 echo "  uploads:  {$uploads}\n";
-echo "  immobili: " . count($immobili) . " (3 pubblicati + 1 bozza), 2 allegati\n";
+echo '  immobili: ' . count($immobili) . ' (3 pubblicati + 1 bozza), ' . count($allegati) . " allegati\n";
