@@ -253,6 +253,13 @@ evitarlo. Se dovesse succedere lo stesso, sostituiscilo con `--cpu-vae`: sposta
 quello stadio sul processore, più lento ma infallibile. Il sintomo nel log del
 motore è `invalid value encountered in cast`.
 
+**Il doppio clic apre il file nel Blocco note invece di avviarlo**
+L'estensione `.bat` risulta associata a un editor di testo. Il collegamento
+creato da `crea-collegamento.bat` passa da `cmd.exe` e non ne risente, quindi
+usa quello. Per rimettere a posto l'associazione: tasto destro sul file →
+*Apri con* → *Scegli un'altra app* → *Altre app* → *Cerca un'altra app in
+questo PC* → `C:\Windows\System32\cmd.exe`.
+
 **`avvia.bat` si chiude con `WinError 10013`**
 Windows riserva interi intervalli di porte a Hyper-V e WSL, e le rifiuta anche
 se nessuno le sta usando. La dashboard ne prova diverse e in ultima istanza ne

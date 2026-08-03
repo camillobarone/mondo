@@ -38,11 +38,19 @@ if (-not $desktop -or -not (Test-Path $desktop)) {
 
 $collegamento = Join-Path $desktop "$Nome.lnk"
 
+$completo = (Resolve-Path $Destinazione).Path
+
 try {
     $shell = New-Object -ComObject WScript.Shell
     $scorciatoia = $shell.CreateShortcut($collegamento)
-    $scorciatoia.TargetPath = (Resolve-Path $Destinazione).Path
-    $scorciatoia.WorkingDirectory = (Split-Path -Parent (Resolve-Path $Destinazione).Path)
+    # Il bersaglio e' cmd.exe, non il .bat direttamente: se l'estensione .bat
+    # risulta associata a un editor di testo — capita a chi una volta ha scelto
+    # "Apri con, Blocco note, usa sempre" — un collegamento al file lo
+    # aprirebbe invece di eseguirlo. Passando per cmd /c l'associazione non
+    # viene nemmeno consultata.
+    $scorciatoia.TargetPath = (Join-Path $env:SystemRoot "System32\cmd.exe")
+    $scorciatoia.Arguments = '/c "' + $completo + '"'
+    $scorciatoia.WorkingDirectory = (Split-Path -Parent $completo)
     $scorciatoia.Description = "Generazione immagini in locale su GPU Intel Arc"
     # Icona di sistema: una macchina fotografica, senza file esterni da spedire.
     $scorciatoia.IconLocation = (Join-Path $env:SystemRoot "System32\imageres.dll") + ",109"
