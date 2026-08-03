@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { all } from "./db";
-import { fromCsv } from "./format";
+import { fromCsv, euro } from "./format";
 import type { Property, Requirement } from "./types";
 
 /**
@@ -9,7 +9,8 @@ import type { Property, Requirement } from "./types";
  * Il punteggio conta quanti criteri della richiesta l'immobile soddisfa
  * davvero (i criteri non compilati non contano ne' a favore ne' contro).
  * Un immobile compare solo se non viola nessun criterio obbligatorio:
- * tipo di contratto, budget e metri quadri minimi.
+ * tipo di contratto, budget massimo e metri quadri minimi. Il budget minimo
+ * non esclude niente: se costa meno del previsto, tanto meglio.
  *
  * PRESTAZIONI — con 500 richieste aperte e 150 immobili disponibili si
  * valutano 75.000 combinazioni a ogni apertura di pagina. Tre accorgimenti
@@ -154,9 +155,9 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
   if (requirement.budgetMax && property.price > requirement.budgetMax * BUDGET_TOLERANCE) {
     return { ok: false, reason: "budget", gap: property.price - requirement.budgetMax };
   }
-  if (requirement.budgetMin && property.price > 0 && property.price < requirement.budgetMin * 0.75) {
-    return { ok: false, reason: "budget", gap: requirement.budgetMin - property.price };
-  }
+  // Il budget minimo NON esclude: costare meno del previsto non e' un
+  // difetto, e un affare sotto le attese vale sempre la telefonata. Pesa
+  // solo sul punteggio, cosi' resta in fondo all'elenco invece che fuori.
   if (requirement.sqmMin && property.sqm && property.sqm < requirement.sqmMin * 0.9) {
     return { ok: false, reason: "metratura", gap: requirement.sqmMin - property.sqm };
   }
@@ -171,6 +172,7 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
   };
 
   if (requirement.budgetMax) check(property.price > 0 && property.price <= requirement.budgetMax);
+  if (requirement.budgetMin) check(property.price >= requirement.budgetMin);
   if (requirement.kind) check(property.kind === requirement.kind);
   if (requirement.city) check(property.city === requirement.city);
   if (requirement.zones.length) {
@@ -207,6 +209,9 @@ function explain(scored: Scored): Match {
     } else if (property.price > 0) {
       warnings.push("Poco sopra il budget");
     }
+  }
+  if (requirement.budgetMin && property.price > 0 && property.price < requirement.budgetMin) {
+    warnings.push(`Sotto il minimo che cercava (${euro(requirement.budgetMin)})`);
   }
   if (requirement.kind) {
     if (property.kind === requirement.kind) reasons.push(`Tipologia: ${scored.property.kind}`);

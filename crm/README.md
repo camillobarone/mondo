@@ -207,8 +207,10 @@ scripts/
 ```
 
 Il motore degli incroci (`matching.ts`) esclude un immobile solo su tre criteri
-— tipo di contratto, budget e metratura minima — e per il resto assegna un
-punteggio. Così un immobile leggermente fuori parametro compare comunque, con
+— tipo di contratto, budget **massimo** e metratura minima — e per il resto
+assegna un punteggio. Il budget *minimo* non esclude mai: un immobile che costa
+meno del previsto resta in elenco, segnalato, perché è comunque una telefonata
+da fare. Così un immobile leggermente fuori parametro compare comunque, con
 l'avviso del perché: la telefonata la decidi tu, non il programma.
 
 Le zone si confrontano come le leggerebbe una persona: maiuscole, accenti e
