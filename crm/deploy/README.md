@@ -9,13 +9,22 @@ certificato da sé.
 
 ## 1 · Il server
 
-Serve una macchina Linux con **Ubuntu 24.04**. Basta la taglia più piccola:
-2 GB di RAM sono già abbondanti per un archivio di qualche migliaio di clienti.
+Serve una macchina Linux con **Ubuntu 24.04**, e due requisiti da non sbagliare:
+
+- **IPv4 pubblico.** I piani solo-IPv6 costano meno ma non sono raggiungibili
+  dalla maggior parte delle connessioni italiane: il gestionale non si
+  aprirebbe.
+- **Almeno 2 GB di RAM.** La compilazione del programma tocca i 900 MB: con
+  1 GB viene interrotta a metà. Sotto i 3 GB lo script aggiunge da sé 2 GB di
+  memoria di scambio, così il margine c'è comunque.
+
+40 GB di disco sono abbondanti: l'archivio pesa pochi megabyte, le foto qualche
+centinaio.
 
 | | Dove stanno i dati | Indicativo |
 |---|---|---|
-| **Aruba Cloud** | Italia (Arezzo, Bergamo) | ~4-6 €/mese + IVA |
-| **Hetzner** | Germania, Finlandia | ~4-5 €/mese + IVA |
+| **Aruba Cloud** | Italia (Arezzo, Bergamo) | ~4,50 €/mese + IVA |
+| **Hetzner** | Germania, Finlandia | ~4,50 €/mese + IVA |
 
 Entrambi sono nell'Unione Europea e forniscono l'accordo sul trattamento dei
 dati (art. 28 GDPR) che serve avere agli atti: sono loro i responsabili del

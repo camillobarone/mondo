@@ -31,24 +31,40 @@ CARTELLA="/opt/mondo-crm"
 UTENTE="mondo"
 
 echo
-echo "== 1/8  Aggiornamento del sistema =========================================="
+echo "== 1/9  Aggiornamento del sistema =========================================="
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq curl ca-certificates gnupg rsync nginx ufw cron >/dev/null
 
-echo "== 2/8  Node.js 22 ========================================================="
+echo "== 2/9  Node.js 22 ========================================================="
 if ! command -v node >/dev/null || [[ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]]; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null
   apt-get install -y -qq nodejs >/dev/null
 fi
 echo "   Node $(node -v)"
 
-echo "== 3/8  Utente dedicato ===================================================="
+echo "== 3/9  Memoria di scambio ================================================="
+# La compilazione arriva a sfiorare 1 GB. Su un server da 2 GB ci sta, ma senza
+# margine: un file di scambio evita che venga uccisa a meta' lasciando il
+# gestionale a terra. Su macchine piu' grandi non serve.
+RAM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+if [[ "$RAM_MB" -lt 3000 && ! -f /swapfile ]]; then
+  fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
+  chmod 600 /swapfile
+  mkswap /swapfile >/dev/null
+  swapon /swapfile
+  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  echo "   ${RAM_MB} MB di RAM: aggiunti 2 GB di scambio."
+else
+  echo "   ${RAM_MB} MB di RAM: sufficiente, nessuno scambio necessario."
+fi
+
+echo "== 4/9  Utente dedicato ===================================================="
 # Il programma non gira come amministratore: se qualcosa va storto, i danni
 # restano dentro la sua cartella.
 id -u "$UTENTE" >/dev/null 2>&1 || useradd --system --create-home --shell /usr/sbin/nologin "$UTENTE"
 
-echo "== 4/8  Programma =========================================================="
+echo "== 5/9  Programma =========================================================="
 mkdir -p "$CARTELLA"
 TEMP="$(mktemp -d)"
 curl -fsSL "$ARCHIVIO" | tar xz -C "$TEMP" --strip-components=1
@@ -62,7 +78,7 @@ chown -R "$UTENTE:$UTENTE" "$CARTELLA"
 echo "   Installazione delle dipendenze e compilazione (un paio di minuti)…"
 sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm install --no-audit --no-fund --silent && npm run build >/dev/null"
 
-echo "== 5/8  Avvio automatico ==================================================="
+echo "== 6/9  Avvio automatico ==================================================="
 cat > /etc/systemd/system/mondo-crm.service <<SERVICE
 [Unit]
 Description=Mondo Immobiliare - gestionale clienti
@@ -94,7 +110,7 @@ systemctl daemon-reload
 systemctl enable --now mondo-crm >/dev/null
 sleep 3
 
-echo "== 6/8  Indirizzo web ======================================================"
+echo "== 7/9  Indirizzo web ======================================================"
 # Non tutti i server hanno IPv6: se manca, quella riga impedirebbe a nginx
 # di partire, e il gestionale non risponderebbe affatto.
 ASCOLTA_IPV6=""
@@ -129,7 +145,7 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t >/dev/null
 systemctl reload nginx
 
-echo "== 7/8  Firewall e certificato HTTPS ======================================="
+echo "== 8/9  Firewall e certificato HTTPS ======================================="
 ufw allow OpenSSH >/dev/null
 ufw allow 'Nginx Full' >/dev/null
 ufw --force enable >/dev/null
@@ -145,7 +161,7 @@ else
   HTTPS=0
 fi
 
-echo "== 8/8  Copia di sicurezza notturna ========================================"
+echo "== 9/9  Copia di sicurezza notturna ========================================"
 cat > /etc/cron.d/mondo-crm <<CRON
 # Copia dell'archivio ogni notte alle 2. Le copie oltre i 60 giorni si
 # cancellano da sole.
