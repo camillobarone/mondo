@@ -444,6 +444,40 @@ def _esegui(engine: Engine, jobs: Jobs, job_id: str, payload: dict) -> None:
             pass
 
 
+def aggiorna_progetto() -> str | None:
+    """Scarica gli aggiornamenti all'avvio, cosi' non serve aprire un terminale.
+
+    Restituisce un resoconto da mostrare, oppure None quando non c'e' nulla da
+    dire. Un aggiornamento che non riesce — niente rete, modifiche locali, git
+    assente — non deve mai impedire di lavorare: si prosegue con la versione
+    che c'e' gia'.
+    """
+    repository = os.path.dirname(PROJECT_ROOT)
+    if not os.path.isdir(os.path.join(repository, ".git")):
+        return None
+
+    def git(*argomenti: str):
+        return subprocess.run(
+            ["git", "-C", repository, *argomenti],
+            capture_output=True, text=True, timeout=120,
+        )
+
+    try:
+        prima = git("rev-parse", "HEAD").stdout.strip()
+        esito = git("pull", "--ff-only")
+        dopo = git("rev-parse", "HEAD").stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+    if esito.returncode != 0:
+        return "Aggiornamento non riuscito: si prosegue con la versione installata."
+    if prima and dopo and prima != dopo:
+        # La pagina viene riletta da disco a ogni richiesta, quindi le modifiche
+        # all'interfaccia sono gia' attive; il resto entra al prossimo avvio.
+        return "Aggiornamento scaricato. Attivo del tutto al prossimo avvio."
+    return None
+
+
 def apri_server(handler, porte=PORTE) -> ThreadingHTTPServer:
     """Occupa la prima porta utilizzabile, altrimenti una qualsiasi libera.
 
@@ -460,6 +494,10 @@ def apri_server(handler, porte=PORTE) -> ThreadingHTTPServer:
 
 
 def main() -> int:
+    notizia = aggiorna_progetto()
+    if notizia:
+        print(f"  {notizia}\n", flush=True)
+
     engine = Engine()
     try:
         engine.start()

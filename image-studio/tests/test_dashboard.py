@@ -284,3 +284,76 @@ def test_la_prima_porta_libera_ha_la_precedenza():
     server = dashboard.apri_server(FakeComfy, porte=(0,))
     assert server.server_port > 0
     server.server_close()
+
+
+# --------------------------------------------------- aggiornamento automatico
+
+
+def _repo(percorso, con_git=True):
+    """Costruisce un repository di prova con dentro la cartella image-studio."""
+    import subprocess as sp
+    percorso.mkdir(parents=True, exist_ok=True)
+    if con_git:
+        sp.run(["git", "init", "-q", str(percorso)], check=True)
+        sp.run(["git", "-C", str(percorso), "config", "user.email", "t@t"], check=True)
+        sp.run(["git", "-C", str(percorso), "config", "user.name", "t"], check=True)
+        (percorso / "f.txt").write_text("uno")
+        sp.run(["git", "-C", str(percorso), "add", "-A"], check=True)
+        sp.run(["git", "-C", str(percorso), "commit", "-qm", "primo"], check=True)
+    studio = percorso / "image-studio"
+    studio.mkdir(exist_ok=True)
+    return studio
+
+
+def test_senza_git_non_disturba(tmp_path, monkeypatch):
+    """Chi ha scaricato lo zip invece di clonare deve poter lavorare lo stesso."""
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(_repo(tmp_path / "a", con_git=False)))
+    assert dashboard.aggiorna_progetto() is None
+
+
+def test_gia_aggiornato_resta_silenzioso(tmp_path, monkeypatch):
+    """Nessun remoto configurato: il pull fallisce, ma non e' una notizia utile
+    da urlare a ogni avvio. Basta che non blocchi."""
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(_repo(tmp_path / "b")))
+    esito = dashboard.aggiorna_progetto()
+    assert esito is None or "prosegue" in esito
+
+
+def test_annuncia_l_aggiornamento_scaricato(tmp_path, monkeypatch):
+    """Con un commit nuovo a monte, l'avvio deve dirlo."""
+    import subprocess as sp
+    origine = tmp_path / "origine"
+    _repo(origine)
+
+    clone = tmp_path / "clone"
+    sp.run(["git", "clone", "-q", str(origine), str(clone)], check=True)
+    sp.run(["git", "-C", str(clone), "config", "user.email", "t@t"], check=True)
+    sp.run(["git", "-C", str(clone), "config", "user.name", "t"], check=True)
+    (clone / "image-studio").mkdir(exist_ok=True)
+
+    # Un commit nuovo sull'origine, che il clone non ha ancora.
+    (origine / "f.txt").write_text("due")
+    sp.run(["git", "-C", str(origine), "commit", "-qam", "secondo"], check=True)
+
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(clone / "image-studio"))
+    esito = dashboard.aggiorna_progetto()
+    assert esito is not None and "Aggiornamento scaricato" in esito
+    assert (clone / "f.txt").read_text() == "due"
+
+
+def test_modifiche_locali_non_bloccano_l_avvio(tmp_path, monkeypatch):
+    """Se il pull non puo' andare avanti si prosegue: mai impedire di lavorare."""
+    import subprocess as sp
+    origine = tmp_path / "origine2"
+    _repo(origine)
+    clone = tmp_path / "clone2"
+    sp.run(["git", "clone", "-q", str(origine), str(clone)], check=True)
+    (clone / "image-studio").mkdir(exist_ok=True)
+
+    (origine / "f.txt").write_text("remoto")
+    sp.run(["git", "-C", str(origine), "commit", "-qam", "remoto"], check=True)
+    (clone / "f.txt").write_text("locale divergente")  # impedisce il fast-forward
+
+    monkeypatch.setattr(dashboard, "PROJECT_ROOT", str(clone / "image-studio"))
+    esito = dashboard.aggiorna_progetto()
+    assert esito is None or "prosegue" in esito

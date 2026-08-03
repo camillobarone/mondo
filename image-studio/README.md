@@ -67,8 +67,11 @@ Per installare ComfyUI altrove:
 
 ## Uso quotidiano: la dashboard
 
-Doppio clic su **`avvia.bat`**. Accende il motore, apre il browser e ti presenta
-la pagina di lavoro. Non serve il terminale.
+Doppio clic su **`avvia.bat`**. Scarica gli aggiornamenti, accende il motore,
+apre il browser e ti presenta la pagina di lavoro. Non serve il terminale.
+
+La prima volta conviene lanciare **`crea-collegamento.bat`**: mette l'icona sul
+Desktop, e da lì in poi si parte da quella.
 
 Quattro schede:
 
@@ -291,7 +294,8 @@ bisogno del server acceso.
 
 ```
 image-studio/
-├── avvia.bat                doppio clic: motore + dashboard nel browser
+├── avvia.bat                doppio clic: aggiorna, accende il motore, apre la pagina
+├── crea-collegamento.bat    mette l'icona sul Desktop, da eseguire una volta
 ├── avvia-comfyui.bat        solo il motore, per l'uso da terminale
 ├── genera.bat               wrapper della CLI
 ├── install/
