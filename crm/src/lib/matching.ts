@@ -41,8 +41,30 @@ interface Scored {
 /** Tolleranza sul budget massimo: un immobile poco sopra vale la telefonata. */
 const BUDGET_TOLERANCE = 1.08;
 
+/**
+ * Confronto "come lo farebbe una persona": ignora maiuscole, accenti e
+ * punteggiatura. Cosi' "S. Cataldo", "San Cataldo" e "san cataldo" non
+ * diventano tre zone diverse solo perche' scritte in tre modi.
+ */
 function normalise(value: string | null | undefined): string {
-  return (value ?? "").trim().toLowerCase();
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * Due zone si considerano la stessa anche quando una contiene l'altra:
+ * "Centro" e "Centro storico", "Cataldo" e "San Cataldo". Sotto i 4
+ * caratteri non si azzarda: troppo facile un falso accostamento.
+ */
+function sameZone(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.length < 4 || b.length < 4) return false;
+  return a.includes(b) || b.includes(a);
 }
 
 /* ------------------------------------------------------------ preparazione */
@@ -112,18 +134,32 @@ function prepareProperty(property: Property): ReadyProperty {
 
 /* -------------------------------------------------------------- confronto */
 
-/** Conta i criteri soddisfatti. Restituisce null se l'immobile va escluso. */
-function score(
-  requirement: ReadyRequirement,
-  property: ReadyProperty,
-): { score: number; total: number; misses: number } | null {
+/** Perche' un immobile non e' stato proposto a una richiesta. */
+export type Rejection = "contratto" | "budget" | "metratura";
+
+type Verdict =
+  | { ok: true; score: number; total: number; misses: number }
+  | { ok: false; reason: Rejection; gap: number };
+
+/**
+ * Conta i criteri soddisfatti, oppure spiega perche' l'immobile e' escluso.
+ * `gap` dice di quanto si sbaglia: euro oltre il budget, metri sotto il minimo.
+ * Serve a rispondere alla domanda "perche' non me l'ha segnalato?".
+ */
+function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdict {
   // --- criteri che escludono l'immobile ---------------------------------
-  if (property.contract !== requirement.contract) return null;
-  if (requirement.budgetMax && property.price > requirement.budgetMax * BUDGET_TOLERANCE) return null;
-  if (requirement.budgetMin && property.price > 0 && property.price < requirement.budgetMin * 0.75) {
-    return null;
+  if (property.contract !== requirement.contract) {
+    return { ok: false, reason: "contratto", gap: 0 };
   }
-  if (requirement.sqmMin && property.sqm && property.sqm < requirement.sqmMin * 0.9) return null;
+  if (requirement.budgetMax && property.price > requirement.budgetMax * BUDGET_TOLERANCE) {
+    return { ok: false, reason: "budget", gap: property.price - requirement.budgetMax };
+  }
+  if (requirement.budgetMin && property.price > 0 && property.price < requirement.budgetMin * 0.75) {
+    return { ok: false, reason: "budget", gap: requirement.budgetMin - property.price };
+  }
+  if (requirement.sqmMin && property.sqm && property.sqm < requirement.sqmMin * 0.9) {
+    return { ok: false, reason: "metratura", gap: requirement.sqmMin - property.sqm };
+  }
 
   let hits = 0;
   let total = 0;
@@ -137,14 +173,25 @@ function score(
   if (requirement.budgetMax) check(property.price > 0 && property.price <= requirement.budgetMax);
   if (requirement.kind) check(property.kind === requirement.kind);
   if (requirement.city) check(property.city === requirement.city);
-  if (requirement.zones.length) check(requirement.zones.includes(property.zone));
+  if (requirement.zones.length) {
+    check(requirement.zones.some((zone) => sameZone(zone, property.zone)));
+  }
   if (requirement.sqmMin) check(property.sqm >= requirement.sqmMin);
   if (requirement.roomsMin) check(property.rooms >= requirement.roomsMin);
   if (requirement.needsElevator) check(property.elevator);
   if (requirement.needsGarage) check(property.garage);
   if (requirement.needsOutdoor) check(property.outdoor);
 
-  return { score: hits, total, misses };
+  return { ok: true, score: hits, total, misses };
+}
+
+/** Conta i criteri soddisfatti. Restituisce null se l'immobile va escluso. */
+function score(
+  requirement: ReadyRequirement,
+  property: ReadyProperty,
+): { score: number; total: number; misses: number } | null {
+  const verdict = evaluate(requirement, property);
+  return verdict.ok ? verdict : null;
 }
 
 /** Scrive le motivazioni: chiamata solo sugli abbinamenti da mostrare. */
@@ -170,7 +217,7 @@ function explain(scored: Scored): Match {
     else warnings.push(`Comune diverso (${scored.property.city || "non indicato"})`);
   }
   if (requirement.zones.length) {
-    if (requirement.zones.includes(property.zone)) {
+    if (requirement.zones.some((zone) => sameZone(zone, property.zone))) {
       reasons.push(`Zona richiesta: ${scored.property.zone}`);
     } else {
       warnings.push(`Fuori dalle zone richieste (${scored.property.zone || "zona non indicata"})`);
@@ -309,6 +356,49 @@ export function countMatchesForProperty(property: Property): number {
   return count;
 }
 
+export interface NearMiss {
+  requirement: Requirement;
+  clientName: string;
+  reason: Rejection;
+  gap: number;
+}
+
+/**
+ * Richieste scartate per questo immobile, con il motivo. Risponde alla
+ * domanda "perche' non me l'ha proposto al cliente Tal dei Tali?" senza
+ * doverci mettere mano. Le differenze di contratto (vendita/affitto) si
+ * contano ma non si elencano: non c'e' niente da valutare.
+ */
+export function nearMissesForProperty(
+  property: Property,
+  limit = 6,
+): { total: number; byReason: Record<Rejection, number>; items: NearMiss[] } {
+  const ready = prepareProperty(property);
+  const byReason: Record<Rejection, number> = { contratto: 0, budget: 0, metratura: 0 };
+  const items: NearMiss[] = [];
+
+  for (const requirement of openRequirements()) {
+    const verdict = evaluate(requirement, ready);
+    if (verdict.ok) continue;
+
+    byReason[verdict.reason]++;
+    if (verdict.reason !== "contratto") {
+      items.push({
+        requirement: requirement.source,
+        clientName: requirement.clientName,
+        reason: verdict.reason,
+        gap: verdict.gap,
+      });
+    }
+  }
+
+  const total = byReason.contratto + byReason.budget + byReason.metratura;
+  // I piu' vicini per primi: sono quelli su cui vale la pena ragionare.
+  items.sort((a, b) => a.gap - b.gap);
+
+  return { total, byReason, items: items.slice(0, limit) };
+}
+
 export interface ClientMatches {
   clientId: number;
   clientName: string;
@@ -321,7 +411,7 @@ export interface ClientMatches {
  * puo' coprire piu' immobili.
  */
 export function matchesByClient({
-  minimumScore = 2,
+  minimumScore = 1,
   onlyPerfect = false,
   perClient = 8,
   page = 1,
@@ -341,7 +431,9 @@ export function matchesByClient({
     for (const property of properties) {
       const outcome = score(requirement, property);
       if (!outcome) continue;
-      if (outcome.score < minimumScore) continue;
+      // Una richiesta senza criteri (solo "compra") non ha niente da
+      // soddisfare: si mostra lo stesso, non si nasconde.
+      if (outcome.total > 0 && outcome.score < minimumScore) continue;
       if (onlyPerfect && outcome.misses > 0) continue;
 
       total++;

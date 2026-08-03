@@ -10,7 +10,7 @@ import {
   valuationsOfProperty,
   activeUserOptions,
 } from "@/lib/queries";
-import { matchesForProperty, countMatchesForProperty } from "@/lib/matching";
+import { matchesForProperty, countMatchesForProperty, nearMissesForProperty } from "@/lib/matching";
 import { deleteProperty } from "@/lib/actions";
 import { euro, shortDate, dateTime, relative, label } from "@/lib/format";
 import {
@@ -40,6 +40,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
   const matches = matchesForProperty(property);
   const matchCount = countMatchesForProperty(property);
+  const missed = nearMissesForProperty(property);
   const offers = offersOfProperty(propertyId);
   const activities = activitiesOfProperty(propertyId);
   const prices = priceHistory(propertyId);
@@ -258,6 +259,54 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
               </ul>
             )}
           </Card>
+
+          {/* ------------------------------------------------- perche' esclusi */}
+          {missed.total > 0 ? (
+            <Card title={`Richieste scartate (${missed.total})`} bodyClassName="">
+              <p className="px-4 pt-3 text-xs text-slate-500">
+                {[
+                  missed.byReason.budget
+                    ? `${missed.byReason.budget} fuori budget`
+                    : null,
+                  missed.byReason.metratura
+                    ? `${missed.byReason.metratura} sotto la metratura richiesta`
+                    : null,
+                  missed.byReason.contratto
+                    ? `${missed.byReason.contratto} cercano l'altro tipo di contratto`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+                .
+              </p>
+              {missed.items.length ? (
+                <ul className="divide-y divide-slate-100">
+                  {missed.items.map((item) => (
+                    <li
+                      key={item.requirement.id}
+                      className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-2"
+                    >
+                      <Link
+                        href={`/clienti/${item.requirement.client_id}`}
+                        className="text-sm text-slate-700 hover:text-brand-700 hover:underline"
+                      >
+                        {item.clientName}
+                      </Link>
+                      <span className="text-xs text-slate-500">
+                        {item.reason === "budget"
+                          ? `${euro(item.gap)} oltre il suo budget`
+                          : `${item.gap} mq sotto il suo minimo`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="px-4 pb-3 pt-1 text-xs text-slate-400">
+                Se qualcuno di questi ti sembra comunque da chiamare, allarga il suo budget o
+                la metratura minima nella sua richiesta.
+              </p>
+            </Card>
+          ) : null}
 
           {/* --------------------------------------------------------- proposte */}
           <Card title={`Proposte ricevute (${offers.length})`} bodyClassName="">

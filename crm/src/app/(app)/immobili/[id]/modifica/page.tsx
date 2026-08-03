@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { all } from "@/lib/db";
-import { getProperty, activeUserOptions } from "@/lib/queries";
+import { getProperty, activeUserOptions , knownZones } from "@/lib/queries";
 import { PageHeader } from "@/components/ui";
 import { PropertyForm } from "../../property-form";
 
@@ -27,6 +27,7 @@ export default async function EditPropertyPage({
     <>
       <PageHeader title={`Modifica ${property.title}`} />
       <PropertyForm
+        zoneOptions={knownZones()}
         property={property}
         userOptions={activeUserOptions()}
         clientOptions={clients.map((client) => ({

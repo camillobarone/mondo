@@ -164,6 +164,50 @@ export function TextArea({
   );
 }
 
+/**
+ * Campo libero con suggerimenti: si sceglie dall'elenco o si scrive quello
+ * che non c'e'. Serve per le zone, dove ogni comune ha i suoi nomi e una
+ * tendina chiusa lascerebbe fuori meta' del Salento.
+ */
+export function ComboField({
+  label,
+  name,
+  options,
+  defaultValue,
+  placeholder,
+  hint,
+  className = "",
+}: {
+  label: string;
+  name: string;
+  options: readonly string[];
+  defaultValue?: string | null;
+  placeholder?: string;
+  hint?: string;
+  className?: string;
+}) {
+  const listId = `${name}-suggerimenti`;
+
+  return (
+    <Field label={label} name={name} hint={hint} className={className}>
+      <input
+        id={name}
+        name={name}
+        list={listId}
+        placeholder={placeholder}
+        defaultValue={defaultValue ?? ""}
+        className="field"
+        autoComplete="off"
+      />
+      <datalist id={listId}>
+        {options.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+    </Field>
+  );
+}
+
 export type Option = { value: string; label: string };
 
 export function SelectField({

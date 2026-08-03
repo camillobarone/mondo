@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listClients, activeUserOptions, clientTags, type ClientFilters } from "@/lib/queries";
-import { fullName, shortDate, daysSince, phoneHref } from "@/lib/format";
+import { fullName, shortDate, daysSince, phoneHref, euro, fromCsv } from "@/lib/format";
 import { PageHeader, Card, EmptyState, StatusChip, Chip, Pagination } from "@/components/ui";
 import { CLIENT_ROLES, CLIENT_SOURCES, CLIENT_STATUSES } from "@/lib/types";
 
@@ -180,6 +180,7 @@ export default async function ClientsPage({
                   <th>Cliente</th>
                   <th>Recapiti</th>
                   <th>Tipo</th>
+                  <th>Cosa cerca</th>
                   <th>Stato</th>
                   <th>Seguito da</th>
                   <th>Ultimo contatto</th>
@@ -189,6 +190,12 @@ export default async function ClientsPage({
                 {rows.map((client) => {
                   const silent = daysSince(client.last_contact_at);
                   const mobile = phoneHref(client.mobile ?? client.phone);
+                  // Chi compra o affitta senza una richiesta registrata resta
+                  // fuori dagli incroci: va detto qui, non scoperto dopo.
+                  const buyer = fromCsv(client.roles).some(
+                    (role) => role === "acquirente" || role === "conduttore",
+                  );
+                  const missingRequirement = buyer && client.open_requirements === 0;
                   return (
                     <tr key={client.id}>
                       <td>
@@ -237,6 +244,34 @@ export default async function ClientsPage({
                                 ))
                             : <span className="text-xs text-slate-400">—</span>}
                         </div>
+                      </td>
+                      <td className="text-xs">
+                        {client.want_budget_max || client.want_budget_min ? (
+                          <>
+                            <div className="font-medium text-slate-800">
+                              {client.want_budget_min && client.want_budget_max
+                                ? `${euro(client.want_budget_min)} – ${euro(client.want_budget_max)}`
+                                : client.want_budget_max
+                                  ? `fino a ${euro(client.want_budget_max)}`
+                                  : `da ${euro(client.want_budget_min)}`}
+                            </div>
+                            {client.want_city || client.want_zones ? (
+                              <div className="text-slate-500">
+                                {[client.want_city, fromCsv(client.want_zones).join(", ")]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </div>
+                            ) : null}
+                          </>
+                        ) : missingRequirement ? (
+                          <Link href={`/clienti/${client.id}?nuova_richiesta=1`}>
+                            <Chip tone="red">manca la richiesta</Chip>
+                          </Link>
+                        ) : client.open_requirements > 0 ? (
+                          <span className="text-slate-500">budget non indicato</span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </td>
                       <td>
                         <StatusChip value={client.status} kind="client" />

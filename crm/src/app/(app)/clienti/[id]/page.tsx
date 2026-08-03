@@ -8,6 +8,7 @@ import {
   propertiesOfClient,
   offersOfClient,
   activeUserOptions,
+  knownZones,
 } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
 import { deleteClient } from "@/lib/actions";
@@ -67,6 +68,13 @@ export default async function ClientPage({
   const silentFor = daysSince(client.last_contact_at);
   const mobile = phoneHref(client.mobile ?? client.phone);
 
+  // Senza una richiesta aperta il cliente non entra negli incroci: e' la
+  // causa piu' comune di "ho inserito l'immobile e non me l'ha segnalato".
+  const buyer = fromCsv(client.roles).some(
+    (role) => role === "acquirente" || role === "conduttore",
+  );
+  const missingRequirement = buyer && requirements.every((r) => r.status !== "aperta");
+
   return (
     <>
       <PageHeader
@@ -109,6 +117,19 @@ export default async function ClientPage({
           </>
         }
       />
+
+      {missingRequirement ? (
+        <div className="mb-4">
+          <Banner tone="red">
+            Questo cliente cerca casa ma non ha una <strong>richiesta aperta</strong>: finché
+            non la registri, il programma non può proporgli nessun immobile.{" "}
+            <Link href={`/clienti/${client.id}?nuova_richiesta=1`} className="font-medium underline">
+              Registra cosa cerca
+            </Link>
+            .
+          </Banner>
+        </div>
+      ) : null}
 
       {!client.privacy_consent ? (
         <div className="mb-4">
@@ -232,6 +253,7 @@ export default async function ClientPage({
               <RequirementForm
                 clientId={client.id}
                 requirement={editing}
+                zoneOptions={knownZones()}
                 cancelHref={`/clienti/${client.id}`}
               />
             ) : requirements.length === 0 ? (

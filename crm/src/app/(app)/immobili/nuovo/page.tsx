@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { all } from "@/lib/db";
-import { activeUserOptions } from "@/lib/queries";
+import { activeUserOptions , knownZones } from "@/lib/queries";
 import { PageHeader } from "@/components/ui";
 import { PropertyForm } from "../property-form";
 
@@ -23,6 +23,7 @@ export default async function NewPropertyPage() {
         subtitle="Collega il proprietario a una scheda cliente: servirà per l'incarico e le provvigioni."
       />
       <PropertyForm
+        zoneOptions={knownZones()}
         userOptions={activeUserOptions()}
         clientOptions={clients.map((client) => ({
           value: String(client.id),

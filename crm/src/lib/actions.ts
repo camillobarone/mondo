@@ -254,6 +254,9 @@ export async function saveProperty(form: FormData) {
     audit(user.id, "modifica", "immobile", id);
     revalidatePath(`/immobili/${id}`);
     revalidatePath("/immobili");
+    // Un immobile che cambia prezzo o zona cambia anche gli incroci.
+    revalidatePath("/incroci");
+    revalidatePath("/richieste");
     redirect(`/immobili/${id}`);
   }
 
@@ -281,6 +284,8 @@ export async function saveProperty(form: FormData) {
   }
   audit(user.id, "crea", "immobile", newId);
   revalidatePath("/immobili");
+  revalidatePath("/incroci");
+  revalidatePath("/richieste");
   redirect(`/immobili/${newId}`);
 }
 
@@ -328,11 +333,16 @@ export async function saveRequirement(form: FormData) {
   const id = Number(form.get("id") ?? 0);
   const clientId = Number(form.get("client_id"));
 
+  // Le zone spuntate piu' quelle scritte a mano, senza doppioni.
+  const zones = [...new Set([...form.getAll("zones").map(String), ...text(form, "zones_extra").split(",")]
+    .map((zone) => zone.trim())
+    .filter(Boolean))].join(",");
+
   const values = [
     text(form, "contract") || "vendita",
     nullable(form, "kind"),
     nullable(form, "city"),
-    csvField(form, "zones"),
+    zones,
     integer(form, "budget_min"),
     integer(form, "budget_max"),
     integer(form, "sqm_min"),

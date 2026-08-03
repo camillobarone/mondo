@@ -16,7 +16,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | **Clienti** | Anagrafica completa, tipo di cliente (venditore, acquirente, locatore…), provenienza del contatto, etichette, storico di ogni telefonata ed email |
 | **Richieste** | Cosa cerca ogni acquirente: zona, budget, metratura, requisiti irrinunciabili |
 | **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite e feedback |
-| **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare |
+| **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
 | **Agenda** | Cose da fare, appuntamenti, promemoria per i clienti trascurati e gli incarichi in scadenza |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
 | **Report** | Da dove arrivano i clienti che comprano davvero, tempi medi di vendita, rendimento per collaboratore |
@@ -121,6 +121,21 @@ Provato con un archivio delle dimensioni reali dell'agenzia — 3.000 clienti,
 L'intero archivio occupa **2,2 MB**: sta su una chiavetta USB migliaia di volte.
 C'è ampio margine — il programma reggerebbe dieci volte tanto senza affanno.
 
+## Perché un cliente non compare negli incroci
+
+Il programma incrocia le **richieste**, non i clienti. Segnare un cliente come
+*acquirente* non basta: finché non registri **cosa cerca** (zona, budget,
+metratura), per il motore quel cliente non sta cercando niente.
+
+Per questo, un acquirente senza richiesta aperta viene segnalato in rosso —
+sia nell'elenco clienti (`manca la richiesta`) sia in cima alla sua scheda.
+
+Se invece la richiesta c'è ma l'immobile non compare lo stesso, apri la scheda
+dell'immobile: sotto agli abbinamenti c'è **Richieste scartate**, che elenca
+nome per nome chi è stato escluso e di quanto.
+
+---
+
 ## Chi vede cosa
 
 Due ruoli:
@@ -195,3 +210,8 @@ Il motore degli incroci (`matching.ts`) esclude un immobile solo su tre criteri
 — tipo di contratto, budget e metratura minima — e per il resto assegna un
 punteggio. Così un immobile leggermente fuori parametro compare comunque, con
 l'avviso del perché: la telefonata la decidi tu, non il programma.
+
+Le zone si confrontano come le leggerebbe una persona: maiuscole, accenti e
+punteggiatura non contano, e "Centro" trova "Centro storico". Chi viene escluso
+finisce nel riquadro **Richieste scartate** della scheda immobile, con scritto
+di quanto: `Mario Rossi — 12.000 € oltre il suo budget`.

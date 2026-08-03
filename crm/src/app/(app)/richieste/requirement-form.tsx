@@ -8,7 +8,6 @@ import {
   PROPERTY_KINDS,
   REQUIREMENT_STATUSES,
   URGENCIES,
-  ZONES,
 } from "@/lib/types";
 import type { Requirement } from "@/lib/types";
 
@@ -17,10 +16,13 @@ export function RequirementForm({
   clientId,
   requirement,
   cancelHref,
+  zoneOptions,
 }: {
   clientId: number;
   requirement?: Requirement;
   cancelHref: string;
+  /** Zone gia' note. Se ne manca una si scrive nel campo libero. */
+  zoneOptions: readonly string[];
 }) {
   return (
     <form action={saveRequirement} className="space-y-4">
@@ -55,13 +57,21 @@ export function RequirementForm({
         />
       </div>
 
-      <CheckboxGroup
-        label="Zone di interesse"
-        name="zones"
-        options={ZONES}
-        selected={fromCsv(requirement?.zones)}
-        columns={4}
-      />
+      <div className="space-y-2">
+        <CheckboxGroup
+          label="Zone di interesse"
+          name="zones"
+          options={zoneOptions}
+          selected={fromCsv(requirement?.zones)}
+          columns={4}
+        />
+        <TextField
+          label="Altre zone"
+          name="zones_extra"
+          placeholder="Casalabate, contrada Santa Barbara"
+          hint="Quelle che non trovi sopra: separale con una virgola. Da qui in poi resteranno tra i suggerimenti."
+        />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <TextField

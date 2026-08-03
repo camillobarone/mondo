@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { saveProperty } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
-import { Card, TextField, TextArea, SelectField, CheckboxRow } from "@/components/ui";
+import { Card, TextField, TextArea, SelectField, CheckboxRow, ComboField } from "@/components/ui";
 import {
   ENERGY_CLASSES,
   PROPERTY_CONDITIONS,
   PROPERTY_KINDS,
   PROPERTY_STATUSES,
-  ZONES,
 } from "@/lib/types";
 import type { Property } from "@/lib/types";
 
@@ -16,11 +15,14 @@ export function PropertyForm({
   userOptions,
   clientOptions,
   defaultAgentId,
+  zoneOptions,
 }: {
   property?: Property;
   userOptions: { value: string; label: string }[];
   clientOptions: { value: string; label: string }[];
   defaultAgentId: number;
+  /** Zone gia' in archivio: suggerimenti, non un elenco chiuso. */
+  zoneOptions: string[];
 }) {
   return (
     <form action={saveProperty} className="space-y-5">
@@ -74,12 +76,13 @@ export function PropertyForm({
             className="sm:col-span-2"
           />
           <TextField label="Comune" name="city" defaultValue={property?.city} placeholder="Lecce" />
-          <SelectField
-            label="Zona"
+          <ComboField
+            label="Zona o localita'"
             name="zone"
-            options={ZONES}
+            options={zoneOptions}
             defaultValue={property?.zone}
-            hint="Serve agli incroci con le richieste"
+            placeholder="Centro storico, Torre Lapillo, contrada…"
+            hint="Scegli dai suggerimenti o scrivine una nuova: serve agli incroci"
           />
         </div>
       </Card>

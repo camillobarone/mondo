@@ -1,5 +1,7 @@
 import "server-only";
 import { all, one, count } from "./db";
+import { fromCsv } from "./format";
+import { ZONES } from "./types";
 import type {
   Activity,
   Client,
@@ -26,7 +28,15 @@ export interface ClientFilters {
 
 export const PAGE_SIZE = 40;
 
-export type ClientRow = Client & { owner_name: string | null; open_requirements: number };
+export type ClientRow = Client & {
+  owner_name: string | null;
+  open_requirements: number;
+  /** Riepilogo di cosa cerca, per mostrarlo direttamente in elenco. */
+  want_budget_min: number | null;
+  want_budget_max: number | null;
+  want_city: string | null;
+  want_zones: string | null;
+};
 
 function clientWhere(filters: ClientFilters): { sql: string; params: unknown[] } {
   const clauses = ["c.deleted_at IS NULL"];
@@ -91,7 +101,17 @@ export function listClients(filters: ClientFilters): {
     `SELECT c.*,
             u.name AS owner_name,
             (SELECT COUNT(*) FROM requirements r
-              WHERE r.client_id = c.id AND r.status = 'aperta') AS open_requirements
+              WHERE r.client_id = c.id AND r.status = 'aperta') AS open_requirements,
+            (SELECT MIN(r.budget_min) FROM requirements r
+              WHERE r.client_id = c.id AND r.status = 'aperta') AS want_budget_min,
+            (SELECT MAX(r.budget_max) FROM requirements r
+              WHERE r.client_id = c.id AND r.status = 'aperta') AS want_budget_max,
+            (SELECT r.city FROM requirements r
+              WHERE r.client_id = c.id AND r.status = 'aperta'
+              ORDER BY r.updated_at DESC LIMIT 1) AS want_city,
+            (SELECT r.zones FROM requirements r
+              WHERE r.client_id = c.id AND r.status = 'aperta'
+              ORDER BY r.updated_at DESC LIMIT 1) AS want_zones
        FROM clients c
        LEFT JOIN users u ON u.id = c.owner_id
       WHERE ${sql}
@@ -107,7 +127,9 @@ export function listClients(filters: ClientFilters): {
 export function listAllClients(filters: ClientFilters): ClientRow[] {
   const { sql, params } = clientWhere(filters);
   return all<ClientRow>(
-    `SELECT c.*, u.name AS owner_name, 0 AS open_requirements
+    `SELECT c.*, u.name AS owner_name, 0 AS open_requirements,
+            NULL AS want_budget_min, NULL AS want_budget_max,
+            NULL AS want_city, NULL AS want_zones
        FROM clients c
        LEFT JOIN users u ON u.id = c.owner_id
       WHERE ${sql}
@@ -327,6 +349,31 @@ export function distinctCities(): string[] {
       WHERE deleted_at IS NULL AND city IS NOT NULL AND city != ''
       ORDER BY city COLLATE NOCASE`,
   ).map((row) => row.city);
+}
+
+/**
+ * Zone gia' usate in archivio, sugli immobili e sulle richieste, unite a
+ * quelle di partenza. Sono suggerimenti, non una gabbia: chi inserisce puo'
+ * sempre scrivere una localita' nuova, e da quel momento la ritrova qui.
+ */
+export function knownZones(): string[] {
+  const fromProperties = all<{ zone: string }>(
+    `SELECT DISTINCT zone FROM properties
+      WHERE deleted_at IS NULL AND zone IS NOT NULL AND zone != ''`,
+  ).map((row) => row.zone);
+
+  const fromRequirements = all<{ zones: string }>(
+    `SELECT DISTINCT zones FROM requirements WHERE zones IS NOT NULL AND zones != ''`,
+  ).flatMap((row) => fromCsv(row.zones));
+
+  const seen = new Map<string, string>();
+  for (const raw of [...ZONES, ...fromProperties, ...fromRequirements]) {
+    const zone = raw.trim();
+    const key = zone.toLowerCase();
+    if (zone && !seen.has(key)) seen.set(key, zone);
+  }
+
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, "it"));
 }
 
 /* ============================================================ richieste */
@@ -560,7 +607,9 @@ export function dashboard(userId: number) {
   );
 
   const silentClients = all<ClientRow>(
-    `SELECT c.*, u.name AS owner_name, 0 AS open_requirements
+    `SELECT c.*, u.name AS owner_name, 0 AS open_requirements,
+            NULL AS want_budget_min, NULL AS want_budget_max,
+            NULL AS want_city, NULL AS want_zones
        FROM clients c
        LEFT JOIN users u ON u.id = c.owner_id
       WHERE c.deleted_at IS NULL
