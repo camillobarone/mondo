@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db, run, one, audit } from "./db";
 import { requireUser, requireOwner, hashPassword, login as doLogin, logout as doLogout } from "./auth";
 import { parseCsv, decodeText } from "./csv";
+import { readXlsx, looksLikeXlsx } from "./xlsx";
 import { splitName, splitPhones, parseRequirements } from "./import-map";
 import type { Property } from "./types";
 
@@ -615,8 +616,26 @@ export interface ImportResult {
   errors: string[];
 }
 
+/** Le celle di un foglio Excel diventano righe con intestazione, come dal CSV. */
+function rowsFromSheet(sheet: string[][]): Record<string, string>[] {
+  const headerIndex = sheet.findIndex((row) => row.some((cell) => cell.trim() !== ""));
+  if (headerIndex < 0) return [];
+
+  const headers = sheet[headerIndex]!.map((cell) => cell.trim());
+  return sheet
+    .slice(headerIndex + 1)
+    .filter((row) => row.some((cell) => cell.trim() !== ""))
+    .map((row) => {
+      const record: Record<string, string> = {};
+      headers.forEach((header, index) => {
+        if (header) record[header] = (row[index] ?? "").trim();
+      });
+      return record;
+    });
+}
+
 /**
- * Importa i clienti da un file CSV.
+ * Importa i clienti da un file Excel o CSV.
  * I nomi delle colonne sono riconosciuti in italiano, con varianti comuni.
  */
 export async function importClients(
@@ -631,23 +650,24 @@ export async function importClients(
 
   const bytes = await file.arrayBuffer();
 
-  // Un .xlsx e' un archivio compresso: comincia per "PK". Riconoscerlo qui
-  // evita la schermata piu' frustrante di tutte, quella che non importa
-  // niente e non dice perche'.
-  const firma = new Uint8Array(bytes.slice(0, 2));
-  if (firma[0] === 0x50 && firma[1] === 0x4b) {
+  // Excel e CSV entrano dalla stessa porta: il formato si riconosce dal
+  // contenuto, non dal nome, cosi' non c'e' un file "sbagliato" da scegliere.
+  let rows: Record<string, string>[];
+  try {
+    rows = looksLikeXlsx(bytes) ? rowsFromSheet(readXlsx(bytes)) : parseCsv(decodeText(bytes)).rows;
+  } catch (error) {
     return {
       imported: 0,
       skipped: 0,
       requirements: 0,
       errors: [
-        "Questo è un file Excel (.xlsx), non un CSV. Aprilo con Excel e salvalo " +
-          "con File → Salva con nome, scegliendo CSV come tipo di file.",
+        `Non sono riuscito a leggere il file: ${
+          error instanceof Error ? error.message : "formato non riconosciuto"
+        }`,
       ],
     };
   }
 
-  const { rows } = parseCsv(decodeText(bytes));
   if (!rows.length) {
     return { imported: 0, skipped: 0, requirements: 0, errors: ["Il file non contiene righe."] };
   }

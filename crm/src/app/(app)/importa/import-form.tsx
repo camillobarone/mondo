@@ -13,18 +13,18 @@ export function ImportForm() {
       <form action={action} className="space-y-4">
         <div>
           <label className="field-label" htmlFor="file">
-            File CSV
+            File Excel o CSV
           </label>
           <input
             id="file"
             name="file"
             type="file"
-            accept=".csv,text/csv"
+            accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             required
             className="field file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:text-slate-700"
           />
           <p className="mt-1 text-xs text-slate-400">
-            In Excel: File → Salva con nome → &quot;CSV (delimitato dal separatore di elenco)&quot;.
+            Il file esportato dal tuo gestionale va bene com&apos;è: non serve convertirlo.
           </p>
         </div>
 

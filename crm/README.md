@@ -65,10 +65,11 @@ npm run dev          # ricarica da solo a ogni modifica, su http://localhost:300
 
 ## Portare dentro i clienti che hai già
 
-1. Esporta l'archivio attuale in formato **CSV** (in Excel: File → Salva con nome → *CSV*).
-   Va bene qualunque variante di CSV: il separatore (virgola, punto e virgola,
-   tabulazione) e la codifica (UTF-8 o quella di Excel per Windows) vengono
-   riconosciuti da soli, accenti compresi.
+1. Esporta l'archivio attuale dal gestionale che usi oggi. **Il file va bene
+   com'è**: Excel (`.xlsx`) o CSV, indifferente. Il formato viene riconosciuto
+   dal contenuto, non dal nome, e per il CSV anche il separatore (virgola,
+   punto e virgola, tabulazione) e la codifica, accenti compresi.
+   Non serve convertire niente: è il passaggio in cui si perdono i dati.
 2. Nel programma, apri **Importa**.
 3. **Prova prima con un file di 10 righe.** Controlla che i dati finiscano nelle
    colonne giuste, poi carica tutto.
@@ -213,6 +214,8 @@ src/
     actions.ts    tutte le scritture (Server Actions)
     matching.ts   il motore che incrocia richieste e immobili
     csv.ts        lettura e scrittura dei file CSV
+    xlsx.ts       lettura dei file Excel (senza dipendenze: lo ZIP lo apre zlib)
+    import-map.ts i tracciati degli altri gestionali riportati ai nostri campi
     format.ts     date, euro, etichette
     types.ts      tipi e vocabolari dei menu a tendina
   components/     pezzi di interfaccia riusabili
