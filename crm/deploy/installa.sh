@@ -194,15 +194,13 @@ chmod 644 /etc/cron.d/mondo-crm
 
 echo
 echo "==========================================================================="
-if [[ ! -f "$CARTELLA/data/mondo.db" ]]; then
-  echo " Creo il primo utente:"
-  echo
-  sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && node scripts/seed.mjs --email '$EMAIL'" 2>/dev/null
-  echo
-  echo " ANNOTA SUBITO email e password qui sopra: non verranno piu' mostrate."
-  chown -R "$UTENTE:$UTENTE" "$CARTELLA/data"
-  systemctl restart mondo-crm
-fi
+# Il primo utente si crea sempre: `seed` non tocca niente se esiste gia'.
+# Non si puo' usare l'esistenza del file come indizio — il programma, appena
+# avviato al passo 6, se lo crea da solo, e il controllo salterebbe la
+# creazione dell'utente lasciando un gestionale in cui non si entra.
+sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && node scripts/seed.mjs --email '$EMAIL'" 2>/dev/null
+chown -R "$UTENTE:$UTENTE" "$CARTELLA/data"
+systemctl restart mondo-crm
 
 echo
 if [[ "$HTTPS" == "1" ]]; then
