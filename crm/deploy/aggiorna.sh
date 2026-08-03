@@ -30,7 +30,13 @@ rm -rf "$TEMP"
 chown -R "$UTENTE:$UTENTE" "$CARTELLA"
 
 echo "== 3/4  Compilo ============================================================"
-sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm install --no-audit --no-fund --silent && npm run build >/dev/null"
+REGISTRO=/tmp/mondo-aggiornamento.log
+if ! sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm install --no-audit --no-fund && npm run build" > "$REGISTRO" 2>&1; then
+  echo "   NON RIUSCITA. Ultime righe:"
+  tail -25 "$REGISTRO" | sed 's/^/   /'
+  echo "   Il gestionale sta ancora girando con la versione precedente."
+  exit 1
+fi
 
 echo "== 4/4  Riavvio ============================================================"
 systemctl restart mondo-crm

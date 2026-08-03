@@ -34,7 +34,11 @@ echo
 echo "== 1/9  Aggiornamento del sistema =========================================="
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq curl ca-certificates gnupg rsync nginx ufw cron >/dev/null
+# build-essential e python3 servono a compilare i componenti nativi quando per
+# la piattaforma non esiste un binario gia' pronto: senza, l'installazione si
+# ferma con "not found: make".
+apt-get install -y -qq curl ca-certificates gnupg rsync nginx ufw cron \
+  build-essential python3 >/dev/null
 
 echo "== 2/9  Node.js 22 ========================================================="
 if ! command -v node >/dev/null || [[ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]]; then
@@ -76,7 +80,26 @@ mkdir -p "$CARTELLA/data" "$CARTELLA/backup"
 chown -R "$UTENTE:$UTENTE" "$CARTELLA"
 
 echo "   Installazione delle dipendenze e compilazione (un paio di minuti)…"
-sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm install --no-audit --no-fund --silent && npm run build >/dev/null"
+# L'output va in un file, ma se qualcosa fallisce viene mostrato: un errore
+# silenzioso qui lascia l'installazione a meta' senza dire perche'.
+REGISTRO=/tmp/mondo-installazione.log
+if ! sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm install --no-audit --no-fund" > "$REGISTRO" 2>&1; then
+  echo
+  echo "   NON RIUSCITA. Ultime righe dell'errore:"
+  echo "   ------------------------------------------------------------------"
+  tail -25 "$REGISTRO" | sed 's/^/   /'
+  echo "   ------------------------------------------------------------------"
+  echo "   Registro completo: $REGISTRO"
+  exit 1
+fi
+if ! sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && npm run build" >> "$REGISTRO" 2>&1; then
+  echo
+  echo "   COMPILAZIONE NON RIUSCITA. Ultime righe:"
+  echo "   ------------------------------------------------------------------"
+  tail -25 "$REGISTRO" | sed 's/^/   /'
+  echo "   ------------------------------------------------------------------"
+  exit 1
+fi
 
 echo "== 6/9  Avvio automatico ==================================================="
 cat > /etc/systemd/system/mondo-crm.service <<SERVICE
