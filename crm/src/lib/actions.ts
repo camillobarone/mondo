@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, run, one, audit } from "./db";
 import { requireUser, requireOwner, hashPassword, login as doLogin, logout as doLogout } from "./auth";
-import { parseCsv } from "./csv";
+import { parseCsv, decodeText } from "./csv";
 import { splitName, splitPhones, parseRequirements } from "./import-map";
 import type { Property } from "./types";
 
@@ -629,7 +629,7 @@ export async function importClients(
     return { imported: 0, skipped: 0, requirements: 0, errors: ["Nessun file selezionato."] };
   }
 
-  const { rows } = parseCsv(await file.text());
+  const { rows } = parseCsv(decodeText(await file.arrayBuffer()));
   if (!rows.length) {
     return { imported: 0, skipped: 0, requirements: 0, errors: ["Il file non contiene righe."] };
   }

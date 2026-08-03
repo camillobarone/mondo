@@ -66,6 +66,9 @@ npm run dev          # ricarica da solo a ogni modifica, su http://localhost:300
 ## Portare dentro i clienti che hai già
 
 1. Esporta l'archivio attuale in formato **CSV** (in Excel: File → Salva con nome → *CSV*).
+   Va bene qualunque variante di CSV: il separatore (virgola, punto e virgola,
+   tabulazione) e la codifica (UTF-8 o quella di Excel per Windows) vengono
+   riconosciuti da soli, accenti compresi.
 2. Nel programma, apri **Importa**.
 3. **Prova prima con un file di 10 righe.** Controlla che i dati finiscano nelle
    colonne giuste, poi carica tutto.

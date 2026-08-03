@@ -7,6 +7,20 @@
 
 export type CsvRow = Record<string, string>;
 
+/**
+ * Excel per Windows, con "Salva come CSV", scrive in Windows-1252: le lettere
+ * accentate diventano illeggibili se lette come UTF-8. Qui si prova prima
+ * l'UTF-8 e, se il file non lo e', si ripiega su Windows-1252. Cosi' non
+ * bisogna sapere cos'e' una codifica per importare un file.
+ */
+export function decodeText(bytes: ArrayBuffer): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder("windows-1252").decode(bytes);
+  }
+}
+
 function detectDelimiter(firstLine: string): string {
   const counts = [
     { char: ";", n: (firstLine.match(/;/g) ?? []).length },
