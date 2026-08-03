@@ -153,6 +153,15 @@ nome per nome chi è stato escluso e di quanto.
 
 ---
 
+## Metterlo online
+
+Per usarlo dalle due sedi, o da casa, serve un server raggiungibile da internet.
+Tutto il necessario sta in **[`deploy/`](deploy/README.md)**: un comando solo
+installa il programma, l'avvio automatico, il certificato HTTPS, il firewall e
+la copia di sicurezza notturna. Costo indicativo del server: 4-6 € al mese.
+
+---
+
 ## Usarlo da più computer
 
 Il programma gira su **un** computer e gli altri lo aprono dal browser: non va
