@@ -78,6 +78,36 @@ final class Auth
             Session::set('_after_login', $_SERVER['REQUEST_URI'] ?? '/gestionale/');
             Router::redirect('/gestionale/login/');
         }
+
+        self::aggiornaDatabase();
+    }
+
+    /**
+     * Applica le modifiche al database ancora da fare, appena qualcuno entra
+     * nel gestionale.
+     *
+     * Serve perché aggiornare il sito significa caricare dei file, e chi lo fa
+     * non ha un terminale: senza questo, una colonna nuova resterebbe scritta
+     * solo nel codice e la prima pagina che prova a leggerla andrebbe in
+     * errore. Il momento giusto è l'ingresso nel gestionale — c'è una persona
+     * davanti, autenticata, e se qualcosa va storto se ne accorge subito
+     * invece di scoprirlo un visitatore.
+     *
+     * Costa una lettura di `schema_migrations` per pagina: nulla, e in cambio
+     * non esiste più il caso "file nuovi, database vecchio".
+     */
+    private static function aggiornaDatabase(): void
+    {
+        try {
+            $fatte = Db::migrate();
+        } catch (\Throwable $e) {
+            Session::flash('Aggiornamento del database non riuscito: ' . $e->getMessage(), 'error');
+            return;
+        }
+
+        if ($fatte !== []) {
+            Session::flash('Database aggiornato (' . count($fatte) . ' modifiche applicate).');
+        }
     }
 
     public static function adminRequired(): void
