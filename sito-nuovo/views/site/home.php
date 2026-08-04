@@ -19,7 +19,10 @@ use Mil\Core\Vocab;
     </p>
 
     <form class="hero-search" method="get" action="<?= e(url('/immobili/')) ?>">
-      <label class="sr">Comune
+      <?php /* L'etichetta la nasconde solo il testo: `sr` su `label` porterebbe
+               fuori schermo anche il campo, e il modulo resterebbe col solo
+               bottone. Il nome del campo resta nella prima option. */ ?>
+      <label><span class="sr">Comune</span>
         <select name="comune">
           <option value="">Tutti i comuni</option>
           <?php foreach ($cities as $city): ?>
@@ -27,7 +30,7 @@ use Mil\Core\Vocab;
           <?php endforeach; ?>
         </select>
       </label>
-      <label class="sr">Tipologia
+      <label><span class="sr">Tipologia</span>
         <select name="tipologia">
           <option value="">Ogni tipologia</option>
           <?php foreach (Vocab::TYPES as $slug => $label): ?>
@@ -35,7 +38,7 @@ use Mil\Core\Vocab;
           <?php endforeach; ?>
         </select>
       </label>
-      <label class="sr">Prezzo massimo
+      <label><span class="sr">Prezzo massimo</span>
         <input type="text" name="prezzo_max" placeholder="Prezzo massimo €" inputmode="numeric">
       </label>
       <button type="submit" class="btn btn-primary">Cerca</button>
