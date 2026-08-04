@@ -34,6 +34,7 @@ $router->get('/blog', [Journal::class, 'index']);
 $router->get('/blog/{slug}', [Journal::class, 'show']);
 $router->get('/contatti', [Pages::class, 'contatti']);
 $router->get('/valutazione-gratuita', [Pages::class, 'valutazione']);
+$router->get('/calcolatore-imposte-acquisto-casa', [Pages::class, 'calcolatore']);
 
 $router->post('/invia-richiesta', [Forms::class, 'submit']);
 

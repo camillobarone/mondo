@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mil\Controller\Site;
 
+use Mil\Core\Imposte;
 use Mil\Core\Seo;
 use Mil\Core\Settings;
 use Mil\Core\View;
@@ -192,6 +193,104 @@ final class Pages
     }
 
     /** @return array<int,array{q:string,a:string}> */
+    /**
+     * Calcolatore delle imposte d'acquisto.
+     *
+     * Il modulo va in GET e non in POST: il risultato ha un indirizzo suo, si
+     * può mandare a un cliente per email o rileggere il giorno dopo, e la
+     * pagina resta memorizzabile in cache. In cambio la pagina col risultato
+     * esce `noindex`: sono combinazioni infinite dello stesso contenuto, e
+     * indicizzarle vorrebbe dire riempire Google di pagine sottili.
+     */
+    public static function calcolatore(): void
+    {
+        $pageUrl = Seo::base() . '/calcolatore-imposte-acquisto-casa/';
+
+        $compilato = q('rendita') !== '' || q('prezzo') !== '';
+        $dati = [
+            'prima' => q('casa', 'prima') !== 'seconda',
+            'impresa' => q('venditore') === 'impresa',
+            'lusso' => q('lusso') === '1',
+            'rendita' => float_or_null(q('rendita')),
+            'prezzo' => float_or_null(q('prezzo')),
+        ];
+
+        $faq = self::faqImposte();
+
+        $graph = [
+            Seo::logoNode(),
+            Seo::agentNode(),
+            [
+                '@type' => 'WebPage',
+                '@id' => $pageUrl . '#webpage',
+                'url' => $pageUrl,
+                'name' => 'Calcolo delle imposte sull’acquisto della casa',
+                'inLanguage' => 'it',
+                'about' => ['@id' => Seo::base() . '/#agent'],
+            ],
+            Seo::faqNode($faq, $pageUrl),
+            Seo::breadcrumbNode([
+                ['name' => 'Home', 'url' => Seo::base() . '/'],
+                ['name' => 'Calcolo imposte d’acquisto', 'url' => $pageUrl],
+            ], $pageUrl),
+        ];
+
+        View::show('site/calcolatore', [
+            'meta' => self::meta(
+                'Calcolo imposte acquisto casa a Lecce e nel Salento',
+                'Calcola registro, IVA, ipotecaria e catastale sull’acquisto della casa: prima o seconda casa, da privato o da costruttore. Aliquote 2026.',
+                $pageUrl,
+                Seo::graph($graph),
+                $compilato ? 'noindex, follow' : 'index, follow'
+            ),
+            'dati' => $dati,
+            'compilato' => $compilato,
+            'esito' => $compilato ? Imposte::calcola($dati) : null,
+            'faq' => $faq,
+        ]);
+    }
+
+    /**
+     * Le domande sono quelle della guida «Imposte Acquisto Casa» del sito
+     * dell'agenzia, accorciate: stesse risposte, stessi numeri. Se un giorno
+     * cambiano lì, vanno cambiate anche qui — è l'unico punto del sito nuovo
+     * in cui un contenuto vive in due posti, e va detto invece che nascosto.
+     *
+     * @return array<int,array{q:string,a:string}>
+     */
+    public static function faqImposte(): array
+    {
+        return [
+            [
+                'q' => 'Come si calcola il valore catastale?',
+                'a' => 'Si prende la rendita catastale, che sta nella visura o nell’atto di provenienza, '
+                    . 'e la si moltiplica per 115,5 se è prima casa o per 126 se è seconda casa. '
+                    . 'Su quel valore si applica l’aliquota: 2% per la prima casa, 9% per la seconda, '
+                    . 'con un minimo di 1.000 euro in entrambi i casi.',
+            ],
+            [
+                'q' => 'Quando si paga l’IVA invece dell’imposta di registro?',
+                'a' => 'Quando il venditore è un’impresa costruttrice o ristrutturatrice e la vendita '
+                    . 'avviene entro cinque anni dalla fine dei lavori. In quel caso l’imposta di registro '
+                    . 'diventa fissa a 200 euro e si paga l’IVA sul prezzo dichiarato: 4% prima casa, '
+                    . '10% seconda casa, 22% per le case di lusso nelle categorie A/1, A/8 e A/9.',
+            ],
+            [
+                'q' => 'Perché il calcolo parte dalla rendita e non dal prezzo?',
+                'a' => 'Per la regola del prezzo-valore: quando l’acquirente è un privato e chiede '
+                    . 'espressamente al notaio di applicarla, le imposte si calcolano sul valore catastale '
+                    . 'anche se il prezzo pagato è più alto. Nel Salento il valore catastale è di solito '
+                    . 'il 40-60% del valore reale, quindi il risparmio è concreto.',
+            ],
+            [
+                'q' => 'Il totale comprende anche il notaio e la provvigione?',
+                'a' => 'No. Qui ci sono solo le imposte dovute allo Stato sull’atto di acquisto. '
+                    . 'L’onorario del notaio, l’imposta di bollo, la tassa ipotecaria e la provvigione '
+                    . 'dell’agenzia sono voci separate e vanno aggiunte a parte.',
+            ],
+        ];
+    }
+
     public static function faqValutazione(): array
     {
         return [

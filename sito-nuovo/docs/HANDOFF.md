@@ -191,6 +191,30 @@ chiusura fino al rogito, richieste dal sito, richieste di acquisto, anagrafica
 con ruoli multipli, adempimenti privacy e antiriciclaggio, articoli e pagine,
 redirect 301, utenti, impostazioni.
 
+### Calcolatore delle imposte d'acquisto
+`/calcolatore-imposte-acquisto-casa/`. Modulo in GET — il risultato ha un
+indirizzo suo, si manda per email e si rilegge; la pagina col risultato esce
+`noindex, follow` perché sono combinazioni infinite dello stesso contenuto.
+Zero JavaScript: si chiedono sia la rendita sia il prezzo, perché senza JS non
+si può nascondere il campo che non serve.
+
+**Le aliquote non sono state ricavate né cercate online**: stanno in
+`Mil\Core\Imposte` come costanti, prese dalla guida «Imposte Acquisto Casa»
+del sito WordPress dell'agenzia (aggiornata 6/7/2026), che cita Agenzia delle
+Entrate e Notariato. Prima casa: rendita × 115,5, registro 2%, minimo €1.000,
+ipotecaria e catastale €50. Seconda casa: × 126, registro 9%. Da impresa: IVA
+4/10/22% sul prezzo, i tre fissi a €200. Verificato contro i due esempi
+pubblicati nella guida (rendita €750 → €1.732,50 e €8.505,00): coincidono.
+
+Fuori dal calcolo di proposito: notaio, bollo, tassa ipotecaria, provvigione —
+non stanno nella guida, e metterci un numero non pubblicato sarebbe inventarlo.
+La pagina lo dice.
+
+⚠️ **Le quattro FAQ della pagina sono una riscrittura di quelle della guida
+WordPress**: è l'unico punto in cui un contenuto vive in due posti. Se i due
+siti dovessero coesistere sullo stesso dominio va risolto, un intent = un
+contenuto.
+
 ### Anteprima della scheda immobile
 Dal gestionale, `Salva e vedi l'anteprima` porta su
 `/gestionale/immobili/{id}/anteprima/`: la scheda pubblica vera, disegnata da

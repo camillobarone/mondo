@@ -22,6 +22,7 @@ final class Feeds
             ['loc' => $base . '/', 'priority' => '1.0', 'lastmod' => date('Y-m-d')],
             ['loc' => $base . '/immobili/', 'priority' => '0.9', 'lastmod' => date('Y-m-d')],
             ['loc' => $base . '/valutazione-gratuita/', 'priority' => '0.9', 'lastmod' => date('Y-m-d')],
+            ['loc' => $base . '/calcolatore-imposte-acquisto-casa/', 'priority' => '0.7', 'lastmod' => date('Y-m-d')],
             ['loc' => $base . '/blog/', 'priority' => '0.7', 'lastmod' => date('Y-m-d')],
             ['loc' => $base . '/contatti/', 'priority' => '0.6', 'lastmod' => date('Y-m-d')],
         ];

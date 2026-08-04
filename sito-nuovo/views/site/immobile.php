@@ -167,6 +167,9 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
         <p>Vuoi vederlo? Fissiamo una visita nei prossimi giorni.</p>
         <p><a class="btn btn-primary" href="tel:+390832391489">Chiama 0832 391489</a></p>
         <p><a class="btn btn-ghost" href="#modulo">Scrivi all’agente</a></p>
+        <?php /* La domanda che arriva subito dopo il prezzo è sempre la stessa:
+                 «e di tasse quanto ci vuole?». Il link sta qui, non in fondo. */ ?>
+        <p class="nota"><a href="<?= e(url('/calcolatore-imposte-acquisto-casa/')) ?>">Calcola le imposte d’acquisto →</a></p>
       </div>
       <?php if (in_array(mb_strtolower((string) $p['city']), ['porto cesareo', 'torre lapillo', 'torre castiglione'], true)): ?>
         <p class="nota-sede">Immobile seguito dalla sede di <strong>Porto Cesareo</strong>,
