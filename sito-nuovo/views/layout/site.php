@@ -63,12 +63,19 @@ $flash = Session::takeFlash();
       <span class="brand-claim">Agenzia FIMAA dal 1994 · Lecce e Porto Cesareo</span>
     </a>
 
+    <?php /* Il numero resta fuori dal menu che si chiude: quando la testata
+             diventa il burger, il bottone per chiamare non deve sparire dietro
+             a un tocco in più. Sul telefono stretto sparisce comunque, perché
+             lì non ci sta accanto al nome — e lì c'è la barra in fondo. */ ?>
+    <a class="nav-cta nav-cta-fissa" href="tel:+390832391489">0832 391489</a>
+
     <input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
     <label for="nav-toggle" class="nav-burger" aria-label="Apri il menu"><span></span></label>
 
     <nav class="nav" aria-label="Menu principale">
       <a href="<?= e(url('/immobili/')) ?>">Immobili</a>
       <a href="<?= e(url('/valutazione-gratuita/')) ?>">Valutazione gratuita</a>
+      <a href="<?= e(url('/calcolatore-imposte-acquisto-casa/')) ?>">Calcolo imposte</a>
       <a href="<?= e(url('/blog/')) ?>">Blog</a>
       <a href="<?= e(url('/contatti/')) ?>">Contatti</a>
       <a class="nav-cta" href="tel:+390832391489">0832 391489</a>

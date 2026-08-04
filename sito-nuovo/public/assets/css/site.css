@@ -80,7 +80,10 @@ img { max-width: 100%; height: auto; display: block; }
 .brand-claim { display: block; font-size: .76rem; color: var(--ink-soft); }
 
 .nav { display: flex; align-items: center; gap: 22px; }
-.nav a { text-decoration: none; color: var(--ink); font-size: .95rem; }
+/* `nowrap`: una voce di menu spezzata su due righe («Valutazione / gratuita»)
+   non si legge come una voce sola, e fa crescere in altezza tutta la testata.
+   Meglio che il menu resti largo e, quando non ci sta, diventi il burger. */
+.nav a { text-decoration: none; color: var(--ink); font-size: .95rem; white-space: nowrap; }
 .nav a:hover { color: var(--accent-dark); }
 .nav-cta {
   background: var(--accent); color: #fff !important; padding: 11px 20px;
@@ -88,8 +91,15 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .nav-cta:hover { background: var(--accent-dark); color: #fff !important; }
 .nav-burger { display: none; }
+/* Il gemello del bottone che vive fuori dal menu richiudibile: si accende solo
+   nella fascia in cui c'è il burger ma lo schermo è ancora largo. */
+.nav-cta-fissa { display: none; text-decoration: none; }
 
-@media (max-width: 880px) {
+/* Il menu passa al burger a 1060 e non a 880: con cinque voci più il numero di
+   telefono, sotto quella misura il nome dell'agenzia si stringeva e le voci
+   andavano a capo. La soglia si ricava dalla larghezza vera del menu, non da
+   un numero tondo: cambiando una voce va rimisurata. */
+@media (max-width: 1060px) {
   .nav-burger {
     display: block; width: 48px; height: 48px; cursor: pointer; position: relative;
     margin-right: -11px;
@@ -107,8 +117,17 @@ img { max-width: 100%; height: auto; display: block; }
     background: #fff; border-bottom: 1px solid var(--line); padding: 8px 20px 18px;
   }
   .nav a { padding: 12px 0; border-bottom: 1px solid var(--line); }
-  .nav-cta { text-align: center; margin-top: 12px; border-bottom: 0; }
+  .nav .nav-cta { text-align: center; margin-top: 12px; border-bottom: 0; }
   .nav-toggle:checked ~ .nav { display: flex; }
+}
+
+/* Fra il burger e il telefono stretto il numero resta in testata, e allora
+   dentro al menu aperto non serve ripeterlo. */
+@media (min-width: 561px) and (max-width: 1060px) {
+  /* `margin-left: auto`: senza, lo spazio si distribuisce e il bottone finisce
+     in mezzo alla testata, lontano sia dal nome sia dal burger. */
+  .nav-cta-fissa { display: inline-block; margin-left: auto; margin-right: 14px; }
+  .nav .nav-cta { display: none; }
 }
 
 /* ------------------------------------------------------------------ hero */
