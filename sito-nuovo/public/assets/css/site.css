@@ -524,6 +524,36 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .filtri .btn { padding: 11px 18px; }
 
+/* Sul computer i filtri stanno sempre aperti e questa etichetta non esiste. */
+.filtri-toggle { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.filtri-apri { display: none; }
+
+/* ------------------------------------------------------------- telefono */
+
+/* Misurato su uno schermo da 412 punti: fra il riempimento della sezione, il
+   titolo, il sottotitolo e i sei campi del filtro, la prima fotografia — la
+   cosa che si è venuti a vedere — compariva dopo 1.761 punti di scorrimento,
+   due schermate piene. Qui il testo si stringe e i filtri si aprono al tocco. */
+@media (max-width: 700px) {
+  .sezione { padding: 44px 0; }
+  .sezione-head { margin-bottom: 22px; }
+  .pagina-titolo { font-size: 1.95rem; line-height: 1.2; }
+  .pagina-sub, .occhiello { font-size: 1rem; line-height: 1.55; }
+  .risposta-diretta { font-size: 1.02rem; }
+
+  .filtri-apri {
+    display: block; margin-bottom: 20px; padding: 13px 18px;
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius);
+    font-weight: 600; text-align: center; cursor: pointer;
+  }
+  .filtri-apri::after { content: " ▾"; color: var(--ink-soft); }
+  .filtri-toggle:focus-visible + .filtri-apri { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .filtri-toggle:checked + .filtri-apri::after { content: " ▴"; }
+
+  .filtri { display: none; padding: 14px; gap: 10px; margin-bottom: 24px; }
+  .filtri-toggle:checked ~ .filtri { display: grid; }
+}
+
 .paginazione { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
 /* 48px pieni: sul telefono un numero di pagina si sbaglia con niente. */
 .paginazione a, .paginazione span {

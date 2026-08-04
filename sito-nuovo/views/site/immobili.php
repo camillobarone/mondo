@@ -31,6 +31,22 @@ $qs = static function (int $page) use ($filters): string {
   <h2 class="pagina-titolo">Immobili in vendita a Lecce e nel Salento</h2>
   <p class="pagina-sub"><?= (int) $result['total'] ?> immobili disponibili, selezionati e verificati dai nostri agenti.</p>
 
+  <?php /* Sul telefono il pannello dei filtri riempiva una schermata intera
+           prima della prima fotografia. Qui si apre solo se serve, con la
+           stessa tecnica del menu: una casella di spunta nascosta e la sua
+           etichetta, nessuna riga di JavaScript. Se però un filtro è già
+           attivo il pannello nasce aperto, altrimenti si vedrebbero risultati
+           ristretti senza capire perché. */ ?>
+  <?php $filtriAttivi = array_filter(
+      $filters,
+      // `status` c'è sempre e `ordina` non restringe niente: se contassero,
+      // il pannello risulterebbe sempre attivo e non si chiuderebbe mai.
+      static fn (mixed $v, string $k): bool => !in_array($k, ['status', 'sort'], true) && !empty($v),
+      ARRAY_FILTER_USE_BOTH
+  ) !== []; ?>
+  <input type="checkbox" id="filtri-toggle" class="filtri-toggle" <?= $filtriAttivi ? 'checked' : '' ?>>
+  <label for="filtri-toggle" class="filtri-apri">Filtra e ordina</label>
+
   <form class="filtri" method="get">
     <label>Comune
       <select name="comune">
