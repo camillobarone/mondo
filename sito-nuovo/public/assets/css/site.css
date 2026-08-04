@@ -189,7 +189,23 @@ img { max-width: 100%; height: auto; display: block; }
 .risposta-diretta {
   font-size: 1.1rem; border-left: 3px solid var(--accent); padding-left: 18px; max-width: 68ch;
 }
+/* Il corpo di un articolo: sottotitoli, elenchi e citazioni nascono dal testo
+   scritto nel gestionale (vedi `Core\Testo`). La misura resta stretta perché
+   una riga lunga più di settanta caratteri si legge male, e i sottotitoli
+   hanno più aria sopra che sotto: così appartengono al paragrafo che aprono
+   e non a quello che chiudono. */
 .testo { max-width: 70ch; }
+.testo > :first-child { margin-top: 0; }
+.testo h3 { margin: 1.9em 0 .5em; }
+.testo h4 { margin: 1.6em 0 .4em; font-size: 1.1rem; }
+.testo ul, .testo ol { margin: 0 0 1em; padding-left: 1.3em; }
+.testo li { margin-bottom: .4em; }
+.testo blockquote {
+  margin: 1.4em 0; padding: 2px 0 2px 20px;
+  border-left: 3px solid var(--accent-chiaro); color: var(--ink-soft);
+}
+.testo blockquote p:last-child { margin-bottom: 0; }
+.testo hr { margin: 2em 0; border: 0; border-top: 1px solid var(--line); }
 .elenco { max-width: 70ch; padding-left: 1.2em; }
 .elenco li { margin-bottom: .4em; }
 
@@ -359,6 +375,8 @@ img { max-width: 100%; height: auto; display: block; }
 .faq details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
 .faq summary:hover { color: var(--accent-dark); }
 .faq-risposta { padding: 0 34px 20px 0; color: var(--ink-soft); }
+.faq-risposta p:last-child, .faq-risposta ul:last-child, .faq-risposta ol:last-child { margin-bottom: 0; }
+.faq-risposta ul, .faq-risposta ol { padding-left: 1.3em; }
 
 /* Barra dei contatti in fondo alla scheda, solo sul telefono. */
 .barra-contatto { display: none; }

@@ -127,9 +127,16 @@ function slugify(string $text): string
     return trim($text, '-');
 }
 
-/** Troncamento a parole intere. */
+/**
+ * Troncamento a parole intere.
+ *
+ * Passa da `Testo::piano()` perché quasi tutti i troncamenti finiscono in una
+ * meta description o in un'anteprima: lì i `##` e gli asterischi del testo
+ * scritto in chat non formattano niente, occupano solo caratteri.
+ */
 function tronca(string $text, int $max = 160): string
 {
+    $text = \Mil\Core\Testo::piano($text);
     $text = trim(preg_replace('/\s+/', ' ', strip_tags($text)) ?? '');
     if (mb_strlen($text) <= $max) {
         return $text;

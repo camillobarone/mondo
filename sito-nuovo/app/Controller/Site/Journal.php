@@ -111,7 +111,14 @@ final class Journal
                 Seo::graph($graph)
             ),
             'post' => $post,
-            'altri' => Content::posts(true, 1, 3)['items'],
+            // Se ne prendono quattro per poterne scartare uno: l'articolo che
+            // si sta leggendo è quasi sempre fra i più recenti, e scartarlo
+            // qui — invece che nella pagina — evita il caso in cui resta il
+            // titolo «Altri articoli» con sotto un elenco vuoto.
+            'altri' => array_slice(array_values(array_filter(
+                Content::posts(true, 1, 4)['items'],
+                static fn (array $a): bool => (int) $a['id'] !== (int) $post['id']
+            )), 0, 3),
         ]);
     }
 }

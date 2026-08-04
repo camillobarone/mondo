@@ -24,6 +24,11 @@ $isNew = (int) $post['id'] === 0;
       </label>
       <label>Testo
         <textarea name="body" rows="20"><?= e((string) $post['body']) ?></textarea>
+        <small>Si incolla com’è scritto in chat: riga vuota fra i paragrafi,
+          <code>##</code> davanti a un sottotitolo, <code>-</code> davanti a una
+          voce di elenco, <code>**parola**</code> per il grassetto,
+          <code>[testo](indirizzo)</code> per un collegamento. In pagina
+          diventano sottotitoli, elenchi e grassetto veri.</small>
       </label>
     </div>
 

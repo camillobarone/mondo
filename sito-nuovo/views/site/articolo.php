@@ -22,7 +22,7 @@
     <p class="risposta-diretta"><?= e((string) $post['excerpt']) ?></p>
   <?php endif; ?>
 
-  <div class="testo"><?= nl2br(e((string) $post['body'])) ?></div>
+  <div class="testo"><?= Mil\Core\Testo::html((string) $post['body']) ?></div>
 
   <p class="firma">
     <?= e((string) ($post['author_name'] ?: 'Mondo Immobiliare')) ?> — Agente Immobiliare FIMAA<br>
@@ -34,9 +34,7 @@
       <h3>Altri articoli</h3>
       <ul class="elenco">
         <?php foreach ($altri as $a): ?>
-          <?php if ((int) $a['id'] !== (int) $post['id']): ?>
-            <li><a href="<?= e(url('/blog/' . $a['slug'] . '/')) ?>"><?= e((string) $a['title']) ?></a></li>
-          <?php endif; ?>
+          <li><a href="<?= e(url('/blog/' . $a['slug'] . '/')) ?>"><?= e((string) $a['title']) ?></a></li>
         <?php endforeach; ?>
       </ul>
     </section>

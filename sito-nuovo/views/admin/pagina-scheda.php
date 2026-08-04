@@ -16,7 +16,10 @@ $isNew = (int) $page['id'] === 0;
         <input type="text" name="slug" value="<?= e((string) $page['slug']) ?>" placeholder="generato dal titolo">
         <small>La pagina risponde su <code>/slug/</code>. Cambiandolo viene creato un 301.</small>
       </label>
-      <label>Testo<textarea name="body" rows="20"><?= e((string) $page['body']) ?></textarea></label>
+      <label>Testo<textarea name="body" rows="20"><?= e((string) $page['body']) ?></textarea>
+        <small>Riga vuota fra i paragrafi, <code>##</code> per un sottotitolo,
+          <code>-</code> per un elenco, <code>**parola**</code> per il grassetto.</small>
+      </label>
     </div>
 
     <div>

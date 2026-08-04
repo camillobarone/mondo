@@ -241,6 +241,26 @@ riconosciuti. Salvando, il riquadro si ricarica nella forma canonica con il
 conteggio delle domande riconosciute: se una manca, si vede lì invece che
 sulla pagina pubblicata.
 
+### Impaginazione del testo scritto a mano (`Mil\Core\Testo`)
+Articoli, pagine e descrizioni degli immobili si scrivono in una chat e si
+incollano nel gestionale. Prima uscivano con `nl2br()`, cioè con i `##` e gli
+asterischi stampati in pagina: un articolo lungo era un muro di testo con dei
+cancelletti dentro.
+
+`Testo::html()` riconosce solo il poco che si usa scrivendo: riga vuota fra i
+paragrafi, `#`/`##` → `h3` e il resto → `h4` (il titolo della pagina è già un
+`h2`: l'indice resta una scala), `-`/`*`/`•` e `1.` per gli elenchi, `>` per le
+citazioni, `---` per una riga, `**grassetto**`, `*corsivo*`,
+`[testo](indirizzo)` con soli `http(s)`, `/`, `mailto:` e `tel:`.
+
+Il testo viene **prima messo in sicurezza con `e()` e poi ricostruito**: non
+esiste un percorso in cui dell'HTML scritto in un articolo arrivi in pagina.
+Un `<script>` incollato si vede come testo.
+
+`Testo::piano()` fa il contrario — toglie i segni senza impaginare — ed è
+richiamato da `tronca()`: nelle meta description e nelle anteprime i `##` non
+formattano niente, occupano solo caratteri contati.
+
 ### Abbinamento domanda/offerta
 Punteggio 0–100. Budget unico criterio bloccante, con tolleranza 5%. I criteri
 non espressi non penalizzano. Sotto 60 non viene proposto.
@@ -296,8 +316,14 @@ cambiando copertina cambia anche `#primaryimage` nel JSON-LD, che resta valido.
   solo l'etichetta. Della barra restava il solo bottone «Cerca», su telefono
   come su computer, dal primo commit. `sr` è passata su uno `<span>`.
 
-Tre di questi quattro erano invisibili a leggere il codice: si sono visti solo
-aprendo le pagine e misurandole.
+- **«Altri articoli» vuoto**: la pagina dell'articolo chiedeva gli ultimi tre
+  post e poi scartava sé stessa disegnando l'elenco. Con un articolo solo
+  pubblicato restava il titolo «Altri articoli» e sotto il nulla. Adesso lo
+  scarto avviene nel controller, che ne chiede quattro per poterne togliere
+  uno, e la sezione o ha delle voci o non c'è.
+
+Quattro di questi cinque erano invisibili a leggere il codice: si sono visti
+solo aprendo le pagine e misurandole.
 
 ---
 

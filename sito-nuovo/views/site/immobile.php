@@ -114,7 +114,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
 
       <?php if (trim((string) $p['description']) !== ''): ?>
         <h3>Descrizione</h3>
-        <div class="testo"><?= nl2br(e((string) $p['description'])) ?></div>
+        <div class="testo"><?= Mil\Core\Testo::html((string) $p['description']) ?></div>
       <?php endif; ?>
 
       <?php
@@ -151,7 +151,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
           <?php foreach ($faq as $i => $voce): ?>
             <details<?= $i === 0 ? ' open' : '' ?>>
               <summary><?= e($voce['q']) ?></summary>
-              <div class="faq-risposta"><?= nl2br(e($voce['a'])) ?></div>
+              <div class="faq-risposta"><?= Mil\Core\Testo::html($voce['a']) ?></div>
             </details>
           <?php endforeach; ?>
         </div>

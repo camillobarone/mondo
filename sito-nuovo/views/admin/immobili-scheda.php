@@ -235,6 +235,8 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
       </label>
       <label>Descrizione
         <textarea name="description" rows="10"><?= e((string) $p['description']) ?></textarea>
+        <small>Riga vuota fra i paragrafi, <code>##</code> per un sottotitolo,
+          <code>-</code> per un elenco, <code>**parola**</code> per il grassetto.</small>
       </label>
 
       <?php
