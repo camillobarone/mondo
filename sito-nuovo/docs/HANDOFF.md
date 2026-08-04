@@ -24,19 +24,22 @@ gira sull'hosting SiteGround già pagato.
 | Branch | `claude/siteground-italian-site-bhtl4j` |
 | PR | **#3** — aperta, in **draft**, `mergeable_state: clean` |
 | Base della PR | `jules-4092590956749443987-c47f811b` |
-| Head al momento | `15003aa` |
+| Head al momento | `d2b36fc` |
 | Cartella | `sito-nuovo/` (il resto del repo non c'entra) |
 | CI | **nessuna configurata** — zero check run, niente da far passare |
 | Commenti | uno solo, del bot Gemini (avviso di dismissione). Nessuna azione |
 
 Albero di lavoro pulito, tutto pushato.
 
-### I quattro commit
+### I commit, in ordine
 
 1. `d2cb64e` — sito nuovo con gestionale, in PHP e MySQL
 2. `9c04bf0` — porting del modello dati dalla PR #2
 3. `3d2216e` — importazione da WordPress, conservando gli slug
 4. `15003aa` — velocità mobile e galleria multi-foto
+5. `2cb5d09` — questo documento
+6. `3afbdda` — verifica della mappatura WP-Residence sul database vero
+7. `d2b36fc` — modulo di ricerca reso visibile in home
 
 ---
 
@@ -55,7 +58,7 @@ portato nella base PHP (commit 2), il codice no.
 tema, niente plugin, niente licenze. PHP 8.1+ e MySQL, punto.
 
 **Zero JavaScript sul sito pubblico.** Non «poco»: zero. Menu, filtri e
-galleria sono HTML e CSS. Da qui il TBT a 0 ms.
+galleria sono HTML e CSS. Da qui un TBT che sta fra 0 e 40 ms.
 
 ### Regole dalla skill `mondo-immobiliare` — in vigore, non negoziabili
 
@@ -197,13 +200,27 @@ non espressi non penalizzano. Sotto 60 non viene proposto.
 Prima, sulla scheda immobile: 98 / 100 / 96 / 100, LCP 1,8 s.
 
 Adesso, su **tutte** le pagine misurate — home, elenco, scheda, contatti,
-valutazione, blog: **100 / 100 / 100 / 100**. LCP fra 0,7 e 1,3 s, TBT 0 ms,
-CLS 0 (0,001 su due pagine).
+valutazione, blog: **100 / 100 / 100 / 100**. LCP fra 0,7 e 1,3 s, CLS 0
+(0,001 su due pagine), TBT fra 0 e 40 ms.
 
 Cosa lo produce: CSS inline minificato, tre larghezze WebP per foto
 (480/960/1600) con `srcset`, preload della candidata LCP con lo stesso
 `imagesrcset` del tag, `width`/`height` ovunque, favicon SVG in data URI (il
 404 su `/favicon.ico` era quello che teneva Best practice a 96).
+
+**Come misurare senza prendere lucciole per lanterne.** Il server PHP di prova
+è a thread singolo: se si lancia Lighthouse mentre il Chrome del giro
+precedente si sta ancora chiudendo, i numeri crollano e non c'entra il codice.
+Visto oggi, sulle stesse pagine e sullo stesso commit:
+
+- home: 96 (TBT 230 ms), poi 99, 100, 100 (TBT 120, 40, 40 ms)
+- scheda immobile: **78** con FCP 3,1 s, poi tre giri identici a **100** con
+  FCP 0,7 s e TBT 0 ms
+
+Il sito non ha JavaScript: un TBT di 200 ms non può venire dal codice. **Tre
+giri e si tiene la mediana** — un numero solo, preso una volta, non vale niente
+né in bene né in male. Il 78 di prima è esattamente il genere di dato che, se
+riportato senza ricontrollarlo, manda a caccia di un problema che non esiste.
 
 ### Galleria multi-foto
 Cinque foto in griglia, le altre dietro un «+N foto». Si aprono a tutto
@@ -224,6 +241,13 @@ cambiando copertina cambia anche `#primaryimage` nel JSON-LD, che resta valido.
   «Terreni edificabili»). Ogni villa sarebbe finita importata come appartamento.
 - **Contrasto**: i link color sabbia della fascia scura vincevano per
   specificità su `.btn-primary`, lasciando il bottone a 3:1.
+- **Barra di ricerca in home**: la classe `sr` (`left: -9999px`) stava sul
+  `<label>`, che avvolge il campo — fuori schermo finiva tutto il campo, non
+  solo l'etichetta. Della barra restava il solo bottone «Cerca», su telefono
+  come su computer, dal primo commit. `sr` è passata su uno `<span>`.
+
+Tre di questi quattro erano invisibili a leggere il codice: si sono visti solo
+aprendo le pagine e misurandole.
 
 ---
 
