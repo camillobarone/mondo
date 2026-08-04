@@ -22,6 +22,7 @@ $voci = [
     '/gestionale/pagine/' => 'Pagine',
 ];
 $vociAdmin = [
+    '/gestionale/importa/' => 'Importa da WordPress',
     '/gestionale/redirect/' => 'Reindirizzamenti',
     '/gestionale/utenti/' => 'Utenti',
     '/gestionale/impostazioni/' => 'Impostazioni',

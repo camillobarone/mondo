@@ -41,8 +41,7 @@ require dirname(__DIR__) . '/app/bootstrap.php';
 
 use Mil\Core\Config;
 use Mil\Core\Db;
-use Mil\Core\Uploader;
-use Mil\Core\WpMapper;
+use Mil\Core\WpImport;
 use Mil\Core\WpSource;
 use Mil\Repo\Properties;
 
@@ -134,11 +133,11 @@ if ($soloCampi) {
 
 // ------------------------------------------------------ 2) e 3) importazione
 
-$immobili = $wp->properties($stati, $limite);
-$mapper = new WpMapper();
+$importatore = new WpImport($wp, $senzaFoto ? '' : $uploads);
+$coda = $importatore->daLavorare($stati, $limite);
 
 echo ($prova ? "SIMULAZIONE — nessuna scrittura\n" : "IMPORTAZIONE\n");
-echo count($immobili) . " immobili da lavorare (" . implode(' + ', $stati) . ")\n";
+echo count($coda) . " immobili da lavorare (" . implode(' + ', $stati) . ")\n";
 echo str_repeat('-', 78) . "\n";
 
 $nuovi = 0;
@@ -147,109 +146,28 @@ $foto = 0;
 $saltati = 0;
 $errori = [];
 
-foreach ($immobili as $post) {
-    $wpId = (int) $post['ID'];
+// La lavorazione vera sta in Mil\Core\WpImport, usata anche dalla pagina del
+// gestionale: qui sopra ci resta solo il modo di raccontarla a schermo.
+foreach ($coda as $wpId) {
+    $esito = $importatore->uno($wpId, $prova, !$senzaFoto);
 
-    try {
-        $meta = $wp->meta($wpId);
-        $terms = $wp->terms($wpId);
-        $dati = $mapper->map($post, $meta, $terms);
-
-        $esistente = Db::one('SELECT id, slug FROM properties WHERE wp_id = :w', ['w' => $wpId]);
-
-        printf(
-            "%-7s %-44s %11s %5s mq\n",
-            $esistente ? 'aggiorn' : 'nuovo',
-            mb_substr((string) $dati['title'], 0, 44),
-            $dati['price'] === null ? 'riservato' : number_format((float) $dati['price'], 0, ',', '.'),
-            (string) $dati['sqm']
-        );
-
-        if ($prova) {
-            $esistente ? $aggiornati++ : $nuovi++;
-            continue;
-        }
-
-        if ($esistente !== null) {
-            $id = (int) $esistente['id'];
-            // Il riferimento generato al primo import non si sovrascrive: se
-            // qualcuno lo ha già dettato a un cliente deve restare quello.
-            unset($dati['ref'], $dati['created_at']);
-            Properties::update($id, $dati, 'aggiornato da WordPress');
-            $aggiornati++;
-        } else {
-            if ($dati['ref'] === '') {
-                $dati['ref'] = Properties::nextRef();
-            }
-            $id = Properties::create($dati);
-            $nuovi++;
-        }
-
-        if (!$senzaFoto && $uploads !== '') {
-            $foto += importaFoto($wp, $id, $wpId, $mapper->immagini($meta), $uploads);
-        }
-    } catch (Throwable $e) {
-        $saltati++;
-        $errori[] = "post {$wpId}: " . $e->getMessage();
-    }
-}
-
-/**
- * Scarica nel gestionale le foto di un immobile. Le immagini già importate
- * si riconoscono dall'ID WordPress e non vengono rifatte.
- *
- * @param array<int,int> $idAllegati
- */
-function importaFoto(WpSource $wp, int $propertyId, int $wpId, array $idAllegati, string $uploads): int
-{
-    $fatte = 0;
-    $ordine = (int) Db::value(
-        'SELECT COALESCE(MAX(sort), 0) FROM property_images WHERE property_id = :p',
-        ['p' => $propertyId]
+    printf(
+        "%-7s %-44s %11s %5s mq\n",
+        substr($esito['stato'], 0, 7),
+        mb_substr($esito['titolo'], 0, 44),
+        $esito['prezzo'] === null ? 'riservato' : number_format($esito['prezzo'], 0, ',', '.'),
+        (string) $esito['mq']
     );
 
-    foreach ($idAllegati as $attId) {
-        $gia = Db::value(
-            'SELECT COUNT(*) FROM property_images WHERE property_id = :p AND wp_id = :w',
-            ['p' => $propertyId, 'w' => $attId]
-        );
-        if ((int) $gia > 0) {
-            continue;
-        }
-
-        $relativo = $wp->attachmentFile($attId);
-        if ($relativo === null) {
-            continue;
-        }
-
-        $sorgente = rtrim($uploads, '/') . '/' . ltrim($relativo, '/');
-        if (!is_file($sorgente)) {
-            continue;
-        }
-
-        try {
-            $img = Uploader::fromFile($sorgente, basename($relativo));
-        } catch (Throwable) {
-            // Una foto illeggibile non deve far saltare l'intero immobile.
-            continue;
-        }
-
-        Db::insert('property_images', [
-            'property_id' => $propertyId,
-            'wp_id' => $attId,
-            'path' => $img['path'],
-            'thumb' => $img['thumb'],
-            'srcset' => $img['srcset'],
-            'alt' => mb_substr($wp->attachmentAlt($attId), 0, 191),
-            'width' => $img['width'],
-            'height' => $img['height'],
-            'sort' => ++$ordine,
-            'created_at' => Db::now(),
-        ]);
-        $fatte++;
+    match ($esito['stato']) {
+        'nuovo' => $nuovi++,
+        'aggiornato' => $aggiornati++,
+        default => $saltati++,
+    };
+    $foto += $esito['foto'];
+    if ($esito['stato'] === 'errore') {
+        $errori[] = $esito['titolo'] . ': ' . $esito['messaggio'];
     }
-
-    return $fatte;
 }
 
 // ---------------------------------------------------------------- rapporto
@@ -265,7 +183,7 @@ if ($saltati > 0) {
     echo "  saltati:     {$saltati}\n";
 }
 
-foreach ($mapper->avvisi() as $avviso) {
+foreach ($importatore->avvisi() as $avviso) {
     echo "  ⚠ {$avviso}\n";
 }
 foreach ($errori as $errore) {

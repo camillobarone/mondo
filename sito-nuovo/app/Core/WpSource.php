@@ -111,22 +111,32 @@ final class WpSource
      * Gli immobili, dal più recente.
      *
      * @param array<int,string> $statuses
+     * @param int $onlyId se maggiore di zero, ne restituisce uno solo: serve
+     *                    a rilavorare una singola scheda senza rileggere
+     *                    tutto l'elenco a ogni giro
      * @return array<int,array<string,mixed>>
      */
-    public function properties(array $statuses = ['publish', 'draft'], int $limit = 0): array
+    public function properties(array $statuses = ['publish', 'draft'], int $limit = 0, int $onlyId = 0): array
     {
         $in = implode(',', array_fill(0, count($statuses), '?'));
         $sql = "SELECT ID, post_title, post_name, post_content, post_excerpt,
                        post_status, post_date, post_modified
                 FROM {p}posts
-                WHERE post_type = 'estate_property' AND post_status IN ({$in})
-                ORDER BY post_date DESC";
+                WHERE post_type = 'estate_property' AND post_status IN ({$in})";
+        $params = $statuses;
+
+        if ($onlyId > 0) {
+            $sql .= ' AND ID = ?';
+            $params[] = (string) $onlyId;
+        }
+
+        $sql .= ' ORDER BY post_date DESC';
         if ($limit > 0) {
             $sql .= ' LIMIT ' . $limit;
         }
 
         $stmt = $this->pdo->prepare(str_replace('{p}', $this->prefix, $sql));
-        $stmt->execute($statuses);
+        $stmt->execute($params);
 
         /** @var array<int,array<string,mixed>> $rows */
         $rows = $stmt->fetchAll();

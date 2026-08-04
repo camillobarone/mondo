@@ -13,6 +13,7 @@ declare(strict_types=1);
 use Mil\Controller\Admin\AgendaController;
 use Mil\Controller\Admin\ContactController;
 use Mil\Controller\Admin\ContentController;
+use Mil\Controller\Admin\ImportController;
 use Mil\Controller\Admin\Dashboard;
 use Mil\Controller\Admin\LeadController;
 use Mil\Controller\Admin\PropertyController;
@@ -55,6 +56,13 @@ $router->any('/gestionale/immobili/nuovo', [PropertyController::class, 'create']
 $router->any('/gestionale/immobili/{id}', [PropertyController::class, 'edit']);
 $router->post('/gestionale/immobili/{id}/foto', [PropertyController::class, 'uploadPhotos']);
 $router->post('/gestionale/immobili/{id}/foto/aggiorna', [PropertyController::class, 'managePhotos']);
+
+// Importazione da WordPress: dal gestionale, non solo da riga di comando.
+$router->get('/gestionale/importa', [ImportController::class, 'page']);
+$router->get('/gestionale/importa/lavora', [ImportController::class, 'work']);
+$router->post('/gestionale/importa/campi', [ImportController::class, 'census']);
+$router->post('/gestionale/importa/prova', [ImportController::class, 'preview']);
+$router->post('/gestionale/importa/avvia', [ImportController::class, 'start']);
 $router->post('/gestionale/immobili/{id}/foto/{imageId}/elimina', [PropertyController::class, 'deletePhoto']);
 $router->post('/gestionale/immobili/{id}/elimina', [PropertyController::class, 'destroy']);
 $router->get('/gestionale/immobili/{id}/abbinamenti', [PropertyController::class, 'matches']);

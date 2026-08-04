@@ -91,6 +91,16 @@ img { max-width: 100%; height: auto; display: block; }
 .tabella td { border-bottom: 1px solid var(--line); padding: 11px 10px; vertical-align: top; }
 .tabella small { color: var(--ink-soft); }
 .tabella tr.spento { opacity: .5; }
+/* Le tabelle larghe scorrono dentro il loro riquadro: la pagina non si
+   allarga, così su schermo stretto resta tutto leggibile. */
+.tabella-scroll { overflow-x: auto; margin-bottom: 18px; }
+
+/* Avanzamento dell'importazione. */
+.barra {
+  height: 14px; background: var(--line, #e2e6ea); border-radius: 999px;
+  overflow: hidden; margin: 12px 0 16px;
+}
+.barra span { display: block; height: 100%; background: var(--accent, #a8642a); transition: width .3s; }
 
 .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .76rem; font-weight: 600; background: #eef1f4; }
 .pill-published, .pill-chiuso-vinto { background: #e6f2ec; color: var(--ok); }
