@@ -346,11 +346,15 @@ final class Seo
             if ($primary !== null) {
                 $house['image'] = ['@id' => $pageUrl . '#primaryimage'];
             }
-            if (!empty($p['lat']) && !empty($p['lng'])) {
+            // Le coordinate passano da `Mappa`, che le arrotonda quando la
+            // scheda è in «solo la zona». Altrimenti la posizione esatta
+            // uscirebbe comunque da qui, mentre la mappa in pagina la nasconde.
+            $punto = Mappa::punto($p);
+            if ($punto !== null) {
                 $house['geo'] = [
                     '@type' => 'GeoCoordinates',
-                    'latitude' => (float) $p['lat'],
-                    'longitude' => (float) $p['lng'],
+                    'latitude' => $punto['lat'],
+                    'longitude' => $punto['lng'],
                 ];
             }
             if ((int) $p['sqm'] > 0) {

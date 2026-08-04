@@ -393,6 +393,21 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .faq details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
 .faq summary:hover { color: var(--accent-dark); }
+/* La mappa: chiusa non costa niente, aperta è alta quanto serve per capire
+   dove si è senza spingere fuori schermo tutto il resto della scheda. */
+.mappa { margin: 0 0 14px; }
+.mappa > summary {
+  cursor: pointer; display: inline-block; padding: 11px 18px;
+  background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius);
+  font-weight: 600; font-size: .95rem;
+}
+.mappa[open] > summary { margin-bottom: 14px; }
+.mappa-riquadro {
+  display: block; width: 100%; height: 340px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--bg-soft);
+}
+@media (max-width: 700px) { .mappa-riquadro { height: 260px; } }
+
 .faq-risposta { padding: 0 34px 20px 0; color: var(--ink-soft); }
 .faq-risposta p:last-child, .faq-risposta ul:last-child, .faq-risposta ol:last-child { margin-bottom: 0; }
 .faq-risposta ul, .faq-risposta ol { padding-left: 1.3em; }

@@ -139,6 +139,38 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
         <p class="nota">Si aprono in una scheda nuova, sul sito di chi li ospita.</p>
       <?php endif; ?>
 
+      <?php $punto = Mil\Core\Mappa::punto($p); ?>
+      <?php if ($punto !== null): ?>
+        <h3>Dove si trova</h3>
+        <?php /* Il riquadro sta dentro un `<details>`: finché resta chiuso il
+                 browser non va a prendere niente, quindi la scheda non paga
+                 una mappa che quasi nessuno apre — e nessun visitatore viene
+                 consegnato a un servizio esterno senza averlo chiesto. Aperto,
+                 carica OpenStreetMap: niente chiave, niente cookie, niente
+                 banner da mostrare. */ ?>
+        <p class="nota">
+          <?= $punto['esatto']
+              ? 'Il segnaposto è sull’immobile.'
+              : 'La mappa mostra la zona, non l’indirizzo esatto: per quello serve un appuntamento.' ?>
+        </p>
+        <details class="mappa">
+          <summary>Apri la mappa</summary>
+          <iframe
+            class="mappa-riquadro"
+            src="<?= e(Mil\Core\Mappa::osm($punto)) ?>"
+            title="Mappa della zona dell’immobile"
+            loading="lazy"
+            referrerpolicy="no-referrer"></iframe>
+          <p class="nota">
+            <a href="<?= e(Mil\Core\Mappa::osmGrande($punto)) ?>" target="_blank" rel="noopener nofollow">Vedi più grande</a>
+            · Mappa © collaboratori di OpenStreetMap
+          </p>
+        </details>
+        <p class="media-link">
+          <a class="btn btn-ghost" href="<?= e(Mil\Core\Mappa::google($punto)) ?>" target="_blank" rel="noopener nofollow">◉ Apri su Google Maps</a>
+        </p>
+      <?php endif; ?>
+
       <?php $faq = Mil\Core\Faq::daJson($p['faqs'] ?? ''); ?>
       <?php if ($faq !== []): ?>
         <h3>Domande frequenti</h3>

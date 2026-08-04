@@ -157,6 +157,18 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
           <input type="text" name="lng" value="<?= e((string) $p['lng']) ?>" placeholder="18.18184">
         </label>
       </div>
+      <?php $modo = (string) ($p['map_mode'] ?? 'zona'); ?>
+      <label>Quanto mostrare la posizione
+        <select name="map_mode">
+          <option value="zona" <?= $modo !== 'esatto' ? 'selected' : '' ?>>Solo la zona — nessun segnaposto</option>
+          <option value="esatto" <?= $modo === 'esatto' ? 'selected' : '' ?>>Indirizzo esatto — segnaposto sulla casa</option>
+        </select>
+        <small>Con «solo la zona» le coordinate escono arrotondate a un centinaio
+          di metri, anche nei dati strutturati: la via si riconosce, il numero
+          civico no. Scegli «esatto» solo se il proprietario è d’accordo che si
+          capisca quale casa è in vendita. Le coordinate qui sopra restano
+          comunque quelle vere: servono a te per ritrovarla.</small>
+      </label>
 
       <h3>Dati tecnici</h3>
       <div class="form-row">

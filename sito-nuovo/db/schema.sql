@@ -40,6 +40,9 @@ CREATE TABLE properties (
   postal_code VARCHAR(10) NOT NULL DEFAULT '',
   lat VARCHAR(20) NOT NULL DEFAULT '',
   lng VARCHAR(20) NOT NULL DEFAULT '',
+  -- Quanto si mostra la posizione: `zona` arrotonda le coordinate a ~110 m e
+  -- toglie il segnaposto, `esatto` le lascia intere. Prudente per difetto.
+  map_mode VARCHAR(10) NOT NULL DEFAULT 'zona',
   price {MONEY} NULL,
   price_hidden INTEGER NOT NULL DEFAULT 0,
   -- Prezzo minimo accettato dal proprietario. Non esce MAI dal gestionale:

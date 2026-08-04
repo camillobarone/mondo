@@ -241,6 +241,26 @@ riconosciuti. Salvando, il riquadro si ricarica nella forma canonica con il
 conteggio delle domande riconosciute: se una manca, si vede lì invece che
 sulla pagina pubblicata.
 
+### Mappa dell'immobile (`Mil\Core\Mappa`)
+Le coordinate c'erano già — colonne `lat`/`lng`, portate dall'importazione —
+ma non si vedevano da nessuna parte. Adesso la scheda ha «Dove si trova».
+
+Niente Google Maps incorporato: sarebbe uno script di terzi su ogni scheda,
+con i cookie e quindi il banner. In pagina c'è un riquadro di OpenStreetMap
+dentro un `<details>`, che **finché resta chiuso non viene scaricato**
+(verificato: 7 richieste di rete, nessuna esterna), più un collegamento a
+Google Maps che sul telefono apre l'applicazione.
+
+`properties.map_mode` decide quanto si mostra, immobile per immobile:
+- `zona` (predefinito) — coordinate arrotondate a 3 decimali (~110 m), niente
+  segnaposto, riquadro largo ~2 km;
+- `esatto` — coordinate intere e segnaposto sulla casa.
+
+L'arrotondamento avviene in `Mappa::punto()`, che è **l'unico punto da cui
+escono le coordinate**: ci passa anche il `geo` del JSON-LD. Verificato che in
+modalità `zona` le coordinate esatte non compaiono da nessuna parte nella
+pagina — se il calcolo fosse solo nel template, uscirebbero dallo schema.
+
 ### Impaginazione del testo scritto a mano (`Mil\Core\Testo`)
 Articoli, pagine e descrizioni degli immobili si scrivono in una chat e si
 incollano nel gestionale. Prima uscivano con `nl2br()`, cioè con i `##` e gli

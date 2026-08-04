@@ -413,6 +413,9 @@ final class PropertyController
             'postal_code' => mb_substr(trim((string) ($_POST['postal_code'] ?? '')), 0, 10),
             'lat' => mb_substr(trim((string) ($_POST['lat'] ?? '')), 0, 20),
             'lng' => mb_substr(trim((string) ($_POST['lng'] ?? '')), 0, 20),
+            // Qualunque cosa arrivi che non sia «esatto» vale «zona»: se un
+            // giorno il modulo cambia, si sbaglia dalla parte prudente.
+            'map_mode' => (string) ($_POST['map_mode'] ?? '') === 'esatto' ? 'esatto' : 'zona',
             'price' => float_or_null($_POST['price'] ?? null),
             'price_hidden' => isset($_POST['price_hidden']) ? 1 : 0,
             'condo_fees' => float_or_null($_POST['condo_fees'] ?? null),
@@ -486,7 +489,7 @@ final class PropertyController
             'id' => 0, 'ref' => '', 'title' => '', 'slug' => '', 'status' => 'draft',
             'deal_stage' => 'acquisizione',
             'contract' => 'vendita', 'type' => 'appartamento', 'city' => 'Lecce', 'area' => '',
-            'address' => '', 'postal_code' => '', 'lat' => '', 'lng' => '', 'price' => null,
+            'address' => '', 'postal_code' => '', 'lat' => '', 'lng' => '', 'map_mode' => 'zona', 'price' => null,
             'price_hidden' => 0, 'min_price' => null, 'condo_fees' => null, 'sqm' => 0,
             'lot_sqm' => 0, 'rooms' => 0,
             'bedrooms' => 0, 'bathrooms' => 0, 'floor' => '', 'floors_total' => 0, 'year_built' => 0,
