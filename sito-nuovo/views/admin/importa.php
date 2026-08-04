@@ -56,7 +56,7 @@ use Mil\Core\Csrf;
           <tbody>
           <?php foreach ($censimento['campi'] as $campo): ?>
             <tr>
-              <td><code><?= e((string) ($campo['meta_key'] ?? '')) ?></code></td>
+              <td><code><?= e((string) ($campo['key'] ?? '')) ?></code></td>
               <td><?= (int) ($campo['n'] ?? 0) ?></td>
               <td><?= e(tronca((string) ($campo['esempio'] ?? ''), 60)) ?></td>
             </tr>
