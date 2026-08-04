@@ -51,19 +51,26 @@ $term = $pdo->prepare('INSERT INTO vnb_terms (term_id, name, slug) VALUES (?,?,?
 $tt = $pdo->prepare('INSERT INTO vnb_term_taxonomy (term_taxonomy_id, term_id, taxonomy) VALUES (?,?,?)');
 $rel = $pdo->prepare('INSERT INTO vnb_term_relationships (object_id, term_taxonomy_id) VALUES (?,?)');
 
-// Tassonomie: nomi come stanno davvero sul sito, compreso quello sporco.
+// Tassonomie. I nomi contrassegnati [vero] sono stati letti sul WordPress in
+// produzione via MCP il 4 agosto 2026: sono scritti così, con il title SEO al
+// posto del nome e la elle minuscola di "Torre lapillo". Gli altri servono a
+// coprire casi che sul sito non ci sono ancora.
 $termini = [
-    1 => ['Ville in Vendita a Lecce e Provincia', 'ville', 'property_category'],
-    2 => ['Appartamenti', 'appartamenti', 'property_category'],
+    1 => ['Ville in Vendita a Lecce e Provincia', 'ville', 'property_category'],  // [vero] 67
+    2 => ['Appartamenti', 'appartamenti', 'property_category'],                   // [vero] 28
     3 => ['Terreni edificabili', 'terreni', 'property_category'],
-    4 => ['Vendita', 'vendita', 'property_action_category'],
+    4 => ['Vendita', 'vendita', 'property_action_category'],                      // [vero] 60
     5 => ['Affitto', 'affitto', 'property_action_category'],
-    6 => ['Porto Cesareo', 'porto-cesareo', 'property_city'],
-    7 => ['Lecce', 'lecce', 'property_city'],
+    6 => ['Porto Cesareo', 'porto-cesareo', 'property_city'],                     // [vero] 179
+    7 => ['Lecce città', 'lecce-citta', 'property_city'],                         // [vero] 117
     8 => ['Zona Poggio', 'zona-poggio', 'property_area'],
-    9 => ['Giardino', 'giardino', 'property_features'],
+    9 => ['Giardino', 'giardino', 'property_features'],                           // [vero] 305
     10 => ['Posto auto', 'posto-auto', 'property_features'],
     11 => ['Impianto di allarme', 'allarme', 'property_features'],
+    12 => ['Indipendenti', 'indipendenti', 'property_category'],                  // [vero] 46
+    13 => ['Torre lapillo', 'torre-lapillo', 'property_city'],                    // [vero] 1979
+    14 => ['Nardò', 'nardo', 'property_city'],                                    // [vero] 169
+    15 => ['Area Solare di Proprietà', 'area-solare', 'property_features'],       // [vero] 268
 ];
 foreach ($termini as $id => [$nome, $slug, $tax]) {
     $term->execute([$id, $nome, $slug]);
@@ -115,9 +122,11 @@ $immobili = [
             'property_zip' => '73010',
             'property_latitude' => '40.26287',
             'property_longitude' => '17.89698',
-            'property_year' => '2005',
+            // Trattino, non underscore: è così che si chiamano sul sito vero.
+            'property-year' => '2005',
+            'stories-number' => '2',
             'energy_class' => 'D',
-            'property_id' => 'MIL-0042',
+            'property_internal_id' => 'MIL-0042',
             '_thumbnail_id' => '90001',
             'image_to_attach' => '90001,90002,90003,90004,90005,90006,90007',
         ],
@@ -170,6 +179,31 @@ $immobili = [
         'date' => '2026-05-02 10:00:00',
         'meta' => ['property_price' => '95000', 'property_lot_size' => '1200'],
         'terms' => [3, 5, 7],
+    ],
+    [
+        // La forma che gli immobili hanno davvero sul sito, e che prima
+        // dell'importazione vera nessun caso di prova riproduceva:
+        // due categorie insieme (la generica arriva per prima), tre comuni
+        // di cui solo uno giusto, galleria come array serializzato invece
+        // che come lista, e una caratteristica fuori vocabolario.
+        // Atteso: casa-indipendente, comune Torre Lapillo, zona vuota.
+        'id' => 29049,
+        'title' => 'Casa indipendente a Torre Lapillo, con rendita',
+        'slug' => 'torre-lapillo-casa-con-rendita',
+        'content' => '<p>Casa indipendente con corte.</p>',
+        'excerpt' => '',
+        'status' => 'publish',
+        'date' => '2025-10-11 11:14:06',
+        'meta' => [
+            'property_price' => '0',
+            'property_size' => '95',
+            'property_bedrooms' => '3',
+            'property_bathrooms' => '1',
+            'energy_class' => 'H',
+            '_thumbnail_id' => '90002',
+            'wpestate_property_gallery' => 'a:3:{i:0;s:5:"90002";i:1;s:5:"90003";i:2;s:5:"90004";}',
+        ],
+        'terms' => [2, 12, 4, 14, 6, 13, 15],
     ],
 ];
 

@@ -229,13 +229,25 @@ cambiando copertina cambia anche `#primaryimage` nel JSON-LD, che resta valido.
 
 ## 7. Cosa manca — dichiarato, non nascosto
 
-**Il punto più importante:** la mappatura dei campi WP-Residence **non è
-verificata sul database vero**. Il connettore MCP del sito è andato in timeout
-quattro volte, e ho cambiato strategia invece di insistere. Per questo
-l'importatore ha `--campi`, che stampa i nomi reali dei meta prima di
-importare: **è il primo passo e non è saltabile.**
+**La mappatura WP-Residence adesso è verificata** (4 agosto 2026). Il
+connettore MCP non andava in timeout: non esponeva i meta, perché WP-Residence
+non li registra con `show_in_rest`. Letti in contesto `edit` sono usciti tutti.
+Quattro chiavi erano sbagliate — `property-year`, `stories-number`,
+`property_internal_id`, `wpestate_property_gallery` — e il riconoscimento della
+tipologia prendeva la categoria sbagliata sugli immobili che ne portano più di
+una, che sul sito vero sono la maggioranza. Corretto e coperto da
+`php bin/verifica-mappatura.php` (12 schede reali). Dettaglio in
+`docs/IMPORT-DA-WORDPRESS.md`.
 
-Poi:
+Resta comunque da lanciare `--campi` sul database vero: la verifica ha coperto
+13 immobili su 49, e una chiave usata su una scheda sola la trova solo il
+censimento completo.
+
+Cosa manca davvero:
+- **Il video degli annunci non viene importato.** Le schede hanno
+  `embed_video_type` / `embed_video_id` e lo schema dichiara un `VideoObject`;
+  il gestionale non ha un campo dove metterlo. Serve una colonna, prima di
+  puntare il dominio.
 - Esecuzione reale su MySQL non provata (qui c'è solo SQLite)
 - Rich Results Test di Google (serve una URL pubblica)
 - Import CSV dell'anagrafica clienti (in WordPress non c'è)
@@ -284,12 +296,13 @@ alla società. Va però messa davanti prima, non dopo.
 Non c'è niente di rotto e niente in sospeso a metà. Le strade aperte, in
 ordine di quanto valgono:
 
-1. **Far girare `--campi` sul database WordPress vero** e correggere la
-   mappatura. È l'unico punto dove il lavoro fatto potrebbe rivelarsi sbagliato.
+1. **Decidere fra sito nuovo e terza strada** (punto 9). Tutto il resto
+   dipende da questa, e adesso è il primo punto: la mappatura, che era il
+   rischio tecnico aperto, è verificata.
 2. **Provare su MySQL** — installazione via `public/install.php` su un
    sottodominio SiteGround, per esempio `prova.mondoimmobiliarelecce.it`.
-3. **Decidere fra sito nuovo e terza strada** (punto 9). Tutto il resto
-   dipende da questa.
+3. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
+   immobili, e decidere il campo video.
 4. Se si va avanti: mappa dei redirect, `og:image` sulle schede (oggi manca),
    export verso i portali.
 

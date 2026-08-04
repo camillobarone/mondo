@@ -7,17 +7,24 @@ namespace Mil\Core;
 /**
  * Traduce un immobile WP-Residence nello schema del gestionale.
  *
- * ⚠️ I nomi dei meta di WP-Residence cambiano fra versioni e temi child.
- * Per ogni campo qui sotto ci sono più alias, provati in ordine, e tutto
- * ciò che non viene riconosciuto finisce nel rapporto invece di sparire in
- * silenzio. Prima di un'importazione vera lanciare `--campi`: stampa i meta
- * realmente presenti sul sito, così gli alias si correggono su dati veri
- * invece che su una convenzione sperata.
+ * Le chiavi qui sotto sono state lette sul database vero di
+ * mondoimmobiliarelecce.it (connettore MCP, contesto `edit`, post 31915 e
+ * 22670 — uno recente e uno del 2022) e i nomi delle tassonomie su tredici
+ * immobili fra pubblicati e bozze. Non sono una convenzione sperata.
+ *
+ * Restano più alias per campo perché i meta di WP-Residence cambiano fra
+ * versioni: il primo è quello verificato, gli altri sono rete di sicurezza.
+ * Prima di un'importazione vera lanciare comunque `--campi`, che stampa il
+ * censimento completo su tutti e 49 gli immobili.
  */
 final class WpMapper
 {
     /**
      * Campo del gestionale => meta WordPress candidati, in ordine di priorità.
+     *
+     * Attenzione ai trattini: WP-Residence mescola `property_price` con
+     * `property-year` e `stories-number`. Cercare l'underscore dove il tema
+     * usa il trattino non dà errore, dà una colonna vuota.
      *
      * @var array<string,array<int,string>>
      */
@@ -32,40 +39,61 @@ final class WpMapper
         'postal_code' => ['property_zip', 'prop_zip', 'property_postal_code'],
         'lat' => ['property_latitude', 'prop_latitude'],
         'lng' => ['property_longitude', 'prop_longitude'],
-        'year_built' => ['property_year', 'prop_year', 'property_year_built'],
+        'year_built' => ['property-year', 'property_year', 'property_year_built'],
         'energy_class' => ['energy_class', 'property_energy_class', 'prop_energy_class'],
-        'ref' => ['property_id', 'prop_id', 'property_reference'],
+        'ref' => ['property_internal_id', 'mls', 'property_id', 'property_reference'],
         'floor' => ['property_floor', 'prop_floor'],
-        'floors_total' => ['property_floors', 'prop_floors'],
-        // WP-Residence tiene la galleria in un meta serializzato o in una
-        // lista di ID separati da virgola, secondo la versione.
-        'gallery' => ['image_to_attach', 'property_images', 'gallery_images', 'prop_gallery'],
+        'floors_total' => ['stories-number', 'property_floors', 'prop_floors'],
+        // WP-Residence tiene la galleria sia come lista di ID separati da
+        // virgola (`image_to_attach`) sia come array serializzato
+        // (`wpestate_property_gallery`): sul sito vero ci sono entrambi.
+        'gallery' => ['image_to_attach', 'wpestate_property_gallery', 'property_images', 'gallery_images'],
     ];
 
     /**
      * Radici per riconoscere la tipologia dal nome del termine.
      *
-     * Sono radici e non parole intere perché i termini del sito sono al
-     * plurale ("Ville in Vendita a Lecce e Provincia", "Terreni edificabili")
-     * e a volte contengono un title SEO invece del solo nome. L'ordine conta:
-     * si prende la prima che combacia, quindi `villett` viene prima di `vill`,
-     * altrimenti ogni villetta finirebbe classificata come villa.
+     * Sono radici e non parole intere perché i termini veri del sito sono al
+     * plurale e a volte contengono un title SEO invece del solo nome: la
+     * categoria 67 si chiama "Ville in Vendita a Lecce e Provincia".
+     *
+     * **L'ordine è la priorità.** Sul sito vero un immobile porta più
+     * categorie insieme — il post 31915 è "Appartamenti" *e* "Indipendenti" —
+     * quindi non si può prendere la prima categoria che combacia con
+     * qualcosa: si scorrono le tipologie dalla più specifica alla più
+     * generica e si tiene la prima che trova un termine. Al contrario, quella
+     * casa indipendente verrebbe importata come appartamento solo perché
+     * WordPress restituisce la categoria 28 prima della 46.
+     *
+     * Da qui anche `villett` prima di `vill` e le tipologie di pregio prima
+     * di `appartamento`, che è il paracadute.
      */
     private const TIPI = [
         'nuda-proprieta' => ['nuda propriet'],
-        'casa-indipendente' => ['casa indipendente', 'casa singola', 'indipendent'],
+        'masseria' => ['masseri'],
+        'palazzo-storico' => ['palazzo storico', 'antiche dimore', 'antica dimora'],
+        'locale-commerciale' => ['commercial', 'negozi', 'uffic', 'capannon', 'artigianal'],
+        'terreno' => ['terren', 'suol', 'lotto edificabil'],
         'villetta' => ['villett', 'villin'],
         'villa' => ['vill'],
-        'masseria' => ['masseri'],
+        'casa-indipendente' => ['casa indipendente', 'casa singola', 'indipendent'],
         'attico' => ['attic', 'mansard'],
         'monolocale' => ['monolocal'],
         'bilocale' => ['bilocal'],
         'trilocale' => ['trilocal'],
         'quadrilocale' => ['quadrilocal'],
-        'terreno' => ['terren', 'suol', 'lotto'],
-        'locale-commerciale' => ['commercial', 'negozi', 'uffic', 'capannon'],
-        'appartamento' => ['appartament', 'apparta'],
+        // "Residence" e "Multiproprietà" sono categorie vere del sito: senza
+        // una radice qui ogni immobile che le porta da solo finirebbe fra gli
+        // avvisi invece che fra gli appartamenti.
+        'appartamento' => ['appartament', 'apparta', 'residence', 'multiproprie'],
     ];
+
+    /**
+     * Tassonomie in cui cercare la tipologia. La nuda proprietà sul sito vero
+     * non è una categoria ma una caratteristica (termine 2003), quindi va
+     * cercata anche lì, altrimenti si perde.
+     */
+    private const TASSONOMIE_TIPO = ['property_category', 'property_features'];
 
     /** @var array<int,string> avvisi accumulati durante la mappatura */
     private array $avvisi = [];
@@ -83,9 +111,15 @@ final class WpMapper
 
         $tipo = $this->tipo($terms, $wpId);
         $contratto = $this->contratto($terms);
-        [$comune, $zona] = $this->luogo($terms, $meta);
+        [$comune, $zona] = $this->luogo($terms, $meta, $titolo);
 
         $prezzo = $this->numero($this->meta($meta, 'price'));
+        // Uno zero a database è la trattativa riservata scritta con lo zero,
+        // non un immobile che si regala: va trattato come prezzo assente,
+        // altrimenti il sito pubblica "€ 0".
+        if ($prezzo !== null && $prezzo <= 0) {
+            $prezzo = null;
+        }
 
         return [
             'wp_id' => $wpId,
@@ -183,12 +217,18 @@ final class WpMapper
     /** @param array<string,array<int,string>> $terms */
     private function tipo(array $terms, int $wpId): string
     {
-        $nomi = $terms['property_category'] ?? [];
+        $nomi = [];
+        foreach (self::TASSONOMIE_TIPO as $tassonomia) {
+            foreach ($terms[$tassonomia] ?? [] as $nome) {
+                $nomi[] = mb_strtolower($nome);
+            }
+        }
 
-        foreach ($nomi as $nome) {
-            $n = mb_strtolower($nome);
-            foreach (self::TIPI as $slug => $parole) {
-                foreach ($parole as $parola) {
+        // Le tipologie fuori, i termini dentro: vince la tipologia più
+        // specifica, non il termine che WordPress restituisce per primo.
+        foreach (self::TIPI as $slug => $parole) {
+            foreach ($parole as $parola) {
+                foreach ($nomi as $n) {
                     if (str_contains($n, $parola)) {
                         return $slug;
                     }
@@ -224,10 +264,12 @@ final class WpMapper
      * @param array<string,string> $meta
      * @return array{0:string,1:string}
      */
-    private function luogo(array $terms, array $meta): array
+    private function luogo(array $terms, array $meta, string $titolo): array
     {
-        $comune = $terms['property_city'][0] ?? '';
-        $zona = $terms['property_area'][0] ?? '';
+        $comune = $this->canonizzaComune(
+            $this->termineDalTitolo($terms['property_city'] ?? [], $titolo)
+        );
+        $zona = $this->termineDalTitolo($terms['property_area'] ?? [], $titolo);
 
         // Senza tassonomia si prova a dedurre il comune dall'indirizzo, ma
         // solo se è uno di quelli presidiati: meglio vuoto che sbagliato.
@@ -241,7 +283,82 @@ final class WpMapper
             }
         }
 
+        // Sul sito vero `property_area` ripete quasi sempre il comune
+        // ("Trepuzzi" / "Trepuzzi"). Ripeterlo anche qui non aggiunge niente
+        // e riempie di rumore le schede: la zona si tiene solo se è altro.
+        if ($this->confrontabile($zona) === $this->confrontabile($comune)) {
+            $zona = '';
+        }
+
         return [trim($comune), trim($zona)];
+    }
+
+    /**
+     * Il termine giusto quando ce n'è più di uno.
+     *
+     * Un immobile a Torre Lapillo porta anche "Nardò" e "Porto Cesareo" fra i
+     * comuni, e WordPress restituisce per primo quello con l'ID più basso —
+     * cioè il più vecchio, non il più giusto. Il titolo dell'annuncio invece
+     * il posto lo dice: se uno dei termini compare lì, è quello.
+     *
+     * @param array<int,string> $nomi
+     */
+    private function termineDalTitolo(array $nomi, string $titolo): string
+    {
+        if ($nomi === []) {
+            return '';
+        }
+
+        $t = $this->confrontabile($titolo);
+        foreach ($nomi as $nome) {
+            $n = $this->confrontabile($nome);
+            if ($n !== '' && str_contains($t, $n)) {
+                return $nome;
+            }
+        }
+
+        return $nomi[0];
+    }
+
+    /**
+     * Il comune scritto come lo scrive il gestionale.
+     *
+     * Sul sito vero i termini sono "Lecce città" e "Torre lapillo": lasciati
+     * così non combaciano con `Vocab::CITIES`, e il filtro per comune del
+     * sito pubblico — che accetta solo quei valori — non li trova mai.
+     */
+    private function canonizzaComune(string $nome): string
+    {
+        $n = $this->confrontabile($nome);
+        if ($n === '') {
+            return '';
+        }
+
+        foreach (Vocab::CITIES as $city) {
+            $c = $this->confrontabile($city);
+            if ($n === $c) {
+                return $city;
+            }
+        }
+
+        // Secondo giro sui prefissi, per assorbire i suffissi redazionali:
+        // "Lecce città" torna Lecce. Si fa dopo il confronto esatto, così
+        // "San Cesario di Lecce" resta sé stesso invece di diventare Lecce.
+        foreach (Vocab::CITIES as $city) {
+            if (str_starts_with($n, $this->confrontabile($city))) {
+                return $city;
+            }
+        }
+
+        return trim($nome);
+    }
+
+    /** Forma confrontabile: solo lettere e cifre, minuscole. */
+    private function confrontabile(string $valore): string
+    {
+        $v = mb_strtolower(trim($valore));
+
+        return preg_replace('/[^\p{L}\p{N}]+/u', '', $v) ?? $v;
     }
 
     /** @param array<string,array<int,string>> $terms */
@@ -251,13 +368,26 @@ final class WpMapper
 
         foreach ($terms['property_features'] ?? [] as $nome) {
             $n = mb_strtolower($nome);
+
+            // La nuda proprietà è già diventata la tipologia dell'immobile:
+            // ripeterla fra le dotazioni la farebbe leggere come un accessorio.
+            if (str_contains($n, 'nuda propriet')) {
+                continue;
+            }
+
             foreach (Vocab::FEATURES as $feature) {
                 if (str_contains($n, mb_strtolower($feature))) {
                     $trovate[] = $feature;
                     continue 2;
                 }
             }
-            $this->avvisi[] = sprintf('Dotazione non nel vocabolario, ignorata: "%s".', $nome);
+
+            // Fuori vocabolario non vuol dire inventata: "Area Solare di
+            // Proprietà" è un termine vero, scelto a mano sul sito attuale.
+            // Si tiene com'è — buttarla sarebbe perdere un dato di vendita —
+            // e l'avviso resta per poterla poi aggiungere a `Vocab::FEATURES`.
+            $trovate[] = trim($nome);
+            $this->avvisi[] = sprintf('Dotazione fuori vocabolario, importata com\'è: "%s".', $nome);
         }
 
         return implode(', ', array_unique($trovate));

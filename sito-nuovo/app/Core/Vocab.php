@@ -18,6 +18,7 @@ final class Vocab
 
     public const TYPES = [
         'appartamento' => 'Appartamento',
+        'monolocale' => 'Monolocale',
         'bilocale' => 'Bilocale',
         'trilocale' => 'Trilocale',
         'quadrilocale' => 'Quadrilocale',
@@ -26,6 +27,10 @@ final class Vocab
         'villetta' => 'Villetta',
         'casa-indipendente' => 'Casa indipendente',
         'masseria' => 'Masseria',
+        // Il sito attuale ha le categorie "Antiche Dimore" e "Palazzo
+        // Storico": senza una voce qui gli immobili di pregio finirebbero
+        // importati come appartamenti.
+        'palazzo-storico' => 'Palazzo storico',
         'nuda-proprieta' => 'Nuda proprietà',
         'terreno' => 'Terreno',
         'locale-commerciale' => 'Locale commerciale',
@@ -62,13 +67,25 @@ final class Vocab
         'rustico' => 'Allo stato rustico',
     ];
 
-    public const ENERGY = ['A4', 'A3', 'A2', 'A1', 'B', 'C', 'D', 'E', 'F', 'G'];
+    /**
+     * Classi energetiche selezionabili. La `H` non appartiene alla scala
+     * nazionale in vigore, ma è il valore che alcune schede del sito attuale
+     * portano davvero (verificato sul post 22670): toglierla dall'elenco non
+     * la cancella dai dati, la fa solo sparire in silenzio all'importazione.
+     */
+    public const ENERGY = ['A4', 'A3', 'A2', 'A1', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-    /** Comuni e marine effettivamente presidiati. Salento, non "Puglia" generica. */
+    /**
+     * Comuni e marine effettivamente presidiati. Salento, non "Puglia"
+     * generica. L'elenco completo dei comuni usati dal sito attuale si ottiene
+     * con `php bin/importa-da-wordpress.php --campi`, che stampa il censimento
+     * della tassonomia `property_city`.
+     */
     public const CITIES = [
         'Lecce', 'Porto Cesareo', 'Torre Lapillo', 'Torre Castiglione', 'San Cataldo',
         'Frigole', 'Nardò', 'Copertino', 'Leverano', 'Galatina', 'Gallipoli',
         'Otranto', 'San Cesario di Lecce', 'Trepuzzi', 'Monteroni di Lecce',
+        "Sant'Isidoro",
     ];
 
     public const FEATURES = [

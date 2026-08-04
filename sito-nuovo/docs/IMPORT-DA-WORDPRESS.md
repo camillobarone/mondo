@@ -9,18 +9,43 @@ Lo script **non scrive mai** sul sito WordPress. Legge e basta.
 
 ---
 
-## ⚠️ Leggi questo prima di partire
+## Stato della mappatura
 
-I nomi dei campi personalizzati di WP-Residence **cambiano fra versioni del
-tema e temi child**. La mappatura in `app/Core/WpMapper.php` segue le
-convenzioni del tema (`property_price`, `property_size`, `property_bedrooms`…)
-ma **non è stata verificata sul database vero**: il connettore MCP del sito è
-andato in timeout ripetutamente mentre la scrivevo, quindi resta un'ipotesi
-ragionevole, non un dato accertato.
+**Verificata sul sito vero il 4 agosto 2026.** I meta sono stati letti sul
+WordPress in produzione tramite il connettore MCP in contesto `edit` (post
+31915, del 2026, e 22670, del 2022), le tassonomie su tredici immobili fra
+pubblicati e bozze. Quello che ne è uscito sta in `app/Core/WpMapper.php` e
+si ricontrolla con:
 
-Per questo il passo 1 esiste e non è saltabile: stampa i nomi che il *tuo*
-sito usa davvero. Se combaciano, non tocchi niente. Se non combaciano, si
-correggono gli alias e si riparte — cinque minuti, non una giornata.
+```bash
+php bin/verifica-mappatura.php
+```
+
+Quel comando ripassa dodici schede reali e non ha bisogno né del database
+WordPress né di rete: se un giorno smette di passare, o è cambiato il mapper
+o è cambiato il sito.
+
+Cinque cose che la verifica ha corretto, e che vale la pena conoscere prima
+di leggere il resto:
+
+| Campo | Si cercava | Sul sito si chiama |
+|---|---|---|
+| Anno di costruzione | `property_year` | **`property-year`** (trattino) |
+| Numero di piani | `property_floors` | **`stories-number`** |
+| Riferimento | `property_id` | **`property_internal_id`** |
+| Galleria serializzata | *non letta* | **`wpestate_property_gallery`** |
+
+E la quinta, che non è un nome di campo: **un immobile porta più categorie
+insieme.** Il post 31915 è "Casa indipendente a Trepuzzi" ed è classificato
+`Appartamenti` *e* `Indipendenti`. Prendere la prima categoria che combacia
+significava importarlo come appartamento, perché WordPress restituisce la 28
+prima della 46. Ora si scorrono le tipologie dalla più specifica alla più
+generica. Vale anche per i comuni: un immobile a Torre Lapillo porta anche
+Nardò e Porto Cesareo, e si sceglie quello che compare nel titolo.
+
+⚠️ Resta comunque il passo 1. La verifica ha coperto tredici immobili su
+quarantanove: il censimento completo lo dà solo `--campi`, ed è l'unico modo
+di accorgersi di una chiave usata su una scheda sola.
 
 ---
 
@@ -66,7 +91,7 @@ importerebbe.
 | Prezzi a zero o vuoti | l'alias del prezzo è sbagliato — torna al passo 1 |
 | Metrature a zero ovunque | idem per `property_size` |
 | «Tipologia non riconosciuta» | il nome del termine non contiene nessuna radice nota: aggiungila a `TIPI` in `WpMapper.php` |
-| «Dotazione non nel vocabolario» | quella caratteristica viene ignorata: se ti serve, aggiungila a `Vocab::FEATURES` |
+| «Dotazione fuori vocabolario» | la caratteristica **viene importata comunque**, com'è scritta; l'avviso serve solo a decidere se aggiungerla a `Vocab::FEATURES` per averla anche nei filtri |
 | `riservato` su un immobile che ha un prezzo | il prezzo non è stato letto |
 
 Un `riservato` su un immobile che davvero non espone il prezzo è corretto: a
@@ -107,16 +132,24 @@ correggi gli alias, rilanci.
 | Stato | `publish` → Pubblicato, `draft` → Bozza |
 | Prezzo, superficie, locali, camere, bagni, piano | meta di WP-Residence |
 | Lotto, anno, classe energetica, CAP, coordinate | idem |
-| Riferimento | meta `property_id`, oppure generato (`MIL-0001`…) |
-| Tipologia | tassonomia `property_category`, riconosciuta per radice |
+| Riferimento | meta `property_internal_id` o `mls`, oppure generato (`MIL-0001`…) |
+| Tipologia | `property_category` e `property_features`, per radice, dalla più specifica alla più generica |
 | Contratto | tassonomia `property_action_category` |
-| Comune e zona | `property_city` e `property_area` |
-| Dotazioni | `property_features`, filtrate sul vocabolario |
+| Comune e zona | `property_city` e `property_area`; fra più termini vince quello nominato nel titolo, e il comune viene riportato alla forma di `Vocab::CITIES` («Lecce città» → Lecce) |
+| Dotazioni | `property_features`, ricondotte al vocabolario dove possibile e tenute com'è altrimenti |
 | Foto | immagine in evidenza + galleria, convertite in WebP e ridotte a 1600 px |
 
 **Non** viene importato: JSON-LD (lo rigenera il codice), meta di Rank Math
 (SEO title e description si ricompilano dal gestionale), i campi di
 WP-Residence senza equivalente.
+
+⚠️ Fra quelli senza equivalente ce n'è uno che pesa: **il video**. Le schede
+del sito attuale portano `embed_video_type` e `embed_video_id` — sul post
+31915 c'è uno YouTube Shorts, sul 22670 un video di presentazione — e lo
+schema di quelle pagine dichiara un `VideoObject`. Il gestionale nuovo non ha
+un campo per tenerlo, quindi oggi quel contenuto si perderebbe. Serve una
+colonna e un blocco nella scheda: è lavoro piccolo, ma va deciso prima di
+puntare il dominio, non dopo.
 
 ---
 
@@ -128,10 +161,11 @@ WP-Residence senza equivalente.
   Elementor o WPBakery però può arrivare del testo di impaginazione. Dopo
   l'importazione apri due o tre descrizioni e guarda: si correggono dal
   gestionale in un minuto.
-- **La galleria** viene letta dai meta `image_to_attach` / `property_images`,
-  che secondo la versione del tema contengono una lista di ID o un array
-  serializzato. Lo script estrae i numeri da entrambi. Se le foto risultano
-  poche, controlla al passo 1 in che chiave sta la galleria.
+- **La galleria** sta in due meta contemporaneamente: `image_to_attach` (lista
+  di ID separati da virgola) e `wpestate_property_gallery` (array serializzato
+  PHP). Lo script legge il primo e ricade sul secondo, estraendo i numeri da
+  entrambi. Se le foto risultano poche, controlla al passo 1 in che chiave sta
+  la galleria.
 - **Nessun immobile viene cancellato.** Se togli un immobile da WordPress,
   quello importato resta: va archiviato a mano dal gestionale.
 - **I dati commerciali non ci sono in WordPress** — incarico, scadenza,
@@ -165,4 +199,12 @@ php bin/importa-da-wordpress.php --prova \
 Contiene i casi che sul sito vero esistono: un immobile completo, uno a
 trattativa riservata, una bozza, un prezzo in formato italiano
 (`€ 178.000,00`), un termine di tassonomia con un title SEO nel campo nome
-(«Ville in Vendita a Lecce e Provincia») e una dotazione fuori vocabolario.
+(«Ville in Vendita a Lecce e Provincia»), un comune scritto «Lecce città» e
+una dotazione fuori vocabolario.
+
+E, dal 4 agosto, la forma che gli immobili hanno davvero e che prima nessun
+caso di prova riproduceva: due categorie insieme, tre comuni di cui uno solo
+giusto, galleria come array serializzato e prezzo scritto `0` invece che
+lasciato vuoto. I nomi dei termini segnati `[vero]` in
+`bin/finto-wordpress.php` sono copiati dal database di produzione, con la
+elle minuscola di «Torre lapillo» compresa: non vanno "sistemati".
