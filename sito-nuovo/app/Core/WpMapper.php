@@ -200,6 +200,67 @@ final class WpMapper
         return array_values(array_unique($ids));
     }
 
+    /**
+     * Verifica, campo per campo, se WordPress contiene davvero il dato che
+     * l'importazione andrà a cercare.
+     *
+     * È il controllo che serve davvero prima di importare. L'elenco crudo dei
+     * meta presenti non lo è: sono sessanta nomi tecnici, e chi deve decidere
+     * se procedere non ha modo di sapere quali contino. Questa risposta invece
+     * si legge — «prezzo: trovato su 49 schede», «anno di costruzione: non
+     * trovato» — e dice in anticipo cosa arriverà vuoto.
+     *
+     * @param array<int,array{key:string,n:int,esempio:string}> $censimento da WpSource::metaCensus()
+     * @return array<int,array{campo:string,chiave:string,schede:int,esempio:string}>
+     */
+    public function copertura(array $censimento): array
+    {
+        $conteggi = [];
+        foreach ($censimento as $riga) {
+            $conteggi[$riga['key']] = $riga;
+        }
+
+        $out = [];
+        foreach (self::CAMPI_LEGGIBILI as $campo => $etichetta) {
+            $trovato = null;
+            foreach (self::META[$campo] ?? [] as $chiave) {
+                if (isset($conteggi[$chiave]) && $conteggi[$chiave]['n'] > 0) {
+                    $trovato = $conteggi[$chiave];
+                    break;
+                }
+            }
+
+            $out[] = [
+                'campo' => $etichetta,
+                'chiave' => $trovato === null ? '' : (string) $trovato['key'],
+                'schede' => $trovato === null ? 0 : (int) $trovato['n'],
+                'esempio' => $trovato === null ? '' : (string) $trovato['esempio'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /** I nomi dei campi come li chiamerebbe un agente, non il database. */
+    private const CAMPI_LEGGIBILI = [
+        'price' => 'Prezzo',
+        'sqm' => 'Superficie',
+        'lot_sqm' => 'Superficie del lotto',
+        'rooms' => 'Locali',
+        'bedrooms' => 'Camere',
+        'bathrooms' => 'Bagni',
+        'address' => 'Indirizzo',
+        'postal_code' => 'CAP',
+        'lat' => 'Latitudine',
+        'lng' => 'Longitudine',
+        'year_built' => 'Anno di costruzione',
+        'energy_class' => 'Classe energetica',
+        'ref' => 'Riferimento',
+        'floor' => 'Piano',
+        'floors_total' => 'Piani totali',
+        'gallery' => 'Galleria fotografica',
+    ];
+
     // ------------------------------------------------------------ interni
 
     /** @param array<string,string> $meta */

@@ -11,6 +11,7 @@ use Mil\Core\Router;
 use Mil\Core\Session;
 use Mil\Core\View;
 use Mil\Core\WpImport;
+use Mil\Core\WpMapper;
 use Mil\Core\WpSource;
 use Mil\Repo\Log;
 use Throwable;
@@ -55,11 +56,15 @@ final class ImportController
 
         try {
             $wp = self::sorgente($percorso);
+            $censimento = $wp->metaCensus();
             Session::set('imp_censimento', [
                 'immobili' => count($wp->properties(['publish'])),
                 'bozze' => count($wp->properties(['draft'])),
-                'campi' => array_slice($wp->metaCensus(), 0, 60),
-                'tassonomie' => $wp->taxonomyCensus(),
+                // Prima cosa serve davvero: l'importazione trova i suoi dati?
+                'copertura' => (new WpMapper())->copertura($censimento),
+                // L'elenco crudo resta, ma in fondo e richiuso: serve solo a
+                // chi deve andare a vedere com'e chiamato un campo.
+                'campi' => $censimento,
             ]);
             Session::forget('imp_anteprima');
             Session::flash('Collegamento a WordPress riuscito.');

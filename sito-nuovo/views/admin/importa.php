@@ -46,24 +46,56 @@ use Mil\Core\Csrf;
       <strong><?= (int) $censimento['bozze'] ?></strong> bozze.
     </p>
 
+    <?php if (!empty($censimento['copertura'])): ?>
+      <?php $mancanti = array_filter($censimento['copertura'], static fn (array $c): bool => $c['schede'] === 0); ?>
+      <h3>L’importazione trova i suoi dati?</h3>
+      <p class="aiuto">Riga per riga: il dato che serve al gestionale, e se WordPress ce l’ha.
+        Quello che qui risulta «non trovato» arriverà vuoto, e andrà scritto a mano
+        sulla scheda — meglio saperlo adesso.</p>
+
+      <table class="tabella">
+        <thead><tr><th>Dato</th><th>Trovato su</th><th>Esempio</th></tr></thead>
+        <tbody>
+        <?php foreach ($censimento['copertura'] as $c): ?>
+          <tr class="<?= $c['schede'] === 0 ? 'spento' : '' ?>">
+            <td><strong><?= e((string) $c['campo']) ?></strong>
+              <?php if ($c['chiave'] !== ''): ?><br><small><code><?= e((string) $c['chiave']) ?></code></small><?php endif; ?>
+            </td>
+            <td><?= $c['schede'] === 0 ? '— non trovato' : (int) $c['schede'] . ' schede' ?></td>
+            <td><?= e(tronca((string) $c['esempio'], 50)) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+
+      <?php if ($mancanti === []): ?>
+        <p><strong>Tutti i dati che servono ci sono.</strong> Si può proseguire.</p>
+      <?php else: ?>
+        <p><strong><?= count($mancanti) ?></strong> dato/i non trovato/i su WordPress:
+          arriveranno vuoti. Non è un errore e non blocca l’importazione — vuol dire solo
+          che su WordPress quel campo non è compilato.</p>
+      <?php endif; ?>
+    <?php endif; ?>
+
     <?php if (!empty($censimento['campi'])): ?>
-      <h3>Campi presenti sulle schede</h3>
-      <p class="aiuto">Serve a controllare che i dati importanti — prezzo, superficie, camere —
-        stiano dove l’importazione li cerca. Se qualcosa manca, si vede prima e non dopo.</p>
-      <div class="tabella-scroll">
-        <table class="tabella">
-          <thead><tr><th>Campo</th><th>Su quante schede</th><th>Esempio</th></tr></thead>
-          <tbody>
-          <?php foreach ($censimento['campi'] as $campo): ?>
-            <tr>
-              <td><code><?= e((string) ($campo['key'] ?? '')) ?></code></td>
-              <td><?= (int) ($campo['n'] ?? 0) ?></td>
-              <td><?= e(tronca((string) ($campo['esempio'] ?? ''), 60)) ?></td>
-            </tr>
-          <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
+      <details>
+        <summary>Elenco completo dei campi WordPress (<?= count($censimento['campi']) ?>)</summary>
+        <p class="aiuto">Serve solo se bisogna capire con che nome è salvato un dato.</p>
+        <div class="tabella-scroll">
+          <table class="tabella">
+            <thead><tr><th>Campo</th><th>Su quante schede</th><th>Esempio</th></tr></thead>
+            <tbody>
+            <?php foreach ($censimento['campi'] as $campo): ?>
+              <tr>
+                <td><code><?= e((string) ($campo['key'] ?? '')) ?></code></td>
+                <td><?= (int) ($campo['n'] ?? 0) ?></td>
+                <td><?= e(tronca((string) ($campo['esempio'] ?? ''), 60)) ?></td>
+              </tr>
+            <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </details>
     <?php endif; ?>
   <?php endif; ?>
 </div>
