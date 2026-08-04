@@ -88,6 +88,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 'home_seo_description' => 'Agenzia immobiliare FIMAA dal 1994 a Lecce e Porto Cesareo. Vendita e valutazione di case, ville e appartamenti nel Salento.',
                 'mail_to' => $adminEmail,
                 'phone_display' => '0832 391489',
+                // Si nasce fuori dall'indice. Un'installazione appena fatta è
+                // quasi sempre una prova, e una prova indicizzata fa
+                // concorrenza al sito vero con il suo stesso contenuto.
+                // Si apre dal gestionale, il giorno che si decide di andare
+                // online: è una scelta da prendere, non da dimenticare.
+                'noindex' => '1',
             ] as $chiave => $valore) {
                 Settings::set($chiave, $valore);
             }

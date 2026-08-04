@@ -38,6 +38,15 @@ final class SystemController
             foreach (array_keys(self::FIELDS) as $key) {
                 Settings::set($key, trim((string) ($_POST[$key] ?? '')));
             }
+
+            // La casella non compare nel POST quando è tolta: va letta a parte,
+            // altrimenti il ciclo qui sopra la svuoterebbe e basta.
+            $noindex = isset($_POST['noindex']) ? '1' : '0';
+            if (Settings::get('noindex', '0') !== $noindex) {
+                Log::write($noindex === '1' ? 'noindex-on' : 'noindex-off', 'impostazioni');
+            }
+            Settings::set('noindex', $noindex);
+
             Log::write('modifica', 'impostazioni');
             Session::flash('Impostazioni salvate.');
             Router::redirect('/gestionale/impostazioni/');

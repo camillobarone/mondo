@@ -17,6 +17,21 @@ use Mil\Core\Settings;
     </label>
   <?php endforeach; ?>
 
+  <h2>Visibilità sui motori</h2>
+  <label class="check">
+    <input type="checkbox" name="noindex" value="1" <?= Settings::get('noindex', '0') === '1' ? 'checked' : '' ?>>
+    <span>Installazione di prova: tieni il sito fuori dai motori di ricerca</span>
+  </label>
+  <p class="aiuto">
+    Con la spunta attiva ogni pagina esce <code>noindex, nofollow</code> e il
+    <code>robots.txt</code> risponde <code>Disallow: /</code>. Serve finché questo
+    indirizzo affianca il sito vero: due copie degli stessi immobili su due
+    indirizzi si tolgono posizioni a vicenda, e a rimetterci è quello che oggi
+    porta i contatti.
+    <strong>Va tolta a mano il giorno in cui si va online</strong> — deve essere
+    una decisione, non una dimenticanza.
+  </p>
+
   <button class="btn btn-primary">Salva impostazioni</button>
 </form>
 

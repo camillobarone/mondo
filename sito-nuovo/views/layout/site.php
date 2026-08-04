@@ -20,7 +20,11 @@ $flash = Session::takeFlash();
 <?php if ($meta['description'] !== ''): ?>
 <meta name="description" content="<?= e($meta['description']) ?>">
 <?php endif; ?>
-<meta name="robots" content="<?= e($meta['robots']) ?>">
+<?php /* Finché l'installazione è di prova, ogni pagina esce `noindex` qualunque
+         cosa dica la sua `meta`: un sottodominio che ripubblica gli stessi
+         immobili farebbe concorrenza al sito vero. Si toglie dal gestionale,
+         di proposito a mano, il giorno in cui si va online. */ ?>
+<meta name="robots" content="<?= e(Settings::get('noindex', '0') === '1' ? 'noindex, nofollow' : $meta['robots']) ?>">
 <link rel="canonical" href="<?= e($meta['canonical']) ?>">
 <meta property="og:type" content="website">
 <meta property="og:title" content="<?= e($meta['title']) ?>">

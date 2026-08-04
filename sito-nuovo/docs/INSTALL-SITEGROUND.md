@@ -115,13 +115,24 @@ Nel gestionale, in ordine:
 
 ## 8. Tenere il sottodominio fuori dall'indice
 
-Finché è una prova, non deve finire su Google. Due strade:
+Finché è una prova, non deve finire su Google: sarebbe una copia degli stessi
+immobili su un secondo indirizzo, e a rimetterci le posizioni è il sito che
+oggi porta i contatti.
 
-- **Protezione con password** (preferibile): Site Tools → **Security →
-  Protected URLs** → proteggi la radice del sottodominio. Nessun crawler entra.
-- In alternativa, in `app/Controller/Site/Feeds.php` metti `Disallow: /` nel
-  robots.txt. È più debole: il robots.txt sconsiglia la scansione, non
-  l'indicizzazione.
+**L'installazione ci pensa da sola.** `install.php` scrive `noindex = 1`, e
+finché quella impostazione è attiva ogni pagina esce `noindex, nofollow` e il
+`robots.txt` risponde `Disallow: /`. Non c'è niente da fare al primo giro.
+
+Si toglie da **Gestionale → Impostazioni → Visibilità sui motori**, il giorno
+in cui si decide di andare online. È una casella da togliere a mano di
+proposito: deve essere una decisione, non una dimenticanza. Il cambio finisce
+nel registro attività, così resta scritto chi l'ha fatto e quando.
+
+**In più, e da fare subito: proteggi il sottodominio con password.** Site Tools
+→ **Sicurezza → URL protetti** → proteggi la radice del sottodominio. Il
+`robots.txt` è una richiesta di buona educazione che i crawler seri
+rispettano; la password è una porta chiusa, e vale anche per chi indovina
+l'indirizzo. Le due cose stanno insieme, non una al posto dell'altra.
 
 ---
 

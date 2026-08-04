@@ -72,6 +72,15 @@ final class Feeds
 
         $base = rtrim(Seo::base(), '/');
 
+        // Su un'installazione di prova non si invita nessuno a entrare: sarebbe
+        // una copia degli stessi immobili su un altro indirizzo, e il duplicato
+        // lo pagherebbe il sito vero.
+        if (\Mil\Core\Settings::get('noindex', '0') === '1') {
+            echo "User-agent: *\n";
+            echo "Disallow: /\n";
+            return;
+        }
+
         // Nessun blocco ai crawler AI: la visibilità nelle risposte generative
         // è un obiettivo, non un rischio da cui difendersi.
         echo "User-agent: *\n";
