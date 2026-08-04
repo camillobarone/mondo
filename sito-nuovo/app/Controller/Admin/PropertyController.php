@@ -22,6 +22,25 @@ use Throwable;
 
 final class PropertyController
 {
+    /**
+     * Indirizzo di un video o di una visita virtuale, ripulito.
+     *
+     * Si accetta solo `http`/`https`: un campo libero che finisce dentro un
+     * `href` è il posto classico dove si infila un `javascript:`, e chi
+     * incolla un link non deve poter iniettare codice nella scheda.
+     */
+    private static function indirizzo(mixed $valore): string
+    {
+        $url = trim((string) $valore);
+        if ($url === '') {
+            return '';
+        }
+
+        $schema = mb_strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+        return in_array($schema, ['http', 'https'], true) ? mb_substr($url, 0, 500) : '';
+    }
+
     public static function index(): void
     {
         Auth::required();
@@ -373,6 +392,8 @@ final class PropertyController
                 ? (string) $_POST['condition_state'] : '',
             'heating' => mb_substr(trim((string) ($_POST['heating'] ?? '')), 0, 60),
             'features' => implode(', ', $features),
+            'video_url' => self::indirizzo($_POST['video_url'] ?? ''),
+            'tour_url' => self::indirizzo($_POST['tour_url'] ?? ''),
             'excerpt' => mb_substr(trim((string) ($_POST['excerpt'] ?? '')), 0, 1000),
             'description' => trim((string) ($_POST['description'] ?? '')),
             'seo_title' => mb_substr(trim((string) ($_POST['seo_title'] ?? '')), 0, 60),
@@ -427,6 +448,7 @@ final class PropertyController
             'lot_sqm' => 0, 'rooms' => 0,
             'bedrooms' => 0, 'bathrooms' => 0, 'floor' => '', 'floors_total' => 0, 'year_built' => 0,
             'energy_class' => '', 'condition_state' => '', 'heating' => '', 'features' => '',
+            'video_url' => '', 'tour_url' => '',
             'excerpt' => '', 'description' => '', 'seo_title' => '', 'seo_description' => '',
             'agent_id' => null, 'owner_contact_id' => null,
             'mandate_start' => null, 'mandate_end' => null, 'exclusive' => 0, 'commission_pct' => null,

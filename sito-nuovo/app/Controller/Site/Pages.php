@@ -42,7 +42,12 @@ final class Pages
                 Settings::get('home_seo_title', 'Agenzia immobiliare a Lecce e Porto Cesareo'),
                 Settings::get('home_seo_description', 'Agenzia immobiliare FIMAA dal 1994 a Lecce e Porto Cesareo. Vendita e valutazione di case, ville e appartamenti nel Salento.'),
                 $pageUrl,
-                Seo::graph($graph)
+                Seo::graph($graph),
+                'index, follow',
+                // Adesso l'LCP della home è la foto dell'hero, non più il
+                // titolo: va annunciata, altrimenti il browser la scopre
+                // solo a layout costruito.
+                self::preloadHero($featured['items'])
             ),
             'featured' => $featured['items'],
             'posts' => Content::posts(true, 1, 3)['items'],
@@ -207,6 +212,43 @@ final class Pages
                 'a' => 'Sì: Lecce e provincia, le marine (San Cataldo, Frigole, Torre Chianca) e la costa ionica da Porto Cesareo a Torre Lapillo, dove abbiamo la seconda sede.',
             ],
         ];
+    }
+
+    /**
+     * L'immobile che dà la foto all'hero: il primo che ne ha davvero una.
+     *
+     * Non il primo e basta: se quello in cima non ha ancora le foto, la home
+     * resterebbe senza immagine per un motivo che non c'entra niente con
+     * quale immobile si vuole mettere in vetrina.
+     *
+     * @param array<int,array<string,mixed>> $featured
+     * @return array<string,mixed>|null
+     */
+    public static function heroImage(array $featured): ?array
+    {
+        foreach ($featured as $p) {
+            if (trim((string) ($p['cover'] ?? '')) !== '') {
+                return $p;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Preload della foto dell'hero. Occupa tutta la larghezza, quindi le
+     * `sizes` sono `100vw` e devono coincidere con quelle del tag.
+     *
+     * @param array<int,array<string,mixed>> $featured
+     */
+    private static function preloadHero(array $featured): string
+    {
+        $hero = self::heroImage($featured);
+        if ($hero === null) {
+            return '';
+        }
+
+        return preload_image((string) $hero['cover'], (string) ($hero['cover_srcset'] ?? ''), '100vw');
     }
 
     /** @return array<string,string> */

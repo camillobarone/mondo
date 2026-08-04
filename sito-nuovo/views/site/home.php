@@ -6,10 +6,26 @@
  * @var array<int,string> $cities
  */
 
+use Mil\Core\Assets;
 use Mil\Core\View;
 use Mil\Core\Vocab;
+
+// Lo sfondo dell'hero è la copertina di un immobile in evidenza: nessun file
+// in più da caricare, e la home cambia faccia da sola quando cambia la
+// vetrina. Se nessuno ha foto resta il fondo scuro, senza buchi.
+$sfondo = Mil\Controller\Site\Pages::heroImage($featured);
+$sfondoSrc = $sfondo === null ? '' : (string) $sfondo['cover'];
 ?>
-<section class="hero">
+<section class="hero<?= $sfondoSrc === '' ? ' hero-senza-foto' : '' ?>">
+  <?php if ($sfondoSrc !== ''): ?>
+    <img class="hero-sfondo" src="<?= e(url($sfondoSrc)) ?>"
+         <?php if (($sfondo['cover_srcset'] ?? '') !== ''): ?>
+         srcset="<?= e(srcset_url((string) $sfondo['cover_srcset'])) ?>"
+         sizes="100vw"
+         <?php endif; ?>
+         alt="" role="presentation"
+         width="1600" height="1120" fetchpriority="high" decoding="async">
+  <?php endif; ?>
   <div class="wrap">
     <p class="hero-kicker">Lecce · Porto Cesareo · Salento</p>
     <h1>La casa giusta la si riconosce entrando.<br>Il prezzo giusto, prima.</h1>

@@ -48,6 +48,13 @@ final class WpMapper
         // virgola (`image_to_attach`) sia come array serializzato
         // (`wpestate_property_gallery`): sul sito vero ci sono entrambi.
         'gallery' => ['image_to_attach', 'wpestate_property_gallery', 'property_images', 'gallery_images'],
+        // WP-Residence tiene il video spezzato in due: il tipo (youtube,
+        // vimeo) e il solo identificativo. L'indirizzo intero si ricompone.
+        'video_type' => ['embed_video_type', 'property_video_type'],
+        'video_id' => ['embed_video_id', 'property_video_id', 'property_video'],
+        // La visita virtuale — Matterport e simili — sta invece come indirizzo
+        // o come codice di incorporamento, a seconda di come e stata inserita.
+        'tour' => ['virtual_tour', 'property_virtual_tour', 'wpestate_virtual_tour', 'matterport_url', 'property_tour'],
     ];
 
     /**
@@ -151,6 +158,8 @@ final class WpMapper
             'floors_total' => (int) $this->numero($this->meta($meta, 'floors_total')),
             'year_built' => $this->anno($this->meta($meta, 'year_built')),
             'energy_class' => $this->classeEnergetica($this->meta($meta, 'energy_class')),
+            'video_url' => $this->video($meta),
+            'tour_url' => $this->tour($meta),
             'features' => $this->dotazioni($terms),
             'excerpt' => mb_substr($this->testo((string) $post['post_excerpt']), 0, 1000),
             'description' => $this->testo((string) $post['post_content']),
@@ -259,9 +268,64 @@ final class WpMapper
         'floor' => 'Piano',
         'floors_total' => 'Piani totali',
         'gallery' => 'Galleria fotografica',
+        'video_id' => 'Video (YouTube o Vimeo)',
+        'tour' => 'Visita virtuale (Matterport)',
     ];
 
     // ------------------------------------------------------------ interni
+
+    /**
+     * L'indirizzo del video, ricomposto.
+     *
+     * WP-Residence non salva l'indirizzo intero: tiene da una parte il tipo
+     * (`youtube`, `vimeo`) e dall'altra il solo identificativo. A volte però
+     * nell'identificativo c'è già l'indirizzo completo, perché è stato
+     * incollato così: in quel caso si prende com'è.
+     *
+     * @param array<string,string> $meta
+     */
+    private function video(array $meta): string
+    {
+        $id = trim($this->meta($meta, 'video_id'));
+        if ($id === '') {
+            return '';
+        }
+
+        if (str_starts_with($id, 'http://') || str_starts_with($id, 'https://')) {
+            return mb_substr($id, 0, 500);
+        }
+
+        $tipo = mb_strtolower(trim($this->meta($meta, 'video_type')));
+
+        return match (true) {
+            str_contains($tipo, 'vimeo') => 'https://vimeo.com/' . rawurlencode($id),
+            default => 'https://www.youtube.com/watch?v=' . rawurlencode($id),
+        };
+    }
+
+    /**
+     * L'indirizzo della visita virtuale.
+     *
+     * Può arrivare come indirizzo pulito oppure come codice `<iframe>` intero,
+     * a seconda di come è stato incollato in WordPress. Nel secondo caso si
+     * tiene solo l'indirizzo: il codice di un terzo porta con sé attributi e
+     * tracciamenti che non controlliamo, e ricostruirlo noi costa una riga.
+     *
+     * @param array<string,string> $meta
+     */
+    private function tour(array $meta): string
+    {
+        $grezzo = trim($this->meta($meta, 'tour'));
+        if ($grezzo === '') {
+            return '';
+        }
+
+        if (preg_match('#src=["\']([^"\']+)["\']#i', $grezzo, $m) === 1) {
+            $grezzo = $m[1];
+        }
+
+        return str_starts_with($grezzo, 'http') ? mb_substr($grezzo, 0, 500) : '';
+    }
 
     /** @param array<string,string> $meta */
     private function meta(array $meta, string $campo): string

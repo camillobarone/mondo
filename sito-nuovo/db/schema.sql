@@ -58,6 +58,12 @@ CREATE TABLE properties (
   condition_state VARCHAR(40) NOT NULL DEFAULT '',
   heating VARCHAR(60) NOT NULL DEFAULT '',
   features TEXT,
+  -- Video e visita virtuale: si conserva l'indirizzo, non il codice di
+  -- incorporamento. Il codice che arriva da un portale porta con se
+  -- tracciamenti e markup che non controlliamo; dall'indirizzo il player
+  -- lo costruisce il sito, come vuole lui.
+  video_url VARCHAR(500) NOT NULL DEFAULT '',
+  tour_url VARCHAR(500) NOT NULL DEFAULT '',
   excerpt TEXT,
   description TEXT,
   seo_title VARCHAR(191) NOT NULL DEFAULT '',

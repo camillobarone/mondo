@@ -212,6 +212,23 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
         <?php endforeach; ?>
       </div>
 
+      <h3>Video e visita virtuale</h3>
+      <p class="aiuto">Si incolla l’indirizzo, non il codice da incorporare. Sulla scheda
+        diventano due pulsanti: nessun riquadro che si carica da solo, quindi la pagina
+        resta veloce e chi non guarda il video non finisce registrato da YouTube.</p>
+      <div class="form-row">
+        <label>Video <small>YouTube o Vimeo</small>
+          <input type="text" name="video_url" inputmode="url" maxlength="500"
+                 value="<?= e((string) ($p['video_url'] ?? '')) ?>"
+                 placeholder="https://www.youtube.com/watch?v=...">
+        </label>
+        <label>Visita virtuale <small>Matterport o simili</small>
+          <input type="text" name="tour_url" inputmode="url" maxlength="500"
+                 value="<?= e((string) ($p['tour_url'] ?? '')) ?>"
+                 placeholder="https://my.matterport.com/show/?m=...">
+        </label>
+      </div>
+
       <h3>Testi</h3>
       <label>Sommario
         <textarea name="excerpt" rows="2" maxlength="1000"><?= e((string) $p['excerpt']) ?></textarea>

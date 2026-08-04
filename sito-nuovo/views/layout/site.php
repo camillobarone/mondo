@@ -32,6 +32,10 @@ $flash = Session::takeFlash();
 <meta property="og:url" content="<?= e($meta['canonical']) ?>">
 <meta property="og:locale" content="it_IT">
 <link rel="icon" href="<?= e(favicon_svg()) ?>" type="image/svg+xml">
+<?php /* Il carattere dei titoli si annuncia subito: sta nel CSS inline, che il
+         browser scopre solo leggendolo, e senza preload il serif arriverebbe
+         a titolo già disegnato facendolo sobbalzare. */ ?>
+<link rel="preload" href="<?= e(asset('font/playfair-display.woff2')) ?>" as="font" type="font/woff2" crossorigin>
 <?= $meta['preload'] ?? '' ?>
 <style><?= Assets::css('site.css') ?></style>
 <?= $meta['jsonld'] ?? '' ?>

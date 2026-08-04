@@ -117,6 +117,28 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
         <div class="testo"><?= nl2br(e((string) $p['description'])) ?></div>
       <?php endif; ?>
 
+      <?php
+      $video = trim((string) ($p['video_url'] ?? ''));
+      $tour = trim((string) ($p['tour_url'] ?? ''));
+      ?>
+      <?php if ($video !== '' || $tour !== ''): ?>
+        <h3>Video e visita virtuale</h3>
+        <?php /* Link, non riquadri incorporati. Un iframe di YouTube o
+                 Matterport carica centinaia di kilobyte e mette un cookie di
+                 profilazione a chi apre la pagina, anche a chi il video non lo
+                 guarderà mai. Così invece non parte niente finché non si
+                 clicca, e la scheda resta veloce. */ ?>
+        <p class="media-link">
+          <?php if ($video !== ''): ?>
+            <a class="btn btn-ghost" href="<?= e($video) ?>" target="_blank" rel="noopener nofollow">▶ Guarda il video</a>
+          <?php endif; ?>
+          <?php if ($tour !== ''): ?>
+            <a class="btn btn-ghost" href="<?= e($tour) ?>" target="_blank" rel="noopener nofollow">⬡ Visita virtuale</a>
+          <?php endif; ?>
+        </p>
+        <p class="nota">Si aprono in una scheda nuova, sul sito di chi li ospita.</p>
+      <?php endif; ?>
+
       <p class="firma">Scheda a cura di Mondo Immobiliare — agenzia FIMAA dal 1994.<br>
         <span>Aggiornata al <?= e(data_it((string) ($p['updated_at'] ?: $p['created_at']))) ?></span></p>
     </div>

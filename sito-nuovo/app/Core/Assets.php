@@ -52,7 +52,7 @@ final class Assets
             return self::$memoria[$file] = (string) file_get_contents($cache);
         }
 
-        $css = self::minify((string) file_get_contents($file));
+        $css = self::assoluti(self::minify((string) file_get_contents($file)), $path);
 
         // Se la cartella di cache non è scrivibile si tira dritto lo stesso:
         // la minificazione costa poco, è la ripetizione che conviene evitare.
@@ -80,6 +80,44 @@ final class Assets
         $css = str_replace(['and(', 'not(', ';}'], [' and (', ' not (', '}'], $css);
 
         return trim($css);
+    }
+
+    /**
+     * Riscrive in assoluto i percorsi dentro `url(...)`.
+     *
+     * Un `url(../font/x.woff2)` dentro un file CSS punta a partire dalla
+     * cartella del CSS. Ma questo CSS finisce dentro la pagina, e lì lo stesso
+     * percorso viene risolto a partire dall'indirizzo della pagina: dalla home
+     * diventa `/font/x.woff2`, che non esiste. Il file non si carica e
+     * l'errore si vede solo nella console del browser.
+     *
+     * La versione (`?v=`) è la stessa che mette `asset()`, di proposito: il
+     * `<link rel=preload>` e il `@font-face` devono chiedere esattamente la
+     * stessa URL, altrimenti il browser scarica il carattere due volte e il
+     * preload non serve a niente.
+     */
+    private static function assoluti(string $css, string $cssPath): string
+    {
+        $cartella = trim(dirname('/assets/css/' . ltrim($cssPath, '/')), '/');
+
+        return preg_replace_callback(
+            '#url\(\s*([\'"]?)(?!data:|https?:|//|/)([^\'")]+)\1\s*\)#i',
+            static function (array $m) use ($cartella): string {
+                $relativo = '/' . $cartella . '/' . $m[2];
+                // Normalizza i `..` senza toccare il disco.
+                $pezzi = [];
+                foreach (explode('/', $relativo) as $pezzo) {
+                    if ($pezzo === '..') {
+                        array_pop($pezzi);
+                    } elseif ($pezzo !== '' && $pezzo !== '.') {
+                        $pezzi[] = $pezzo;
+                    }
+                }
+
+                return 'url("' . asset(implode('/', array_slice($pezzi, 1))) . '")';
+            },
+            $css
+        ) ?? $css;
     }
 
     private static function cacheFile(string $sorgente): string

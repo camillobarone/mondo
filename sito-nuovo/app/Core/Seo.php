@@ -311,7 +311,29 @@ final class Seo
         if ($hasAccommodation) {
             $listing['about'] = ['@id' => $pageUrl . '#house'];
         }
+        // Il video dell'annuncio, se c'è. `VideoObject` vuole per forza
+        // `thumbnailUrl` e `uploadDate`: senza, Google scarta il nodo invece
+        // di ignorarne un pezzo, quindi si dichiara solo quando entrambi ci
+        // sono davvero — la miniatura è la foto di copertina, la data è
+        // quella di pubblicazione dell'annuncio.
+        $video = trim((string) ($p['video_url'] ?? ''));
+        if ($video !== '' && $primary !== null) {
+            $listing['video'] = ['@id' => $pageUrl . '#video'];
+        }
         $nodes[] = $listing;
+
+        if ($video !== '' && $primary !== null) {
+            $nodes[] = [
+                '@type' => 'VideoObject',
+                '@id' => $pageUrl . '#video',
+                'name' => self::text((string) $p['title']),
+                'description' => self::text(tronca((string) $p['description'], 200)),
+                'contentUrl' => $video,
+                'thumbnailUrl' => (string) $primary['url'],
+                'uploadDate' => substr((string) ($p['published_at'] ?: $p['created_at']), 0, 10),
+                'inLanguage' => 'it',
+            ];
+        }
 
         // 2. House / Apartment — dati tecnici.
         if ($hasAccommodation) {
