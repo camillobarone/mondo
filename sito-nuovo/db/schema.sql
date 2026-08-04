@@ -66,6 +66,9 @@ CREATE TABLE properties (
   tour_url VARCHAR(500) NOT NULL DEFAULT '',
   excerpt TEXT,
   description TEXT,
+  -- Domande frequenti, in JSON: [{"q": "...", "a": "..."}]. Una copia sola,
+  -- da cui escono sia il testo visibile in pagina sia il nodo FAQPage.
+  faqs TEXT,
   seo_title VARCHAR(191) NOT NULL DEFAULT '',
   seo_description VARCHAR(255) NOT NULL DEFAULT '',
   agent_id INTEGER NULL,

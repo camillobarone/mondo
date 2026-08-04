@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Mil\Controller\Admin;
 
+use Mil\Controller\Site\Listings;
 use Mil\Core\Auth;
 use Mil\Core\Csrf;
 use Mil\Core\Db;
+use Mil\Core\Faq;
 use Mil\Core\Router;
 use Mil\Core\Session;
 use Mil\Core\Uploader;
@@ -66,7 +68,7 @@ final class PropertyController
             $id = Properties::create(self::fromRequest());
             Log::write('crea', 'immobile', $id, (string) ($_POST['title'] ?? ''));
             Session::flash('Immobile creato. Ora puoi caricare le foto.');
-            Router::redirect('/gestionale/immobili/' . $id . '/');
+            Router::redirect(self::doveTornare((int) $id));
         }
 
         View::show('admin/immobili-scheda', [
@@ -104,7 +106,7 @@ final class PropertyController
             Properties::update((int) $id, $data, trim((string) ($_POST['price_reason'] ?? '')));
             Log::write('modifica', 'immobile', (int) $id, (string) $data['title']);
             Session::flash('Modifiche salvate.');
-            Router::redirect('/gestionale/immobili/' . $id . '/');
+            Router::redirect(self::doveTornare((int) $id));
         }
 
         View::show('admin/immobili-scheda', [
@@ -117,6 +119,42 @@ final class PropertyController
             'proposte' => Deals::offersFor((int) $id),
             'storicoPrezzi' => Properties::priceHistory((int) $id),
         ], 'layout/admin');
+    }
+
+    /**
+     * L'immobile come si vedrà online, prima che sia online.
+     *
+     * Serve perché la scheda del gestionale è un modulo — caselle e menu — e
+     * da lì non si capisce come verrà la pagina: dove va a finire la
+     * descrizione, se le foto sono nell'ordine giusto, se il prezzo si legge.
+     * Qui si vede la pagina vera, disegnata dallo stesso codice del sito, con
+     * l'unica differenza di una fascia in alto che ricorda dove sei.
+     *
+     * Funziona anche in bozza: è proprio prima di pubblicare che serve
+     * guardarla.
+     */
+    public static function preview(string $id): void
+    {
+        Auth::required();
+
+        $property = Properties::find((int) $id);
+        if ($property === null) {
+            Session::flash('Immobile non trovato.', 'error');
+            Router::redirect('/gestionale/immobili/');
+        }
+
+        Listings::render($property, true);
+    }
+
+    /**
+     * Dove si finisce dopo aver salvato: sulla scheda, oppure sull'anteprima
+     * se si è premuto il bottone che salva e mostra il risultato.
+     */
+    private static function doveTornare(int $id): string
+    {
+        $base = '/gestionale/immobili/' . $id . '/';
+
+        return (string) ($_POST['dopo'] ?? '') === 'anteprima' ? $base . 'anteprima/' : $base;
     }
 
     public static function uploadPhotos(string $id): void
@@ -396,6 +434,11 @@ final class PropertyController
             'tour_url' => self::indirizzo($_POST['tour_url'] ?? ''),
             'excerpt' => mb_substr(trim((string) ($_POST['excerpt'] ?? '')), 0, 1000),
             'description' => trim((string) ($_POST['description'] ?? '')),
+            // Le domande si incollano in un riquadro solo e si salvano già
+            // divise in coppie: così la pagina e il JSON-LD leggono la stessa
+            // cosa, e riaprendo la scheda si rilegge il testo come è stato
+            // capito — se una domanda manca, si vede subito.
+            'faqs' => Faq::json(Faq::parse((string) ($_POST['faqs'] ?? ''))),
             'seo_title' => mb_substr(trim((string) ($_POST['seo_title'] ?? '')), 0, 60),
             'seo_description' => mb_substr(trim((string) ($_POST['seo_description'] ?? '')), 0, 160),
             'agent_id' => int_or_null($_POST['agent_id'] ?? null) ?: null,
@@ -449,7 +492,7 @@ final class PropertyController
             'bedrooms' => 0, 'bathrooms' => 0, 'floor' => '', 'floors_total' => 0, 'year_built' => 0,
             'energy_class' => '', 'condition_state' => '', 'heating' => '', 'features' => '',
             'video_url' => '', 'tour_url' => '',
-            'excerpt' => '', 'description' => '', 'seo_title' => '', 'seo_description' => '',
+            'excerpt' => '', 'description' => '', 'faqs' => '', 'seo_title' => '', 'seo_description' => '',
             'agent_id' => null, 'owner_contact_id' => null,
             'mandate_start' => null, 'mandate_end' => null, 'exclusive' => 0, 'commission_pct' => null,
             'sold_price' => null, 'preliminary_date' => null, 'deed_date' => null,

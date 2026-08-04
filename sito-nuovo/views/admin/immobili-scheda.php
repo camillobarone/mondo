@@ -236,6 +236,25 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
       <label>Descrizione
         <textarea name="description" rows="10"><?= e((string) $p['description']) ?></textarea>
       </label>
+
+      <?php
+      $faq = Mil\Core\Faq::daJson($p['faqs'] ?? '');
+      ?>
+      <label>Domande frequenti
+        <?php /* Un riquadro solo, non dodici caselle: le domande si scrivono
+                 altrove e si incollano qui tutte insieme. Salvando, il testo
+                 torna riscritto nella forma qui sotto — se una domanda non
+                 compare, vuol dire che non è stata riconosciuta, e si vede
+                 subito invece di scoprirlo sulla pagina pubblicata. */ ?>
+        <textarea name="faqs" rows="12" placeholder="Quanto costa la villa?&#10;Il prezzo richiesto è 450.000 euro, trattabile.&#10;&#10;Si può visitare nel fine settimana?&#10;Sì, su appuntamento anche il sabato mattina."><?= e(Mil\Core\Faq::testo($faq)) ?></textarea>
+        <small>Una domanda per riga, sotto la sua risposta, e una riga vuota fra
+          una coppia e l’altra. Compaiono in fondo alla scheda e finiscono
+          da sole nei dati strutturati per Google.
+          <?php if ($faq !== []): ?>
+            <strong><?= count($faq) ?> domande riconosciute.</strong>
+          <?php endif; ?>
+        </small>
+      </label>
     </div>
 
     <div>
@@ -252,6 +271,14 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
 
       <div class="pannello">
         <button type="submit" class="btn btn-primary largo"><?= $isNew ? 'Crea immobile' : 'Salva modifiche' ?></button>
+        <?php /* Salva e porta all'anteprima con un gesto solo. È lo stesso
+                 modulo e lo stesso invio: cambia solo dove si finisce dopo,
+                 quindi non c'è modo di vedere un'anteprima di dati non
+                 salvati — sarebbe la bugia peggiore che un'anteprima possa
+                 raccontare. */ ?>
+        <button type="submit" class="btn btn-ghost largo" name="dopo" value="anteprima">
+          <?= $isNew ? 'Crea e vedi l’anteprima' : 'Salva e vedi l’anteprima' ?>
+        </button>
         <?php if (!$isNew): ?>
           <p class="muto">Creato il <?= e(data_it((string) $p['created_at'], true)) ?> · <?= (int) $p['views'] ?> visite</p>
         <?php endif; ?>

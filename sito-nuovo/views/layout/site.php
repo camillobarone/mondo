@@ -43,6 +43,19 @@ $flash = Session::takeFlash();
 <body>
 <a class="skip" href="#contenuto">Vai al contenuto</a>
 
+<?php /* Anteprima dal gestionale: la pagina è quella vera, cambia solo questa
+         fascia. Sta in cima e non si può chiudere, così non capita di
+         scambiarla per il sito pubblico e di credere pubblicato un immobile
+         che è ancora in bozza. */ ?>
+<?php if ($anteprima ?? false): ?>
+<div class="fascia-anteprima">
+  <div class="wrap fascia-riga">
+    <p><strong>Anteprima.</strong> Così si vedrà la scheda online<?= ($p['status'] ?? '') !== 'published' ? ' — adesso è in ' . e(mb_strtolower(Mil\Core\Vocab::label('status', (string) $p['status']))) : '' ?>.</p>
+    <a href="<?= e(url('/gestionale/immobili/' . (int) ($p['id'] ?? 0) . '/')) ?>">‹ Torna a modificare</a>
+  </div>
+</div>
+<?php endif; ?>
+
 <header class="site-head">
   <div class="wrap head-row">
     <a class="brand" href="<?= e(url('/')) ?>">

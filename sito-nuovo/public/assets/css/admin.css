@@ -160,6 +160,8 @@ img { max-width: 100%; height: auto; display: block; }
 .btn-ghost { background: #fff; color: var(--ink); border-color: var(--line); }
 .btn-danger { background: var(--err); color: #fff; }
 .largo { width: 100%; }
+/* Due bottoni larghi uno sotto l'altro: senza aria in mezzo si toccano. */
+.largo + .largo { margin-top: 10px; }
 
 .mini {
   display: inline-block; background: none; border: 1px solid var(--line); border-radius: 6px;

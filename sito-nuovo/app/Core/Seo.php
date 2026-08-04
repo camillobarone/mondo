@@ -434,7 +434,18 @@ final class Seo
             $nodes[] = $offer;
         }
 
-        // 5. Breadcrumb — l'ultimo item ha sempre `item`.
+        // 5. FAQPage — solo se le domande sono davvero stampate nella scheda.
+        // La regola «visibili in pagina» è rispettata per costruzione: pagina e
+        // nodo leggono la stessa colonna, quindi non possono divergere.
+        $faq = Faq::daJson($p['faqs'] ?? '');
+        if ($faq !== []) {
+            $nodes[] = self::faqNode(array_map(static fn (array $voce): array => [
+                'q' => self::text($voce['q']),
+                'a' => self::text($voce['a']),
+            ], $faq), $pageUrl);
+        }
+
+        // 6. Breadcrumb — l'ultimo item ha sempre `item`.
         $nodes[] = self::breadcrumbNode([
             ['name' => 'Home', 'url' => $base . '/'],
             ['name' => 'Immobili in vendita', 'url' => $base . '/immobili/'],

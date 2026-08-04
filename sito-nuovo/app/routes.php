@@ -54,6 +54,7 @@ $router->get('/gestionale', [Dashboard::class, 'index']);
 $router->get('/gestionale/immobili', [PropertyController::class, 'index']);
 $router->any('/gestionale/immobili/nuovo', [PropertyController::class, 'create']);
 $router->any('/gestionale/immobili/{id}', [PropertyController::class, 'edit']);
+$router->get('/gestionale/immobili/{id}/anteprima', [PropertyController::class, 'preview']);
 $router->post('/gestionale/immobili/{id}/foto', [PropertyController::class, 'uploadPhotos']);
 $router->post('/gestionale/immobili/{id}/foto/aggiorna', [PropertyController::class, 'managePhotos']);
 

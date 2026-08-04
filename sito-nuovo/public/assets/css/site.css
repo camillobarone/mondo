@@ -292,6 +292,32 @@ img { max-width: 100%; height: auto; display: block; }
 .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0 0 28px; }
 .chips li { background: var(--bg-soft); padding: 7px 15px; border-radius: 2px; font-size: .87rem; }
 
+/* Domande frequenti. `<details>` porta con sé il triangolino del browser, che
+   cambia forma da un browser all'altro: si spegne e si disegna il segno `+`
+   con un pseudo-elemento, così è lo stesso ovunque e ruota all'apertura. */
+.faq { margin: 0 0 32px; max-width: 70ch; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary {
+  cursor: pointer; list-style: none; padding: 16px 34px 16px 0; position: relative;
+  font-family: var(--serif); font-size: 1.08rem; font-weight: 600; color: var(--ink);
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "+"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  font: 300 1.5rem/1 system-ui, sans-serif; color: var(--accent);
+  transition: transform .18s ease;
+}
+.faq details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+.faq summary:hover { color: var(--accent-dark); }
+.faq-risposta { padding: 0 34px 20px 0; color: var(--ink-soft); }
+
+/* Fascia dell'anteprima dal gestionale. Volutamente stonata rispetto al resto
+   della grafica: deve essere impossibile scambiarla per parte del sito. */
+.fascia-anteprima { background: #2c2a24; color: #fdfbf7; padding: 10px 0; font-size: .9rem; }
+.fascia-riga { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; }
+.fascia-riga p { margin: 0; }
+.fascia-anteprima a { color: #fdfbf7; text-decoration: underline; }
+
 .box-contatto {
   background: var(--bg-card); border-radius: var(--radius); padding: 26px;
   position: sticky; top: 104px; box-shadow: var(--ombra);

@@ -191,6 +191,32 @@ chiusura fino al rogito, richieste dal sito, richieste di acquisto, anagrafica
 con ruoli multipli, adempimenti privacy e antiriciclaggio, articoli e pagine,
 redirect 301, utenti, impostazioni.
 
+### Anteprima della scheda immobile
+Dal gestionale, `Salva e vedi l'anteprima` porta su
+`/gestionale/immobili/{id}/anteprima/`: la scheda pubblica vera, disegnata da
+`Listings::render()` — lo stesso metodo che serve il sito — con in cima una
+fascia scura che dice dove sei e in che stato è l'immobile. Funziona anche in
+bozza, esce sempre `noindex, nofollow` e non conta la visita.
+
+L'anteprima mostra i dati **salvati**, non quelli scritti nel modulo e non
+ancora inviati: il bottone salva e poi mostra, in un gesto solo. Un'anteprima
+di dati non salvati avrebbe richiesto JavaScript e avrebbe potuto mostrare una
+pagina che sul sito non esisterà mai.
+
+### Domande frequenti sulla scheda (FAQ)
+Colonna `properties.faqs`, JSON `[{"q": …, "a": …}]`, una copia sola da cui
+escono sia il testo visibile in fondo alla scheda (`<details>`, senza
+JavaScript) sia il nodo `FAQPage` del JSON-LD. La regola della skill — «FAQ
+visibili in pagina identiche a quelle nello schema» — è rispettata per
+costruzione, non per disciplina.
+
+Si scrivono in un riquadro solo (`Mil\Core\Faq::parse`), incollando il blocco
+com'esce da una chat: grassetti `**così**`, prefissi `D:`/`R:`, trattini,
+numerazione e domanda staccata dalla risposta da una riga vuota vengono tutti
+riconosciuti. Salvando, il riquadro si ricarica nella forma canonica con il
+conteggio delle domande riconosciute: se una manca, si vede lì invece che
+sulla pagina pubblicata.
+
 ### Abbinamento domanda/offerta
 Punteggio 0–100. Budget unico criterio bloccante, con tolleranza 5%. I criteri
 non espressi non penalizzano. Sotto 60 non viene proposto.

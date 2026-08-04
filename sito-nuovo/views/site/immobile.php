@@ -139,6 +139,24 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
         <p class="nota">Si aprono in una scheda nuova, sul sito di chi li ospita.</p>
       <?php endif; ?>
 
+      <?php $faq = Mil\Core\Faq::daJson($p['faqs'] ?? ''); ?>
+      <?php if ($faq !== []): ?>
+        <h3>Domande frequenti</h3>
+        <?php /* `<details>` è la fisarmonica che il browser ha già: si apre e
+                 si chiude da sola, senza una riga di JavaScript, e il testo
+                 delle risposte resta comunque dentro la pagina — quindi lo
+                 leggono i motori di ricerca anche quando è chiuso. La prima
+                 resta aperta perché una pagina di soli titoli sembra vuota. */ ?>
+        <div class="faq">
+          <?php foreach ($faq as $i => $voce): ?>
+            <details<?= $i === 0 ? ' open' : '' ?>>
+              <summary><?= e($voce['q']) ?></summary>
+              <div class="faq-risposta"><?= nl2br(e($voce['a'])) ?></div>
+            </details>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+
       <p class="firma">Scheda a cura di Mondo Immobiliare — agenzia FIMAA dal 1994.<br>
         <span>Aggiornata al <?= e(data_it((string) ($p['updated_at'] ?: $p['created_at']))) ?></span></p>
     </div>

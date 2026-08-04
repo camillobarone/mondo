@@ -77,12 +77,37 @@ final class Listings
             return;
         }
 
-        $images = Properties::images((int) $property['id']);
         Properties::incrementViews((int) $property['id']);
+        self::render($property);
+    }
+
+    /**
+     * Disegna la scheda pubblica di un immobile.
+     *
+     * Il gestionale chiama questo stesso metodo per l'anteprima: una scheda
+     * sola, disegnata da un punto solo. Un'anteprima costruita a parte
+     * mostrerebbe una pagina somigliante invece della pagina vera, e la
+     * differenza salterebbe fuori il giorno della pubblicazione — cioè troppo
+     * tardi per essere utile.
+     *
+     * @param array<string,mixed> $property
+     */
+    public static function render(array $property, bool $anteprima = false): void
+    {
+        $images = Properties::images((int) $property['id']);
 
         $pageUrl = Seo::base() . '/immobili/' . $property['slug'] . '/';
 
         $description = (string) ($property['seo_description'] ?: tronca((string) $property['description'], 155));
+
+        // Un immobile venduto resta online per la storia, ma fuori dall'indice;
+        // l'anteprima non deve finirci nemmeno per sbaglio.
+        $robots = 'index, follow';
+        if ($anteprima) {
+            $robots = 'noindex, nofollow';
+        } elseif ($property['status'] === 'sold') {
+            $robots = 'noindex, follow';
+        }
 
         View::show('site/immobile', [
             'meta' => Pages::meta(
@@ -90,12 +115,12 @@ final class Listings
                 $description,
                 $pageUrl,
                 Seo::graph(Seo::listingNodes($property, $images)),
-                // Un immobile venduto resta online per la storia, ma fuori dall'indice.
-                $property['status'] === 'sold' ? 'noindex, follow' : 'index, follow',
+                $robots,
                 self::preloadCopertina($images)
             ),
             'p' => $property,
             'images' => $images,
+            'anteprima' => $anteprima,
             'simili' => Properties::search([
                 'status' => 'online',
                 'city' => $property['city'],
