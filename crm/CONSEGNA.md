@@ -94,6 +94,7 @@ aggiornati gli URL dentro `crm/deploy/installa.sh` e `crm/deploy/aggiorna.sh`.
 | `crm/README.md` | come si usa, funzione per funzione — è il manuale |
 | `crm/deploy/README.md` | come si mette online da zero, aggiornamenti, ripristini |
 | `crm/CONSEGNA.md` | questo documento |
+| `crm/HANDOFF.md` | per far ripartire una conversazione nuova con Claude senza perdere il filo |
 
 ---
 

@@ -1,0 +1,202 @@
+# Handoff — per riprendere in una chat nuova
+
+Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
+l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
+
+**Aggiornato al 4 agosto 2026.**
+
+> Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
+> l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
+> d'uso. Se hai poco spazio, leggi prima **CONSEGNA.md capitoli 5 e 6**.
+
+---
+
+## 1 · Chi è l'utente
+
+**Camillo Barone**, titolare di **Studio RCS Srls** — *Mondo Immobiliare
+Lecce*, agenzia FIMAA dal 1994, uffici a **Lecce** e **Porto Cesareo**.
+
+- **Scrive e va risposto in italiano.** Anche i commenti nel codice sono in
+  italiano.
+- **Non è tecnico.** PowerShell, SSH e pannelli cloud vanno spiegati con
+  comandi da copiare e incollare, non descritti.
+- **Un passo alla volta.** Lo ha chiesto esplicitamente durante la
+  configurazione del server: *«un solo passo alla volta, mi raccomando»*.
+  Quando ci sono più schermate da attraversare, dagli una schermata per
+  messaggio e aspetta la conferma.
+- **Manda screenshot.** Vanno **letti davvero** prima di indicare dove
+  cliccare. In questa sessione l'ho mandato sul prodotto Aruba sbagliato
+  perché ho tirato a indovinare, e la sua risposta è stata:
+  *«cerca di non commettere più questi errori.»*
+- **Corregge quando sbaglio, e ha ragione.** Ha notato dati mancanti dopo una
+  conversione CSV, e date lette male in un file Excel. Verificare prima di
+  affermare.
+
+---
+
+## 2 · Cos'è il progetto
+
+Un CRM immobiliare completo, **in esercizio dal 3 agosto 2026**, con
+l'archivio reale dell'agenzia già dentro.
+
+| | |
+|---|---|
+| Indirizzo | **https://gestionale.mondoimmobiliarelecce.it** |
+| Server | Aruba Cloud VPS, **77.81.234.151**, Ubuntu 24.04 |
+| Repository | `camillobarone/mondo`, cartella **`crm/`** |
+| Ramo | `claude/real-estate-client-management-app-xl7dnx` |
+| Pull request | **#2**, aperta in bozza |
+| Tecnologie | Next.js 16 (App Router, Server Actions), React 19, SQLite via `better-sqlite3`, Tailwind v4 |
+| Archivio dentro | 1.108 clienti, 206 richieste, 53 immobili |
+
+Utenti del programma: **UFFICIO** e **CAMILLO BARONE** (entrambi titolari).
+
+**Tutto è già committato e pushato** — l'ultimo commit è `7324ae4`.
+
+---
+
+## 3 · Il comando che serve sempre
+
+Dopo ogni modifica al codice, l'utente aggiorna il server **da solo**, da
+PowerShell (questa sessione **non ha accesso SSH** al server: nessuna chiave,
+nessuna rotta di rete):
+
+```
+ssh root@77.81.234.151 "bash /opt/mondo-crm/deploy/aggiorna.sh"
+```
+
+**Attenzione alle virgolette annidate in PowerShell** — questa forma perde il
+`cd` e dà `Cannot find module`:
+
+```
+ssh root@IP 'sudo -u mondo bash -c "cd /opt/mondo-crm && node ..."'   # SBAGLIATO
+ssh root@IP "cd /opt/mondo-crm && sudo -u mondo node ..."             # giusto
+```
+
+---
+
+## 4 · Cosa c'è dentro, in breve
+
+Clienti · Richieste · Immobili (con foto) · **Venditori** (proprietari, con
+avviso compleanni) · **Incroci** automatici · Agenda · **Resoconto per il
+proprietario** · Trattative · Report · Adempimenti (privacy datata,
+antiriciclaggio, registro accessi) · Importazione da Excel · **Ricerca
+globale** · copia di sicurezza dal browser.
+
+### Le cose costruite in questa sessione, in ordine
+
+1. Correzione di **tre cause diverse** di incroci mancati (soglia punteggio,
+   confronto zone letterale, budget minimo che escludeva) più una quarta: un
+   `budget_min` **invisibile** nell'interfaccia.
+2. **Importazione diretta da `.xlsx`** — lettore Excel scritto in casa sopra
+   `zlib`, verificato cella per cella contro openpyxl (8.896 celle, zero
+   differenze). Il passaggio da CSV perdeva dati.
+3. **Messa online** con un comando (`deploy/installa.sh`).
+4. **Foto** sugli immobili.
+5. **Venditori** + legame venditore↔immobile da entrambe le parti, con
+   **ricerca** al posto della tendina infinita.
+6. **Resoconto per il proprietario** — pagina stampabile con chi si è fermato
+   sul prezzo e a quali cifre l'immobile tornerebbe interessante.
+7. **Agenda**: modifica/eliminazione anche delle attività svolte, calendario
+   iCalendar (singolo evento + abbonamento per persona), avviso email 30
+   minuti prima via cron.
+8. **Revisione completa** + quattro utilità: ricerca globale, *Proponi su
+   WhatsApp*, riquadro *Da sistemare*, copia di sicurezza dal browser.
+
+---
+
+## 5 · Cosa resta aperto
+
+| Cosa | Stato |
+|---|---|
+| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Non fatto.** Finché manca, l'avviso *email* 30 minuti prima non parte (il calendario funziona lo stesso). Procedimento nel capitolo **6-bis** di `CONSEGNA.md`. Serve la casella da cui spedire e la sua password: le ha solo lui. |
+| **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
+| **Provare le ultime novità** | L'ultimo aggiornamento del server era in corso quando la chat si è chiusa. |
+| **Controllo orario della PR #2** | Vedi capitolo 7. |
+
+### Fuori perimetro, in attesa di una sua decisione
+
+Pubblicazione annunci sui portali, firma digitale, invii massivi
+email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
+
+---
+
+## 6 · Come si lavora su questo codice
+
+**Convenzioni date per acquisite:**
+
+- codice e commenti **in italiano**, come il resto del progetto;
+- i commenti spiegano **perché**, non cosa: la riga di codice si legge da sola,
+  il motivo per cui è scritta così no;
+- **nessuna dipendenza superflua.** Il lettore Excel e il generatore iCalendar
+  sono scritti a mano apposta. Le sole dipendenze sono `better-sqlite3`,
+  `sharp`, `nodemailer`, oltre a Next/React/Tailwind;
+- **si verifica con un browser vero** prima di dire che funziona. Il metodo
+  usato: server di prova su una porta libera con `CRM_DB_PATH` su un database
+  usa-e-getta nello scratchpad, dati di prova via `better-sqlite3`, Playwright
+  con `executablePath: "/opt/pw-browsers/chromium"` (i pacchetti si prendono
+  con un symlink da `/opt/node22/lib/node_modules/`, **da rimuovere dopo**);
+- prima di dichiarare finito: `npx tsc --noEmit` e `npm run build`.
+
+### Trappole già pagate (non ripeterle)
+
+- **`due_at` è ora locale senza fuso** (viene da `<input datetime-local>`),
+  mentre `date('now')` in SQLite è **UTC**. Ogni confronto fra i due usa
+  `date('now','localtime')`. Nei file di calendario l'orario va portato com'è
+  con `TZID=Europe/Rome`, senza passare da `Date`.
+- **Le colonne nuove** non arrivano da `CREATE TABLE IF NOT EXISTS`: si
+  aggiungono nell'elenco `COLONNE_AGGIUNTE` in `src/lib/db.ts`.
+- **Servizio, cron e file della posta** stanno in `deploy/servizi.sh`, usato
+  sia da `installa.sh` sia da `aggiorna.sh`: scritti solo dall'installazione,
+  un aggiornamento non li applicherebbe mai.
+- **nginx**: `client_max_body_size 32M` (senza, l'importazione muore) e
+  `X-Forwarded-Proto` (senza, non si entra dagli altri computer).
+- **I campi di un modulo non montati non vengono inviati**: se un blocco è
+  condizionale, i valori già registrati vanno passati come campi nascosti,
+  altrimenti il salvataggio li cancella.
+- **Le tendine troncate** (`LIMIT 500`) scollegano in silenzio ciò che sta
+  oltre il taglio: il valore attuale va sempre inserito fra le opzioni.
+- **I numeri di telefono dell'archivio sono senza +39**: per WhatsApp si passa
+  da `whatsappHref()` in `src/lib/format.ts`, mai da `wa.me` a mano.
+
+---
+
+## 7 · Il controllo periodico della PR
+
+C'è un promemoria automatico che rientra **ogni ora** con questo testo:
+
+> *Controllo periodico della PR camillobarone/mondo#2 (gestionale clienti):
+> verifica stato CI, eventuali commenti di revisione e conflitti di merge. Se
+> non è cambiato nulla, ri-arma il controllo silenziosamente senza scrivere
+> all'utente.*
+
+Cosa fare quando arriva: leggere lo stato della PR #2, e **se non è cambiato
+nulla ri-armarlo con `send_later` a 60 minuti senza scrivere all'utente**.
+Stato noto all'ultimo controllo: aperta in bozza, `mergeable_state: clean`,
+**nessuna CI configurata**, nessuna review, un solo commento (il bot Gemini del
+2 agosto, da ignorare).
+
+Il controllo si ferma solo quando la PR viene unita o chiusa, o se lo chiede
+lui.
+
+---
+
+## 8 · Da sapere sull'ambiente di lavoro
+
+- La sessione gira in un **container isolato**: il repository viene clonato da
+  zero e sparisce a fine sessione. **Quello che non è pushato è perso.**
+- **Non c'è accesso SSH al server dell'agenzia** e non c'è il comando `gh`: per
+  GitHub si usano gli strumenti `mcp__github__*`.
+- Chromium è già installato in `/opt/pw-browsers/chromium`; non lanciare
+  `playwright install`.
+- File temporanei nello scratchpad indicato dal sistema, mai in `/tmp`.
+
+---
+
+## 9 · Prima frase utile per la chat nuova
+
+> Riprendo il gestionale di Mondo Immobiliare (`crm/`, ramo
+> `claude/real-estate-client-management-app-xl7dnx`, PR #2, online su
+> https://gestionale.mondoimmobiliarelecce.it). Ho letto `HANDOFF.md`,
+> `CONSEGNA.md` e `README.md`. Resta da configurare l'SMTP per gli avvisi
+> email e da inserire i dati dei venditori. Dimmi da dove ripartiamo.

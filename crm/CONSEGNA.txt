@@ -103,6 +103,10 @@ Documentazione già nel repository
   crm/CONSEGNA.md
       questo documento
 
+  crm/HANDOFF.md
+      per far ripartire una conversazione nuova con Claude senza perdere
+      il filo
+
 
 4 · COME È FATTO DENTRO
 -----------------------
