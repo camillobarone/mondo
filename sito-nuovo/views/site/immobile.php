@@ -187,6 +187,19 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
     ]) ?>
   </div>
 
+  <?php /* Sul telefono il riquadro col numero resta in cima e sparisce dopo
+           due dita di scorrimento: da lì in poi, per chiamare, bisogna
+           tornare su. Questa barra si appoggia in fondo allo schermo per
+           tutta la scheda e si ferma da sola prima del piè di pagina —
+           `sticky`, non `fixed`, così non copre niente e non sposta un
+           pixel del contenuto. Sopra i 900px non esiste: lì il riquadro
+           dei contatti sta già di fianco e segue lo scorrimento. */ ?>
+  <div class="barra-contatto">
+    <span class="barra-prezzo"><?= e($prezzo) ?></span>
+    <a class="btn btn-primary" href="tel:+390832391489">Chiama</a>
+    <a class="btn btn-ghost" href="#modulo">Scrivi</a>
+  </div>
+
   <?php if ($simili !== []): ?>
     <section class="wrap sezione">
       <h3>Altri immobili a <?= e((string) $p['city']) ?></h3>

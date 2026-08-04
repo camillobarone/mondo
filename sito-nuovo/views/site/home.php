@@ -60,6 +60,24 @@ $sfondoSrc = $sfondo === null ? '' : (string) $sfondo['cover'];
       <button type="submit" class="btn btn-primary">Cerca</button>
     </form>
 
+    <?php
+    /* Le scorciatoie nascono dai comuni che hanno davvero immobili online:
+       una voce fissa scritta a mano finirebbe prima o poi su un elenco vuoto,
+       che è il modo più veloce per far chiudere la pagina. */
+    $scorciatoie = [];
+    foreach (array_slice($cities, 0, 4) as $comune) {
+        $scorciatoie[] = ['Case a ' . $comune, '/immobili/?comune=' . rawurlencode($comune)];
+    }
+    $scorciatoie[] = ['Fino a 150.000 €', '/immobili/?prezzo_max=150000'];
+    ?>
+    <?php if (count($scorciatoie) > 1): ?>
+      <ul class="scorciatoie">
+        <?php foreach ($scorciatoie as [$etichetta, $indirizzo]): ?>
+          <li><a href="<?= e(url($indirizzo)) ?>"><?= e($etichetta) ?></a></li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+
     <ul class="trust">
       <li><strong>4,9 / 5</strong><span>58 recensioni Google</span></li>
       <li><strong>FIMAA</strong><span>iscritti dal 1994</span></li>

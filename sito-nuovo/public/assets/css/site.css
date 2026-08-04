@@ -116,24 +116,53 @@ img { max-width: 100%; height: auto; display: block; }
 /* L'hero porta una foto vera a tutta larghezza: è la casa che vende la casa.
    L'immagine è la copertina di un immobile in evidenza, quindi non c'è
    nessun file in più da caricare e cambia da sola quando cambia la vetrina. */
-.hero { position: relative; padding: 96px 0 72px; color: #fff; overflow: hidden; background: var(--scuro); }
+/* L'hero è una fotografia grande con le parole appoggiate in fondo, non un
+   riquadro scuro con dentro una foto. Su un sito immobiliare la casa è il
+   prodotto: se il velo la copre, resta una pagina di testo su fondo marrone. */
+.hero {
+  position: relative; min-height: min(82vh, 660px);
+  display: flex; align-items: flex-end;
+  padding: 132px 0 52px; color: #fff; overflow: hidden; background: var(--scuro);
+}
 .hero-sfondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-/* Il velo scuro non è decorazione: senza, il testo bianco su una foto chiara
-   diventa illeggibile, e su una foto scura sparisce il contrasto del bottone. */
+/* Due veli invece di uno. Quello verticale scurisce solo il fondo, dove stanno
+   le parole, e lascia in chiaro la parte alta della foto; quello obliquo tiene
+   il margine sinistro leggibile anche se lì la foto è chiara. Il testo bianco
+   resta sopra la zona più scura, quindi il contrasto non dipende dalla foto
+   che capita in vetrina. */
 .hero::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(105deg, rgba(28,26,22,.88) 0%, rgba(28,26,22,.72) 45%, rgba(28,26,22,.38) 100%);
+  background:
+    linear-gradient(to top, rgba(22,20,17,.94) 0%, rgba(22,20,17,.80) 34%, rgba(22,20,17,.34) 66%, rgba(22,20,17,.20) 100%),
+    linear-gradient(100deg, rgba(22,20,17,.58) 0%, rgba(22,20,17,.12) 58%, rgba(22,20,17,0) 100%);
 }
-.hero > .wrap { position: relative; z-index: 1; }
+/* `.wrap` qui è figlio di un flex: senza `width` si stringe sul contenuto e i
+   margini automatici lo centrano, sfasandolo rispetto a tutte le altre
+   sezioni della pagina. */
+.hero > .wrap { position: relative; z-index: 1; width: 100%; }
 .hero-kicker { text-transform: uppercase; letter-spacing: .18em; font-size: .72rem; color: var(--accent-chiaro); font-weight: 700; }
 .hero h1 { max-width: 17ch; color: #fff; text-wrap: balance; }
 .hero-lead { max-width: 56ch; color: rgba(255,255,255,.86); font-size: 1.08rem; }
 
-.hero-senza-foto { background: var(--scuro); }
+/* Senza foto non c'è niente da velare, e l'hero non deve restare alto e vuoto. */
+.hero-senza-foto { background: var(--scuro); min-height: 0; padding-top: 96px; }
 .hero-senza-foto::after { background: none; }
 
+/* Le scorciatoie sotto la ricerca. Un menu a tendina chiede di sapere già cosa
+   si cerca; queste dicono cosa c'è, con le parole con cui la gente lo chiede
+   davvero al telefono. Sono link normali verso l'elenco già filtrato: nessuna
+   riga di JavaScript, e le pagine che aprono esistono e hanno risultati. */
+.scorciatoie { display: flex; flex-wrap: wrap; gap: 9px; margin: 0 0 34px; padding: 0; list-style: none; }
+.scorciatoie a {
+  display: inline-block; padding: 8px 16px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.34); color: #fff; text-decoration: none;
+  font-size: .88rem; background: rgba(255,255,255,.07);
+  transition: background .18s ease, border-color .18s ease;
+}
+.scorciatoie a:hover, .scorciatoie a:focus-visible { background: rgba(255,255,255,.18); border-color: #fff; color: #fff; }
+
 .hero-search {
-  display: flex; flex-wrap: wrap; gap: 10px; margin: 32px 0 34px;
+  display: flex; flex-wrap: wrap; gap: 10px; margin: 32px 0 18px;
   background: var(--bg-card); padding: 14px; border-radius: var(--radius); box-shadow: var(--ombra);
 }
 /* Il campo che si allarga è la label, perché è lei il figlio del flex. */
@@ -172,13 +201,20 @@ img { max-width: 100%; height: auto; display: block; }
 .griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 34px 30px; }
 .griglia-3 { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
 
-/* La scheda non ha piu un bordo che la chiude: la foto arriva fino al bordo
-   e il testo le sta sotto, come su una pagina di rivista. Su un sito
-   immobiliare la foto e il prodotto, non un contorno dell'annuncio. */
-.card { background: transparent; }
+/* La scheda torna a essere un oggetto con un suo bordo. Senza, il titolo e il
+   prezzo galleggiavano sul fondo della pagina e la griglia sembrava un elenco
+   di ritagli: è il «troppo spoglia» detto guardandola. Il contorno non toglie
+   spazio alla foto — la foto occupa comunque tutta la larghezza della scheda —
+   ma dice dove finisce un immobile e dove comincia il successivo. */
+.card {
+  background: var(--bg-card); border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--ombra); display: flex; flex-direction: column;
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgba(34,31,26,.06), 0 18px 40px -18px rgba(34,31,26,.34); }
 .card-media {
   display: block; position: relative; aspect-ratio: 4 / 3; overflow: hidden;
-  background: var(--bg-soft); border-radius: var(--radius);
+  background: var(--bg-soft);
 }
 .card-media img { transition: transform .5s ease; }
 .card:hover .card-media img { transform: scale(1.03); }
@@ -194,16 +230,24 @@ img { max-width: 100%; height: auto; display: block; }
 .badge-warn { background: var(--warn); }
 .badge-off { background: var(--ink-soft); }
 
-.card-body { padding: 18px 2px 0; }
-.card-kicker { font-size: .76rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .5em; }
-.card-title { font-size: 1.3rem; margin-bottom: .25em; line-height: 1.25; }
+.card-body { padding: 20px 22px 22px; display: flex; flex-direction: column; flex: 1; }
+.card-kicker { font-size: .74rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .12em; margin-bottom: .55em; }
+.card-title { font-size: 1.22rem; margin-bottom: .3em; line-height: 1.3; }
 .card-title a { text-decoration: none; color: inherit; }
 .card-title a:hover { color: var(--accent-dark); }
-.card-price { font-family: var(--serif); font-weight: 600; font-size: 1.3rem; margin-bottom: .4em; color: var(--accent-dark); }
-.card-specs {
-  list-style: none; display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0; margin: 0;
-  font-size: .86rem; color: var(--ink-soft);
+/* Il prezzo e la voce che si cerca per prima: sta piu grande del titolo e in
+   fondo alla scheda, dove l'occhio torna dopo aver guardato la foto. */
+.card-price {
+  font-family: var(--serif); font-weight: 600; font-size: 1.42rem;
+  margin: auto 0 0; padding-top: 14px; color: var(--accent-dark);
 }
+/* I dati tecnici separati da una barretta invece che da uno spazio: senza,
+   «105 mq 2 bagni» si legge come una frase sola. */
+.card-specs {
+  list-style: none; display: flex; flex-wrap: wrap; padding: 0;
+  margin: 10px 0 0; font-size: .85rem; color: var(--ink-soft);
+}
+.card-specs li + li { margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--line); }
 
 .post-card { border-top: 3px solid var(--ink); padding-top: 16px; }
 .post-card h3 { font-size: 1.08rem; }
@@ -228,7 +272,12 @@ img { max-width: 100%; height: auto; display: block; }
 
 .briciole { max-width: var(--wrap); margin: 0 auto; padding: 18px 20px 0; font-size: .85rem; color: var(--ink-soft); }
 .briciole a { color: var(--ink-soft); }
-.scheda-head { padding-top: 18px; max-width: 26ch; }
+/* `.scheda-head` porta anche la classe `.wrap`, che centra con margini
+   automatici: un `max-width` qui stringeva e centrava tutta l'intestazione,
+   lasciandola sospesa in mezzo alla pagina mentre il resto partiva da sinistra.
+   La misura va messa sul titolo, che è l'unica riga che deve restare corta. */
+.scheda-head { padding-top: 18px; }
+.scheda-head h2 { max-width: 26ch; }
 .scheda-kicker { font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .1em; }
 .scheda-prezzo { font-family: var(--serif); font-size: 2.1rem; font-weight: 600; color: var(--accent-dark); }
 
@@ -310,6 +359,20 @@ img { max-width: 100%; height: auto; display: block; }
 .faq details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
 .faq summary:hover { color: var(--accent-dark); }
 .faq-risposta { padding: 0 34px 20px 0; color: var(--ink-soft); }
+
+/* Barra dei contatti in fondo alla scheda, solo sul telefono. */
+.barra-contatto { display: none; }
+@media (max-width: 900px) {
+  .barra-contatto {
+    display: flex; align-items: center; gap: 10px;
+    position: sticky; bottom: 0; z-index: 15;
+    margin-top: 28px; padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(253,251,247,.96); border-top: 1px solid var(--line);
+    backdrop-filter: saturate(1.4) blur(8px);
+  }
+  .barra-prezzo { flex: 1; font-family: var(--serif); font-weight: 600; font-size: 1.05rem; color: var(--accent-dark); }
+  .barra-contatto .btn { padding: 12px 18px; font-size: .9rem; }
+}
 
 /* Fascia dell'anteprima dal gestionale. Volutamente stonata rispetto al resto
    della grafica: deve essere impossibile scambiarla per parte del sito. */
