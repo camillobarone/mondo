@@ -683,55 +683,6 @@ export function userByCalendarToken(
   );
 }
 
-/* ============================================== report per il proprietario */
-
-export interface PropertyReport {
-  /** Giorni da quando l'immobile e' in portafoglio. */
-  days: number;
-  visits: ActivityRow[];
-  /** I feedback scritti dopo le visite: sono la parte che pesa di piu'. */
-  feedback: { date: string | null; text: string; client: string | null }[];
-  contacts: number;
-}
-
-export function propertyReport(property: Property): PropertyReport {
-  const inizio = property.mandate_start ?? property.created_at;
-  // Giorni interi compiuti: la data del mandato e' a mezzanotte, e arrotondare
-  // per eccesso farebbe dire "95 giorni" a un mandato firmato 94 giorni fa.
-  const days = inizio
-    ? Math.max(0, Math.floor((Date.now() - new Date(inizio).getTime()) / 86400000))
-    : 0;
-
-  const visits = all<ActivityRow>(
-    `${ACTIVITY_SELECT}
-      WHERE a.property_id = ? AND a.type = 'visita'
-      ORDER BY COALESCE(a.due_at, a.done_at) DESC`,
-    [property.id],
-  );
-
-  // Ogni contatto registrato su questo immobile, non solo le visite:
-  // telefonate e richieste di informazioni dicono quanto si e' mosso.
-  const contacts = count(
-    `SELECT COUNT(*) AS n FROM activities WHERE property_id = ?`,
-    [property.id],
-  );
-
-  // Solo l'esito, mai le note. Le note sono i promemoria dell'agente ("portare
-  // la planimetria", "chiedere lo sconto"): finirebbero virgolettate in un
-  // foglio che si consegna al proprietario, come se le avesse dette il
-  // visitatore. L'esito e' il campo che si compila apposta, quando la visita
-  // si segna come fatta.
-  const feedback = visits
-    .filter((visit) => visit.done_at && (visit.outcome ?? "").trim())
-    .map((visit) => ({
-      date: visit.done_at,
-      text: (visit.outcome ?? "").trim(),
-      client: visit.client_name || null,
-    }));
-
-  return { days, visits, feedback, contacts };
-}
-
 /* ============================================================= venditori */
 
 export type SellerRow = Client & {

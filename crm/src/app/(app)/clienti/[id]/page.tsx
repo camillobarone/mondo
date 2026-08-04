@@ -485,8 +485,8 @@ export default async function ClientPage({
           {/* --------------------------------------------------------- storico */}
           <Card title="Registra un contatto">
             {/* L'immobile si sceglie anche da qui: una visita registrata dalla
-                scheda del cliente, senza casa collegata, sparisce dal resoconto
-                che poi si consegna al proprietario. */}
+                scheda del cliente, senza casa collegata, sparisce dallo storico
+                visite che poi si consegna al proprietario. */}
             <ActivityForm
               clientId={client.id}
               userOptions={users}

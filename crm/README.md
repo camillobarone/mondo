@@ -17,7 +17,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | **Richieste** | Cosa cerca ogni acquirente: zona, budget, metratura, requisiti irrinunciabili |
 | **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback e **foto** |
 | **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
-| **Resoconto** | Una pagina da stampare per il proprietario: quanti lo cercano, chi si è fermato sul prezzo, cosa hanno detto i visitatori |
+| **Storico visite** | Una pagina da stampare per il proprietario: chi è venuto a vedere la casa, quando, con che numero, e cosa ha detto |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
 | **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza. Si modificano e si eliminano, entrano nel tuo calendario e avvisano 30 minuti prima |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
@@ -233,48 +233,6 @@ Non è obbligatorio: un venditore che ha già venduto tutto resta in elenco senz
 immobili collegati. Ma un immobile senza proprietario sì che è un problema, e
 l'elenco immobili lo segnala in cima con il collegamento per vedere quali sono.
 
----
-
-## Il resoconto per il proprietario
-
-Sulla scheda di ogni immobile, in alto, c'è **Resoconto per il proprietario**:
-una pagina sola, fatta per essere stampata e lasciata sul tavolo. Il pulsante
-*Stampa o salva in PDF* apre la finestra di stampa; scegliendo "Salva come PDF"
-invece della stampante si ottiene il file da mandare su WhatsApp.
-
-Serve alla conversazione più difficile del mestiere: dire a chi vende che il
-prezzo è fuori mercato. A parole è la tua opinione contro la sua. Con i numeri
-della sua casa in mano è un fatto:
-
-- **quanti clienti in archivio cercano davvero una casa così**, quanti contatti
-  sono arrivati, quante visite sono state fatte, quante proposte;
-- **chi si è fermato soltanto sul prezzo**: persone che cercavano quella
-  tipologia in quella zona e il cui budget dichiarato non arriva alla cifra.
-  Sotto, i prezzi a cui l'immobile rientrerebbe nel loro raggio, con **quanti
-  acquirenti** ci sono a ciascuno, confrontati con quelli di oggi. Il
-  proprietario sceglie fra numeri concreti invece di sentirsi dire "è caro";
-- **le frasi dei visitatori**, come sono state scritte dopo il sopralluogo;
-- **la storia del prezzo** e le proposte ricevute.
-
-Sono tutti dati che già hai: nessun campo nuovo da compilare. Ma vanno
-registrati — un immobile senza visite annotate e senza richieste collegate
-produce un resoconto a zeri, che è a sua volta un'informazione, ma sul lavoro
-fatto e non sulla casa.
-
-Perché una visita ci finisca servono due cose, tutte e due nella riga della
-visita:
-
-1. **l'immobile collegato** — si sceglie dal menù *Immobile*, che c'è sia sulla
-   scheda dell'immobile (già compilato), sia in agenda, sia sulla scheda del
-   cliente;
-2. **la visita segnata come fatta, con il commento**. Mettendo la spunta
-   *Fatto* compare il campo **«Cosa ha detto il cliente»**: quello che scrivi lì
-   finisce nel resoconto, virgolettato.
-
-Il resoconto riporta **solo quel campo**, mai le *Note*. Le note sono i tuoi
-promemoria — «portare la planimetria», «chiedere se scende» — e in un foglio
-che si consegna al proprietario sembrerebbero frasi dette dal visitatore.
-
 **I compleanni** compaiono in **Agenda**, in cima, da una settimana prima. Per
 ognuno c'è il pulsante per chiamare e quello per mandare gli auguri su WhatsApp
 **con il messaggio già scritto**. Basta compilare la data di nascita nella
@@ -282,6 +240,49 @@ scheda cliente.
 
 È la telefonata che costa meno di tutte e vale più di molte altre. Se non
 compare da sola il giorno giusto, però, non la fa nessuno.
+
+---
+
+## Lo storico visite per il proprietario
+
+Sulla scheda di ogni immobile, in alto, c'è **Storico visite**: una pagina
+sola, fatta per essere stampata e consegnata a chi vende. Il pulsante *Stampa o
+salva in PDF* apre la finestra di stampa; scegliendo "Salva come PDF" invece
+della stampante si ottiene il file da mandare su WhatsApp.
+
+Serve a rispondere alla domanda che ogni proprietario fa prima o poi — *«ma la
+state facendo vedere?»* — prima ancora che la faccia. Il foglio riporta:
+
+- il **saluto** al proprietario, con il tuo nome in fondo;
+- **le visite fatte**, dalla più vecchia alla più recente: data, nome e cognome
+  di chi è venuto, il suo numero di telefono e il commento raccolto dopo il
+  sopralluogo;
+- **gli appuntamenti già fissati**, in un riquadro a parte: sapere che qualcuno
+  passa la settimana prossima vale quanto una visita fatta.
+
+Non c'è niente da compilare a parte: **l'elenco si riempie dall'agenda**. Ogni
+visita o appuntamento che registri sulla scheda dell'immobile compare qui da
+solo, con la data dell'appuntamento — non quella in cui hai messo la spunta.
+
+Perché una visita ci finisca servono due cose, tutte e due nella riga della
+visita:
+
+1. **l'immobile collegato** — si sceglie dal menù *Immobile*, che c'è sia sulla
+   scheda dell'immobile (già compilato), sia in agenda, sia sulla scheda del
+   cliente;
+2. **il commento**. Mettendo la spunta *Fatto* compare il campo **«Cosa ha
+   detto il cliente»**: quello che scrivi lì finisce nella colonna *Commento*.
+
+### Le note interne
+
+Il foglio riporta anche le **Note** della riga, dopo il commento. Sono i tuoi
+promemoria — «portare la planimetria», «chiedere se scende» — e in un foglio
+consegnato al proprietario possono sembrare frasi dette dal visitatore. In cima
+alla pagina c'è **Togli le note interne**: un clic e restano solo i commenti
+dei clienti. Il comando non si stampa, serve solo a te prima di stampare.
+
+Tieni presente che il foglio contiene **nome e telefono di chi ha visitato**:
+sono dati di altri clienti, e sta a te decidere caso per caso se consegnarli.
 
 ---
 

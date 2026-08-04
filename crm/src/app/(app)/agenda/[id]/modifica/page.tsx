@@ -110,7 +110,7 @@ export default async function EditActivityPage({
       <Card title="Eliminare">
         <p className="mb-3 text-sm text-slate-600">
           L&apos;attività sparisce dall&apos;agenda, dallo storico del cliente e
-          dell&apos;immobile, e dal resoconto per il proprietario. Non si recupera.
+          dell&apos;immobile, e dallo storico visite del proprietario. Non si recupera.
         </p>
         <DeleteActivityButton id={activity.id} redirectTo={ritorno} />
       </Card>

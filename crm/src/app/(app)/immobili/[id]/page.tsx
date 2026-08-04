@@ -96,9 +96,6 @@ export default async function PropertyPage({
             <Link href={`/immobili/${property.id}/visite`} className="btn-secondary">
               Storico visite
             </Link>
-            <Link href={`/immobili/${property.id}/report`} className="btn-secondary">
-              Resoconto per il proprietario
-            </Link>
             <Link href={`/immobili/${property.id}/modifica`} className="btn-primary">
               Modifica
             </Link>

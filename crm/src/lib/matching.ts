@@ -477,50 +477,6 @@ export function nearMissesForProperty(
   return { total, byReason, items: items.slice(0, limit) };
 }
 
-export interface PriceInterest {
-  /** Richieste aperte che oggi corrispondono davvero. */
-  matching: number;
-  /** Chi e' stato escluso soltanto dal prezzo, con il budget che aveva. */
-  blockedByPrice: { clientName: string; budgetMax: number }[];
-  /** Fascia in cui quei clienti avrebbero comprato. */
-  band: { min: number; max: number } | null;
-}
-
-/**
- * Quanto interesse ha davvero questo immobile, e quanto ne perde per il
- * prezzo. E' il numero che serve al proprietario per capire se il problema
- * e' la casa o la cifra: "quattro persone la volevano, tutte sotto i 260".
- */
-export function priceInterest(property: Property): PriceInterest {
-  const ready = prepareProperty(property);
-  const blocked: { clientName: string; budgetMax: number }[] = [];
-  let matching = 0;
-
-  for (const requirement of openRequirements()) {
-    const verdict = evaluate(requirement, ready);
-    if (verdict.ok) {
-      matching++;
-      continue;
-    }
-    // Solo chi si e' fermato sul prezzo pur volendo quel tipo di immobile: chi
-    // cercava in un altro comune o un'altra tipologia e' gia' stato escluso
-    // prima, con il suo motivo, e non arriva mai qui.
-    if (verdict.reason !== "budget" || !requirement.budgetMax) continue;
-    if (ready.price > 0 && requirement.budgetMax >= ready.price) continue;
-
-    blocked.push({ clientName: requirement.clientName, budgetMax: requirement.budgetMax });
-  }
-
-  blocked.sort((a, b) => b.budgetMax - a.budgetMax);
-  const budgets = blocked.map((b) => b.budgetMax);
-
-  return {
-    matching,
-    blockedByPrice: blocked,
-    band: budgets.length ? { min: Math.min(...budgets), max: Math.max(...budgets) } : null,
-  };
-}
-
 export interface ClientMatches {
   clientId: number;
   clientName: string;

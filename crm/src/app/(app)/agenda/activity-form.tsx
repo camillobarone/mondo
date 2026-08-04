@@ -38,9 +38,9 @@ export function ActivityForm({
   const [type, setType] = useState(activity?.type ?? "chiamata");
   const [done, setDone] = useState(Boolean(activity?.done_at));
 
-  // Il commento raccolto dopo una visita e' quello che finisce nel resoconto
-  // per il proprietario: va chiesto quando c'e' qualcosa da raccontare, cioe'
-  // quando l'attivita' e' fatta, e non prima.
+  // Il commento raccolto dopo una visita e' quello che finisce nello storico
+  // visite del proprietario: va chiesto quando c'e' qualcosa da raccontare,
+  // cioe' quando l'attivita' e' fatta, e non prima.
   const chiediEsito = done;
   const visita = type === "visita";
 
@@ -155,8 +155,8 @@ export function ActivityForm({
               </select>
               {visita ? (
                 <p className="mt-1 text-xs text-slate-500">
-                  Collegando la visita all&apos;immobile finisce nel resoconto per il
-                  proprietario.
+                  Collegando la visita all&apos;immobile finisce nello storico visite
+                  del proprietario.
                 </p>
               ) : null}
             </div>
@@ -207,7 +207,7 @@ export function ActivityForm({
             />
             {visita ? (
               <p className="mt-1 text-xs text-slate-500">
-                Finisce nel resoconto per il proprietario, virgolettato.
+                Finisce nello storico visite del proprietario.
               </p>
             ) : null}
           </div>

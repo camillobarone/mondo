@@ -340,27 +340,29 @@ richieste estratte dal testo libero delle note.
    compleanni in Agenda, con gli auguri WhatsApp già scritti.
 9. **Legame venditore–immobile** da entrambe le parti, con **ricerca** invece di
    una tendina con dentro tutto l'archivio.
-10. **Resoconto per il proprietario** — l'ultima cosa fatta, vedi sotto.
+10. **Storico visite per il proprietario** — l'ultima cosa fatta, vedi sotto.
 
-### Il resoconto per il proprietario
+### Lo storico visite per il proprietario
 
 Su ogni scheda immobile, in alto: una pagina sola, da stampare o salvare in PDF
 (dalla finestra di stampa, scegliendo "Salva come PDF") e mandare su WhatsApp.
 
-Serve alla conversazione più difficile del mestiere — dire che il prezzo è fuori
-mercato. A parole è opinione contro opinione; con i numeri della sua casa in
-mano è un fatto. Mostra quanti clienti in archivio cercano davvero una casa
-così, quanti contatti e visite ci sono stati, **chi si è fermato soltanto sul
-prezzo** e a quali cifre l'immobile tornerebbe nel loro raggio (con quanti
-acquirenti a ciascuna), le frasi scritte dai visitatori, la storia dei ribassi e
-le proposte.
+Risponde alla domanda che il proprietario fa prima o poi — «ma la state facendo
+vedere?» — prima ancora che la faccia. Riporta il saluto, l'elenco delle visite
+effettuate con data, nome, cognome, telefono e commento di chi è venuto, e in un
+riquadro a parte gli appuntamenti già fissati.
 
-Nel conteggio degli acquirenti c'è un **margine dell'8%** sul budget dichiarato,
-perché in trattativa quel margine c'è quasi sempre.
+Non c'è un elenco da tenere aggiornato a parte: **legge dall'agenda**. Ogni
+visita o appuntamento collegato all'immobile compare da solo, con la data
+dell'appuntamento e non quella in cui è stata messa la spunta *Fatto*.
 
-Il resoconto virgolette **solo il campo «Cosa ha detto il cliente»**, mai le
-*Note*: quelle sono i promemoria dell'agente e in un foglio consegnato al
-proprietario sembrerebbero frasi del visitatore.
+Le **Note** della riga compaiono dopo il commento, ma si tolgono con un clic
+(*Togli le note interne*): sono i promemoria dell'agente e in un foglio
+consegnato al proprietario sembrerebbero frasi del visitatore.
+
+Un resoconto sul prezzo — con chi si era fermato sulla cifra e a quanto
+l'immobile tornerebbe interessante — era stato costruito e poi tolto su
+richiesta il 4 agosto 2026. Il codice resta nella storia del repository.
 
 ### Agenda: modifica, calendario, avvisi
 

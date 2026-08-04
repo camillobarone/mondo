@@ -13,8 +13,9 @@ l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
 ## 1 · Chi è l'utente
 
-**Camillo Barone**, titolare di **Studio RCS Srls** — *Mondo Immobiliare
-Lecce*, agenzia FIMAA dal 1994, uffici a **Lecce** e **Porto Cesareo**.
+**Camillo Barone**, titolare di **Studio RCS Srls** —
+*Mondo Immobiliare Lecce*, agenzia FIMAA dal 1994,
+uffici a **Lecce** e **Porto Cesareo**.
 
 - **Scrive e va risposto in italiano.** Anche i commenti nel codice sono in
   italiano.
@@ -51,7 +52,7 @@ l'archivio reale dell'agenzia già dentro.
 
 Utenti del programma: **UFFICIO** e **CAMILLO BARONE** (entrambi titolari).
 
-**Tutto è già committato e pushato** — l'ultimo commit è `7324ae4`.
+**Tutto è già committato e pushato.**
 
 ---
 
@@ -77,11 +78,13 @@ ssh root@IP "cd /opt/mondo-crm && sudo -u mondo node ..."             # giusto
 
 ## 4 · Cosa c'è dentro, in breve
 
-Clienti · Richieste · Immobili (con foto) · **Venditori** (proprietari, con
-avviso compleanni) · **Incroci** automatici · Agenda · **Resoconto per il
-proprietario** · Trattative · Report · Adempimenti (privacy datata,
-antiriciclaggio, registro accessi) · Importazione da Excel · **Ricerca
-globale** · copia di sicurezza dal browser.
+Clienti · Richieste · Immobili (con foto) ·
+**Venditori** (proprietari, con avviso compleanni) ·
+**Incroci** automatici · Agenda ·
+**Storico visite per il proprietario** ·
+Trattative · Report · Adempimenti (privacy datata, antiriciclaggio,
+registro accessi) · Importazione da Excel · **Ricerca globale** ·
+copia di sicurezza dal browser.
 
 ### Le cose costruite in questa sessione, in ordine
 
@@ -95,13 +98,20 @@ globale** · copia di sicurezza dal browser.
 4. **Foto** sugli immobili.
 5. **Venditori** + legame venditore↔immobile da entrambe le parti, con
    **ricerca** al posto della tendina infinita.
-6. **Resoconto per il proprietario** — pagina stampabile con chi si è fermato
-   sul prezzo e a quali cifre l'immobile tornerebbe interessante.
+6. **Storico visite per il proprietario** — pagina stampabile con nome,
+   telefono e commento di chi è venuto a vedere, presa dall'agenda.
 7. **Agenda**: modifica/eliminazione anche delle attività svolte, calendario
    iCalendar (singolo evento + abbonamento per persona), avviso email 30
    minuti prima via cron.
-8. **Revisione completa** + quattro utilità: ricerca globale, *Proponi su
-   WhatsApp*, riquadro *Da sistemare*, copia di sicurezza dal browser.
+8. **Revisione completa** + quattro utilità: ricerca globale,
+   *Proponi su WhatsApp*, riquadro *Da sistemare*, copia di sicurezza dal
+   browser.
+9. **Incroci più stretti**: niente più proposte in un comune diverso da quello
+   richiesto, né di una famiglia di tipologie diversa (commerciale, terreno,
+   box a chi cerca casa). Il confronto sul comune tollera le scritture diverse
+   («Lecce» e «LECCE (LE)»), e la tipologia esclude solo quando entrambe le
+   famiglie si riconoscono.
+10. **Storico visite**, e rimozione del resoconto sul prezzo (vedi sotto).
 
 ---
 
@@ -112,7 +122,7 @@ globale** · copia di sicurezza dal browser.
 | **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Non fatto.** Finché manca, l'avviso *email* 30 minuti prima non parte (il calendario funziona lo stesso). Procedimento nel capitolo **6-bis** di `CONSEGNA.md`. Serve la casella da cui spedire e la sua password: le ha solo lui. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Provare le ultime novità** | L'ultimo aggiornamento del server era in corso quando la chat si è chiusa. |
-| **Controllo orario della PR #2** | Vedi capitolo 7. |
+| **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 
 ### Fuori perimetro, in attesa di una sua decisione
 
@@ -163,15 +173,23 @@ email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
 
 ## 7 · Il controllo periodico della PR
 
-C'è un promemoria automatico che rientra **ogni ora** con questo testo:
+C'è un promemoria automatico che rientra **una volta al giorno**, alle 07:00
+UTC (le 9 in Italia), con questo testo:
 
-> *Controllo periodico della PR camillobarone/mondo#2 (gestionale clienti):
+> Controllo giornaliero della PR camillobarone/mondo#2 (gestionale clienti):
 > verifica stato CI, eventuali commenti di revisione e conflitti di merge. Se
-> non è cambiato nulla, ri-arma il controllo silenziosamente senza scrivere
-> all'utente.*
+> non è cambiato nulla, ri-arma il controllo per il giorno dopo alle 07:00 UTC
+> silenziosamente, senza scrivere all'utente.
 
-Cosa fare quando arriva: leggere lo stato della PR #2, e **se non è cambiato
-nulla ri-armarlo con `send_later` a 60 minuti senza scrivere all'utente**.
+Cosa fare quando arriva: leggere lo stato della PR #2, e
+**se non è cambiato nulla ri-armarlo con `send_later` per il giorno dopo**,
+senza scrivere all'utente.
+
+Era ogni ora fino al 4 agosto 2026, poi lui ha chiesto di diradarlo. Il
+promemoria si crea con `send_later` e non con `create_trigger`: un promemoria
+ricorrente vero parte senza gli strumenti `mcp__github__*` e non riuscirebbe a
+leggere la PR.
+
 Stato noto all'ultimo controllo: aperta in bozza, `mergeable_state: clean`,
 **nessuna CI configurata**, nessuna review, un solo commento (il bot Gemini del
 2 agosto, da ignorare).

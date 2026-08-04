@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getProperty, visitHistory } from "@/lib/queries";
 import { shortDate } from "@/lib/format";
-import { PrintButton } from "../report/print-button";
+import { PrintButton } from "@/components/print-button";
 
 export const dynamic = "force-dynamic";
 
