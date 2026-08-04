@@ -13,10 +13,10 @@
   RewriteRule ^ index.php [L]
 </IfModule>
 
-# Le foto caricate non devono poter essere eseguite come codice.
-<Directory "uploads">
-  php_flag engine off
-</Directory>
+# Le foto caricate non devono poter essere eseguite come codice: la regola
+# sta in `uploads/.htaccess`, non qui. `<Directory>` dentro un .htaccess non
+# e ammessa e fa rispondere 500 all'intero sito, e `php_flag` fa lo stesso
+# dove PHP gira in FPM invece che come modulo Apache — cioe su SiteGround.
 
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"

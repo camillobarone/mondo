@@ -9,6 +9,7 @@
 # Foto caricate dal gestionale.
 /public/uploads/*
 !/public/uploads/.gitkeep
+!/public/uploads/.htaccess
 
 # Cache del CSS minificato: si rigenera da sola.
 /storage/cache/*
