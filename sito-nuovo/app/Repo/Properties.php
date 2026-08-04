@@ -108,8 +108,12 @@ final class Properties
             $clauses[] = 'p.featured = 1';
         }
         if (!empty($filters['q'])) {
-            $clauses[] = '(p.title LIKE :q OR p.description LIKE :q OR p.city LIKE :q OR p.area LIKE :q OR p.ref LIKE :q)';
-            $params['q'] = '%' . $filters['q'] . '%';
+            [$clausola, $suoi] = Db::likeAny(
+                ['p.title', 'p.description', 'p.city', 'p.area', 'p.ref'],
+                (string) $filters['q']
+            );
+            $clauses[] = $clausola;
+            $params += $suoi;
         }
 
         return [$clauses === [] ? '1 = 1' : implode(' AND ', $clauses), $params];

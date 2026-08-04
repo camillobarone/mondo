@@ -30,8 +30,12 @@ final class Contacts
             $params['active'] = (int) ($data['active'] ?? 1);
         }
         if (!empty($data['q'])) {
-            $clauses[] = '(c.name LIKE :q OR c.phone LIKE :q OR c.email LIKE :q OR c.notes LIKE :q)';
-            $params['q'] = '%' . $data['q'] . '%';
+            [$clausola, $suoi] = Db::likeAny(
+                ['c.name', 'c.phone', 'c.email', 'c.notes'],
+                (string) $data['q']
+            );
+            $clauses[] = $clausola;
+            $params += $suoi;
         }
         if (!empty($data['status'])) {
             $clauses[] = 'c.status = :status';

@@ -201,6 +201,31 @@ final class Db
     }
 
     /**
+     * Clausola «una di queste colonne contiene il testo cercato».
+     *
+     * Ogni colonna riceve un segnaposto suo. Sembra pignoleria e non lo è:
+     * con i prepared statement nativi di MySQL lo stesso `:q` ripetuto cinque
+     * volte fa fallire la query con `Invalid parameter number`, mentre SQLite
+     * lo accetta. Scritta così la ricerca funziona su tutti e due.
+     *
+     * @param array<int,string> $colonne
+     * @return array{0:string,1:array<string,string>} clausola e parametri
+     */
+    public static function likeAny(array $colonne, string $testo, string $prefisso = 'q'): array
+    {
+        $pezzi = [];
+        $params = [];
+
+        foreach (array_values($colonne) as $i => $colonna) {
+            $nome = $prefisso . $i;
+            $pezzi[] = "{$colonna} LIKE :{$nome}";
+            $params[$nome] = '%' . $testo . '%';
+        }
+
+        return ['(' . implode(' OR ', $pezzi) . ')', $params];
+    }
+
+    /**
      * "Questa colonna data contiene davvero una data", scritto in modo che
      * valga su entrambi i database.
      *

@@ -26,8 +26,12 @@ final class Leads
             $params['source'] = $data['source'];
         }
         if (!empty($data['q'])) {
-            $clauses[] = '(l.name LIKE :q OR l.phone LIKE :q OR l.email LIKE :q OR l.message LIKE :q)';
-            $params['q'] = '%' . $data['q'] . '%';
+            [$clausola, $suoi] = Db::likeAny(
+                ['l.name', 'l.phone', 'l.email', 'l.message'],
+                (string) $data['q']
+            );
+            $clauses[] = $clausola;
+            $params += $suoi;
         }
         if (!empty($data['assigned_to'])) {
             $clauses[] = 'l.assigned_to = :assigned_to';
