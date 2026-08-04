@@ -175,7 +175,7 @@ final class Deals
                     SUM(sold_price) AS volume,
                     SUM(COALESCE(commission_seller, 0) + COALESCE(commission_buyer, 0)) AS provvigioni
              FROM properties
-             WHERE deed_date IS NOT NULL AND deed_date <> ''
+             WHERE " . Db::dateFilled('deed_date') . "
                AND deed_date >= :da AND deed_date <= :a",
             ['da' => $year . '-01-01', 'a' => $year . '-12-31']
         );
@@ -196,7 +196,7 @@ final class Deals
     {
         $rows = Db::all(
             "SELECT published_at, created_at, deed_date FROM properties
-             WHERE deed_date IS NOT NULL AND deed_date <> ''"
+             WHERE " . Db::dateFilled('deed_date')
         );
 
         $giorni = [];

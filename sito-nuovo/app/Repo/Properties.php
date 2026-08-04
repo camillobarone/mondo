@@ -261,8 +261,7 @@ final class Properties
         return Db::all(
             "SELECT p.*, u.name AS agent_name
              FROM properties p LEFT JOIN users u ON u.id = p.agent_id
-             WHERE p.mandate_end IS NOT NULL
-               AND p.mandate_end <> ''
+             WHERE " . Db::dateFilled('p.mandate_end') . "
                AND p.mandate_end <= :limite
                AND p.deal_stage NOT IN ('rogitato','ritirato')
              ORDER BY p.mandate_end",

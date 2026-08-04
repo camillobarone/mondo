@@ -200,6 +200,26 @@ final class Db
         return 'CONCAT(' . implode(', ', $parts) . ')';
     }
 
+    /**
+     * "Questa colonna data contiene davvero una data", scritto in modo che
+     * valga su entrambi i database.
+     *
+     * Su MySQL una colonna `DATE` o non ha valore (NULL) o ne ha uno valido:
+     * la stringa vuota non ci può stare, e confrontarcela non è inutile — è
+     * un errore fatale, `1525 Incorrect DATE value`, che porta giù la pagina.
+     * Su SQLite la stessa colonna è testo, quindi la stringa vuota ci finisce
+     * eccome, e va esclusa a mano: senza, `'' <= '2026-09-18'` è vero e gli
+     * incarichi mai compilati risulterebbero tutti in scadenza.
+     */
+    public static function dateFilled(string $column): string
+    {
+        if (self::driver() === 'sqlite') {
+            return "({$column} IS NOT NULL AND {$column} <> '')";
+        }
+
+        return "{$column} IS NOT NULL";
+    }
+
     /** Espressione "adesso" utilizzabile nelle query, per driver. */
     public static function now(): string
     {
