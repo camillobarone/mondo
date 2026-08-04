@@ -343,18 +343,30 @@ Resta comunque da lanciare `--campi` sul database vero: la verifica ha coperto
 13 immobili su 49, e una chiave usata su una scheda sola la trova solo il
 censimento completo.
 
-Cosa manca davvero:
-- **Il video degli annunci non viene importato.** Le schede hanno
-  `embed_video_type` / `embed_video_id` e lo schema dichiara un `VideoObject`;
-  il gestionale non ha un campo dove metterlo. Serve una colonna, prima di
-  puntare il dominio.
+⚠️ **Questo elenco va riletto contro il codice prima di ripeterlo a Camillo.**
+Il 4 agosto gli è stato detto che mancava il campo video quando era già fatto
+da due commit: la riga era rimasta qui. Una funzione dichiarata mancante che
+invece c'è costa più di una mancanza dichiarata: gli fa spendere una decisione
+su un problema che non esiste.
+
+Cosa manca davvero (verificato il 4 agosto, sera):
 - Esecuzione reale su MySQL non provata (qui c'è solo SQLite)
 - Rich Results Test di Google (serve una URL pubblica)
 - Import CSV dell'anagrafica clienti (in WordPress non c'è)
 - Export verso i portali (Immobiliare.it, Idealista)
-- Editor con formattazione ricca, geocoding, virtual tour, calcolatore
-  imposte, tool OMI
+- Geocoding, tool OMI, pagine di zona, pagine dei soci
+- Statistiche di visita: nessun Analytics, e nessun conteggio lato server
+  oltre alle visualizzazioni per immobile
+- Blocco dopo N tentativi di accesso falliti: c'è solo un ritardo di 300 ms
 - FAQ della pagina valutazione scritte nel codice, non modificabili dal pannello
+- **La mappa vecchio → nuovo degli indirizzi non esiste ancora**: il gestionale
+  ha la tabella e la pagina dei reindirizzamenti, ma sono vuote. È il pezzo che
+  decide se il passaggio costa posizioni. Vedi `MIGRAZIONE-SEO.md`, fasi 1 e 2.
+
+Fatti, non più mancanti: video e visita virtuale (colonne, campi, importazione,
+pulsanti sulla scheda, `VideoObject` nel JSON-LD), calcolatore delle imposte,
+anteprima della scheda, FAQ per immobile, formattazione ricca del testo
+(`Core\Testo`: sottotitoli, elenchi, grassetto, collegamenti).
 
 ---
 
