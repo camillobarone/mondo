@@ -57,15 +57,55 @@ function normalise(value: string | null | undefined): string {
 }
 
 /**
- * Due zone si considerano la stessa anche quando una contiene l'altra:
- * "Centro" e "Centro storico", "Cataldo" e "San Cataldo". Sotto i 4
- * caratteri non si azzarda: troppo facile un falso accostamento.
+ * Due luoghi si considerano lo stesso anche quando uno contiene l'altro:
+ * "Centro" e "Centro storico", "Cataldo" e "San Cataldo", "Porto Cesareo" e
+ * "Porto Cesareo (LE)". Sotto i 4 caratteri non si azzarda: troppo facile un
+ * falso accostamento.
  */
-function sameZone(a: string, b: string): boolean {
+function samePlace(a: string, b: string): boolean {
   if (!a || !b) return false;
   if (a === b) return true;
   if (a.length < 4 || b.length < 4) return false;
   return a.includes(b) || b.includes(a);
+}
+
+/**
+ * Famiglie di immobili: cose che si possono ragionevolmente proporre l'una al
+ * posto dell'altra. Un attico a chi cerca un appartamento vale la telefonata;
+ * un locale commerciale a chi cerca casa no, e nemmeno un terreno o un box.
+ *
+ * Si riconosce dalla parola perche' la tipologia arriva anche dagli archivi
+ * importati, dove non e' scritta come nel menu a tendina.
+ */
+const FAMIGLIE: { nome: string; parole: string[] }[] = [
+  {
+    nome: "commerciale",
+    parole: [
+      "commerciale", "negozio", "ufficio", "capannone", "laboratorio",
+      "magazzino", "opificio", "bar", "ristorante", "albergo", "hotel",
+    ],
+  },
+  { nome: "terreno", parole: ["terreno", "suolo", "lotto", "agricolo", "edificabile"] },
+  { nome: "posto auto", parole: ["box", "garage", "autorimessa", "posto auto"] },
+  {
+    nome: "abitativo",
+    parole: [
+      "appartamento", "attico", "villa", "villetta", "casa", "abitazione",
+      "trullo", "pajara", "masseria", "rustico", "monolocale", "bilocale",
+      "trilocale", "quadrilocale", "loft", "mansarda", "palazzo", "dimora",
+    ],
+  },
+];
+
+/**
+ * A quale famiglia appartiene una tipologia. `null` quando non si riconosce:
+ * in quel caso non si esclude niente, si lascia decidere all'agente.
+ */
+function famiglia(kind: string): string | null {
+  for (const gruppo of FAMIGLIE) {
+    if (gruppo.parole.some((parola) => kind.includes(parola))) return gruppo.nome;
+  }
+  return null;
 }
 
 /* ------------------------------------------------------------ preparazione */
@@ -136,7 +176,7 @@ function prepareProperty(property: Property): ReadyProperty {
 /* -------------------------------------------------------------- confronto */
 
 /** Perche' un immobile non e' stato proposto a una richiesta. */
-export type Rejection = "contratto" | "budget" | "metratura";
+export type Rejection = "contratto" | "comune" | "tipologia" | "budget" | "metratura";
 
 type Verdict =
   | { ok: true; score: number; total: number; misses: number }
@@ -151,6 +191,21 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
   // --- criteri che escludono l'immobile ---------------------------------
   if (property.contract !== requirement.contract) {
     return { ok: false, reason: "contratto", gap: 0 };
+  }
+  // Il comune esclude: chi cerca a Lecce non si sposta a Gallipoli perche'
+  // l'immobile e' bello. Sulla zona invece si transige — dentro lo stesso
+  // comune una via vicina resta una proposta sensata.
+  if (requirement.city && property.city && !samePlace(requirement.city, property.city)) {
+    return { ok: false, reason: "comune", gap: 0 };
+  }
+  // La tipologia esclude solo quando le due famiglie sono davvero diverse:
+  // un locale commerciale a chi cerca casa non e' una proposta, e' rumore.
+  // Fra tipologie della stessa famiglia (attico invece di appartamento) si
+  // segnala e basta.
+  const cercata = famiglia(requirement.kind);
+  const offerta = famiglia(property.kind);
+  if (cercata && offerta && cercata !== offerta) {
+    return { ok: false, reason: "tipologia", gap: 0 };
   }
   if (requirement.budgetMax && property.price > requirement.budgetMax * BUDGET_TOLERANCE) {
     return { ok: false, reason: "budget", gap: property.price - requirement.budgetMax };
@@ -174,9 +229,9 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
   if (requirement.budgetMax) check(property.price > 0 && property.price <= requirement.budgetMax);
   if (requirement.budgetMin) check(property.price >= requirement.budgetMin);
   if (requirement.kind) check(property.kind === requirement.kind);
-  if (requirement.city) check(property.city === requirement.city);
+  if (requirement.city) check(samePlace(requirement.city, property.city));
   if (requirement.zones.length) {
-    check(requirement.zones.some((zone) => sameZone(zone, property.zone)));
+    check(requirement.zones.some((zone) => samePlace(zone, property.zone)));
   }
   if (requirement.sqmMin) check(property.sqm >= requirement.sqmMin);
   if (requirement.roomsMin) check(property.rooms >= requirement.roomsMin);
@@ -218,11 +273,11 @@ function explain(scored: Scored): Match {
     else warnings.push(`Tipologia diversa (${scored.property.kind || "non indicata"})`);
   }
   if (requirement.city) {
-    if (property.city === requirement.city) reasons.push(`Comune: ${scored.property.city}`);
-    else warnings.push(`Comune diverso (${scored.property.city || "non indicato"})`);
+    if (samePlace(requirement.city, property.city)) reasons.push(`Comune: ${scored.property.city}`);
+    else warnings.push(`Comune non indicato sull'immobile`);
   }
   if (requirement.zones.length) {
-    if (requirement.zones.some((zone) => sameZone(zone, property.zone))) {
+    if (requirement.zones.some((zone) => samePlace(zone, property.zone))) {
       reasons.push(`Zona richiesta: ${scored.property.zone}`);
     } else {
       warnings.push(`Fuori dalle zone richieste (${scored.property.zone || "zona non indicata"})`);
@@ -382,15 +437,22 @@ export interface NearMiss {
 /**
  * Richieste scartate per questo immobile, con il motivo. Risponde alla
  * domanda "perche' non me l'ha proposto al cliente Tal dei Tali?" senza
- * doverci mettere mano. Le differenze di contratto (vendita/affitto) si
- * contano ma non si elencano: non c'e' niente da valutare.
+ * doverci mettere mano. Contratto, comune e tipologia si contano ma non si
+ * elencano: sono differenze su cui non c'e' niente da valutare, elencarle
+ * seppellirebbe le due che contano davvero.
  */
 export function nearMissesForProperty(
   property: Property,
   limit = 6,
 ): { total: number; byReason: Record<Rejection, number>; items: NearMiss[] } {
   const ready = prepareProperty(property);
-  const byReason: Record<Rejection, number> = { contratto: 0, budget: 0, metratura: 0 };
+  const byReason: Record<Rejection, number> = {
+    contratto: 0,
+    comune: 0,
+    tipologia: 0,
+    budget: 0,
+    metratura: 0,
+  };
   const items: NearMiss[] = [];
 
   for (const requirement of openRequirements()) {
@@ -398,7 +460,7 @@ export function nearMissesForProperty(
     if (verdict.ok) continue;
 
     byReason[verdict.reason]++;
-    if (verdict.reason !== "contratto") {
+    if (verdict.reason === "budget" || verdict.reason === "metratura") {
       items.push({
         requirement: requirement.source,
         clientName: requirement.clientName,
@@ -408,7 +470,7 @@ export function nearMissesForProperty(
     }
   }
 
-  const total = byReason.contratto + byReason.budget + byReason.metratura;
+  const total = Object.values(byReason).reduce((somma, quanti) => somma + quanti, 0);
   // I piu' vicini per primi: sono quelli su cui vale la pena ragionare.
   items.sort((a, b) => a.gap - b.gap);
 
@@ -440,10 +502,10 @@ export function priceInterest(property: Property): PriceInterest {
       matching++;
       continue;
     }
-    // Solo chi si e' fermato sul prezzo pur volendo quel tipo di immobile:
-    // un budget basso su una casa in un altro comune non dice niente.
+    // Solo chi si e' fermato sul prezzo pur volendo quel tipo di immobile: chi
+    // cercava in un altro comune o un'altra tipologia e' gia' stato escluso
+    // prima, con il suo motivo, e non arriva mai qui.
     if (verdict.reason !== "budget" || !requirement.budgetMax) continue;
-    if (requirement.city && requirement.city !== ready.city) continue;
     if (ready.price > 0 && requirement.budgetMax >= ready.price) continue;
 
     blocked.push({ clientName: requirement.clientName, budgetMax: requirement.budgetMax });

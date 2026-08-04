@@ -121,11 +121,17 @@ body {
     max-width: none !important;
   }
 
-  /* Un riquadro spezzato a metà fra due fogli è illeggibile. */
+  /* Un riquadro o una riga spezzati fra due fogli sono illeggibili. */
   section,
   li,
+  tr,
   .card {
     break-inside: avoid;
+  }
+
+  /* L'intestazione di una tabella lunga si ripete su ogni foglio. */
+  thead {
+    display: table-header-group;
   }
 
   a {

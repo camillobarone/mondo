@@ -93,6 +93,9 @@ export default async function PropertyPage({
         }
         actions={
           <>
+            <Link href={`/immobili/${property.id}/visite`} className="btn-secondary">
+              Storico visite
+            </Link>
             <Link href={`/immobili/${property.id}/report`} className="btn-secondary">
               Resoconto per il proprietario
             </Link>
@@ -406,6 +409,12 @@ export default async function PropertyPage({
                   missed.byReason.contratto
                     ? `${missed.byReason.contratto} cercano l'altro tipo di contratto`
                     : null,
+                  missed.byReason.comune
+                    ? `${missed.byReason.comune} cercano in un altro comune`
+                    : null,
+                  missed.byReason.tipologia
+                    ? `${missed.byReason.tipologia} cercano un'altra tipologia`
+                    : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}
@@ -562,7 +571,7 @@ export default async function PropertyPage({
                         <span className="text-sm text-slate-800">{activity.title}</span>
                       </div>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {dateTime(activity.done_at ?? activity.due_at ?? activity.created_at)}
+                        {dateTime(activity.due_at ?? activity.done_at ?? activity.created_at)}
                         {activity.client_name ? (
                           <>
                             {" · "}

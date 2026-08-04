@@ -512,7 +512,7 @@ export default async function ClientPage({
                         <span className="text-sm text-slate-800">{activity.title}</span>
                       </div>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {dateTime(activity.done_at ?? activity.due_at ?? activity.created_at)}
+                        {dateTime(activity.due_at ?? activity.done_at ?? activity.created_at)}
                         {activity.user_name ? ` · ${activity.user_name}` : ""}
                         {activity.property_title ? (
                           <>

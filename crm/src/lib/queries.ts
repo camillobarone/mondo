@@ -538,7 +538,7 @@ export function activitiesOfClient(clientId: number, limit = 100): ActivityRow[]
   return all<ActivityRow>(
     `${ACTIVITY_SELECT}
       WHERE a.client_id = ?
-      ORDER BY COALESCE(a.done_at, a.due_at, a.created_at) DESC
+      ORDER BY COALESCE(a.due_at, a.done_at, a.created_at) DESC
       LIMIT ?`,
     [clientId, limit],
   );
@@ -548,9 +548,39 @@ export function activitiesOfProperty(propertyId: number, limit = 100): ActivityR
   return all<ActivityRow>(
     `${ACTIVITY_SELECT}
       WHERE a.property_id = ?
-      ORDER BY COALESCE(a.done_at, a.due_at, a.created_at) DESC
+      ORDER BY COALESCE(a.due_at, a.done_at, a.created_at) DESC
       LIMIT ?`,
     [propertyId, limit],
+  );
+}
+
+export type VisitRow = ActivityRow & { client_phone: string | null };
+
+/**
+ * Visite e appuntamenti registrati su un immobile, dal piu' vecchio al piu'
+ * recente. E' lo storico che si consegna al proprietario, e prende da una
+ * fonte sola: l'agenda. Quello che si segna in agenda compare qui, senza
+ * doverlo riscrivere da nessuna parte — se lo storico fosse un elenco a
+ * parte, le due liste divergerebbero alla prima visita segnata di fretta.
+ *
+ * Ci sono anche gli appuntamenti ancora da fare: al proprietario interessa
+ * sapere che qualcuno passa la settimana prossima.
+ */
+export function visitHistory(propertyId: number): VisitRow[] {
+  return all<VisitRow>(
+    `SELECT a.*,
+            TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
+            COALESCE(c.mobile, c.phone) AS client_phone,
+            p.title AS property_title,
+            u.name  AS user_name
+       FROM activities a
+       LEFT JOIN clients    c ON c.id = a.client_id
+       LEFT JOIN properties p ON p.id = a.property_id
+       LEFT JOIN users      u ON u.id = a.user_id
+      WHERE a.property_id = ?
+        AND a.type IN ('visita', 'appuntamento')
+      ORDER BY COALESCE(a.due_at, a.done_at, a.created_at)`,
+    [propertyId],
   );
 }
 
@@ -675,7 +705,7 @@ export function propertyReport(property: Property): PropertyReport {
   const visits = all<ActivityRow>(
     `${ACTIVITY_SELECT}
       WHERE a.property_id = ? AND a.type = 'visita'
-      ORDER BY COALESCE(a.done_at, a.due_at) DESC`,
+      ORDER BY COALESCE(a.due_at, a.done_at) DESC`,
     [property.id],
   );
 

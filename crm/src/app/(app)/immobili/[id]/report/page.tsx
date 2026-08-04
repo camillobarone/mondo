@@ -55,7 +55,15 @@ export default async function PropertyReportPage({
         <Link href={`/immobili/${property.id}`} className="btn-secondary">
           ← Torna alla scheda
         </Link>
-        <PrintButton />
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={`/immobili/${property.id}/visite`}
+            className="text-sm text-slate-500 hover:text-brand-700 hover:underline"
+          >
+            Storico visite
+          </Link>
+          <PrintButton />
+        </div>
       </div>
 
       {/* ------------------------------------------------------------ testata */}
