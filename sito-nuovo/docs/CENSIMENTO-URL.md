@@ -150,7 +150,7 @@ con lo stesso indirizzo, altrimenti si perde la posizione che ha oggi.
 | `mutuo-prima-casa-lecce` | Mutuo prima casa |
 | `tempi-rogito-lecce` | Dal compromesso al rogito |
 | `comprare-casa-a-lecce` | Comprare casa a Lecce |
-| `calcolo-imu-2026-lecce` | Calcolo IMU 2026 |
+| `calcolo-imu-2026-lecce` | Calcolo IMU 2026 — ⚠️ **è un calcolatore, non testo** (vedi sotto) |
 | `camillo-barone-agente-immobiliare-lecce-dal-1994` | Camillo Barone |
 | `antonio-renna-agente-immobiliare` | Antonio Renna |
 | `alessandro-ciullo-agente-immobiliare` | Alessandro Ciullo |
@@ -158,6 +158,27 @@ con lo stesso indirizzo, altrimenti si perde la posizione che ha oggi.
 | `cookie-policy` | Cookie Policy |
 | `informativa-sulla-privacy-e-sulluso-dei-dati-di-mondo-immobiliare` | Informativa privacy |
 | `terms-of-user` | Terms of Use |
+
+### ⚠️ `calcolo-imu-2026-lecce` — rimandata (5 agosto 2026)
+
+L'unica delle 46 che non si ricrea incollando del testo: è un **calcolatore**.
+Si fa con lo stesso schema di `/calcolatore-imposte-acquisto-casa/` — modulo
+HTML, `GET`, calcolo in PHP, pagina ridisegnata, zero JavaScript — con una
+classe `Imu` accanto a `Core\Imposte`.
+
+Serve prima di poterla fare:
+
+1. **Le aliquote IMU del Comune di Lecce**, prese dalla pagina che l'agenzia
+   ha già pubblicato. Sono una delibera comunale: non si ricavano altrove e
+   non si inventano, esattamente come le aliquote in `Imposte`.
+2. **Dove tenerle.** Quelle di `Imposte` stanno in costanti nel codice, e va
+   bene: sono legge nazionale e cambiano di rado. Le aliquote comunali IMU
+   cambiano **ogni anno**, quindi andrebbero in Impostazioni, modificabili dal
+   gestionale senza toccare file. Decisione non ancora presa.
+
+Nota sull'indirizzo: contiene `2026` e va tenuto identico — cambiarlo
+perderebbe la posizione. Da gennaio sarà una pagina aggiornata con un anno
+vecchio nell'indirizzo: si convive, aggiornando titolo e contenuto.
 
 ## Pagine da NON portare — residui del tema
 
