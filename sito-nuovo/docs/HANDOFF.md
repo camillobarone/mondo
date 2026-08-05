@@ -232,6 +232,18 @@ punto ricompare il campo della password. Fra i due salvataggi l'account è un
 agente senza password — che comunque non entra, per via del controllo
 sull'hash vuoto.
 
+> ⚠️ **Scritto nel programma, non ancora sul server.** Il 5 agosto 2026
+> Camillo ha scelto di dare a ogni collega un'email diversa invece di
+> caricare gli otto file di questa modifica. Sul server c'è quindi ancora la
+> versione con l'email unica, che è coerente e funziona.
+>
+> Gli otto file sono un blocco unico e vanno caricati insieme, mai a pezzi:
+> `Db.php`, `Auth.php`, `Users.php`, `SystemController.php`, `utenti.php`,
+> `utente-scheda.php`, `schema.sql` e la migrazione
+> `2026-08-05-email-condivisa.mysql.sql`. Caricare il solo
+> `SystemController.php` farebbe accettare al modulo un'email ripetuta che il
+> database rifiuterebbe subito dopo, con un errore poco leggibile.
+
 **L'email non è più unica.** In agenzia la posta è una sola, e chiedere un
 indirizzo diverso per ogni collega significa chiedere di inventarne. L'email
 qui è la chiave d'accesso, non un dato anagrafico: deve essere unica solo fra
