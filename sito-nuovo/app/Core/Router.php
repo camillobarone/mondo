@@ -73,6 +73,16 @@ final class Router
     {
         $path = self::normalize($path);
 
+        // HEAD è una GET senza corpo: chi la manda vuole sapere se la pagina
+        // esiste e quando è cambiata, non leggerla. Nessuna rotta è registrata
+        // su HEAD, quindi finivano tutte nel fallback e rispondevano 404 —
+        // compresa la home. Lo usano i servizi che controllano se un sito è
+        // vivo, i verificatori di link e le anteprime dei messaggi.
+        // Il corpo lo scarta il server web, che per HEAD non lo spedisce.
+        if ($method === 'HEAD') {
+            $method = 'GET';
+        }
+
         foreach ($this->routes as $route) {
             if ($route['method'] !== $method) {
                 continue;

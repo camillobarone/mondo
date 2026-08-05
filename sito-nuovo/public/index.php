@@ -25,7 +25,7 @@ $path = is_string($rawPath) ? rawurldecode($rawPath) : '/';
 
 // Una URL, una forma: le pagine vivono con lo slash finale. La variante senza
 // slash risponde 301 invece di servire lo stesso contenuto a due indirizzi.
-if ($method === 'GET' && $path !== '/' && !str_ends_with($path, '/')) {
+if (($method === 'GET' || $method === 'HEAD') && $path !== '/' && !str_ends_with($path, '/')) {
     $lastSegment = substr($path, (int) strrpos($path, '/') + 1);
     if (!str_contains($lastSegment, '.')) {
         $query = (string) ($_SERVER['QUERY_STRING'] ?? '');
