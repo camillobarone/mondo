@@ -11,23 +11,26 @@ final class Auth
 
     public static function attempt(string $email, string $password): bool
     {
+        // Gli account «solo firma» sono esclusi qui, nella query, non dopo.
+        // Non è una rifinitura: più account possono condividere l'email
+        // dell'agenzia, quindi cercare per sola email potrebbe restituire una
+        // firma al posto della persona che sta davvero entrando, e negarle
+        // l'accesso pur avendo la password giusta. Filtrando subito, chi non
+        // entra non può nemmeno fare ombra a chi entra.
         $user = Db::one(
-            'SELECT * FROM users WHERE email = :e AND active = 1',
+            "SELECT * FROM users WHERE email = :e AND active = 1 AND role <> 'firma'",
             ['e' => mb_strtolower(trim($email))]
         );
 
-        // Account «solo firma»: esistono per comparire come autori di un
-        // articolo, non per entrare. Non hanno password, e questo controllo
-        // dice a chiare lettere che nessun tentativo di accesso li riguarda.
-        // L'hash vuoto lo negherebbe già password_verify() da solo: sta qui
-        // perché una difesa che si vede è una difesa che nessuno smonta per
-        // sbaglio.
-        if ($user !== null
-            && ((string) $user['role'] === 'firma' || (string) $user['password_hash'] === '')) {
+        // Password mai impostata: nessun tentativo può indovinarla, perché
+        // non c'è. password_verify() lo negherebbe da solo su un hash vuoto —
+        // sta scritto perché una difesa che si vede è una difesa che nessuno
+        // smonta per sbaglio.
+        if ($user === null || (string) $user['password_hash'] === '') {
             return false;
         }
 
-        if ($user === null || !password_verify($password, (string) $user['password_hash'])) {
+        if (!password_verify($password, (string) $user['password_hash'])) {
             return false;
         }
 

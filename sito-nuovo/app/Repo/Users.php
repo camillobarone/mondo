@@ -27,9 +27,18 @@ final class Users
         return Db::one('SELECT * FROM users WHERE id = :id', ['id' => $id]);
     }
 
+    /**
+     * «C'è già un account CHE ENTRA con questa email?»
+     *
+     * L'email è la chiave con cui si accede, non un dato anagrafico: deve
+     * essere unica solo fra chi la usa per entrare. Gli account «solo firma»
+     * non entrano, quindi restano fuori dal conteggio e possono condividere
+     * l'indirizzo dell'agenzia — che è come funziona un ufficio con una
+     * casella di posta sola.
+     */
     public static function emailTaken(string $email, ?int $ignoreId = null): bool
     {
-        $sql = 'SELECT COUNT(*) FROM users WHERE email = :e';
+        $sql = "SELECT COUNT(*) FROM users WHERE email = :e AND role <> 'firma'";
         $params = ['e' => mb_strtolower(trim($email))];
         if ($ignoreId !== null) {
             $sql .= ' AND id <> :id';

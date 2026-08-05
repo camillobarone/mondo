@@ -152,8 +152,8 @@ final class SystemController
                 Session::flash('Email non valida.', 'error');
             } elseif ($role !== 'firma' && mb_strlen($password) < 10) {
                 Session::flash('La password deve avere almeno 10 caratteri.', 'error');
-            } elseif (Users::emailTaken($email)) {
-                Session::flash('Esiste già un utente con questa email.', 'error');
+            } elseif ($role !== 'firma' && Users::emailTaken($email)) {
+                Session::flash('Esiste già un utente che entra nel gestionale con questa email.', 'error');
             } else {
                 $id = Users::create([
                     'name' => mb_substr(trim((string) ($_POST['name'] ?? '')), 0, 120) ?: 'Senza nome',
@@ -199,6 +199,7 @@ final class SystemController
 
             $active = isset($_POST['active']) ? 1 : 0;
             $role = self::role($_POST['role'] ?? '');
+            $email = trim((string) ($_POST['email'] ?? $user['email']));
 
             // Non ci si può disattivare né declassare da soli: si resterebbe
             // chiusi fuori dal proprio gestionale, e per rientrare servirebbe
@@ -208,7 +209,23 @@ final class SystemController
                 $role = (string) $user['role'];
             }
 
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Session::flash('Email non valida.', 'error');
+                Router::redirect('/gestionale/utenti/' . $id . '/');
+            }
+
+            // L'email torna a essere una chiave d'accesso solo per chi entra:
+            // qui si controlla se la vuole un ruolo che entra, e in quel caso
+            // che non sia già di qualcun altro che entra. Vale sia quando si
+            // cambia l'indirizzo sia quando si promuove un «solo firma», che
+            // fino a un attimo prima poteva legittimamente condividerlo.
+            if ($role !== 'firma' && Users::emailTaken($email, (int) $id)) {
+                Session::flash('Questa email è già di un altro account che entra nel gestionale.', 'error');
+                Router::redirect('/gestionale/utenti/' . $id . '/');
+            }
+
             $dati = [
+                'email' => $email,
                 'name' => mb_substr(trim((string) ($_POST['name'] ?? '')), 0, 120) ?: (string) $user['name'],
                 'role' => $role,
                 'phone' => mb_substr(trim((string) ($_POST['phone'] ?? '')), 0, 40),

@@ -6,7 +6,11 @@
 CREATE TABLE users (
   id {PK},
   name VARCHAR(120) NOT NULL,
-  email VARCHAR(191) NOT NULL UNIQUE,
+  -- Non unica: gli account «solo firma» condividono l'indirizzo
+  -- dell'agenzia, perché non entrano e per loro l'email non è la chiave di
+  -- accesso. Fra gli account che entrano l'unicità la garantisce
+  -- Users::emailTaken(), che sa distinguere i ruoli.
+  email VARCHAR(191) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL DEFAULT 'agent',
   phone VARCHAR(40) NOT NULL DEFAULT '',
@@ -16,6 +20,10 @@ CREATE TABLE users (
   last_login_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT {NOW}
 ){SUFFIX};
+
+-- Non è più un vincolo, ma resta un indice: su questa colonna si cerca a
+-- ogni tentativo di accesso.
+CREATE INDEX users_email ON users (email);
 
 -- `status` è lo stato di PUBBLICAZIONE (cosa si vede online), `deal_stage` è
 -- lo stato della TRATTATIVA (a che punto è il lavoro). Sono due assi diversi:

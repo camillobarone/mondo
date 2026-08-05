@@ -10,6 +10,15 @@ use Mil\Core\Csrf;
   <h2><?= e((string) $u['email']) ?></h2>
 
   <div class="form-row">
+    <label>Email
+      <input type="email" name="email" value="<?= e((string) $u['email']) ?>" required autocomplete="off">
+      <?php if ($u['role'] === 'firma'): ?>
+        <small>Questo account non entra: l’indirizzo dell’agenzia va benissimo, anche se lo usano già altri.</small>
+      <?php endif; ?>
+    </label>
+  </div>
+
+  <div class="form-row">
     <label>Nome<input type="text" name="name" value="<?= e((string) $u['name']) ?>" required></label>
     <label>Telefono<input type="tel" name="phone" value="<?= e((string) $u['phone']) ?>"></label>
     <label>Ruolo

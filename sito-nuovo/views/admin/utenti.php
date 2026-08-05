@@ -29,7 +29,9 @@ use Mil\Core\Csrf;
     <form method="post" class="form">
       <?= Csrf::field() ?>
       <label>Nome<input type="text" name="name" required></label>
-      <label>Email<input type="email" name="email" required autocomplete="off"></label>
+      <label>Email <small>per «Solo firma» va bene quella dell’agenzia, anche ripetuta</small>
+        <input type="email" name="email" required autocomplete="off">
+      </label>
       <label>Telefono<input type="tel" name="phone"></label>
       <label>Ruolo
         <select name="role">

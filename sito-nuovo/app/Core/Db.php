@@ -260,6 +260,32 @@ final class Db
      *
      * @return array<int,string> nomi delle migrazioni trattate in questo giro
      */
+    /**
+     * Una migrazione può valere per un solo driver: si scrive il nome con
+     * `.mysql.sql` o `.sqlite.sql` prima dell'estensione, e viene eseguita
+     * solo dove serve.
+     *
+     * Serve perché quasi tutto lo schema si scrive uguale per i due driver —
+     * e per le differenze piccole bastano i segnaposto di dialect() — ma
+     * qualcosa proprio no: togliere un vincolo di unicità è un `ALTER TABLE`
+     * su MySQL e una ricostruzione completa della tabella su SQLite. Scriverle
+     * come due file separati è più leggibile che nasconderle dentro un
+     * segnaposto, e ognuno resta SQL vero, che si legge e si prova da solo.
+     *
+     * I file dell'altro driver non vengono segnati come applicati: non lo
+     * sono. Restano lì, e il confronto costa un accostamento di stringhe.
+     */
+    private static function migrazioneVale(string $nome): bool
+    {
+        foreach (['mysql', 'sqlite'] as $driver) {
+            if (str_ends_with($nome, '.' . $driver . '.sql')) {
+                return self::driver() === $driver;
+            }
+        }
+
+        return true;
+    }
+
     public static function migrate(bool $markOnly = false): array
     {
         $dir = MIL_ROOT . '/db/migrations';
@@ -289,7 +315,7 @@ final class Db
         $done = [];
         foreach ($files as $file) {
             $name = basename($file);
-            if (isset($applied[$name])) {
+            if (isset($applied[$name]) || !self::migrazioneVale($name)) {
                 continue;
             }
             if (!$markOnly) {

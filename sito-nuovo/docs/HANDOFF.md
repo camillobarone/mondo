@@ -232,6 +232,25 @@ punto ricompare il campo della password. Fra i due salvataggi l'account è un
 agente senza password — che comunque non entra, per via del controllo
 sull'hash vuoto.
 
+**L'email non è più unica.** In agenzia la posta è una sola, e chiedere un
+indirizzo diverso per ogni collega significa chiedere di inventarne. L'email
+qui è la chiave d'accesso, non un dato anagrafico: deve essere unica solo fra
+chi entra davvero. `Users::emailTaken()` conta perciò i soli account con ruolo
+diverso da `firma`, e il vincolo `UNIQUE` è stato tolto dal database.
+
+Il pezzo che rende la cosa sicura sta in `Auth::attempt()`: la query esclude
+`role = 'firma'`. Senza quel filtro, cercare per sola email potrebbe
+restituire una firma al posto della persona che sta entrando — stesso
+indirizzo — e negarle l'accesso pur avendo la password giusta.
+
+### Migrazioni per un solo driver
+Un file di migrazione chiamato `*.mysql.sql` o `*.sqlite.sql` viene eseguito
+solo sul driver corrispondente, e sull'altro non viene nemmeno segnato come
+applicato (`Db::migrazioneVale()`). Serviva per togliere il vincolo di
+unicità sull'email: su MySQL è un `ALTER TABLE`, su SQLite bisogna
+ricostruire la tabella. Sono due file gemelli, ognuno SQL vero che si legge e
+si prova da solo, invece di un segnaposto che nasconde la differenza.
+
 ### `llms.txt`
 `/llms.txt`, generato dal database come la sitemap: identità dell'agenzia,
 sedi, pagine principali, immobili online e articoli, in Markdown pulito.
