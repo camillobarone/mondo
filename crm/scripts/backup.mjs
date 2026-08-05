@@ -56,6 +56,13 @@ if (removed) console.log(`Rimosse ${removed} copie più vecchie di 60 giorni.`);
 const photoDir = path.join(path.dirname(dbPath), "foto");
 const photoBackup = path.join(backupDir, "foto");
 
+// La cartella si crea sempre, anche quando non c'e' ancora nessuna foto.
+// Costa niente ed evita che il comando settimanale di copia sul PC
+//     scp -r root@IP:/opt/mondo-crm/backup/foto ...
+// finisca con "No such file or directory" finche' nessuno ha caricato la prima
+// immagine: un errore che sembra un guasto e non lo e'.
+fs.mkdirSync(photoBackup, { recursive: true });
+
 if (fs.existsSync(photoDir)) {
   let copied = 0;
   for (const property of fs.readdirSync(photoDir)) {

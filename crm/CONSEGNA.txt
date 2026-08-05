@@ -251,6 +251,11 @@ Non c'è più un pulsante nel programma che scarichi l'intero archivio: da quand
 ognuno vede solo le proprie schede, sarebbe la separazione aggirata con un clic
 (capitolo 10-bis). Questa è la strada, ed è anche l'unica che porta via le foto.
 
+Se il secondo comando risponde No such file or directory, vuol dire che la
+copia notturna non è ancora passata dopo questo aggiornamento. Basta forzarla
+una volta e la cartella c'è:
+    ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
+
 Ripristinare una copia (l'ordine conta: prima si ferma il programma):
     systemctl stop mondo-crm
     cp /opt/mondo-crm/backup/<copia>.db /opt/mondo-crm/data/mondo.db
