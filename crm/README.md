@@ -444,6 +444,36 @@ mosse.
 
 Gli utenti si creano da **Utenti** (solo il titolare).
 
+### La propria password
+
+Ognuno si cambia la propria da **Il mio accesso**, il collegamento in fondo alla
+colonna a sinistra. Serve la password di adesso, e la nuova deve avere almeno 8
+caratteri.
+
+Appena cambiata, **tutti gli accessi già aperti si chiudono** — anche quelli su
+altri computer, e anche quelli di chi conosceva la password vecchia. È il motivo
+per cui cambiarla serve a qualcosa: senza, chi era già entrato resterebbe dentro
+per due settimane.
+
+**Password dimenticata:** dalla pagina di accesso c'è *Password dimenticata?*.
+Si scrive il proprio indirizzo e arriva un'email con un collegamento che vale
+**un'ora e una volta sola**. La risposta a schermo è sempre la stessa, che
+l'indirizzo esista o no: altrimenti sarebbe un modo per sapere da fuori chi
+lavora in agenzia.
+
+> Il recupero per email funziona **solo con l'SMTP configurato** (capitolo 6-bis
+> di `CONSEGNA.md`). Finché manca, la pagina lo dice invece di far aspettare
+> un'email che non arriverà.
+
+**Se nessuno riesce più a entrare** — password persa e posta non configurata —
+si reimposta dal server:
+
+```bash
+npm run password -- --email nome@mondoimmobiliarelecce.it
+```
+
+Ne genera una a caso e la stampa. Con `--password "..."` la si sceglie.
+
 ⚠️ Una cosa da sapere con chiarezza: questo separa gli sguardi dentro il
 programma, non l'accesso alla macchina. **Chi ha le chiavi del server ha il file
 dell'archivio**, e in quel file c'è tutto. Se serve una separazione che regga

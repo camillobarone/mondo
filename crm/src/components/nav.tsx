@@ -115,12 +115,14 @@ export function Nav({
           <p className="text-xs text-slate-400 capitalize">
             {userRole} · {office}
           </p>
-          <Link
-            href="/esci"
-            className="mt-2 inline-block text-xs text-slate-400 underline-offset-2 hover:text-white hover:underline"
-          >
-            Esci
-          </Link>
+          <div className="mt-2 flex gap-3 text-xs text-slate-400">
+            <Link href="/accesso" className="underline-offset-2 hover:text-white hover:underline">
+              Il mio accesso
+            </Link>
+            <Link href="/esci" className="underline-offset-2 hover:text-white hover:underline">
+              Esci
+            </Link>
+          </div>
         </div>
       </aside>
     </>

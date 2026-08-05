@@ -168,6 +168,34 @@ Le cose costruite in questa sessione, in ordine
     fuga. I controlli vanno fatti sul numero di telefono, che e' di una
     persona sola.
 
+12. Il proprio accesso e il recupero della password. Pagina
+    /accesso (cambio della propria password) e /recupero + /recupero/[token]
+    (password dimenticata). Prima le password le impostava solo il titolare, il
+    che sotto la separazione simmetrica non aveva senso.
+
+    Tre cose non ovvie:
+    - Le sessioni cadono. users.password_changed_at (millisecondi, non
+      testo: una data scritta viene letta come ora locale da JavaScript e come
+      ora di Greenwich da SQLite) viene confrontato con l'iat messo nel
+      cookie. Senza, cambiare la password non cacciava fuori nessuno e il
+      cambio era una formalita'.
+    - Del biglietto di recupero si salva solo l'impronta (SHA-256), mai il
+      biglietto. Vale un'ora, una volta sola, e chiederne uno nuovo annulla i
+      precedenti. La risposta a schermo e' identica che l'indirizzo esista o no.
+    - Le email vanno spedite in base64 (textEncoding: "base64" in
+      posta.ts). Il modo predefinito di nodemailer, quoted-printable, spezza
+      le righe oltre i 76 caratteri: l'indirizzo del recupero ne ha quasi cento
+      e arrivava tagliato in due. L'ha trovato la prova in browser, non la
+      lettura del codice.
+
+    Via di scampo quando la posta non e' configurata (che e' lo stato di
+    adesso): npm run password -- --email .... Lo script si aggiunge da solo la
+    colonna se manca, perche' si usa proprio quando qualcosa non va e il
+    programma magari non e' ripartito.
+
+    Verificato in browser: 29 controlli, compreso il caso della seconda finestra
+    aperta prima del cambio che si ritrova fuori.
+
 
 5 · COSA RESTA APERTO
 ---------------------

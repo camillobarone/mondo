@@ -4,7 +4,12 @@ import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, run, one, audit } from "./db";
-import { requireUser, requireOwner, hashPassword, login as doLogin, logout as doLogout } from "./auth";
+import {
+  requireUser, requireOwner, hashPassword,
+  login as doLogin, logout as doLogout,
+  cambiaLaMiaPassword, preparaRecupero, impostaPasswordConBiglietto,
+} from "./auth";
+import { invia, postaConfigurata, indirizzoBase } from "./posta";
 import { parseCsv, decodeText } from "./csv";
 import { readXlsx, looksLikeXlsx } from "./xlsx";
 import { salvaFoto, cancellaFile, MAX_FOTO_PER_IMMOBILE } from "./photos";
@@ -1297,4 +1302,87 @@ export async function rigeneraCalendario() {
   run(`UPDATE users SET calendar_token = ? WHERE id = ?`, [token, user.id]);
   audit(user.id, "modifica", "utente", user.id, "nuovo indirizzo del calendario");
   revalidatePath("/agenda/calendario");
+}
+
+/* ======================================================== il proprio accesso */
+
+/**
+ * Cambio della propria password.
+ *
+ * Serve perche' altrimenti le password le imposta solo il titolare, dalla
+ * pagina Utenti: vuol dire che qualcun altro conosce la tua. Fra colleghi che
+ * non si vedono le schede a vicenda e' una stonatura.
+ */
+export async function cambiaPassword(_prima: string | null, form: FormData) {
+  const user = await requireUser();
+
+  const attuale = String(form.get("attuale") ?? "");
+  const nuova = String(form.get("nuova") ?? "");
+  const conferma = String(form.get("conferma") ?? "");
+
+  if (nuova !== conferma) return "Le due nuove password non coincidono.";
+
+  const errore = cambiaLaMiaPassword(user.id, attuale, nuova);
+  if (errore) return errore;
+
+  // Il cambio ha appena fatto cadere tutte le sessioni aperte prima, compresa
+  // questa: si rientra con la password nuova. E' voluto — e' il momento in cui
+  // chi conosceva la vecchia smette di poter entrare.
+  await doLogout();
+  redirect("/login?cambiata=1");
+}
+
+/**
+ * Richiesta del collegamento per rientrare quando la password si e' persa.
+ *
+ * Risponde sempre la stessa cosa, che l'indirizzo esista o no: da fuori non si
+ * deve poter capire chi ha un accesso al gestionale e chi no.
+ */
+export async function chiediRecupero(_prima: string | null, form: FormData) {
+  const email = text(form, "email");
+  const fatto = "Se quell'indirizzo ha un accesso, fra poco arriva un'email con il collegamento.";
+
+  if (!email.includes("@")) return fatto;
+  if (!postaConfigurata()) {
+    return "La posta non è ancora configurata su questo server: il recupero automatico non può funzionare. Chiedi al titolare di reimpostarti la password.";
+  }
+
+  const richiesta = preparaRecupero(email);
+  if (!richiesta) return fatto;
+
+  const base = indirizzoBase();
+  const collegamento = `${base}/recupero/${richiesta.token}`;
+  const ora = richiesta.scadenza.toLocaleTimeString("it-IT", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  await invia({
+    a: richiesta.utente.email,
+    oggetto: "Rientrare nel gestionale Mondo Immobiliare",
+    testo:
+      `Ciao ${richiesta.utente.name},\n\n` +
+      `hai chiesto di reimpostare la password del gestionale. Apri questo collegamento:\n\n` +
+      `${collegamento}\n\n` +
+      `Vale fino alle ${ora} di oggi, e una volta sola.\n\n` +
+      `Se non sei stato tu, non devi fare niente: senza aprire il collegamento non cambia nulla, ` +
+      `e la password di adesso continua a funzionare.\n\n` +
+      `Mondo Immobiliare Lecce`,
+  });
+
+  return fatto;
+}
+
+/** Imposta la password nuova arrivando dal collegamento ricevuto per email. */
+export async function reimpostaPassword(_prima: string | null, form: FormData) {
+  const token = String(form.get("token") ?? "");
+  const nuova = String(form.get("nuova") ?? "");
+  const conferma = String(form.get("conferma") ?? "");
+
+  if (nuova !== conferma) return "Le due password non coincidono.";
+
+  const errore = impostaPasswordConBiglietto(token, nuova);
+  if (errore) return errore;
+
+  redirect("/login?cambiata=1");
 }

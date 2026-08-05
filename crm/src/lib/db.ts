@@ -45,6 +45,18 @@ const COLONNE_AGGIUNTE: { tabella: string; colonna: string; definizione: string 
   // Quando e' partito il promemoria dei 30 minuti: senza, ripartirebbe a ogni
   // giro del cron.
   { tabella: "activities", colonna: "reminded_at", definizione: "TEXT" },
+  // Quando e' stata cambiata la password l'ultima volta, in millisecondi.
+  //
+  // Serve a far cadere le sessioni aperte prima del cambio. Senza, cambiare la
+  // password non caccerebbe fuori nessuno: chi era gia' entrato — compreso chi
+  // conosceva la vecchia password — resterebbe dentro per due settimane, e il
+  // cambio sarebbe solo una formalita'.
+  //
+  // In millisecondi e non in testo di proposito: una data scritta
+  // "2026-08-05 07:45:00" viene letta come ora locale in JavaScript e come ora
+  // di Greenwich da SQLite, e due ore di differenza qui vorrebbero dire
+  // sessioni che cadono quando non devono.
+  { tabella: "users", colonna: "password_changed_at", definizione: "INTEGER" },
 ];
 
 function aggiungiColonneMancanti(database: Database.Database) {

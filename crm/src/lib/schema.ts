@@ -21,6 +21,24 @@ CREATE TABLE IF NOT EXISTS users (
   created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+-- --------------------------------------------------- recupero password
+-- Un biglietto usa e getta per rientrare quando la password si e' persa.
+--
+-- Del biglietto si conserva solo l'impronta, mai il biglietto stesso: cosi'
+-- nemmeno chi legge l'archivio puo' usarlo per entrare al posto di qualcuno.
+-- Vale un'ora e una volta sola.
+CREATE TABLE IF NOT EXISTS password_resets (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash  TEXT    NOT NULL,
+  expires_at  INTEGER NOT NULL,          -- millisecondi, per non litigare coi fusi
+  used_at     TEXT,
+  created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_hash ON password_resets(token_hash);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+
 -- ---------------------------------------------------------------- clienti
 CREATE TABLE IF NOT EXISTS clients (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,

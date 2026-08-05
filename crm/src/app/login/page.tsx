@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { count } from "@/lib/db";
@@ -5,9 +6,14 @@ import { LoginForm } from "./form";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cambiata?: string }>;
+}) {
   if (await currentUser()) redirect("/");
 
+  const { cambiata } = await searchParams;
   const hasUsers = count(`SELECT COUNT(*) AS n FROM users WHERE active = 1`) > 0;
 
   return (
@@ -20,7 +26,22 @@ export default async function LoginPage() {
 
         <div className="rounded-lg bg-white p-6 shadow-lg">
           {hasUsers ? (
-            <LoginForm />
+            <>
+              {cambiata ? (
+                <p
+                  className="mb-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+                  role="status"
+                >
+                  Password cambiata. Entra con quella nuova.
+                </p>
+              ) : null}
+              <LoginForm />
+              <p className="mt-4 text-center text-sm">
+                <Link href="/recupero" className="text-slate-500 hover:text-brand-700 hover:underline">
+                  Password dimenticata?
+                </Link>
+              </p>
+            </>
           ) : (
             <div className="text-sm text-slate-600">
               <p className="font-medium text-slate-800">Nessun utente configurato.</p>

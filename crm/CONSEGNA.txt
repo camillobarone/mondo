@@ -155,8 +155,10 @@ File chiave
 
 Due dettagli che sembrano scelte estetiche e invece non lo sono
 
-1. serverExternalPackages: ["better-sqlite3"] in next.config.ts. Senza,
-   la compilazione fallisce: è un modulo nativo e non va impacchettato.
+1. serverExternalPackages in next.config.ts. better-sqlite3 è un
+   modulo nativo e senza quella riga la compilazione fallisce; nodemailer fa
+   richieste che il compilatore non sa seguire e impacchettarlo rompe l'invio
+   delle email.
 2. Il cookie di sessione mette secure in base a x-forwarded-proto, non a
    NODE_ENV. Con NODE_ENV l'accesso funzionava sul computer dove girava il
    programma e falliva silenziosamente su tutti gli altri dell'ufficio.
@@ -550,10 +552,39 @@ Non c'è nessun pulsante per chiamare il cliente del collega: si scrive al
 collega. Da lì in poi è un accordo fra due persone, provvigione compresa —
 come si è sempre fatto fra agenzie.
 
+
+La password è di chi la usa
+
+Ognuno si cambia la propria da Il mio accesso (in fondo alla colonna a
+sinistra). Prima le impostava solo il titolare dalla pagina Utenti: voleva dire
+che qualcun altro conosceva la tua, e fra colleghi che non si vedono le schede a
+vicenda era una stonatura.
+
+Appena cambiata, tutti gli accessi già aperti si chiudono, compresi quelli
+di chi conosceva la password vecchia. È il momento in cui il cambio serve
+davvero a qualcosa.
+
+Password dimenticata: dalla pagina di accesso, Password dimenticata?.
+Arriva un'email con un collegamento che vale un'ora e una volta sola. Del
+collegamento in archivio resta solo l'impronta, mai il collegamento stesso: chi
+leggesse il file dell'archivio non potrebbe usarlo per entrare.
+
+  | Funziona solo con l'SMTP configurato (capitolo 6-bis). Finché manca, la
+  | pagina lo dice invece di far aspettare un'email che non arriverà, e la
+  | password la reimposta il titolare da Utenti.
+
+Se non entra più nessuno — password persa e posta non configurata — si
+reimposta dal server:
+    ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo npm run password -- --email nome@mondoimmobiliarelecce.it"
+Ne genera una a caso e la stampa a schermo. Annotarla subito.
+
 ⚠️ Il limite, detto chiaro. Questo separa gli sguardi dentro il programma,
 non l'accesso alla macchina. Chi ha le chiavi del server ha il file
-dell'archivio, e lì dentro c'è tutto; chi amministra gli utenti può anche
-cambiare la password di un altro. Se serve una separazione che regga fra due
+dell'archivio, e lì dentro c'è tutto; chi amministra gli utenti può ancora
+imporre una password nuova a un altro — non può leggere quella in uso, ma può
+sostituirla, e a quel punto entrare. La differenza è che adesso
+se ne accorge: l'interessato si ritrova fuori e la sua password non
+funziona più. Se serve una separazione che regga fra due
 persone che non si fidano l'una dell'altra, la strada sono
 due installazioni distinte che si parlano solo per gli incroci.
 
