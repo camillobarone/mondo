@@ -24,22 +24,29 @@ gira sull'hosting SiteGround già pagato.
 | Branch | `claude/siteground-italian-site-bhtl4j` |
 | PR | **#3** — aperta, in **draft**, `mergeable_state: clean` |
 | Base della PR | `jules-4092590956749443987-c47f811b` |
-| Head al momento | `d2b36fc` |
+| Head al momento | `14ab230` |
 | Cartella | `sito-nuovo/` (il resto del repo non c'entra) |
 | CI | **nessuna configurata** — zero check run, niente da far passare |
 | Commenti | uno solo, del bot Gemini (avviso di dismissione). Nessuna azione |
 
 Albero di lavoro pulito, tutto pushato.
 
-### I commit, in ordine
+### I commit
 
-1. `d2cb64e` — sito nuovo con gestionale, in PHP e MySQL
-2. `9c04bf0` — porting del modello dati dalla PR #2
-3. `3d2216e` — importazione da WordPress, conservando gli slug
-4. `15003aa` — velocità mobile e galleria multi-foto
-5. `2cb5d09` — questo documento
-6. `3afbdda` — verifica della mappatura WP-Residence sul database vero
-7. `d2b36fc` — modulo di ricerca reso visibile in home
+Sono una quarantina e l'elenco per esteso invecchiava a ogni sessione: si
+legge con `git log --oneline --reverse` dalla cartella `sito-nuovo/`. I
+messaggi sono scritti per essere letti in fila e raccontano il perché, non
+il cosa.
+
+Le tappe che servono per orientarsi:
+
+- `d2cb64e` — nasce il sito nuovo con gestionale, in PHP e MySQL
+- `3d2216e` — importazione da WordPress, conservando gli slug
+- `8a9b8a7` — gli articoli tornano alla radice, dove Google li conosce
+- `383b365` — il database si aggiorna da solo entrando nel gestionale
+- `c36ad99` — la grafica di adesso: palette calda, foto grandi
+- `4bb84cc` — le correzioni del controllo generale del 5 agosto
+- `14ab230` — ultimo: la favicon prende il blu del logo vero
 
 ---
 
@@ -213,8 +220,10 @@ resta qui perché sapere **cosa era rotto** evita di rifare lo stesso errore.
 - **Il logo non esisteva.** `Seo.php` dichiarava `/assets/img/logo-512.png`
   come `logo` e `image` dell'agenzia su ogni pagina, ma la cartella `img/`
   non c'era: il nodo che identifica l'agenzia puntava a un 404, e `og:image`
-  restava vuoto ovunque non ci fosse una foto di immobile. Adesso i due file
-  ci sono. **Non sono il logo vero dell'agenzia**: vedi la sezione 10.
+  restava vuoto ovunque non ci fosse una foto di immobile. Risolto due volte:
+  prima il codice, che adesso cerca il file su disco e ne legge le misure vere
+  invece di dichiararne di inventate; poi il file, che Camillo ha disegnato e
+  caricato. Vedi il blocco qui sotto.
 - **`HEAD` rispondeva 404 su tutto**, home compresa: nessuna rotta era
   registrata su quel metodo.
 - **Nessuna pagina era conservabile.** La sessione si apriva a chiunque e PHP
@@ -236,6 +245,48 @@ telefono deprecato assente da tutto il codice.
 Gli attrezzi per rifarlo — crawler, misura dei margini, contrasto — vivono
 nello scratchpad della sessione e vanno riscritti in una chat nuova. Sono un
 centinaio di righe di Playwright in tutto.
+
+### Il server è allineato al codice — 5 agosto 2026, sera
+
+Il giorno prima era rimasto **mezzo caricato**, ed è così che il sito era
+andato giù. Adesso `prova.mondoimmobiliarelecce.it` ha tutti i file del
+controllo generale. Caricati uno per volta, o a gruppi solo dove i file erano
+davvero indipendenti fra loro, con una verifica dopo ognuno.
+
+L'ordine seguito, che è anche l'ordine delle dipendenze:
+
+1. `app/Core/Session.php` — da solo, perché il nuovo `index.php` chiama un
+   metodo che prima non c'era. Provato in locale rimettendo l'`index.php`
+   vecchio accanto al `Session.php` nuovo: otto indirizzi, tutti 200.
+2. `public/index.php`
+3. `app/Core/Legali.php` — file nuovo, inerte finché non arriva chi lo usa
+4. `views/layout/site.php`
+5. i quattro di `app/Controller/Site/` insieme: indipendenti l'uno dall'altro
+6. `app/helpers.php`, `views/admin/dashboard.php`, `public/assets/css/site.css`
+7. la migrazione `2026-08-05-tentativi-accesso.sql` con `app/Core/Auth.php` —
+   tutti e due inerti; poi l'ingresso nel gestionale ha applicato la
+   migrazione, con il messaggio «Database aggiornato» a confermarlo
+8. `app/Controller/Admin/Session.php` — per ultimo, perché è quello che
+   accende il blocco dei tentativi: prima di lui la tabella doveva esistere
+
+**Il logo vero c'è.** Camillo l'ha disegnato e caricato: `logo.png` 1024×1024
+e `social-1200x630.png`, in `public/assets/img/`. Verificato nel sorgente
+della home — il nodo `ImageObject` riporta `"width": 1024, "height": 1024`,
+cioè le misure lette dal file, non scritte a memoria. Il marchio è blu
+**`#1b82d8`**, ed è il valore da usare ovunque serva il colore dell'agenzia.
+La favicon adesso è casa bianca su quadrato blu: bianco su `#1b82d8` misura
+4,0:1, sopra il 3:1 che si chiede a una forma piena. Fondo pieno e non
+trasparente perché a 16 pixel un quadrato bianco sparisce nella barra delle
+linguette.
+
+**Il log del server era pulito tranne una riga**, che si ripeteva a ogni
+apertura dell'anteprima di un articolo: `Undefined array key "author_name"`.
+L'anteprima disegna l'articolo con lo stesso codice del sito, ma le arrivava
+il risultato di `Content::post()`, che era `SELECT * FROM posts`: le colonne
+dell'autore stanno in `users`. Oltre all'avviso, l'anteprima perdeva la firma
+in fondo e il nodo `Person` dello schema — due delle cose che si va a
+guardare proprio in anteprima. Corretto in `0b2a6ab`: ora `post()` fa la
+stessa unione che `postBySlug()` faceva già.
 
 ### Sito pubblico
 Home con ricerca, elenco con filtri, scheda immobile con galleria, pagina
@@ -665,12 +716,42 @@ alla società. Va però messa davanti prima, non dopo.
 
 ## 10. Se si riprende adesso, da dove
 
-Aggiornato al **5 agosto 2026**. Le prime due voci di questa lista — decidere
-se fare il sito nuovo, e provarlo su MySQL — sono superate: la decisione è
-presa e il sito gira su `prova.mondoimmobiliarelecce.it` con MySQL, gestionale
-compreso. Anche l'`og:image`, che qui figurava come mancante, è fatto.
+Aggiornato alla **sera del 5 agosto 2026**. Superato tutto quello che
+riguardava il codice: il sito gira su `prova.mondoimmobiliarelecce.it` con
+MySQL e gestionale, i file sul server sono allineati al repo, il logo vero è
+al suo posto e il log del server è vuoto.
 
-Cosa resta, in ordine di quanto pesa:
+**Il passo successivo è già cominciato, e si è fermato su due dati.** Si stava
+scrivendo l'**informativa privacy**. Quella del sito vecchio (pagina WP
+`24677`) non si può ricopiare: descrive Google Analytics, il retargeting e una
+newsletter, e il sito nuovo non ha niente di tutto questo — zero JavaScript,
+nessun cookie di tracciamento, nessun modulo di iscrizione. Ricopiarla
+sarebbe dichiarare il falso.
+
+Quello che il sito fa davvero, letto dal codice e già pronto per il testo:
+
+- i moduli raccolgono **nome, telefono, email, zona, messaggio e indirizzo
+  IP** (`Forms.php` → tabella `leads`)
+- **un solo cookie**, `milsess`, tecnico, di sessione, e parte soltanto
+  quando si invia un modulo o si entra nel gestionale
+- **un solo terzo**: il riquadro OpenStreetMap sulle schede immobile, dentro
+  un `<details>` chiuso — si collega solo se il visitatore clicca «Apri la
+  mappa», e con `referrerpolicy="no-referrer"`
+- i tentativi di accesso falliti al gestionale salvano IP ed email per un
+  quarto d'ora, poi `Auth::dimenticaVecchi()` li cancella
+- titolare: Studio RCS Srls, Via Giuseppe Parini 48/a, Lecce, P.IVA
+  IT05004730759, tel 0832 391489
+
+**Le due domande da fare a Camillo appena si riprende**, e finché non
+risponde il testo non si scrive perché sarebbero dati inventati:
+
+1. quale **indirizzo email** pubblicare per le richieste privacy (accesso,
+   cancellazione). Non compare da nessuna parte nel codice: cercato, zero
+   risultati.
+2. **per quanto tempo tiene le richieste di contatto** prima di cancellarle.
+   Proposta fatta e in attesa di conferma: 24 mesi dall'ultimo contatto.
+
+Poi, in ordine di quanto pesa:
 
 1. **Ricreare il contenuto: 35 pagine e 54 articoli.** È il collo di
    bottiglia, e non è lavoro tecnico — sono testi da riscrivere uno per uno
@@ -686,22 +767,24 @@ Cosa resta, in ordine di quanto pesa:
    l'informativa deve essere raggiungibile da ogni pagina. Gli indirizzi
    stanno in `app/Core/Legali.php`; finché mancano, il piè di pagina non le
    nomina — meglio nessun collegamento che uno rotto — e il riepilogo del
-   gestionale lo dice in chiaro.
+   gestionale lo dice in chiaro. Le pagine vecchie da cui partire: WP `24677`
+   (privacy) e WP `30757` (cookie). La cookie policy sarà corta: il sito ha
+   un cookie solo, tecnico.
 4. **Pulizia prima di andare online**: cancellare `public/install.php`, i 2
    clienti di esempio e i 3 articoli di esempio.
 5. **`agenzia-immobiliare-porto-cesareo`.** Il nodo della seconda sede nello
    schema la nomina in ogni pagina del sito. Finché non esiste, `url` viene
    omesso dal nodo: nessun collegamento rotto, ma nemmeno l'indirizzo della
-   sede nei dati strutturati.
+   sede nei dati strutturati. La pagina vecchia da cui partire è WP `30534`,
+   pubblicata e aggiornata a luglio 2026.
 6. **Il calcolatore IMU** (`calcolo-imu-2026-lecce`), rimandato: è l'unica
    delle 46 pagine che è codice e non testo. Vedi `CENSIMENTO-URL.md`.
 7. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
    immobili, e decidere il campo video.
-8. **Sostituire `public/assets/img/logo-512.png`** con il logo vero
-   dell'agenzia, se ne esiste uno in file. Quello attuale è il marchio della
-   favicon portato a 512 px: chiude il 404 che c'era, ma non è il logo
-   dell'agenzia. Stessa cosa per `social-1200x630.png`, l'immagine che si
-   vede quando un link del sito viene incollato in una chat.
+8. **Decidere se mettere il logo in testata.** Adesso il sito scrive il nome
+   dell'agenzia in caratteri, non lo disegna: il logo esiste come file e sta
+   nei dati strutturati, ma in pagina non si vede. Non è una svista ed è una
+   scelta di Camillo, non da fare per conto suo.
 9. Più avanti: export verso i portali.
 
 ### Il check-in orario sulla PR

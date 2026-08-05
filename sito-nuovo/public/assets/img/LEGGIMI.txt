@@ -1,8 +1,16 @@
-Qui dentro vanno due immagini, e non ci sono ancora.
+Le due immagini che il codice cerca qui dentro CI SONO SUL SERVER, ma NON
+stanno in questo repo: Camillo le ha disegnate e caricate a mano il 5 agosto
+2026 con il Gestione File di SiteGround. Chi clona il repo non le ha, e il
+sito gira lo stesso — vedi in fondo.
+
+Il blu del marchio e' #1b82d8. E' il valore da usare ovunque serva il colore
+dell'agenzia: lo usa gia' la favicon in app/helpers.php.
 
 --------------------------------------------------------------------
 logo.png       (vanno bene anche logo.webp o logo.jpg)
 --------------------------------------------------------------------
+Sul server: 1024 x 1024, marchio blu su fondo bianco pieno.
+
 Il logo dell'agenzia, nella forma che ha: non deve essere quadrato.
 Il codice lo cerca su disco e ne legge le misure vere, quindi non c'e'
 nessun formato da rispettare.
@@ -19,6 +27,8 @@ dell'anteprima social.
 --------------------------------------------------------------------
 social-1200x630.png
 --------------------------------------------------------------------
+Sul server: 1200 x 630, lo stesso marchio su fondo bianco.
+
 Cio' che si vede quando un link del sito viene incollato in una chat,
 su Facebook o in una email.
 
@@ -28,7 +38,7 @@ su Facebook o in una email.
   - testo grande: su un telefono questa immagine si vede piccola
 
 --------------------------------------------------------------------
-Finche' non ci sono, il sito funziona lo stesso: il nodo `logo` non
-viene emesso — insieme ai rimandi che lo citavano, quindi niente
-riferimenti appesi — e l'anteprima social compare solo sulle pagine
-che hanno gia' la foto di un immobile.
+Dove non ci sono — ogni copia locale del repo — il sito funziona lo
+stesso: il nodo `logo` non viene emesso, insieme ai rimandi che lo
+citavano, quindi niente riferimenti appesi; e l'anteprima social
+compare solo sulle pagine che hanno gia' la foto di un immobile.
