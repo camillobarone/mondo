@@ -197,7 +197,16 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* --------------------------------------------------------------- sezioni */
 
-.sezione { padding: 76px 0; }
+/* `padding-block` e non `padding: 76px 0`.
+   Quasi tutte le pagine sono un `<article class="wrap sezione">`: le due
+   classi stanno sullo stesso elemento e pesano uguale, quindi vinceva
+   l'ultima scritta nel file — `.sezione` — che azzerando il riempimento
+   laterale portava via i 20px di `.wrap`. Sul computer non si vedeva,
+   perché sotto i 1180px di `--wrap` la finestra è comunque più larga e i
+   margini restano ai lati. Sul telefono invece `.wrap` è largo quanto lo
+   schermo, e il testo finiva appoggiato al vetro.
+   Scrivendo solo il verticale il riempimento laterale non viene toccato. */
+.sezione { padding-block: 76px; }
 .sezione-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 34px; }
 .link-more { font-size: .92rem; white-space: nowrap; }
 /* Il titolo di pagina è un `h1`: è l'elemento che dice a Google, e a chi
@@ -262,8 +271,13 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* --------------------------------------------------------------- griglia */
 
-.griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 34px 30px; }
-.griglia-3 { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+/* `min(330px, 100%)` e non `330px` secco: la misura minima di una colonna è
+   un pavimento, e su uno schermo da 320 punti restano 280 di spazio utile —
+   la colonna teneva i suoi 330 e le schede uscivano dallo schermo di 30
+   punti, con la pagina che si trascinava di lato. Con `min()` la colonna
+   non chiede mai più di quanto ce n'è. */
+.griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 34px 30px; }
+.griglia-3 { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
 
 /* La scheda torna a essere un oggetto con un suo bordo. Senza, il titolo e il
    prezzo galleggiavano sul fondo della pagina e la griglia sembrava un elenco
@@ -334,7 +348,10 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* ---------------------------------------------------------------- scheda */
 
-.briciole { max-width: var(--wrap); margin: 0 auto; padding: 18px 20px 0; font-size: .85rem; color: var(--ink-soft); }
+/* Il margine laterale lo mette `.wrap`, qui resta solo l'aspetto: la
+   briciola si portava dietro una copia di `--wrap` e dei 20px, e dentro a un
+   `.wrap` faceva 40px — rientrava rispetto al titolo che le sta sotto. */
+.briciole { padding-top: 18px; font-size: .85rem; color: var(--ink-soft); }
 .briciole a { color: var(--ink-soft); }
 /* `.scheda-head` porta anche la classe `.wrap`, che centra con margini
    automatici: un `max-width` qui stringeva e centrava tutta l'intestazione,
@@ -397,7 +414,7 @@ img { max-width: 100%; height: auto; display: block; }
 .scheda-grid { display: grid; grid-template-columns: 1fr 330px; gap: 46px; padding-top: 26px; }
 @media (max-width: 900px) { .scheda-grid { grid-template-columns: 1fr; } }
 
-.dati { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 20px; margin: 0 0 28px; }
+.dati { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); gap: 2px 20px; margin: 0 0 28px; }
 .dati div { border-bottom: 1px solid var(--line); padding: 10px 0; }
 .dati dt { font-size: .74rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
 .dati dd { margin: 0; font-weight: 600; font-size: 1.05rem; }
@@ -483,7 +500,7 @@ img { max-width: 100%; height: auto; display: block; }
   width: 100%; padding: 12px; margin-top: 6px; border: 1px solid var(--line);
   border-radius: 8px; font: inherit; background: #fff;
 }
-.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 18px; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 0 18px; }
 .hp { position: absolute; left: -9999px; }
 .privacy { font-size: .82rem; color: var(--ink-soft); }
 
@@ -562,7 +579,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* --------------------------------------------------------------- filtri */
 
 .filtri {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 12px;
   align-items: end; background: var(--bg-soft); padding: 18px; border-radius: var(--radius); margin-bottom: 32px;
 }
 .filtri label { display: block; font-size: .8rem; font-weight: 600; }
@@ -582,7 +599,7 @@ img { max-width: 100%; height: auto; display: block; }
    cosa che si è venuti a vedere — compariva dopo 1.761 punti di scorrimento,
    due schermate piene. Qui il testo si stringe e i filtri si aprono al tocco. */
 @media (max-width: 700px) {
-  .sezione { padding: 44px 0; }
+  .sezione { padding-block: 44px; }
   .sezione-head { margin-bottom: 22px; }
   .pagina-titolo { font-size: 1.95rem; line-height: 1.2; }
   .pagina-sub, .occhiello { font-size: 1rem; line-height: 1.55; }
@@ -610,7 +627,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .paginazione .on { background: var(--ink); color: #fff; border-color: var(--ink); }
 
-.sedi { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; margin-bottom: 20px; }
+.sedi { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 28px; margin-bottom: 20px; }
 .sede { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
 
 /* ---------------------------------------------------------------- flash */
@@ -625,7 +642,7 @@ img { max-width: 100%; height: auto; display: block; }
 .site-foot { background: var(--scuro); color: #cfc7ba; padding: 72px 0 30px; margin-top: 0; font-size: .93rem; }
 .site-foot a { color: #fff; }
 .foot-title { font-family: var(--serif); font-weight: 500; }
-.foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 34px; }
+.foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 34px; }
 .foot-title { color: #fff; font-size: 1rem; }
 .rating { color: var(--accent-chiaro); }
 .piva { font-size: .82rem; opacity: .75; }

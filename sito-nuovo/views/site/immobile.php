@@ -14,7 +14,7 @@ $prezzo = (int) $p['price_hidden'] === 1 ? 'Trattativa riservata' : euro(isset($
 $features = array_filter(array_map('trim', explode(',', (string) $p['features'])));
 ?>
 <article class="scheda">
-  <nav class="briciole" aria-label="Percorso">
+  <nav class="wrap briciole" aria-label="Percorso">
     <a href="<?= e(url('/')) ?>">Home</a> ›
     <a href="<?= e(url('/immobili/')) ?>">Immobili</a> ›
     <span><?= e((string) $p['title']) ?></span>
