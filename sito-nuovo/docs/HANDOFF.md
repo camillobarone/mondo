@@ -552,8 +552,15 @@ Cosa manca davvero (verificato il 4 agosto, sera):
   ha la tabella e la pagina dei reindirizzamenti, ma sono vuote. È il pezzo che
   decide se il passaggio costa posizioni. Vedi `MIGRAZIONE-SEO.md`, fasi 1 e 2.
   Il censimento è fatto (`CENSIMENTO-URL.md`): 34 immobili e 56 articoli non
-  hanno bisogno di niente, restano identici. Restano da decidere le 46 pagine di
-  contenuto — che vanno prima ricreate — e le 25 pagine-residuo del tema.
+  hanno bisogno di **reindirizzamenti**, perché i loro indirizzi restano
+  identici. Attenzione a non leggerci più di quello: **gli articoli non sono
+  stati importati** — l'importatore legge solo `estate_property` — e vanno
+  ricreati a mano come le pagine. Restano da decidere le 25 pagine-residuo del
+  tema.
+- **Il contenuto da ricreare**: 35 pagine e 54 articoli al 5 agosto 2026. Il
+  conto aggiornato, l'elenco di cosa è già fatto e la regola con cui si
+  scelgono i collegamenti interni stanno in `CENSIMENTO-URL.md`, sezione «A che
+  punto siamo».
 - Il `sameAs` dell'autore singolo: il nodo `Person` di un articolo eredita
   l'aggancio a Wikidata da `worksFor` → `#agent`, ma non ha un proprio
   collegamento a un profilo pubblico. Servirebbe una colonna in `users`.
@@ -600,18 +607,31 @@ alla società. Va però messa davanti prima, non dopo.
 
 ## 10. Se si riprende adesso, da dove
 
-Non c'è niente di rotto e niente in sospeso a metà. Le strade aperte, in
-ordine di quanto valgono:
+Aggiornato al **5 agosto 2026**. Le prime due voci di questa lista — decidere
+se fare il sito nuovo, e provarlo su MySQL — sono superate: la decisione è
+presa e il sito gira su `prova.mondoimmobiliarelecce.it` con MySQL, gestionale
+compreso. Anche l'`og:image`, che qui figurava come mancante, è fatto.
 
-1. **Decidere fra sito nuovo e terza strada** (punto 9). Tutto il resto
-   dipende da questa, e adesso è il primo punto: la mappatura, che era il
-   rischio tecnico aperto, è verificata.
-2. **Provare su MySQL** — installazione via `public/install.php` su un
-   sottodominio SiteGround, per esempio `prova.mondoimmobiliarelecce.it`.
-3. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
+Cosa resta, in ordine di quanto pesa:
+
+1. **Ricreare il contenuto: 35 pagine e 54 articoli.** È il collo di
+   bottiglia, e non è lavoro tecnico — sono testi da riscrivere uno per uno
+   nel gestionale, con lo stesso slug del sito vecchio. Finché non ci sono,
+   il sito nuovo non può sostituire quello vero. Elenco, conteggio e regole
+   in `CENSIMENTO-URL.md`.
+2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
+   pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
+   eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
+3. **Le password.** Quella del gestionale e quella del database di prova sono
+   passate in chat e vanno cambiate; i sali di sicurezza del WordPress vanno
+   ruotati. Non è rimandabile a dopo il passaggio.
+4. **Pulizia prima di andare online**: cancellare `public/install.php`, i 2
+   clienti di esempio e i 3 articoli di esempio.
+5. **Il calcolatore IMU** (`calcolo-imu-2026-lecce`), rimandato: è l'unica
+   delle 46 pagine che è codice e non testo. Vedi `CENSIMENTO-URL.md`.
+6. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
    immobili, e decidere il campo video.
-4. Se si va avanti: mappa dei redirect, `og:image` sulle schede (oggi manca),
-   export verso i portali.
+7. Più avanti: export verso i portali.
 
 ### Il check-in orario sulla PR
 

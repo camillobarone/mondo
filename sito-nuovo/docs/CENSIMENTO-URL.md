@@ -104,11 +104,69 @@ restano identici e non serve toccare niente.
 guardate: se una è una bozza di un immobile venduto, la sua vecchia URL
 potrebbe essere ancora indicizzata.
 
+## A che punto siamo — 5 agosto 2026
+
+| | Fatte | Restano |
+|---|---|---|
+| Pagine (46, di cui 3 sono codice) | 8 | **35** |
+| Articoli (56) | 2 | **54** |
+
+**Pagine create sul sito nuovo:** `chi-siamo`, `stefano-my`,
+`camillo-barone-agente-immobiliare-lecce-dal-1994`,
+`antonio-renna-agente-immobiliare`, `alessandro-ciullo-agente-immobiliare`,
+`libro`, `agevolazioni-prima-casa-lecce`, `comprare-casa-a-lecce`.
+
+**Articoli creati:** `sistema-prezzo-valore`, `valutazione-immobiliare-lecce`.
+
+**Non serve crearle:** `mondoimmobiliare` (è la home, `/`), `contatti` e
+`blog` — sul sito nuovo sono rotte in `routes.php`, non righe nel database.
+
+### ⚠️ Gli articoli NON sono stati importati
+
+Vale la pena scriverlo perché è un errore che ho già fatto una volta in chat:
+**l'importatore legge solo `estate_property`**, cioè gli immobili. Un
+importatore di articoli non esiste — vedi `WpMapper::map()`, che mappa un
+immobile e nient'altro.
+
+I 56 articoli compaiono in questo censimento perché i loro **indirizzi** non
+cambiano, non perché siano già passati al sito nuovo. Vanno ricreati a mano
+come le pagine.
+
+E anche se un importatore ci fosse, `WpMapper::testo()` fa `strip_tags()`:
+titoletti, elenchi, grassetti e **collegamenti** andrebbero persi. Va bene per
+la descrizione di un immobile, non per una guida fiscale di quattromila
+parole. Chi un giorno scriverà l'importatore degli articoli deve convertire
+l'HTML nella notazione di `Core\Testo` (`##`, `-`, `**`, `[testo](url)`),
+non buttarlo via.
+
+## Come si scelgono i collegamenti interni
+
+Regola fissa, applicata a ogni pagina ricreata:
+
+1. **Se il sito nuovo ha già qualcosa che fa quel lavoro, il collegamento va
+   lì.** Esempi reali: `mondoimmobiliarelecce.it/#calcolatore-imposte` —
+   un'àncora sulla home vecchia — diventa `/calcolatore-imposte-acquisto-casa/`,
+   che è una pagina intera e funzionante; «Richiedi una valutazione gratuita»
+   va su `/valutazione-gratuita/` invece che su una pagina non ancora creata.
+2. **Altrimenti tiene lo slug del sito vecchio.** Punta a un 404 finché quella
+   pagina non esiste, e si ripara da solo il giorno che la crei. Il sito di
+   prova non è pubblico, quindi non fa danno — mentre togliere il collegamento
+   adesso significa doversi ricordare di rimetterlo, e non succederà.
+3. **Se la destinazione potrebbe non esistere mai, il collegamento si toglie**
+   e resta solo il testo. Unico caso oggi: il calcolatore IMU, rimandato. I
+   collegamenti da rimettere quando esisterà sono in `agevolazioni-prima-casa-lecce`
+   e in `comprare-casa-a-lecce`.
+
+Un collegamento trovato senza destinazione: `concetto-di-valutazione-immobiliare`,
+che nel censimento non c'è né come pagina né come articolo né come residuo del
+tema — probabilmente è già rotto sul sito vero. Ripuntato a
+`valutazione-immobiliare-lecce`, confermato dall'agenzia.
+
 ## Pagine da ricreare — il grosso del lavoro
 
 Sono le pagine che oggi portano visite: zone, quartieri, guide fiscali,
-schede dei soci. Il sito nuovo **non ne ha nessuna**. Ognuna va ricreata
-con lo stesso indirizzo, altrimenti si perde la posizione che ha oggi.
+schede dei soci. Ognuna va ricreata con lo stesso indirizzo, altrimenti si
+perde la posizione che ha oggi.
 
 | Slug (resta uguale) | Pagina |
 |---|---|
@@ -220,6 +278,10 @@ Non vanno ricreate.
 
 Tutti alla radice, tutti da conservare — è il patrimonio di contenuti
 dell'agenzia. Con la strada 1 gli indirizzi restano identici.
+
+⚠️ **Stanno ancora solo sul sito vecchio.** Nessun importatore li porta di
+qua: vanno ricreati a mano, uno per uno, come le pagine. Restano identici gli
+indirizzi, non il contenuto — quello va riscritto nel gestionale.
 
 | Slug | Titolo |
 |---|---|
