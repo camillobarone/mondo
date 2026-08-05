@@ -41,7 +41,7 @@ final class Feeds
         foreach (Db::all("SELECT slug, updated_at, published_at, created_at FROM posts
                           WHERE status = 'published' ORDER BY id DESC") as $row) {
             $urls[] = [
-                'loc' => $base . '/blog/' . $row['slug'] . '/',
+                'loc' => $base . '/' . $row['slug'] . '/',
                 'priority' => '0.7',
                 'lastmod' => substr((string) ($row['updated_at'] ?: $row['published_at'] ?: $row['created_at']), 0, 10),
             ];

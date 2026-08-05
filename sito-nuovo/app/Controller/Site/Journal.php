@@ -45,16 +45,23 @@ final class Journal
         ]);
     }
 
-    public static function show(string $slug): void
+    /**
+     * L'articolo, servito alla radice: `/imposte-acquisto-casa/`.
+     *
+     * Torna `false` invece di stampare il 404, perché chi la chiama — il
+     * fallback di Pages — deve poter continuare a cercare altrove: alla
+     * radice ci stanno anche le pagine statiche, e chi arriva qui è già
+     * l'ultimo tentativo prima del 404.
+     */
+    public static function show(string $slug): bool
     {
         $post = Content::postBySlug($slug);
 
         if ($post === null || $post['status'] !== 'published') {
-            Pages::notFound();
-            return;
+            return false;
         }
 
-        $pageUrl = Seo::base() . '/blog/' . $post['slug'] . '/';
+        $pageUrl = Seo::base() . '/' . $post['slug'] . '/';
         $published = substr((string) ($post['published_at'] ?: $post['created_at']), 0, 10);
 
         $article = [
@@ -120,5 +127,7 @@ final class Journal
                 static fn (array $a): bool => (int) $a['id'] !== (int) $post['id']
             )), 0, 3),
         ]);
+
+        return true;
     }
 }

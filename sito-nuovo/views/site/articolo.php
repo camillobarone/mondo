@@ -34,7 +34,7 @@
       <h3>Altri articoli</h3>
       <ul class="elenco">
         <?php foreach ($altri as $a): ?>
-          <li><a href="<?= e(url('/blog/' . $a['slug'] . '/')) ?>"><?= e((string) $a['title']) ?></a></li>
+          <li><a href="<?= e(url('/' . $a['slug'] . '/')) ?>"><?= e((string) $a['title']) ?></a></li>
         <?php endforeach; ?>
       </ul>
     </section>

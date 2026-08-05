@@ -115,8 +115,33 @@ final class Content
     }
 
     /**
-     * Slug unico dentro una tabella. Il nome della tabella non arriva mai
-     * dall'utente: è passato dal codice fra i due valori ammessi.
+     * Slug che una pagina o un articolo non può prendersi, perché alla
+     * radice risponde già una rotta fissa. Senza questo elenco una pagina
+     * chiamata «Contatti» prenderebbe lo slug `contatti` e resterebbe
+     * invisibile per sempre: la rotta vince, e nessuno capisce perché.
+     */
+    private const RISERVATI = [
+        'immobili',
+        'blog',
+        'contatti',
+        'valutazione-gratuita',
+        'calcolatore-imposte-acquisto-casa',
+        'invia-richiesta',
+        'gestionale',
+        'assets',
+        'uploads',
+        'robots',
+        'sitemap',
+    ];
+
+    /**
+     * Slug unico. Il nome della tabella non arriva mai dall'utente: è
+     * passato dal codice fra i due valori ammessi.
+     *
+     * L'unicità è fra le due tabelle, non dentro una sola: articoli e pagine
+     * abitano entrambi la radice del sito, quindi un articolo e una pagina
+     * con lo stesso slug sarebbero due contenuti allo stesso indirizzo, e
+     * uno dei due non si vedrebbe mai.
      */
     private static function uniqueSlug(string $table, string $raw, ?int $ignoreId = null): string
     {
@@ -125,17 +150,36 @@ final class Content
         $slug = $base;
         $n = 1;
 
-        while (true) {
-            $sql = "SELECT COUNT(*) FROM {$table} WHERE slug = :s";
+        while (self::slugOccupato($table, $slug, $ignoreId)) {
+            $slug = $base . '-' . (++$n);
+        }
+
+        return $slug;
+    }
+
+    private static function slugOccupato(string $table, string $slug, ?int $ignoreId): bool
+    {
+        if (in_array($slug, self::RISERVATI, true)) {
+            return true;
+        }
+
+        foreach (['posts', 'pages'] as $altra) {
+            $sql = "SELECT COUNT(*) FROM {$altra} WHERE slug = :s";
             $params = ['s' => $slug];
-            if ($ignoreId !== null) {
+
+            // L'esclusione vale solo per la riga che si sta salvando, e
+            // quindi solo nella sua tabella: un id uguale nell'altra è un
+            // contenuto diverso.
+            if ($altra === $table && $ignoreId !== null) {
                 $sql .= ' AND id <> :id';
                 $params['id'] = $ignoreId;
             }
-            if ((int) Db::value($sql, $params) === 0) {
-                return $slug;
+
+            if ((int) Db::value($sql, $params) > 0) {
+                return true;
             }
-            $slug = $base . '-' . (++$n);
         }
+
+        return false;
     }
 }

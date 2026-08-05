@@ -136,7 +136,7 @@ $sfondoSrc = $sfondo === null ? '' : (string) $sfondo['cover'];
   <div class="griglia griglia-3">
     <?php foreach ($posts as $post): ?>
       <article class="post-card">
-        <h3><a href="<?= e(url('/blog/' . $post['slug'] . '/')) ?>"><?= e((string) $post['title']) ?></a></h3>
+        <h3><a href="<?= e(url('/' . $post['slug'] . '/')) ?>"><?= e((string) $post['title']) ?></a></h3>
         <p><?= e(tronca((string) ($post['excerpt'] ?: $post['body']), 140)) ?></p>
         <p class="post-meta"><?= e(data_it((string) ($post['published_at'] ?: $post['created_at']))) ?></p>
       </article>

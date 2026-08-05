@@ -12,7 +12,7 @@
     <div class="griglia griglia-3">
       <?php foreach ($result['items'] as $post): ?>
         <article class="post-card">
-          <h3><a href="<?= e(url('/blog/' . $post['slug'] . '/')) ?>"><?= e((string) $post['title']) ?></a></h3>
+          <h3><a href="<?= e(url('/' . $post['slug'] . '/')) ?>"><?= e((string) $post['title']) ?></a></h3>
           <p><?= e(tronca((string) ($post['excerpt'] ?: $post['body']), 160)) ?></p>
           <p class="post-meta">
             <?= e(data_it((string) ($post['published_at'] ?: $post['created_at']))) ?>

@@ -62,7 +62,7 @@ final class ContentController
             Csrf::check();
             $data = self::postFromRequest();
             if ($data['slug'] !== $post['slug']) {
-                Redirects::put('/blog/' . $post['slug'], '/blog/' . $data['slug']);
+                Redirects::put('/' . $post['slug'], '/' . $data['slug']);
             }
             Content::updatePost((int) $id, $data);
             Log::write('modifica', 'articolo', (int) $id);

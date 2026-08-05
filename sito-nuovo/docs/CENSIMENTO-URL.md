@@ -22,23 +22,40 @@ caratteristiche, stato) e le pagine 2, 3… degli elenchi. Vanno contati
 prima del passaggio: sono quasi tutti `noindex` per scelta di Rank Math, ma
 «quasi» non è «tutti» e va verificato uno per uno.
 
-## La cosa più importante che è emersa
+## La cosa più importante che è emersa — decisa il 5 agosto 2026
 
 **Gli articoli del blog stanno alla radice**, non sotto `/blog/`:
 `www.mondoimmobiliarelecce.it/imposte-acquisto-casa/`, non
-`/blog/imposte-acquisto-casa/`. Il sito nuovo invece li mette sotto
-`/blog/`. Sono 56 indirizzi che cambierebbero tutti insieme.
+`/blog/imposte-acquisto-casa/`. Il sito nuovo li metteva sotto `/blog/`:
+sarebbero stati 56 indirizzi cambiati tutti insieme.
 
-Due strade, e vanno decise prima di ogni altra cosa:
+C'erano due strade — servirli alla radice anche sul sito nuovo, oppure
+tenere `/blog/` e scrivere 56 reindirizzamenti 301. **Scelta la prima**: in
+una migrazione si cambia una cosa alla volta, e la struttura degli
+indirizzi non è ciò che c'era da sistemare. Un 301 passa quasi tutto, ma
+«quasi» moltiplicato per 56 pagine, mentre cambia anche tutto il resto, era
+rischio che si poteva non correre.
 
-1. **Il sito nuovo serve gli articoli alla radice**, come oggi. Zero
-   reindirizzamenti, zero rischio. Costa una modifica al programma.
-2. **Si tiene `/blog/` e si fanno 56 reindirizzamenti 301.** Un 301 passa
-   quasi tutto, ma «quasi» moltiplicato per 56 pagine, in un momento in cui
-   cambia anche tutto il resto, è rischio che si poteva non correre.
+**Fatto.** Il sito nuovo serve gli articoli alla radice. In pratica:
 
-Raccomandazione: **la 1**. In una migrazione si cambia una cosa alla volta,
-e la struttura degli indirizzi non è ciò che c'è da sistemare.
+- `/blog/` resta ed è l'indice degli articoli — anche sul sito vero c'è una
+  pagina con slug `blog` che fa esattamente questo.
+- Il singolo articolo risponde su `/<slug>/`, servito dal fallback di
+  `Pages::catchAll()` insieme alle pagine statiche: prima i redirect, poi
+  le pagine, poi gli articoli, poi il 404.
+- `/blog/<slug>/` risponde 301 verso `/<slug>/`. Non serve per il sito
+  vero, dove quegli indirizzi non sono mai esistiti: serve a non spezzare i
+  link che il sito di prova ha esposto per qualche giorno.
+- Articoli e pagine ora condividono la radice, quindi lo slug dev'essere
+  unico **fra le due tabelle**, non dentro una sola. Se ne occupa
+  `Content::uniqueSlug()`, che rifiuta anche gli slug su cui risponde già
+  una rotta fissa (`immobili`, `blog`, `contatti`, `gestionale`…): una
+  pagina chiamata «Contatti» diventa `contatti-2` invece di restare
+  invisibile per sempre.
+- La sitemap e tutti i collegamenti interni puntano già alla forma nuova.
+
+Conseguenza sul resto del censimento: **per gli articoli non serve nessun
+reindirizzamento**. I 56 indirizzi restano identici a quelli di oggi.
 
 ## Immobili — nessun reindirizzamento necessario
 

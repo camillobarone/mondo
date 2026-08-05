@@ -184,6 +184,19 @@ Home con ricerca, elenco con filtri, scheda immobile con galleria, pagina
 valutazione con FAQ visibili, blog, pagine statiche, contatti con entrambe le
 sedi, sitemap dal database, robots.txt che non blocca i crawler AI.
 
+### Dove stanno gli articoli
+**Alla radice: `/imposte-acquisto-casa/`, non `/blog/imposte-acquisto-casa/`.**
+È la struttura del sito vero, e conservarla evita 56 reindirizzamenti nel
+momento peggiore per farli. `/blog/` resta come indice. Il singolo articolo lo
+serve `Pages::catchAll()`, che prova in quest'ordine: redirect 301, pagine
+statiche, articoli, 404. `/blog/<slug>/` risponde 301 verso `/<slug>/` per non
+spezzare i link usciti dal sito di prova.
+
+Conseguenza da ricordare: articoli e pagine abitano lo stesso spazio di nomi.
+`Content::uniqueSlug()` cerca lo slug **in tutt'e due le tabelle** e rifiuta
+quelli su cui risponde già una rotta fissa (elenco in `Content::RISERVATI`). Chi
+aggiunge una rotta pubblica nuova alla radice deve aggiungerla anche lì.
+
 ### Gestionale
 Riepilogo, immobili con doppio stato (pubblicazione e trattativa), incarichi
 con scadenza, prezzo minimo riservato, storico prezzi, proposte d'acquisto,
@@ -382,6 +395,13 @@ Cosa manca davvero (verificato il 4 agosto, sera):
 - **La mappa vecchio → nuovo degli indirizzi non esiste ancora**: il gestionale
   ha la tabella e la pagina dei reindirizzamenti, ma sono vuote. È il pezzo che
   decide se il passaggio costa posizioni. Vedi `MIGRAZIONE-SEO.md`, fasi 1 e 2.
+  Il censimento è fatto (`CENSIMENTO-URL.md`): 34 immobili e 56 articoli non
+  hanno bisogno di niente, restano identici. Restano da decidere le 46 pagine di
+  contenuto — che vanno prima ricreate — e le 25 pagine-residuo del tema.
+- **Manca l'`h1` in quasi tutte le pagine**: ce l'hanno solo la home e il
+  calcolatore. Elenco immobili, scheda immobile, blog, articolo, pagina
+  statica, contatti e valutazione aprono con un `<h2 class="pagina-titolo">`.
+  Non è un errore che blocca, ma è un segnale strutturale regalato.
 
 Fatti, non più mancanti: video e visita virtuale (colonne, campi, importazione,
 pulsanti sulla scheda, `VideoObject` nel JSON-LD), calcolatore delle imposte,

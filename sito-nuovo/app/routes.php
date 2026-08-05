@@ -24,6 +24,7 @@ use Mil\Controller\Site\Forms;
 use Mil\Controller\Site\Journal;
 use Mil\Controller\Site\Listings;
 use Mil\Controller\Site\Pages;
+use Mil\Core\Router;
 
 // ------------------------------------------------------------------ pubblico
 
@@ -31,7 +32,18 @@ $router->get('/', [Pages::class, 'home']);
 $router->get('/immobili', [Listings::class, 'index']);
 $router->get('/immobili/{slug}', [Listings::class, 'show']);
 $router->get('/blog', [Journal::class, 'index']);
-$router->get('/blog/{slug}', [Journal::class, 'show']);
+
+// I singoli articoli stanno alla radice — `/imposte-acquisto-casa/` — come
+// sul sito vero: sono 56 indirizzi che Google conosce da anni e che così non
+// cambiano. Li serve il fallback qui sotto, insieme alle pagine statiche.
+// Questa rotta resta solo per non spezzare i link `/blog/<slug>/` che il
+// sito di prova ha esposto per qualche giorno.
+$router->get('/blog/{slug}', static function (string $slug): void {
+    // Se intanto l'articolo è stato rinominato, si va dritti alla
+    // destinazione finale invece di incatenare due 301 di fila.
+    Pages::redirectIfKnown('/' . $slug);
+    Router::redirect('/' . $slug . '/', 301);
+});
 $router->get('/contatti', [Pages::class, 'contatti']);
 $router->get('/valutazione-gratuita', [Pages::class, 'valutazione']);
 $router->get('/calcolatore-imposte-acquisto-casa', [Pages::class, 'calcolatore']);
@@ -42,7 +54,7 @@ $router->get('/sitemap.xml', [Feeds::class, 'sitemap']);
 $router->get('/robots.txt', [Feeds::class, 'robots']);
 
 // Qualsiasi altro percorso: prima i redirect 301, poi le pagine statiche,
-// e solo alla fine il 404.
+// poi gli articoli del blog, e solo alla fine il 404.
 $router->fallback([Pages::class, 'catchAll']);
 
 // --------------------------------------------------------------- gestionale

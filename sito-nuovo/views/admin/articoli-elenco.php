@@ -13,13 +13,13 @@
   <?php foreach ($result['items'] as $post): ?>
     <tr>
       <td><a href="<?= e(url('/gestionale/articoli/' . $post['id'] . '/')) ?>"><?= e((string) $post['title']) ?></a><br>
-        <small><code>/blog/<?= e((string) $post['slug']) ?>/</code></small></td>
+        <small><code>/<?= e((string) $post['slug']) ?>/</code></small></td>
       <td><?= e((string) ($post['author_name'] ?? '—')) ?></td>
       <td><span class="pill pill-<?= e((string) $post['status']) ?>"><?= $post['status'] === 'published' ? 'Pubblicato' : 'Bozza' ?></span></td>
       <td><?= e(data_it((string) ($post['published_at'] ?: $post['created_at']))) ?></td>
       <td class="destra">
         <?php if ($post['status'] === 'published'): ?>
-          <a class="mini" href="<?= e(url('/blog/' . $post['slug'] . '/')) ?>" target="_blank" rel="noopener">Vedi ↗</a>
+          <a class="mini" href="<?= e(url('/' . $post['slug'] . '/')) ?>" target="_blank" rel="noopener">Vedi ↗</a>
         <?php endif; ?>
       </td>
     </tr>

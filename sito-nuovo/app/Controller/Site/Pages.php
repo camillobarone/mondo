@@ -124,15 +124,32 @@ final class Pages
         ]);
     }
 
-    /** Redirect 301, poi pagine statiche, poi 404. In quest'ordine. */
+    /**
+     * Redirect 301, poi pagine statiche, poi articoli del blog, poi 404.
+     * In quest'ordine.
+     *
+     * Alla radice ci stanno due cose: le pagine e gli articoli. Gli articoli
+     * ci stanno perché è lì che il sito vero li tiene da anni, ed è l'unico
+     * modo di cambiare programma senza cambiare 56 indirizzi indicizzati.
+     * Che non si pestino i piedi lo garantisce Content::uniqueSlug(), che
+     * cerca lo slug in entrambe le tabelle prima di assegnarlo.
+     */
     public static function catchAll(string $path): void
     {
         self::redirectIfKnown($path);
 
         $slug = trim($path, '/');
-        $page = $slug === '' ? null : Content::pageBySlug($slug);
+        if ($slug === '') {
+            self::notFound();
+            return;
+        }
+
+        $page = Content::pageBySlug($slug);
 
         if ($page === null || $page['status'] !== 'published') {
+            if (Journal::show($slug)) {
+                return;
+            }
             self::notFound();
             return;
         }
