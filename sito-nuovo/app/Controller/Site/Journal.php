@@ -61,6 +61,20 @@ final class Journal
             return false;
         }
 
+        self::render($post);
+
+        return true;
+    }
+
+    /**
+     * Disegna un articolo. Separato da show() per lo stesso motivo di
+     * Pages::renderPage(): serve anche all'anteprima del gestionale, che deve
+     * poter mostrare una bozza — l'unico momento in cui guardarla è utile.
+     *
+     * @param array<string,mixed> $post
+     */
+    public static function render(array $post, bool $anteprima = false): void
+    {
         $pageUrl = Seo::base() . '/' . $post['slug'] . '/';
         $published = substr((string) ($post['published_at'] ?: $post['created_at']), 0, 10);
 
@@ -130,7 +144,10 @@ final class Journal
                 (string) ($post['seo_title'] ?: $post['title']),
                 (string) ($post['seo_description'] ?: tronca((string) ($post['excerpt'] ?: $post['body']), 155)),
                 $pageUrl,
-                Seo::graph($graph)
+                Seo::graph($graph),
+                $anteprima ? 'noindex, nofollow' : 'index, follow',
+                '',
+                (string) ($post['cover'] ?? '')
             ),
             'post' => $post,
             // Se ne prendono quattro per poterne scartare uno: l'articolo che
@@ -142,7 +159,5 @@ final class Journal
                 static fn (array $a): bool => (int) $a['id'] !== (int) $post['id']
             )), 0, 3),
         ]);
-
-        return true;
     }
 }

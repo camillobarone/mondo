@@ -18,6 +18,8 @@
     <?= e(data_it((string) ($post['published_at'] ?: $post['created_at']))) ?>
   </p>
 
+  <?= Mil\Core\View::partial('site/_copertina', ['item' => $post]) ?>
+
   <?php if (trim((string) $post['excerpt']) !== ''): ?>
     <?php /* L'occhiello è una frase, non un pezzo di pagina impaginato: si
              tolgono i segni del markdown senza trasformarli in titoli. Negli

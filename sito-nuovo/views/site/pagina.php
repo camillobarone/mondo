@@ -8,6 +8,7 @@
   </nav>
 
   <h1 class="pagina-titolo"><?= e((string) $page['title']) ?></h1>
+  <?= Mil\Core\View::partial('site/_copertina', ['item' => $page]) ?>
   <div class="testo"><?= Mil\Core\Testo::html((string) $page['body']) ?></div>
 
   <p class="firma">Mondo Immobiliare — agenzia FIMAA dal 1994<br>

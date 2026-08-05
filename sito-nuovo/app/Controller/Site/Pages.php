@@ -48,7 +48,9 @@ final class Pages
                 // Adesso l'LCP della home è la foto dell'hero, non più il
                 // titolo: va annunciata, altrimenti il browser la scopre
                 // solo a layout costruito.
-                self::preloadHero($featured['items'])
+                self::preloadHero($featured['items']),
+                // Anche la home condivisa in chat mostra la sua foto grande.
+                (string) (self::heroImage($featured['items'])['cover'] ?? '')
             ),
             'featured' => $featured['items'],
             'posts' => Content::posts(true, 1, 3)['items'],
@@ -154,6 +156,21 @@ final class Pages
             return;
         }
 
+        self::renderPage($page);
+    }
+
+    /**
+     * Disegna una pagina statica.
+     *
+     * Sta fuori da catchAll() perché la usa anche l'anteprima del gestionale:
+     * una bozza non risponde a nessun indirizzo pubblico, e senza questo non
+     * ci sarebbe modo di vederla prima di pubblicarla — che è esattamente il
+     * momento in cui uno vorrebbe guardarla.
+     *
+     * @param array<string,mixed> $page
+     */
+    public static function renderPage(array $page, bool $anteprima = false): void
+    {
         $pageUrl = Seo::base() . '/' . $page['slug'] . '/';
         $graph = [
             Seo::logoNode(),
@@ -177,7 +194,10 @@ final class Pages
                 (string) ($page['seo_title'] ?: $page['title']),
                 (string) ($page['seo_description'] ?: tronca((string) $page['body'], 155)),
                 $pageUrl,
-                Seo::graph($graph)
+                Seo::graph($graph),
+                $anteprima ? 'noindex, nofollow' : 'index, follow',
+                '',
+                (string) ($page['cover'] ?? '')
             ),
             'page' => $page,
         ]);
@@ -374,7 +394,8 @@ final class Pages
         string $canonical,
         string $jsonld = '',
         string $robots = 'index, follow',
-        string $preload = ''
+        string $preload = '',
+        string $image = ''
     ): array {
         return [
             // Limiti Rank Math applicati anche qui: 60 e 160 caratteri.
@@ -384,6 +405,33 @@ final class Pages
             'jsonld' => $jsonld,
             'robots' => $robots,
             'preload' => $preload,
+            'image' => self::immagineSociale($image),
         ];
+    }
+
+    /**
+     * L'immagine che si vede quando il link viene incollato in WhatsApp, su
+     * Facebook o in una email. Fino a ieri il sito non ne dichiarava nessuna:
+     * un immobile condiviso in chat arrivava come un rettangolo di testo,
+     * proprio nel posto in cui la foto è tutto.
+     *
+     * Se la pagina non ha un'immagine sua si ripiega sul logo. Non è un gran
+     * biglietto da visita, ma è meglio del vuoto: almeno si riconosce da chi
+     * arriva il link.
+     *
+     * L'indirizzo esce sempre assoluto — i social non sanno risolvere un
+     * percorso relativo, e senza dominio l'anteprima resta bianca.
+     */
+    private static function immagineSociale(string $image): string
+    {
+        $image = trim($image);
+        if ($image === '') {
+            $image = trim((string) Settings::get('logo_url', ''));
+        }
+        if ($image === '') {
+            return '';
+        }
+
+        return str_starts_with($image, 'http') ? $image : url($image);
     }
 }

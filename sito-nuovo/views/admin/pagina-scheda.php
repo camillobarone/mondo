@@ -6,7 +6,9 @@ use Mil\Core\Csrf;
 
 $isNew = (int) $page['id'] === 0;
 ?>
-<form method="post" class="form">
+<?php /* `enctype` serve perché il modulo adesso porta anche un file: senza,
+         il browser manda solo il nome e la foto non arriva mai. */ ?>
+<form method="post" class="form" enctype="multipart/form-data">
   <?= Csrf::field() ?>
   <div class="due-colonne">
     <div class="pannello">
@@ -32,6 +34,19 @@ $isNew = (int) $page['id'] === 0;
           </select>
         </label>
         <button class="btn btn-primary largo"><?= $isNew ? 'Crea pagina' : 'Salva' ?></button>
+        <?php if (!$isNew): ?>
+          <p class="muto">
+            <a href="<?= e(url('/gestionale/pagine/' . $page['id'] . '/anteprima/')) ?>" target="_blank" rel="noopener">Vedi la pagina ↗</a>
+            <?php if ($page['status'] !== 'published'): ?>
+              <br><small>È una bozza: la vedi solo tu, da qui.</small>
+            <?php endif; ?>
+          </p>
+        <?php endif; ?>
+      </div>
+
+      <div class="pannello">
+        <h2>Immagine</h2>
+        <?= Mil\Core\View::partial('admin/_copertina', ['item' => $page]) ?>
       </div>
 
       <div class="pannello">

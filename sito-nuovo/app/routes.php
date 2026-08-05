@@ -100,11 +100,13 @@ $router->post('/gestionale/agenda/{id}/elimina', [AgendaController::class, 'dest
 
 $router->get('/gestionale/articoli', [ContentController::class, 'posts']);
 $router->any('/gestionale/articoli/nuovo', [ContentController::class, 'createPost']);
+$router->get('/gestionale/articoli/{id}/anteprima', [ContentController::class, 'previewPost']);
 $router->any('/gestionale/articoli/{id}', [ContentController::class, 'editPost']);
 $router->post('/gestionale/articoli/{id}/elimina', [ContentController::class, 'destroyPost']);
 
 $router->get('/gestionale/pagine', [ContentController::class, 'pages']);
 $router->any('/gestionale/pagine/nuova', [ContentController::class, 'createPage']);
+$router->get('/gestionale/pagine/{id}/anteprima', [ContentController::class, 'previewPage']);
 $router->any('/gestionale/pagine/{id}', [ContentController::class, 'editPage']);
 $router->post('/gestionale/pagine/{id}/elimina', [ContentController::class, 'destroyPage']);
 

@@ -9,7 +9,9 @@ use Mil\Core\Csrf;
 
 $isNew = (int) $post['id'] === 0;
 ?>
-<form method="post" class="form">
+<?php /* `enctype` serve perché il modulo adesso porta anche un file: senza,
+         il browser manda solo il nome e la foto non arriva mai. */ ?>
+<form method="post" class="form" enctype="multipart/form-data">
   <?= Csrf::field() ?>
   <div class="due-colonne">
     <div class="pannello">
@@ -50,10 +52,16 @@ $isNew = (int) $post['id'] === 0;
           </select>
           <small>Un cluster tematico, un autore: è così che si costruisce autorevolezza.</small>
         </label>
-        <label>Immagine di copertina (URL)
-          <input type="text" name="cover" value="<?= e((string) $post['cover']) ?>">
-        </label>
+        <?= Mil\Core\View::partial('admin/_copertina', ['item' => $post]) ?>
         <button class="btn btn-primary largo"><?= $isNew ? 'Crea articolo' : 'Salva' ?></button>
+        <?php if (!$isNew): ?>
+          <p class="muto">
+            <a href="<?= e(url('/gestionale/articoli/' . $post['id'] . '/anteprima/')) ?>" target="_blank" rel="noopener">Vedi l’articolo ↗</a>
+            <?php if ($post['status'] !== 'published'): ?>
+              <br><small>È una bozza: lo vedi solo tu, da qui.</small>
+            <?php endif; ?>
+          </p>
+        <?php endif; ?>
       </div>
 
       <div class="pannello">

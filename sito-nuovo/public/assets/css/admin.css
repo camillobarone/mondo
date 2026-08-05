@@ -146,6 +146,11 @@ img { max-width: 100%; height: auto; display: block; }
 .form-larga { margin: 0; }
 
 .aiuto { font-size: .85rem; color: var(--ink-soft, #5a6673); max-width: 70ch; margin: 6px 0 20px; }
+/* L'immagine già caricata, con la casella per toglierla. Si vede piccola:
+   serve a riconoscerla, non a giudicarla — per quello c'è l'anteprima. */
+.copertina-attuale { margin: 0 0 16px; }
+.copertina-attuale img { width: 100%; max-width: 260px; height: auto; border-radius: 6px; display: block; margin-bottom: 8px; }
+
 .check { display: flex; align-items: flex-start; gap: 8px; font-weight: 500 !important; }
 .check input { margin-top: 3px; }
 .check small { flex-basis: 100%; }

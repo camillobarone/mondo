@@ -31,6 +31,16 @@ $flash = Session::takeFlash();
 <meta property="og:description" content="<?= e($meta['description']) ?>">
 <meta property="og:url" content="<?= e($meta['canonical']) ?>">
 <meta property="og:locale" content="it_IT">
+<?php /* L'anteprima di quando il link finisce in una chat. Per un'agenzia
+         immobiliare non è un dettaglio: gli annunci si mandano su WhatsApp, e
+         un link senza foto in mezzo a una conversazione non lo apre nessuno.
+         `summary_large_image` è quello che dice a X di usare il riquadro
+         grande invece del francobollo di fianco al testo. */ ?>
+<?php if (($meta['image'] ?? '') !== ''): ?>
+<meta property="og:image" content="<?= e($meta['image']) ?>">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="<?= e($meta['image']) ?>">
+<?php endif; ?>
 <link rel="icon" href="<?= e(favicon_svg()) ?>" type="image/svg+xml">
 <?php /* Il carattere dei titoli si annuncia subito: sta nel CSS inline, che il
          browser scopre solo leggendolo, e senza preload il serif arriverebbe

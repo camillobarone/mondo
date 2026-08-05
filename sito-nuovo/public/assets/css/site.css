@@ -213,6 +213,14 @@ img { max-width: 100%; height: auto; display: block; }
    salta un gradino e chi si muove fra i titoli con lo screen reader non
    capisce dove sta. La misura resta quella di prima. */
 .titolo-sezione { font-size: 1.35rem; }
+
+/* Copertina di una pagina o di un articolo. Sta sotto il titolo e non sopra:
+   il lettore arriva dal risultato di ricerca, e la prima cosa che deve
+   ritrovare è il titolo che ha cliccato, non una fotografia.
+   Larga quanto il testo, non quanto la pagina: a tutta larghezza una foto
+   3:2 riempie lo schermo da sola e spinge sotto la piega ogni parola. */
+.copertina { margin: 0 0 32px; max-width: 70ch; }
+.copertina img { width: 100%; border-radius: var(--radius); }
 .pagina-sub { color: var(--ink-soft); margin-bottom: 28px; }
 .vuoto { color: var(--ink-soft); background: var(--bg-soft); padding: 22px; border-radius: var(--radius); }
 .nota { font-size: .9rem; color: var(--ink-soft); }

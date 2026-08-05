@@ -116,7 +116,11 @@ final class Listings
                 $pageUrl,
                 Seo::graph(Seo::listingNodes($property, $images)),
                 $robots,
-                self::preloadCopertina($images)
+                self::preloadCopertina($images),
+                // La prima foto è anche l'anteprima nelle chat: un annuncio
+                // si manda su WhatsApp, e senza foto quel link non lo apre
+                // nessuno.
+                (string) ($images[0]['path'] ?? '')
             ),
             'p' => $property,
             'images' => $images,

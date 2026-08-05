@@ -263,6 +263,36 @@ unicità sull'email: su MySQL è un `ALTER TABLE`, su SQLite bisogna
 ricostruire la tabella. Sono due file gemelli, ognuno SQL vero che si legge e
 si prova da solo, invece di un segnaposto che nasconde la differenza.
 
+### Copertine e anteprima social
+Pagine e articoli hanno un'immagine di copertina, caricata dal gestionale e
+lavorata dallo stesso `Uploader` delle foto degli immobili: tre larghezze in
+WebP. Si vede sotto il titolo — non sopra: chi arriva da Google deve
+ritrovare per primo il titolo che ha cliccato — larga quanto il testo, con
+`width`/`height` sempre stampati perché la pagina non sobbalzi.
+
+Prima esisteva una colonna `posts.cover` che era una casella di testo in cui
+scrivere a mano un indirizzo, **e che non veniva mostrata da nessuna parte**:
+si salvava e finiva lì.
+
+`Pages::meta()` ha ora un settimo parametro, l'immagine, e il layout emette
+`og:image` più le `twitter:card`. **Prima il sito non dichiarava nessuna
+immagine sociale**: un immobile mandato su WhatsApp arrivava come un
+rettangolo di testo, proprio dove la foto è tutto. La scheda immobile passa
+la sua prima foto, la home quella dell'hero, pagine e articoli la copertina;
+se non c'è niente si ripiega su `logo_url` delle impostazioni.
+
+**Anteprima delle bozze**: `/gestionale/pagine/{id}/anteprima/` e
+`/gestionale/articoli/{id}/anteprima/`. Per questo il disegno della pagina è
+stato estratto in `Pages::renderPage()` e `Journal::render()`, sullo stesso
+schema di `Listings::render()`, che l'anteprima degli immobili già usava.
+
+Nota su `Uploader`: genera solo le larghezze **minori o uguali** all'originale
+(480, 960, 1600). Una foto da 1400 px esce quindi al massimo a 960, e su uno
+schermo grande si vede leggermente ingrandita. Vale anche per le foto degli
+immobili. Si sistema aggiungendo la larghezza reale quando sta fra due
+tagli — non è stato fatto per non cambiare come sono già state lavorate le
+1.114 foto importate.
+
 ### `llms.txt`
 `/llms.txt`, generato dal database come la sitemap: identità dell'agenzia,
 sedi, pagine principali, immobili online e articoli, in Markdown pulito.
