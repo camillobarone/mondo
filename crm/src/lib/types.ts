@@ -246,7 +246,12 @@ export const FINANCING = [
   { value: "mutuo_da_valutare", label: "Mutuo da valutare" },
 ] as const;
 
-export const OFFICES = ["Lecce", "Porto Cesareo"] as const;
+/**
+ * Le due sedi, piu' una voce per chi non e' nessuna delle due: le agenzie
+ * indipendenti con cui si collabora hanno un'utenza qui dentro, ma non sono
+ * un nostro ufficio. E' solo un'etichetta — non decide cosa si vede.
+ */
+export const OFFICES = ["Lecce", "Porto Cesareo", "Agenzia esterna"] as const;
 
 /**
  * Zone di riferimento del mercato locale. Servono ai filtri e al matching:
