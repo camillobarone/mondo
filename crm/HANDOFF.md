@@ -166,7 +166,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Provare le ultime novità** | L'ultimo aggiornamento del server era in corso quando la chat si è chiusa. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
-| **Incroci fra colleghi** | **Da fare.** E' il passo che da' senso alla separazione: quando un acquirente di uno corrisponde all'immobile dell'altro, il programma lo segnala. La scheda mostrata deve essere ridotta — niente nome ne' telefono del cliente altrui, solo le caratteristiche e *«richiesta di <collega>»* con un pulsante per contattare lui. Insieme a questo va deciso cosa fare dei **contatti in comune** (oggi il rilevamento doppioni non attraversa il muro) e delle **richieste di cancellazione GDPR**, che vanno girate a voce. |
+| **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
 
 ### Fuori perimetro, in attesa di una sua decisione
 

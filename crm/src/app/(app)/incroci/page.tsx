@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { matchesByClient, type Match } from "@/lib/matching";
+import { matchesByClient, incrociFraColleghi, type Match } from "@/lib/matching";
 import { euro, whatsappHref } from "@/lib/format";
 import { PageHeader, Card, EmptyState, Chip, Pagination } from "@/components/ui";
 
@@ -42,18 +42,31 @@ export default async function MatchesPage({
     page: Number(params.page ?? 1) || 1,
   });
 
+  // Solo il numero: le segnalazioni fra colleghi stanno nella loro pagina,
+  // perche' si leggono in un altro modo — li' non si chiama un cliente, si
+  // chiama un collega.
+  const conIColleghi = incrociFraColleghi(user.id, { limite: 0 });
+
   return (
     <>
       <PageHeader
         title="Incroci"
         subtitle="Chi chiamare, e per quale immobile. Aggiornato in tempo reale."
         actions={
-          <Link
-            href={onlyPerfect ? "/incroci" : "/incroci?soloPerfetti=1"}
-            className="btn-secondary"
-          >
-            {onlyPerfect ? "Mostra tutti" : "Solo corrispondenze piene"}
-          </Link>
+          <>
+            {conIColleghi.colleghi.length ? (
+              <Link href="/incroci/colleghi" className="btn-secondary">
+                Con i colleghi
+                {conIColleghi.totale ? ` (${conIColleghi.totale})` : ""}
+              </Link>
+            ) : null}
+            <Link
+              href={onlyPerfect ? "/incroci" : "/incroci?soloPerfetti=1"}
+              className="btn-secondary"
+            >
+              {onlyPerfect ? "Mostra tutti" : "Solo corrispondenze piene"}
+            </Link>
+          </>
         }
       />
 
@@ -61,11 +74,21 @@ export default async function MatchesPage({
         <Card>
           <EmptyState
             title="Nessun incrocio al momento."
-            hint="Servono richieste aperte e immobili disponibili. Registra cosa cercano i tuoi acquirenti e gli abbinamenti compariranno qui."
+            hint={
+              conIColleghi.totale
+                ? `Nel tuo archivio non c'è niente da abbinare, ma ci sono ${conIColleghi.totale} segnalazioni con i colleghi.`
+                : "Servono richieste aperte e immobili disponibili. Registra cosa cercano i tuoi acquirenti e gli abbinamenti compariranno qui."
+            }
             action={
-              <Link href="/richieste" className="btn-secondary">
-                Vai alle richieste
-              </Link>
+              conIColleghi.totale ? (
+                <Link href="/incroci/colleghi" className="btn-secondary">
+                  Vedi gli incroci con i colleghi
+                </Link>
+              ) : (
+                <Link href="/richieste" className="btn-secondary">
+                  Vai alle richieste
+                </Link>
+              )
             }
           />
         </Card>

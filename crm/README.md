@@ -411,6 +411,32 @@ Conseguenze pratiche, da conoscere prima di aggiungere un collega:
 - Anche una **richiesta di cancellazione** (GDPR) va girata a voce all'altro,
   perché ognuno cancella solo la propria copia.
 
+### Quando qualcosa di tuo corrisponde a qualcosa di un collega
+
+La separazione avrebbe poco senso se poi le occasioni si perdessero. In
+**Incroci → Con i colleghi** il programma segnala, nei due versi, quando un tuo
+acquirente corrisponde all'immobile di un collega o quando un tuo immobile
+corrisponde a un acquirente suo.
+
+Valgono le stesse regole degli incroci tuoi — niente proposte in un altro
+comune o di un'altra famiglia di tipologie — ma cambia cosa si vede:
+**le caratteristiche sì, l'identità no.**
+
+| Del collega vedi | Non vedi |
+|---|---|
+| tipologia, comune, zona, metri, vani, prezzo richiesto | chi è il proprietario |
+| cosa cerca un suo acquirente e con che budget | nome e telefono di quell'acquirente |
+| | il **prezzo minimo** che il venditore accetterebbe |
+| | note interne e provvigioni |
+
+Il prezzo minimo in particolare non esce per nessun motivo: è la soglia sotto
+cui il venditore non scende, e conoscerla vuol dire sedersi al tavolo sapendo
+la mano dell'altro.
+
+Non c'è nessun pulsante per chiamare il cliente di un collega, perché non è un
+tuo cliente: si scrive al collega, e da lì in poi è un accordo fra voi due —
+provvigione compresa.
+
 Il ruolo **titolare** non dà più accesso ai dati altrui. Serve solo ad
 amministrare il programma: creare e disattivare gli utenti. Il **registro
 accessi** invece adesso ce l'hanno tutti, ma ognuno vede soltanto le proprie

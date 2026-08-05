@@ -321,11 +321,6 @@ function byQuality(a: Scored, b: Scored): number {
 /* ----------------------------------------------------------- dati di base */
 
 /**
- * Immobili ancora proponibili, gia' preparati per il confronto. Memorizzato
- * per singola richiesta HTTP: la stessa pagina puo' incrociare centinaia di
- * richieste senza rileggere ne' rianalizzare il portafoglio ogni volta.
- */
-/**
  * Immobili ancora proponibili, gia' preparati per il confronto.
  *
  * Sono i propri, e basta: gli incroci girano dentro l'archivio di chi guarda.
@@ -583,4 +578,272 @@ export function matchesByClient(
     }));
 
   return { groups, total, clients: ordered.length, page: current, pages };
+}
+
+/* ============================================ incroci fra colleghi */
+
+/**
+ * Qui, e solo qui, il confronto attraversa il muro.
+ *
+ * Serve a rispondere a una domanda sola: "il collega ha qualcosa per il mio
+ * cliente, o un cliente per il mio immobile?". La risposta utile e' si' o no —
+ * a quel punto ci si telefona, come si e' sempre fatto fra agenzie.
+ *
+ * La regola di cosa passa e cosa no e' semplice da tenere a mente:
+ * **le caratteristiche si', l'identita' no.** Di un immobile altrui si vedono
+ * tipologia, comune, zona, metri, vani e prezzo richiesto — cioe' quello che
+ * un collega direbbe al telefono. Non si vedono il prezzo minimo che il
+ * proprietario accetterebbe, le provvigioni, le note interne, ne' chi e' il
+ * proprietario. Di una richiesta altrui si vede cosa cerca e con che budget;
+ * non si vede **mai** chi la sta cercando, ne' il suo numero.
+ *
+ * Il prezzo minimo in particolare non deve uscire per nessun motivo: e' la
+ * soglia sotto cui il venditore non scende, e conoscerla vuol dire sedersi al
+ * tavolo sapendo la mano dell'altro.
+ */
+
+/** Un immobile di un collega, ridotto a cio' che si puo' dire al telefono. */
+export interface ImmobileDiUnCollega {
+  id: number;
+  titolo: string;
+  tipologia: string;
+  contratto: string;
+  comune: string | null;
+  zona: string | null;
+  mq: number | null;
+  vani: number | null;
+  prezzo: number | null;
+}
+
+/** Una richiesta di un collega. Chi l'ha fatta non compare, in nessun campo. */
+export interface RichiestaDiUnCollega {
+  id: number;
+  contratto: string;
+  tipologia: string | null;
+  comune: string | null;
+  zone: string;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  mqMin: number | null;
+  vaniMin: number | null;
+}
+
+export interface Collega {
+  id: number;
+  nome: string;
+  email: string;
+}
+
+export interface IncrocioCollega {
+  /** Da che parte sta la cosa mia: il cliente o l'immobile. */
+  verso: "mio-cliente" | "mio-immobile";
+  collega: Collega;
+  punteggio: number;
+  totale: number;
+  motivi: string[];
+  avvertenze: string[];
+  /** Presenti a coppie: uno dei due lati e' mio, l'altro del collega. */
+  mioCliente?: { id: number; nome: string; telefono: string | null; richiestaId: number };
+  immobileDelCollega?: ImmobileDiUnCollega;
+  mioImmobile?: { id: number; titolo: string; prezzo: number | null };
+  richiestaDelCollega?: RichiestaDiUnCollega;
+}
+
+/**
+ * Gli immobili dei colleghi, con le sole colonne che possono uscire.
+ *
+ * La selezione e' scritta campo per campo apposta: un `SELECT *` qui, oggi o
+ * fra due anni, porterebbe fuori prezzo minimo, provvigioni e note interne
+ * senza che nessuno se ne accorga.
+ */
+const immobiliDeiColleghi = cache(
+  (utente: number): (ReadyProperty & { collega: Collega })[] =>
+    all<{
+      id: number; title: string; kind: string; contract: string;
+      city: string | null; zone: string | null;
+      sqm: number | null; rooms: number | null; price: number | null;
+      elevator: number; garage: number; outdoor: string | null;
+      agente_id: number; agente_nome: string; agente_email: string;
+    }>(
+      `SELECT p.id, p.title, p.kind, p.contract, p.city, p.zone,
+              p.sqm, p.rooms, p.price, p.elevator, p.garage, p.outdoor,
+              u.id AS agente_id, u.name AS agente_nome, u.email AS agente_email
+         FROM properties p
+         JOIN users u ON u.id = p.agent_id
+        WHERE p.deleted_at IS NULL
+          AND p.agent_id != ?
+          AND u.active = 1
+          AND p.status IN ('acquisizione', 'in_vendita')
+        ORDER BY p.updated_at DESC`,
+      [utente],
+    ).map((riga) => ({
+      ...prepareProperty({
+        id: riga.id, title: riga.title, kind: riga.kind, contract: riga.contract,
+        city: riga.city, zone: riga.zone, sqm: riga.sqm, rooms: riga.rooms,
+        price: riga.price, elevator: riga.elevator, garage: riga.garage,
+        outdoor: riga.outdoor,
+      } as Property),
+      collega: { id: riga.agente_id, nome: riga.agente_nome, email: riga.agente_email },
+    })),
+);
+
+/**
+ * Le richieste aperte dei colleghi, senza chi le ha fatte.
+ *
+ * `client_id` non viene nemmeno letto: cosi' non c'e' niente da cui ricavare
+ * un collegamento a quella scheda, neanche per sbaglio in una pagina scritta
+ * domani.
+ */
+const richiesteDeiColleghi = cache(
+  (utente: number): (ReadyRequirement & { collega: Collega })[] =>
+    all<{
+      id: number; contract: string; kind: string | null; city: string | null;
+      zones: string; needs: string;
+      budget_min: number | null; budget_max: number | null;
+      sqm_min: number | null; rooms_min: number | null;
+      referente_id: number; referente_nome: string; referente_email: string;
+    }>(
+      `SELECT r.id, r.contract, r.kind, r.city, r.zones, r.needs,
+              r.budget_min, r.budget_max, r.sqm_min, r.rooms_min,
+              u.id AS referente_id, u.name AS referente_nome, u.email AS referente_email
+         FROM requirements r
+         JOIN clients c ON c.id = r.client_id
+         JOIN users   u ON u.id = c.owner_id
+        WHERE r.status = 'aperta'
+          AND c.deleted_at IS NULL
+          AND c.owner_id != ?
+          AND u.active = 1
+        ORDER BY r.updated_at DESC`,
+      [utente],
+    ).map((riga) => ({
+      ...prepareRequirement({
+        id: riga.id, contract: riga.contract, kind: riga.kind, city: riga.city,
+        zones: riga.zones, needs: riga.needs,
+        budget_min: riga.budget_min, budget_max: riga.budget_max,
+        sqm_min: riga.sqm_min, rooms_min: riga.rooms_min,
+        // Non e' il vero cliente: e' un turacciolo, perche' il tipo lo vuole e
+        // il numero vero non deve entrare in memoria da questa parte del muro.
+        client_id: 0,
+      } as Requirement),
+      collega: { id: riga.referente_id, nome: riga.referente_nome, email: riga.referente_email },
+    })),
+);
+
+function immobileVisibile(pronto: ReadyProperty): ImmobileDiUnCollega {
+  const p = pronto.source;
+  return {
+    id: p.id,
+    titolo: p.title,
+    tipologia: p.kind,
+    contratto: p.contract,
+    comune: p.city,
+    zona: p.zone,
+    mq: p.sqm,
+    vani: p.rooms,
+    prezzo: p.price,
+  };
+}
+
+function richiestaVisibile(pronta: ReadyRequirement): RichiestaDiUnCollega {
+  const r = pronta.source;
+  return {
+    id: r.id,
+    contratto: r.contract,
+    tipologia: r.kind,
+    comune: r.city,
+    zone: r.zones,
+    budgetMin: r.budget_min,
+    budgetMax: r.budget_max,
+    mqMin: r.sqm_min,
+    vaniMin: r.rooms_min,
+  };
+}
+
+/**
+ * Tutti gli incroci che scavalcano il muro, nei due versi.
+ *
+ * Vale la stessa severita' degli incroci propri: comune diverso, famiglia di
+ * tipologia diversa, fuori budget o sotto metratura restano fuori. Una
+ * segnalazione fra colleghi costa una telefonata a qualcuno: deve valerla.
+ */
+export function incrociFraColleghi(
+  utente: number,
+  { limite = 60 }: { limite?: number } = {},
+): { incroci: IncrocioCollega[]; totale: number; colleghi: string[] } {
+  const mieRichieste = openRequirements(utente);
+  const mieiImmobili = availableProperties(utente);
+  const loroImmobili = immobiliDeiColleghi(utente);
+  const loroRichieste = richiesteDeiColleghi(utente);
+
+  const raccolti: (IncrocioCollega & { misses: number })[] = [];
+  const colleghi = new Set<string>();
+
+  // Verso 1: un mio acquirente e l'immobile di un collega.
+  for (const richiesta of mieRichieste) {
+    for (const immobile of loroImmobili) {
+      const esito = score(richiesta, immobile);
+      if (!esito) continue;
+
+      const spiegato = explain({
+        property: immobile.source,
+        requirement: richiesta.source,
+        ...esito,
+      });
+      colleghi.add(immobile.collega.nome);
+      raccolti.push({
+        verso: "mio-cliente",
+        collega: immobile.collega,
+        punteggio: esito.score,
+        totale: esito.total,
+        misses: esito.misses,
+        motivi: spiegato.reasons,
+        avvertenze: spiegato.warnings,
+        mioCliente: {
+          id: richiesta.source.client_id,
+          nome: richiesta.clientName,
+          telefono: richiesta.clientPhone,
+          richiestaId: richiesta.source.id,
+        },
+        immobileDelCollega: immobileVisibile(immobile),
+      });
+    }
+  }
+
+  // Verso 2: un mio immobile e l'acquirente di un collega.
+  for (const richiesta of loroRichieste) {
+    for (const immobile of mieiImmobili) {
+      const esito = score(richiesta, immobile);
+      if (!esito) continue;
+
+      const spiegato = explain({
+        property: immobile.source,
+        requirement: richiesta.source,
+        ...esito,
+      });
+      colleghi.add(richiesta.collega.nome);
+      raccolti.push({
+        verso: "mio-immobile",
+        collega: richiesta.collega,
+        punteggio: esito.score,
+        totale: esito.total,
+        misses: esito.misses,
+        motivi: spiegato.reasons,
+        avvertenze: spiegato.warnings,
+        mioImmobile: {
+          id: immobile.source.id,
+          titolo: immobile.source.title,
+          prezzo: immobile.source.price,
+        },
+        richiestaDelCollega: richiestaVisibile(richiesta),
+      });
+    }
+  }
+
+  raccolti.sort((a, b) => b.punteggio - a.punteggio || a.misses - b.misses);
+
+  return {
+    incroci: raccolti.slice(0, limite).map(({ misses: _misses, ...resto }) => resto),
+    totale: raccolti.length,
+    colleghi: [...colleghi].sort((a, b) => a.localeCompare(b, "it")),
+  };
 }

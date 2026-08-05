@@ -510,6 +510,38 @@ Quattro cose da sapere, perché si notano nell'uso:
    e disattivare gli utenti. Il registro accessi ce l'hanno tutti, ma
    ciascuno vede soltanto le proprie mosse.
 
+
+Gli incroci con i colleghi
+
+La separazione avrebbe poco senso se poi le occasioni si perdessero. In
+Incroci → Con i colleghi il programma segnala nei due versi: un tuo
+acquirente per l'immobile di un collega, e un tuo immobile per un acquirente
+suo.
+
+Valgono le stesse regole degli incroci propri (niente altro comune, niente
+altra famiglia di tipologie), ma cambia cosa si vede —
+le caratteristiche sì, l'identità no:
+
+  tipologia, comune, zona, metri, vani, prezzo richiesto
+      chi è il proprietario
+
+  cosa cerca un suo acquirente, e con che budget
+      nome e telefono di quell'acquirente
+
+  Del collega si vede
+      il prezzo minimo accettato dal venditore
+
+  Del collega si vede
+      note interne e provvigioni
+
+
+Il prezzo minimo non esce per nessun motivo: è la soglia sotto cui il venditore
+non scende, e conoscerla vuol dire sedersi al tavolo sapendo la mano dell'altro.
+
+Non c'è nessun pulsante per chiamare il cliente del collega: si scrive al
+collega. Da lì in poi è un accordo fra due persone, provvigione compresa —
+come si è sempre fatto fra agenzie.
+
 ⚠️ Il limite, detto chiaro. Questo separa gli sguardi dentro il programma,
 non l'accesso alla macchina. Chi ha le chiavi del server ha il file
 dell'archivio, e lì dentro c'è tutto; chi amministra gli utenti può anche
