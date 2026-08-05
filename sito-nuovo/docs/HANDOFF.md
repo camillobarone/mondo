@@ -211,6 +211,27 @@ le schede stanno subito sotto l'`h1`). Saltare un gradino fa perdere il filo a
 chi si muove fra i titoli con lo screen reader, ed è l'unico rilievo che
 Lighthouse dava sull'accessibilità.
 
+### Account «solo firma»
+Terzo ruolo accanto a `agent` e `admin`: **`firma`**. Serve ai colleghi che
+compaiono come autori di un articolo — nome e biografia in fondo al pezzo,
+nodo `Person` nel JSON-LD — ma non gestiscono immobili e non entrano nel
+gestionale. Nessuna password in circolazione per un accesso che non useranno.
+
+Come funziona: `password_hash` resta la stringa vuota, e `Auth::attempt()`
+rifiuta esplicitamente sia il ruolo `firma` sia l'hash vuoto. Passare un
+account esistente a `firma` **cancella la password**, altrimenti l'etichetta
+sarebbe una bugia. Nessuna colonna nuova: il ruolo sta dove stava già.
+
+Due protezioni: non ci si può cambiare il ruolo da soli (si resterebbe chiusi
+fuori, e per rientrare servirebbe phpMyAdmin), e la password nel modulo di
+creazione non è più `required` in HTML — senza JavaScript non si può togliere
+l'obbligo al volo, quindi il controllo vero è nel controller, per ruolo.
+
+Per ridare l'accesso a un «solo firma»: rimettilo Agente, salva, e a quel
+punto ricompare il campo della password. Fra i due salvataggi l'account è un
+agente senza password — che comunque non entra, per via del controllo
+sull'hash vuoto.
+
 ### `llms.txt`
 `/llms.txt`, generato dal database come la sitemap: identità dell'agenzia,
 sedi, pagine principali, immobili online e articoli, in Markdown pulito.

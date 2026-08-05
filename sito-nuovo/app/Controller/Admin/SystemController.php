@@ -122,6 +122,22 @@ final class SystemController
 
     // -------------------------------------------------------------- utenti
 
+    /**
+     * I tre ruoli ammessi, con `agent` come ripiego: quello che arriva dal
+     * modulo non si usa mai così com'è.
+     *
+     * `firma` è un account che non entra nel gestionale — esiste solo per
+     * comparire come autore di un articolo, con nome e biografia. Serve per
+     * i colleghi che scrivono ma non gestiscono immobili: nessuna password
+     * in circolazione per un accesso che non useranno.
+     */
+    private static function role(mixed $valore): string
+    {
+        $valore = (string) $valore;
+
+        return in_array($valore, ['admin', 'firma'], true) ? $valore : 'agent';
+    }
+
     public static function users(): void
     {
         Auth::adminRequired();
@@ -130,10 +146,11 @@ final class SystemController
             Csrf::check();
             $email = trim((string) ($_POST['email'] ?? ''));
             $password = (string) ($_POST['password'] ?? '');
+            $role = self::role($_POST['role'] ?? '');
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 Session::flash('Email non valida.', 'error');
-            } elseif (mb_strlen($password) < 10) {
+            } elseif ($role !== 'firma' && mb_strlen($password) < 10) {
                 Session::flash('La password deve avere almeno 10 caratteri.', 'error');
             } elseif (Users::emailTaken($email)) {
                 Session::flash('Esiste già un utente con questa email.', 'error');
@@ -141,10 +158,13 @@ final class SystemController
                 $id = Users::create([
                     'name' => mb_substr(trim((string) ($_POST['name'] ?? '')), 0, 120) ?: 'Senza nome',
                     'email' => $email,
-                    'role' => (string) ($_POST['role'] ?? 'agent') === 'admin' ? 'admin' : 'agent',
+                    'role' => $role,
                     'phone' => mb_substr(trim((string) ($_POST['phone'] ?? '')), 0, 40),
                     'active' => 1,
-                ], $password);
+                    // Chi firma e basta non entra: password vuota, che
+                    // Users::create() traduce in un hash vuoto — e un hash
+                    // vuoto non combacia con nessun tentativo di accesso.
+                ], $role === 'firma' ? '' : $password);
                 Log::write('crea', 'utente', $id, $email);
                 Session::flash('Utente creato.');
             }
@@ -178,18 +198,33 @@ final class SystemController
             }
 
             $active = isset($_POST['active']) ? 1 : 0;
-            // Non ci si può disattivare da soli: si resterebbe chiusi fuori.
+            $role = self::role($_POST['role'] ?? '');
+
+            // Non ci si può disattivare né declassare da soli: si resterebbe
+            // chiusi fuori dal proprio gestionale, e per rientrare servirebbe
+            // phpMyAdmin.
             if ((int) $id === Auth::id()) {
                 $active = 1;
+                $role = (string) $user['role'];
             }
 
-            Users::update((int) $id, [
+            $dati = [
                 'name' => mb_substr(trim((string) ($_POST['name'] ?? '')), 0, 120) ?: (string) $user['name'],
-                'role' => (string) ($_POST['role'] ?? 'agent') === 'admin' ? 'admin' : 'agent',
+                'role' => $role,
                 'phone' => mb_substr(trim((string) ($_POST['phone'] ?? '')), 0, 40),
                 'bio' => mb_substr(trim((string) ($_POST['bio'] ?? '')), 0, 2000),
                 'active' => $active,
-            ], $password);
+            ];
+
+            // Diventare «solo firma» toglie l'accesso davvero: la password
+            // precedente va cancellata, altrimenti chi la conosceva
+            // continuerebbe a entrare e l'etichetta sarebbe una bugia.
+            if ($role === 'firma') {
+                $dati['password_hash'] = '';
+                $password = '';
+            }
+
+            Users::update((int) $id, $dati, $password);
 
             Log::write('modifica', 'utente', (int) $id);
             Session::flash('Utente aggiornato.');

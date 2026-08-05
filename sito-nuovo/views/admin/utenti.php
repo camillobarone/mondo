@@ -14,8 +14,10 @@ use Mil\Core\Csrf;
         <tr class="<?= (int) $u['active'] === 0 ? 'spento' : '' ?>">
           <td><a href="<?= e(url('/gestionale/utenti/' . $u['id'] . '/')) ?>"><?= e((string) $u['name']) ?></a></td>
           <td><small><?= e((string) $u['email']) ?></small></td>
-          <td><?= $u['role'] === 'admin' ? 'Amministratore' : 'Agente' ?></td>
-          <td><?= e(!empty($u['last_login_at']) ? data_it((string) $u['last_login_at'], true) : 'mai') ?></td>
+          <td><?= ['admin' => 'Amministratore', 'firma' => 'Solo firma'][$u['role']] ?? 'Agente' ?></td>
+          <td><?= $u['role'] === 'firma'
+                ? '<small class="muto">non entra</small>'
+                : e(!empty($u['last_login_at']) ? data_it((string) $u['last_login_at'], true) : 'mai') ?></td>
         </tr>
       <?php endforeach; ?>
       </tbody>
@@ -33,10 +35,14 @@ use Mil\Core\Csrf;
         <select name="role">
           <option value="agent">Agente</option>
           <option value="admin">Amministratore</option>
+          <option value="firma">Solo firma — non entra nel gestionale</option>
         </select>
       </label>
-      <label>Password <small>almeno 10 caratteri</small>
-        <input type="password" name="password" required minlength="10" autocomplete="new-password">
+      <?php /* La password non è `required`: con «Solo firma» non serve, e
+               senza JavaScript non si può togliere l'obbligo al volo. Il
+               controllo vero è nel controller, che è dove deve stare. */ ?>
+      <label>Password <small>almeno 10 caratteri — lasciala vuota per «Solo firma»</small>
+        <input type="password" name="password" minlength="10" autocomplete="new-password">
       </label>
       <button class="btn btn-primary">Crea utente</button>
     </form>

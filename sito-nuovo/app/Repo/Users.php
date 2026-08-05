@@ -39,11 +39,18 @@ final class Users
         return (int) Db::value($sql, $params) > 0;
     }
 
-    /** @param array<string,mixed> $data */
+    /**
+     * Password vuota significa «questo account non entra»: si salva un hash
+     * vuoto, che non combacia con nessun tentativo di accesso. Serve agli
+     * account «solo firma», che esistono per comparire come autori di un
+     * articolo e non hanno motivo di avere credenziali in giro.
+     *
+     * @param array<string,mixed> $data
+     */
     public static function create(array $data, string $password): int
     {
         $data['email'] = mb_strtolower(trim((string) $data['email']));
-        $data['password_hash'] = Auth::hash($password);
+        $data['password_hash'] = $password === '' ? '' : Auth::hash($password);
         $data['created_at'] = Db::now();
 
         return Db::insert('users', $data);

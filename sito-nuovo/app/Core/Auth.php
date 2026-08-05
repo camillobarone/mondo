@@ -16,6 +16,17 @@ final class Auth
             ['e' => mb_strtolower(trim($email))]
         );
 
+        // Account «solo firma»: esistono per comparire come autori di un
+        // articolo, non per entrare. Non hanno password, e questo controllo
+        // dice a chiare lettere che nessun tentativo di accesso li riguarda.
+        // L'hash vuoto lo negherebbe già password_verify() da solo: sta qui
+        // perché una difesa che si vede è una difesa che nessuno smonta per
+        // sbaglio.
+        if ($user !== null
+            && ((string) $user['role'] === 'firma' || (string) $user['password_hash'] === '')) {
+            return false;
+        }
+
         if ($user === null || !password_verify($password, (string) $user['password_hash'])) {
             return false;
         }
