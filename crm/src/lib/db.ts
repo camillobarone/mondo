@@ -26,6 +26,7 @@ function connect(): Database.Database {
   database.pragma("foreign_keys = ON");
   database.exec(SCHEMA);
   aggiungiColonneMancanti(database);
+  assegnaTitolareMancante(database);
   return database;
 }
 
@@ -61,6 +62,46 @@ function aggiungiColonneMancanti(database: Database.Database) {
       if (!String(errore).includes("duplicate column name")) throw errore;
     }
   }
+}
+
+/**
+ * Ogni cliente e ogni immobile devono avere un responsabile.
+ *
+ * Da quando ognuno vede solo la propria roba, una scheda senza responsabile non
+ * sarebbe "di tutti": sarebbe di nessuno, e sparirebbe dagli elenchi di
+ * chiunque. Il modo per accorgersene sarebbe non trovare piu' un cliente che
+ * c'e' sempre stato.
+ *
+ * Le schede rimaste scoperte vanno quindi al titolare — che e' anche la
+ * verita' storica: prima che ci fossero piu' persone in archivio, erano sue.
+ * Gira a ogni avvio, ma tocca solo le righe scoperte: quando non ce ne sono
+ * piu', non fa niente.
+ */
+function assegnaTitolareMancante(database: Database.Database) {
+  const riferimento = database
+    .prepare(
+      `SELECT id FROM users
+        WHERE active = 1
+        ORDER BY (role = 'titolare') DESC, id
+        LIMIT 1`,
+    )
+    .get() as { id: number } | undefined;
+
+  // Al primissimo avvio non c'e' ancora nessun utente: non c'e' neanche niente
+  // da assegnare, e al prossimo giro ci sara'.
+  if (!riferimento) return;
+
+  database.prepare(`UPDATE clients    SET owner_id = ? WHERE owner_id IS NULL`).run(riferimento.id);
+  database.prepare(`UPDATE properties SET agent_id = ? WHERE agent_id IS NULL`).run(riferimento.id);
+
+  // Un'attivita' senza persona, senza cliente e senza immobile non avrebbe
+  // nessun appiglio per farsi trovare da qualcuno.
+  database
+    .prepare(
+      `UPDATE activities SET user_id = ?
+        WHERE user_id IS NULL AND client_id IS NULL AND property_id IS NULL`,
+    )
+    .run(riferimento.id);
 }
 
 // In sviluppo Next ricarica i moduli a ogni modifica: senza il globale
