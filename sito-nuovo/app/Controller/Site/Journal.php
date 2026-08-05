@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mil\Controller\Site;
 
 use Mil\Core\Seo;
+use Mil\Core\Testo;
 use Mil\Core\View;
 use Mil\Repo\Content;
 
@@ -133,6 +134,15 @@ final class Journal
             'mainEntity' => ['@id' => $pageUrl . '#post'],
         ];
         $graph[] = $article;
+
+        // Anche gli articoli: molti dei 56 importati chiudono con un blocco
+        // di domande frequenti, che sul sito vecchio Rank Math marcava e qui
+        // altrimenti resterebbe testo semplice.
+        $faq = Testo::faq((string) ($post['body'] ?? ''));
+        if ($faq !== []) {
+            $graph[] = Seo::faqNode($faq, $pageUrl);
+        }
+
         $graph[] = Seo::breadcrumbNode([
             ['name' => 'Home', 'url' => Seo::base() . '/'],
             ['name' => 'Blog', 'url' => Seo::base() . '/blog/'],

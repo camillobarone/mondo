@@ -307,6 +307,39 @@ tutto quello che è già stato caricato restano come sono: i file WebP sono già
 stati scritti, e nessuno li rigenera. Se una foto in pagina si vede sfocata,
 si ricarica e viene rilavorata con le misure nuove.
 
+### Le domande frequenti diventano dati strutturati
+Pagine e articoli emettevano `WebPage`/`BlogPosting` e le briciole di pane, e
+basta. Le guide fiscali dell'agenzia hanno metà del contenuto fatto di domande
+— sette sole su «Agevolazioni prima casa» — e sul sito vecchio Rank Math le
+marcava come `FAQPage`. Qui restavano testo semplice.
+
+`Testo::faq()` le rilegge dal testo già scritto, senza campi nuovi:
+
+- un `##` intitolato **Domande frequenti** (oppure `FAQ`, o *Domande e
+  risposte*) apre la sezione;
+- ogni `###` dentro la sezione è una domanda, il testo fino al `###`
+  successivo è la sua risposta;
+- un altro `##`, o una riga orizzontale `---`, chiudono la sezione.
+
+Quel confine è la parte che conta: senza, ogni `h3` della pagina diventerebbe
+una domanda che nessuno ha posto — e la firma in fondo all'articolo finirebbe
+dentro l'ultima risposta.
+
+Le risposte escono senza segni di formattazione: nel JSON-LD un `**` non è
+grassetto, è rumore dentro una frase. Paragrafi consecutivi si uniscono in una
+risposta sola.
+
+Il nodo si aggiunge solo se la sezione c'è: una pagina senza domande ha il
+grafo di prima, invariato. In pagina non cambia niente — le `h3` si vedevano
+già.
+
+**Perché, visto che Google ha tolto i risultati arricchiti per le FAQ nel
+2023** (li tiene solo per enti pubblici e sanità): perché non è per Google. È
+la forma in cui ChatGPT, Perplexity e gli assistenti leggono una domanda e la
+sua risposta senza doverla indovinare, ed è il terreno su cui il sito sta
+costruendo. Costa qualche riga di JSON su pagine che quelle domande ce le
+hanno già scritte dentro.
+
 ### `llms.txt`
 `/llms.txt`, generato dal database come la sitemap: identità dell'agenzia,
 sedi, pagine principali, immobili online e articoli, in Markdown pulito.

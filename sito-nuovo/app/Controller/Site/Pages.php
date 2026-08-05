@@ -7,6 +7,7 @@ namespace Mil\Controller\Site;
 use Mil\Core\Imposte;
 use Mil\Core\Seo;
 use Mil\Core\Settings;
+use Mil\Core\Testo;
 use Mil\Core\View;
 use Mil\Repo\Content;
 use Mil\Repo\Properties;
@@ -183,11 +184,21 @@ final class Pages
                 'inLanguage' => 'it',
                 'publisher' => ['@id' => Seo::base() . '/#agent'],
             ],
-            Seo::breadcrumbNode([
-                ['name' => 'Home', 'url' => Seo::base() . '/'],
-                ['name' => Seo::text((string) $page['title']), 'url' => $pageUrl],
-            ], $pageUrl),
         ];
+
+        // Le domande frequenti, se la pagina ne ha una sezione. Si leggono
+        // dal testo già scritto — nessun campo in più da compilare — e
+        // valgono per le guide fiscali, dove metà del contenuto è fatto di
+        // domande che qualcuno digita davvero in un motore di ricerca.
+        $faq = Testo::faq((string) ($page['body'] ?? ''));
+        if ($faq !== []) {
+            $graph[] = Seo::faqNode($faq, $pageUrl);
+        }
+
+        $graph[] = Seo::breadcrumbNode([
+            ['name' => 'Home', 'url' => Seo::base() . '/'],
+            ['name' => Seo::text((string) $page['title']), 'url' => $pageUrl],
+        ], $pageUrl);
 
         View::show('site/pagina', [
             'meta' => self::meta(

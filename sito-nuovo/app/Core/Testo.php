@@ -52,6 +52,94 @@ final class Testo
         return (string) preg_replace('/(?<!\*)\*([^*]+)\*(?!\*)/u', '$1', $testo);
     }
 
+    /**
+     * Le domande frequenti scritte dentro il testo.
+     *
+     * Servono ai dati strutturati: un blocco `FAQPage` dice a una macchina
+     * «questa è una domanda, questa è la sua risposta», e senza di esso resta
+     * solo del testo che qualcuno dovrà indovinare. Per Google conta poco — i
+     * risultati arricchiti per le FAQ sono stati tolti nel 2023 a tutti tranne
+     * enti pubblici e sanità — ma è la forma in cui gli assistenti leggono, ed
+     * è il terreno su cui l'agenzia sta costruendo.
+     *
+     * Si riconosce da come è già scritto, senza campi nuovi da compilare: un
+     * `##` intitolato «Domande frequenti» apre la sezione, ogni `###` dentro è
+     * una domanda, il testo fino al `###` successivo è la risposta. Un altro
+     * `##`, o una riga orizzontale, chiudono la sezione — così le `h3` del
+     * resto della pagina non finiscono a fare domande che nessuno ha posto.
+     *
+     * Le risposte escono senza segni di formattazione: nel JSON-LD un `**`
+     * non è grassetto, è rumore dentro una frase.
+     *
+     * @return array<int,array{q:string,a:string}>
+     */
+    public static function faq(string $testo): array
+    {
+        $faq = [];
+        $dentro = false;
+        $domanda = null;
+        $risposta = [];
+
+        $chiudi = static function () use (&$faq, &$domanda, &$risposta): void {
+            $corpo = trim(implode(' ', $risposta));
+            if ($domanda !== null && $corpo !== '') {
+                $faq[] = ['q' => $domanda, 'a' => $corpo];
+            }
+            $domanda = null;
+            $risposta = [];
+        };
+
+        foreach (explode("\n", str_replace(["\r\n", "\r"], "\n", $testo)) as $riga) {
+            $riga = trim($riga);
+
+            if (preg_match('/^(#{1,6})\s+(.+)$/u', $riga, $m) === 1) {
+                $chiudi();
+
+                // `#` e `##` sono le sezioni della pagina: aprono la parte
+                // delle domande o la chiudono passando ad altro argomento.
+                if (strlen($m[1]) <= 2) {
+                    $dentro = self::apreLeDomande(self::pulisci($m[2]));
+                    continue;
+                }
+
+                if ($dentro) {
+                    $domanda = self::pulisci($m[2]);
+                }
+                continue;
+            }
+
+            if ($riga === '---' || $riga === '***') {
+                $chiudi();
+                $dentro = false;
+                continue;
+            }
+
+            if ($domanda !== null && $riga !== '') {
+                $risposta[] = self::pulisci($riga);
+            }
+        }
+
+        $chiudi();
+
+        return $faq;
+    }
+
+    /** Il titolo di sezione che apre le domande frequenti. */
+    private static function apreLeDomande(string $titolo): bool
+    {
+        $titolo = rtrim(mb_strtolower($titolo, 'UTF-8'), " \t:.");
+
+        return $titolo === 'faq'
+            || str_starts_with($titolo, 'domande frequenti')
+            || str_starts_with($titolo, 'domande e risposte');
+    }
+
+    /** Una riga senza segni di formattazione e senza spazi doppi. */
+    private static function pulisci(string $riga): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', self::piano($riga)));
+    }
+
     private function converti(string $testo): string
     {
         $testo = trim(str_replace(["\r\n", "\r"], "\n", $testo));
