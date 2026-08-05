@@ -265,8 +265,8 @@ si prova da solo, invece di un segnaposto che nasconde la differenza.
 
 ### Copertine e anteprima social
 Pagine e articoli hanno un'immagine di copertina, caricata dal gestionale e
-lavorata dallo stesso `Uploader` delle foto degli immobili: tre larghezze in
-WebP. Si vede sotto il titolo — non sopra: chi arriva da Google deve
+lavorata dallo stesso `Uploader` delle foto degli immobili: fino a tre
+larghezze in WebP. Si vede sotto il titolo — non sopra: chi arriva da Google deve
 ritrovare per primo il titolo che ha cliccato — larga quanto il testo, con
 `width`/`height` sempre stampati perché la pagina non sobbalzi.
 
@@ -286,12 +286,26 @@ se non c'è niente si ripiega su `logo_url` delle impostazioni.
 stato estratto in `Pages::renderPage()` e `Journal::render()`, sullo stesso
 schema di `Listings::render()`, che l'anteprima degli immobili già usava.
 
-Nota su `Uploader`: genera solo le larghezze **minori o uguali** all'originale
-(480, 960, 1600). Una foto da 1400 px esce quindi al massimo a 960, e su uno
-schermo grande si vede leggermente ingrandita. Vale anche per le foto degli
-immobili. Si sistema aggiungendo la larghezza reale quando sta fra due
-tagli — non è stato fatto per non cambiare come sono già state lavorate le
-1.114 foto importate.
+Nota su `Uploader`, **risolta**. Generava solo le larghezze minori o uguali
+all'originale (480, 960, 1600): una foto da 1400 px usciva quindi al massimo a
+960, e una da 800 px a 480 — su schermo grande si vedevano ingrandite. Adesso
+la misura più grande è quella dell'originale, con il tetto di 1600:
+
+```php
+$massima = min($width, max(self::WIDTHS));
+$larghezze = array_values(array_filter(self::WIDTHS, fn ($w) => $w < $massima));
+$larghezze[] = $massima;
+```
+
+Non si ingrandisce mai (il tetto è l'originale) e non si superano i 1600 px
+(nessuno schermo userebbe una foto da 5000). Verificato su 400, 480, 800, 960,
+1400, 1600 e 3000 px: le prime due e le ultime tre non cambiano, 800 e 1400
+adesso escono alla loro misura vera.
+
+**Vale solo dalle foto caricate da qui in avanti.** Le 1.114 foto importate e
+tutto quello che è già stato caricato restano come sono: i file WebP sono già
+stati scritti, e nessuno li rigenera. Se una foto in pagina si vede sfocata,
+si ricarica e viene rilavorata con le misure nuove.
 
 ### `llms.txt`
 `/llms.txt`, generato dal database come la sitemap: identità dell'agenzia,
@@ -414,8 +428,9 @@ Adesso, su **tutte** le pagine misurate — home, elenco, scheda, contatti,
 valutazione, blog: **100 / 100 / 100 / 100**. LCP fra 0,7 e 1,3 s, CLS 0
 (0,001 su due pagine), TBT fra 0 e 40 ms.
 
-Cosa lo produce: CSS inline minificato, tre larghezze WebP per foto
-(480/960/1600) con `srcset`, preload della candidata LCP con lo stesso
+Cosa lo produce: CSS inline minificato, fino a tre larghezze WebP per foto
+(480/960/1600, o la misura vera dell'originale se sta fra due tagli) con
+`srcset`, preload della candidata LCP con lo stesso
 `imagesrcset` del tag, `width`/`height` ovunque, favicon SVG in data URI (il
 404 su `/favicon.ico` era quello che teneva Best practice a 96).
 

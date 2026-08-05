@@ -22,8 +22,9 @@ final class Uploader
      * 1600 px per mostrarla larga 360. È la singola voce che pesa di più
      * sul caricamento in mobilità, molto più del codice.
      *
-     * Le larghezze più grandi della foto originale vengono saltate: non si
-     * ingrandisce mai, si otterrebbe un file più pesante e più sfocato.
+     * Non si ingrandisce mai: si otterrebbe un file più pesante e più
+     * sfocato. Al posto delle misure più grandi dell'originale si genera
+     * l'originale stesso, così la risoluzione che c'è non va persa.
      */
     private const WIDTHS = [480, 960, 1600];
 
@@ -96,13 +97,14 @@ final class Uploader
         $name = $stem . '-' . bin2hex(random_bytes(4));
         $urlBase = rtrim((string) Config::get('uploads_url'), '/') . '/' . $subdir . '/' . date('Y/m') . '/' . $name;
 
-        // Si generano solo le larghezze che la foto originale può sostenere,
-        // più — sempre — una versione alla larghezza reale se è più piccola
-        // di tutte, altrimenti un'immagine da 400 px resterebbe senza file.
-        $larghezze = array_values(array_filter(self::WIDTHS, static fn (int $w): bool => $w <= $width));
-        if ($larghezze === []) {
-            $larghezze = [$width];
-        }
+        // La misura più grande è quella dell'originale, ma senza superare
+        // 1600: non si ingrandisce mai, e non si tiene in pagina un file da
+        // 5000 px che nessuno schermo userebbe. Sotto di essa restano le
+        // misure fisse. Così una foto da 1400 px viene servita a 1400 e non
+        // buttata giù a 960 solo perché non arriva a 1600.
+        $massima = min($width, max(self::WIDTHS));
+        $larghezze = array_values(array_filter(self::WIDTHS, static fn (int $w): bool => $w < $massima));
+        $larghezze[] = $massima;
 
         $srcset = [];
         $piuGrande = null;
