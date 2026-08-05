@@ -46,26 +46,29 @@ export default async function PropertyPage({
   const query = await searchParams;
   const propertyId = Number(id);
 
-  const property = getProperty(propertyId);
+  // L'immobile di un collega qui non esiste: getProperty non lo restituisce e
+  // la pagina risponde 404, la stessa risposta di un numero inventato.
+  const property = getProperty(user.id, propertyId);
   if (!property) notFound();
 
-  const matches = matchesForProperty(property);
-  const matchCount = countMatchesForProperty(property);
-  const missed = nearMissesForProperty(property);
-  const photos = photosOfProperty(property.id);
+  const matches = matchesForProperty(user.id, property);
+  const matchCount = countMatchesForProperty(user.id, property);
+  const missed = nearMissesForProperty(user.id, property);
+  const photos = photosOfProperty(user.id, property.id);
   const proprietari = property.owner_client_id
     ? { rows: [], total: 0, searched: false }
-    : searchOwnerCandidates(query.proprietario);
-  const offers = offersOfProperty(propertyId);
-  const activities = activitiesOfProperty(propertyId);
-  const prices = priceHistory(propertyId);
-  const valuations = valuationsOfProperty(propertyId);
+    : searchOwnerCandidates(user.id, query.proprietario);
+  const offers = offersOfProperty(user.id, propertyId);
+  const activities = activitiesOfProperty(user.id, propertyId);
+  const prices = priceHistory(user.id, propertyId);
+  const valuations = valuationsOfProperty(user.id, propertyId);
   const users = activeUserOptions();
 
   const clients = all<{ id: number; name: string }>(
     `SELECT id, TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')) AS name
-       FROM clients WHERE deleted_at IS NULL
+       FROM clients WHERE deleted_at IS NULL AND owner_id = ?
       ORDER BY last_name COLLATE NOCASE LIMIT 1000`,
+    [user.id],
   );
   const clientOptions = clients.map((client) => ({
     value: String(client.id),

@@ -325,17 +325,30 @@ function byQuality(a: Scored, b: Scored): number {
  * per singola richiesta HTTP: la stessa pagina puo' incrociare centinaia di
  * richieste senza rileggere ne' rianalizzare il portafoglio ogni volta.
  */
-const availableProperties = cache((): ReadyProperty[] =>
+/**
+ * Immobili ancora proponibili, gia' preparati per il confronto.
+ *
+ * Sono i propri, e basta: gli incroci girano dentro l'archivio di chi guarda.
+ * La segnalazione degli incroci fra colleghi — un mio acquirente e l'immobile
+ * di un altro — e' un'altra cosa, con altre regole su cosa si puo' mostrare,
+ * e non passa da qui.
+ *
+ * Memorizzato per singola richiesta HTTP e per persona: la stessa pagina puo'
+ * incrociare centinaia di richieste senza rileggere il portafoglio ogni volta.
+ */
+const availableProperties = cache((utente: number): ReadyProperty[] =>
   all<Property>(
-    `SELECT * FROM properties
-      WHERE deleted_at IS NULL
-        AND status IN ('acquisizione', 'in_vendita')
-      ORDER BY updated_at DESC`,
+    `SELECT p.* FROM properties p
+      WHERE p.deleted_at IS NULL
+        AND p.agent_id = ?
+        AND p.status IN ('acquisizione', 'in_vendita')
+      ORDER BY p.updated_at DESC`,
+    [utente],
   ).map(prepareProperty),
 );
 
 const openRequirements = cache(
-  (): (ReadyRequirement & { clientName: string; clientPhone: string | null })[] =>
+  (utente: number): (ReadyRequirement & { clientName: string; clientPhone: string | null })[] =>
     all<Requirement & { client_name: string; client_phone: string | null }>(
       `SELECT r.*,
               TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
@@ -344,7 +357,9 @@ const openRequirements = cache(
          JOIN clients c ON c.id = r.client_id
         WHERE r.status = 'aperta'
           AND c.deleted_at IS NULL
+          AND c.owner_id = ?
         ORDER BY r.updated_at DESC`,
+      [utente],
     ).map((row) => ({
       ...prepareRequirement(row),
       clientName: row.client_name,
@@ -352,11 +367,11 @@ const openRequirements = cache(
     })),
 );
 
-function scoreAgainstPortfolio(requirement: Requirement): Scored[] {
+function scoreAgainstPortfolio(utente: number, requirement: Requirement): Scored[] {
   const ready = prepareRequirement(requirement);
   const results: Scored[] = [];
 
-  for (const property of availableProperties()) {
+  for (const property of availableProperties(utente)) {
     const outcome = score(ready, property);
     if (outcome) results.push({ property: property.source, requirement, ...outcome });
   }
@@ -367,8 +382,12 @@ function scoreAgainstPortfolio(requirement: Requirement): Scored[] {
 /* ---------------------------------------------------------- API pubblica */
 
 /** Immobili che corrispondono a una richiesta, i migliori per primi. */
-export function matchesForRequirement(requirement: Requirement, limit = 20): Match[] {
-  return scoreAgainstPortfolio(requirement).slice(0, limit).map(explain);
+export function matchesForRequirement(
+  utente: number,
+  requirement: Requirement,
+  limit = 20,
+): Match[] {
+  return scoreAgainstPortfolio(utente, requirement).slice(0, limit).map(explain);
 }
 
 /**
@@ -376,10 +395,11 @@ export function matchesForRequirement(requirement: Requirement, limit = 20): Mat
  * e i primi da mostrare.
  */
 export function requirementSummary(
+  utente: number,
   requirement: Requirement,
   top = 4,
 ): { count: number; perfect: number; top: Match[] } {
-  const scored = scoreAgainstPortfolio(requirement);
+  const scored = scoreAgainstPortfolio(utente, requirement);
   let perfect = 0;
   for (const item of scored) if (item.misses === 0) perfect++;
 
@@ -388,13 +408,14 @@ export function requirementSummary(
 
 /** Richieste che corrispondono a un immobile: "a chi lo propongo?". */
 export function matchesForProperty(
+  utente: number,
   property: Property,
   limit = 12,
 ): (Match & { client_name: string; client_phone: string | null })[] {
   const ready = prepareProperty(property);
   const scored: (Scored & { client_name: string; client_phone: string | null })[] = [];
 
-  for (const requirement of openRequirements()) {
+  for (const requirement of openRequirements(utente)) {
     const outcome = score(requirement, ready);
     if (outcome) {
       scored.push({
@@ -418,10 +439,10 @@ export function matchesForProperty(
 }
 
 /** Quanti clienti aspettano un immobile come questo. */
-export function countMatchesForProperty(property: Property): number {
+export function countMatchesForProperty(utente: number, property: Property): number {
   const ready = prepareProperty(property);
   let count = 0;
-  for (const requirement of openRequirements()) {
+  for (const requirement of openRequirements(utente)) {
     if (score(requirement, ready)) count++;
   }
   return count;
@@ -442,6 +463,7 @@ export interface NearMiss {
  * seppellirebbe le due che contano davvero.
  */
 export function nearMissesForProperty(
+  utente: number,
   property: Property,
   limit = 6,
 ): { total: number; byReason: Record<Rejection, number>; items: NearMiss[] } {
@@ -455,7 +477,7 @@ export function nearMissesForProperty(
   };
   const items: NearMiss[] = [];
 
-  for (const requirement of openRequirements()) {
+  for (const requirement of openRequirements(utente)) {
     const verdict = evaluate(requirement, ready);
     if (verdict.ok) continue;
 
@@ -490,24 +512,27 @@ export interface ClientMatches {
  * Tutti gli incroci aperti, raggruppati per cliente: una telefonata sola
  * puo' coprire piu' immobili.
  */
-export function matchesByClient({
-  minimumScore = 1,
-  onlyPerfect = false,
-  perClient = 8,
-  page = 1,
-  clientsPerPage = 25,
-}: {
-  minimumScore?: number;
-  onlyPerfect?: boolean;
-  perClient?: number;
-  page?: number;
-  clientsPerPage?: number;
-} = {}): { groups: ClientMatches[]; total: number; clients: number; page: number; pages: number } {
-  const properties = availableProperties();
+export function matchesByClient(
+  utente: number,
+  {
+    minimumScore = 1,
+    onlyPerfect = false,
+    perClient = 8,
+    page = 1,
+    clientsPerPage = 25,
+  }: {
+    minimumScore?: number;
+    onlyPerfect?: boolean;
+    perClient?: number;
+    page?: number;
+    clientsPerPage?: number;
+  } = {},
+): { groups: ClientMatches[]; total: number; clients: number; page: number; pages: number } {
+  const properties = availableProperties(utente);
   const byClient = new Map<number, { name: string; phone: string | null; scored: Scored[] }>();
   let total = 0;
 
-  for (const requirement of openRequirements()) {
+  for (const requirement of openRequirements(utente)) {
     for (const property of properties) {
       const outcome = score(requirement, property);
       if (!outcome) continue;

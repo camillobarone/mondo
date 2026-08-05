@@ -12,11 +12,11 @@ export default async function ClientsPage({
 }: {
   searchParams: Promise<ClientFilters>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const filters = await searchParams;
-  const { rows, total, page, pages } = listClients(filters);
+  const { rows, total, page, pages } = listClients(user.id, filters);
   const users = activeUserOptions();
-  const tags = clientTags();
+  const tags = clientTags(user.id);
 
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, value]) => Boolean(value)) as [string, string][],

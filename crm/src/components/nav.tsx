@@ -79,7 +79,7 @@ export function Nav({
               name="q"
               placeholder="Cerca nome, telefono, immobile…"
               className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
-              aria-label="Cerca in tutto l'archivio"
+              aria-label="Cerca nelle tue schede"
             />
           </form>
           <div className="space-y-1">{links}</div>
@@ -104,7 +104,7 @@ export function Nav({
             name="q"
             placeholder="Cerca…"
             className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
-            aria-label="Cerca in tutto l'archivio"
+            aria-label="Cerca nelle tue schede"
           />
         </form>
 

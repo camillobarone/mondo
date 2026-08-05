@@ -26,8 +26,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/importa", label: "Importa" },
   ];
 
+  // Il registro e' di tutti, perche' ognuno vede soltanto le proprie mosse.
+  // Restano da titolare solo gli utenti, che e' amministrazione del programma
+  // e non lettura di dati.
+  items.push({ href: "/registro", label: "Registro" });
   if (user.role === "titolare") {
-    items.push({ href: "/utenti", label: "Utenti" }, { href: "/registro", label: "Registro" });
+    items.push({ href: "/utenti", label: "Utenti" });
   }
 
   return (

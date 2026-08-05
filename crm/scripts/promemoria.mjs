@@ -67,16 +67,28 @@ function quando(valore) {
 const adesso = Date.now();
 const candidati = db
   .prepare(
+    // Il nome del cliente, il suo numero e l'immobile escono solo se quella
+    // scheda e' di chi riceve l'avviso: ognuno vede soltanto la propria roba,
+    // e un'email e' un posto da cui i dati escono per sempre. Se la scheda e'
+    // di un collega, l'avviso arriva lo stesso ma con il solo titolo e l'ora.
+    //
+    // Il destinatario si ricava anche dal cliente o dall'immobile, non solo da
+    // chi ha in carico l'attivita': cosi' un appuntamento rimasto senza
+    // assegnatario non smette di avvisare qualcuno, in silenzio, per sempre.
     `SELECT a.id, a.type, a.title, a.notes, a.due_at, a.client_id, a.property_id,
-            TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS cliente,
-            COALESCE(c.mobile, c.phone) AS telefono,
-            p.title AS immobile,
-            TRIM(COALESCE(p.address,'') || ' ' || COALESCE(p.city,'')) AS indirizzo,
+            CASE WHEN c.owner_id = u.id
+                 THEN TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,''))
+                 END AS cliente,
+            CASE WHEN c.owner_id = u.id THEN COALESCE(c.mobile, c.phone) END AS telefono,
+            CASE WHEN p.agent_id = u.id THEN p.title END AS immobile,
+            CASE WHEN p.agent_id = u.id
+                 THEN TRIM(COALESCE(p.address,'') || ' ' || COALESCE(p.city,''))
+                 END AS indirizzo,
             u.name AS agente, u.email AS email
        FROM activities a
        LEFT JOIN clients    c ON c.id = a.client_id
        LEFT JOIN properties p ON p.id = a.property_id
-       JOIN users u ON u.id = a.user_id
+       JOIN users u ON u.id = COALESCE(a.user_id, c.owner_id, p.agent_id)
       WHERE a.done_at IS NULL
         AND a.due_at IS NOT NULL
         AND a.reminded_at IS NULL
@@ -124,8 +136,12 @@ for (const riga of daAvvisare) {
     riga.immobile ? `Immobile: ${riga.immobile}` : "",
     riga.indirizzo?.trim() ? `Indirizzo: ${riga.indirizzo.trim()}` : "",
     riga.notes ? `\n${riga.notes}` : "",
-    base && riga.property_id ? `\n${base}/immobili/${riga.property_id}` : "",
-    base && !riga.property_id && riga.client_id ? `\n${base}/clienti/${riga.client_id}` : "",
+    // Il collegamento si mette solo se la scheda si puo' aprire davvero: un
+    // indirizzo verso la scheda di un collega darebbe "non trovata".
+    base && riga.property_id && riga.immobile ? `\n${base}/immobili/${riga.property_id}` : "",
+    base && riga.client_id && riga.cliente && !(riga.property_id && riga.immobile)
+      ? `\n${base}/clienti/${riga.client_id}`
+      : "",
   ].filter(Boolean);
 
   // I minuti veri, non il preavviso: il cron gira ogni cinque minuti, quindi

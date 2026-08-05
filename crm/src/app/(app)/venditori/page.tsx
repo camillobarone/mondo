@@ -20,9 +20,9 @@ export default async function SellersPage({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const filters = await searchParams;
-  const { rows, total, page, pages } = listSellers(filters);
+  const { rows, total, page, pages } = listSellers(user.id, filters);
 
   return (
     <>

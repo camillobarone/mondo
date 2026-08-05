@@ -19,13 +19,16 @@ export default async function PropertiesPage({
 }: {
   searchParams: Promise<PropertyFilters>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const filters = await searchParams;
-  const { rows, total, page, pages } = listProperties(filters);
+  const { rows, total, page, pages } = listProperties(user.id, filters);
   const users = activeUserOptions();
-  const cities = distinctCities();
-  const copertine = coverPhotos(rows.map((property) => property.id));
-  const senzaProprietario = countPropertiesWithoutOwner();
+  const cities = distinctCities(user.id);
+  const copertine = coverPhotos(
+    user.id,
+    rows.map((property) => property.id),
+  );
+  const senzaProprietario = countPropertiesWithoutOwner(user.id);
 
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, value]) => Boolean(value)) as [string, string][],

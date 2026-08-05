@@ -15,10 +15,12 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
-  const attivita = getActivity(Number(id));
+  const attivita = getActivity(user.id, Number(id));
 
+  // Stessa risposta se l'appuntamento non c'e' e se e' di un collega: due
+  // risposte diverse permetterebbero di contare l'agenda altrui a tentativi.
   if (!attivita) return new Response("Attività non trovata.", { status: 404 });
 
   const testo = evento(attivita, { base: process.env.CRM_BASE_URL ?? "" });

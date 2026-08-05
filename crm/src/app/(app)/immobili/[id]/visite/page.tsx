@@ -25,10 +25,10 @@ export default async function VisitHistoryPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ note?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
   const { note } = await searchParams;
-  const property = getProperty(Number(id));
+  const property = getProperty(user.id, Number(id));
   if (!property) notFound();
 
   // Le note sono i promemoria dell'agente ("portare la planimetria"): utili in
@@ -37,7 +37,7 @@ export default async function VisitHistoryPage({
   // proprio il racconto della visita.
   const conNote = note !== "no";
 
-  const visite = visitHistory(property.id);
+  const visite = visitHistory(user.id, property.id);
   const svolte = visite.filter((visita) => visita.done_at);
   const inProgramma = visite.filter((visita) => !visita.done_at);
 

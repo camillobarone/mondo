@@ -37,7 +37,7 @@ export default async function MatchesPage({
   const onlyPerfect = params.soloPerfetti === "1";
 
   // Gia' raggruppati per cliente: una telefonata copre piu' immobili.
-  const { groups, total, clients, page, pages } = matchesByClient({
+  const { groups, total, clients, page, pages } = matchesByClient(user.id, {
     onlyPerfect,
     page: Number(params.page ?? 1) || 1,
   });

@@ -1,4 +1,4 @@
-import { requireOwner } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { auditTrail } from "@/lib/queries";
 import { dateTime } from "@/lib/format";
 import { PageHeader, Card, EmptyState, Chip } from "@/components/ui";
@@ -14,14 +14,16 @@ const TONES: Record<string, string> = {
 };
 
 export default async function AuditPage() {
-  await requireOwner();
-  const entries = auditTrail(300);
+  // Non e' piu' una pagina da titolare: ognuno ha il registro delle proprie
+  // mosse, e nessuno ha quello degli altri.
+  const user = await requireUser();
+  const entries = auditTrail(user.id, 300);
 
   return (
     <>
       <PageHeader
         title="Registro accessi"
-        subtitle="Chi ha fatto cosa. Serve agli adempimenti privacy e a ricostruire gli errori."
+        subtitle="Cosa hai fatto e quando. Serve agli adempimenti privacy e a ricostruire gli errori."
       />
 
       <Card bodyClassName="">

@@ -26,7 +26,7 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { q } = await searchParams;
   const testo = (q ?? "").trim();
   const like = `%${testo}%`;
@@ -37,7 +37,7 @@ export default async function SearchPage({
   const clienti = testo
     ? all<Client>(
         `SELECT * FROM clients
-          WHERE deleted_at IS NULL AND (
+          WHERE deleted_at IS NULL AND owner_id = ? AND (
             first_name LIKE ? OR last_name LIKE ? OR company LIKE ?
             OR (first_name || ' ' || last_name) LIKE ?
             OR (last_name || ' ' || first_name) LIKE ?
@@ -47,21 +47,21 @@ export default async function SearchPage({
           ORDER BY last_name COLLATE NOCASE, first_name COLLATE NOCASE
           LIMIT 30`,
         cercaNumero
-          ? [like, like, like, like, like, like, like, `%${cifre}%`, `%${cifre}%`]
-          : [like, like, like, like, like, like, like],
+          ? [user.id, like, like, like, like, like, like, like, `%${cifre}%`, `%${cifre}%`]
+          : [user.id, like, like, like, like, like, like, like],
       )
     : [];
 
   const immobili = testo
     ? all<Property>(
         `SELECT * FROM properties
-          WHERE deleted_at IS NULL AND (
+          WHERE deleted_at IS NULL AND agent_id = ? AND (
             title LIKE ? OR ref LIKE ? OR address LIKE ?
             OR city LIKE ? OR zone LIKE ?
           )
           ORDER BY updated_at DESC
           LIMIT 30`,
-        [like, like, like, like, like],
+        [user.id, like, like, like, like, like],
       )
     : [];
 

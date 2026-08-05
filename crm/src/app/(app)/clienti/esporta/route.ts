@@ -9,8 +9,11 @@ export async function GET(request: Request) {
   const user = await currentUser();
   if (!user) return new Response("Non autorizzato", { status: 401 });
 
+  // I filtri arrivano dall'indirizzo e non sono controllati: va bene, perche'
+  // il vincolo che conta non e' fra questi. Qualunque cosa chieda chi scarica,
+  // listAllClients gli da' soltanto le proprie schede.
   const params = Object.fromEntries(new URL(request.url).searchParams) as ClientFilters;
-  const clients = listAllClients(params);
+  const clients = listAllClients(user.id, params);
 
   const csv = buildCsv(
     [

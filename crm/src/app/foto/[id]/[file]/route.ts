@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
+import { getProperty } from "@/lib/queries";
 import { leggiFoto } from "@/lib/photos";
 
 /**
@@ -8,18 +9,29 @@ import { leggiFoto } from "@/lib/photos";
  * Non stanno nella cartella pubblica di proposito: sono materiale
  * dell'agenzia, e vanno viste solo da chi ha fatto l'accesso. Passando da qui
  * il controllo c'e'; in `public/` chiunque conoscesse l'indirizzo le vedrebbe.
+ *
+ * Aver fatto l'accesso pero' non basta piu': l'indirizzo contiene il numero
+ * dell'immobile, e senza un controllo di appartenenza basterebbe cambiarlo per
+ * sfogliare le foto del portafoglio di un collega — planimetrie e interni di
+ * case che non si stanno seguendo.
  */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string; file: string }> },
 ) {
-  if (!(await currentUser())) {
+  const user = await currentUser();
+  if (!user) {
     return new NextResponse("Accesso richiesto", { status: 401 });
   }
 
   const { id, file } = await params;
   const propertyId = Number(id);
   if (!Number.isInteger(propertyId) || propertyId <= 0) {
+    return new NextResponse("Non trovata", { status: 404 });
+  }
+
+  // Stessa risposta per l'immobile che non esiste e per quello di un collega.
+  if (!getProperty(user.id, propertyId)) {
     return new NextResponse("Non trovata", { status: 404 });
   }
 

@@ -10,9 +10,9 @@ export default async function ReportPage() {
   const user = await requireUser();
   const isOwner = user.role === "titolare";
 
-  const sources = reportBySource();
-  const agents = reportByAgent();
-  const sales = reportSalesPerformance();
+  const sources = reportBySource(user.id);
+  const agents = reportByAgent(user.id);
+  const sales = reportSalesPerformance(user.id);
 
   const withDelta = sales.filter((sale) => sale.price && sale.sold_price);
   const averageDelta = withDelta.length

@@ -12,8 +12,9 @@ export default async function NewPropertyPage() {
   const clients = all<{ id: number; name: string }>(
     `SELECT id, TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'') ||
             CASE WHEN company IS NOT NULL AND company != '' THEN ' (' || company || ')' ELSE '' END) AS name
-       FROM clients WHERE deleted_at IS NULL
+       FROM clients WHERE deleted_at IS NULL AND owner_id = ?
       ORDER BY last_name COLLATE NOCASE LIMIT 1000`,
+    [user.id],
   );
 
   return (
@@ -23,7 +24,7 @@ export default async function NewPropertyPage() {
         subtitle="Collega il proprietario a una scheda cliente: servirà per l'incarico e le provvigioni."
       />
       <PropertyForm
-        zoneOptions={knownZones()}
+        zoneOptions={knownZones(user.id)}
         userOptions={activeUserOptions()}
         defaultAgentId={user.id}
       />

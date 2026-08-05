@@ -61,6 +61,86 @@ function tagField(form: FormData, key: string): string {
     .join(",");
 }
 
+/* ====================================================== muro, in scrittura */
+
+/**
+ * Il muro visto dal lato delle modifiche.
+ *
+ * Nascondere una scheda non basta: i moduli mandano al server il numero della
+ * scheda su cui agire, e quel numero si puo' cambiare. Senza questi controlli
+ * si potrebbe modificare o cancellare la scheda di un collega senza averla mai
+ * vista — e la cancellazione non lascerebbe niente da guardare dopo.
+ *
+ * Il messaggio e' sempre lo stesso, che la scheda non esista o che sia di un
+ * altro. Due messaggi diversi sarebbero un modo per contare l'archivio altrui
+ * un tentativo alla volta.
+ */
+const NEGATO = "Scheda non trovata.";
+
+function esigiCliente(utente: number, id: number) {
+  const mio = one<{ id: number }>(`SELECT id FROM clients WHERE id = ? AND owner_id = ?`, [
+    id,
+    utente,
+  ]);
+  if (!mio) throw new Error(NEGATO);
+}
+
+function esigiImmobile(utente: number, id: number) {
+  const mio = one<{ id: number }>(`SELECT id FROM properties WHERE id = ? AND agent_id = ?`, [
+    id,
+    utente,
+  ]);
+  if (!mio) throw new Error(NEGATO);
+}
+
+function esigiRichiesta(utente: number, id: number) {
+  const mia = one<{ id: number }>(
+    `SELECT r.id FROM requirements r
+       JOIN clients c ON c.id = r.client_id
+      WHERE r.id = ? AND c.owner_id = ?`,
+    [id, utente],
+  );
+  if (!mia) throw new Error(NEGATO);
+}
+
+/** Come in lettura: e' mia se e' assegnata a me o se tocca una mia scheda. */
+function esigiAttivita(utente: number, id: number) {
+  const mia = one<{ id: number }>(
+    `SELECT a.id FROM activities a
+       LEFT JOIN clients    c ON c.id = a.client_id
+       LEFT JOIN properties p ON p.id = a.property_id
+      WHERE a.id = ? AND (a.user_id = ? OR c.owner_id = ? OR p.agent_id = ?)`,
+    [id, utente, utente, utente],
+  );
+  if (!mia) throw new Error(NEGATO);
+}
+
+/** Una proposta si tocca da entrambi i lati della trattativa. */
+function esigiProposta(utente: number, id: number) {
+  const mia = one<{ id: number }>(
+    `SELECT o.id FROM offers o
+       JOIN clients    c ON c.id = o.client_id
+       JOIN properties p ON p.id = o.property_id
+      WHERE o.id = ? AND (p.agent_id = ? OR c.owner_id = ?)`,
+    [id, utente, utente],
+  );
+  if (!mia) throw new Error(NEGATO);
+}
+
+/**
+ * I collegamenti che un modulo puo' portarsi dietro (il cliente e l'immobile
+ * di un'attivita', di una proposta, di una valutazione) devono puntare a
+ * schede proprie: altrimenti si scriverebbe dentro la storia di una scheda di
+ * un collega senza poterla nemmeno vedere.
+ */
+function esigiCollegamenti(
+  utente: number,
+  collegamenti: { clientId?: number | null; propertyId?: number | null },
+) {
+  if (collegamenti.clientId) esigiCliente(utente, collegamenti.clientId);
+  if (collegamenti.propertyId) esigiImmobile(utente, collegamenti.propertyId);
+}
+
 /* ============================================================== accesso */
 
 export async function loginAction(_prev: string | null, form: FormData) {
@@ -109,6 +189,7 @@ export async function saveClient(form: FormData) {
   }
 
   if (id) {
+    esigiCliente(user.id, id);
     const previous = one<{ privacy_consent: number; privacy_date: string | null }>(
       `SELECT privacy_consent, privacy_date FROM clients WHERE id = ?`,
       [id],
@@ -134,7 +215,10 @@ export async function saveClient(form: FormData) {
       [
         values.first_name, values.last_name, values.company, values.phone, values.mobile,
         values.email, values.address, values.city, values.tax_code, values.birth_date,
-        values.roles, values.source, values.status, values.owner_id, values.tags, values.notes,
+        // Mai NULL: una scheda senza responsabile non sarebbe di tutti, sarebbe
+        // di nessuno, e sparirebbe dagli elenchi di chiunque.
+        values.roles, values.source, values.status, values.owner_id ?? user.id,
+        values.tags, values.notes,
         values.privacy_consent, privacyDate, values.privacy_scope,
         values.aml_doc_type, values.aml_doc_number, values.aml_doc_expiry,
         values.aml_doc_number,
@@ -176,6 +260,7 @@ export async function saveClient(form: FormData) {
 export async function deleteClient(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
+  esigiCliente(user.id, id);
   // Cancellazione logica: la scheda sparisce ma resta la traccia per il registro.
   run(`UPDATE clients SET deleted_at = datetime('now') WHERE id = ?`, [id]);
   audit(user.id, "elimina", "cliente", id);
@@ -183,10 +268,21 @@ export async function deleteClient(form: FormData) {
   redirect("/clienti");
 }
 
-/** Cancellazione definitiva su richiesta dell'interessato (GDPR). */
+/**
+ * Cancellazione definitiva su richiesta dell'interessato (GDPR).
+ *
+ * Non e' piu' riservata al titolare: adesso che ognuno tiene le proprie
+ * schede, la richiesta di cancellazione la evade chi quel contatto ce l'ha.
+ *
+ * Da sapere: se la stessa persona e' in archivio anche presso un collega,
+ * questa cancella solo la propria copia. Finche' non c'e' un modo di
+ * segnalare i contatti in comune, una richiesta di cancellazione va girata a
+ * voce anche all'altro.
+ */
 export async function eraseClient(form: FormData) {
-  const user = await requireOwner();
+  const user = await requireUser();
   const id = Number(form.get("id"));
+  esigiCliente(user.id, id);
   run(`DELETE FROM clients WHERE id = ?`, [id]);
   audit(user.id, "elimina", "cliente", id, "cancellazione definitiva su richiesta GDPR");
   revalidatePath("/clienti");
@@ -231,6 +327,11 @@ export async function saveProperty(form: FormData) {
   if (!values.title) throw new Error("Serve un titolo per l'immobile.");
 
   if (id) {
+    esigiImmobile(user.id, id);
+    // Il modulo si porta dietro anche il proprietario collegato, in un campo
+    // nascosto: va controllato come tutto il resto, altrimenti sarebbe una
+    // strada silenziosa per agganciare all'immobile la scheda di un collega.
+    esigiCollegamenti(user.id, { clientId: values.owner_client_id });
     const previous = one<Property>(`SELECT * FROM properties WHERE id = ?`, [id]);
 
     run(
@@ -245,7 +346,7 @@ export async function saveProperty(form: FormData) {
         values.ref, values.title, values.kind, values.contract, values.address, values.city,
         values.zone, values.sqm, values.rooms, values.bathrooms, values.floor, values.elevator,
         values.outdoor, values.garage, values.condition, values.energy_class, values.price,
-        values.min_price, values.status, values.owner_client_id, values.agent_id,
+        values.min_price, values.status, values.owner_client_id, values.agent_id ?? user.id,
         values.mandate_start, values.mandate_end, values.exclusive, values.commission_pct,
         values.notes, id,
       ],
@@ -310,6 +411,11 @@ export async function linkOwner(form: FormData) {
   const clientId = Number(form.get("client_id")) || null;
   if (!propertyId) return;
 
+  // Entrambe le schede devono essere proprie: quella dell'immobile perche' si
+  // sta modificando, quella del cliente perche' ci si sta agganciando.
+  esigiImmobile(user.id, propertyId);
+  esigiCollegamenti(user.id, { clientId });
+
   run(`UPDATE properties SET owner_client_id = ?, updated_at = datetime('now') WHERE id = ?`, [
     clientId, propertyId,
   ]);
@@ -342,6 +448,7 @@ export async function uploadPhotos(
   const user = await requireUser();
   const propertyId = Number(form.get("property_id"));
   if (!propertyId) return { caricate: 0, errori: ["Immobile non indicato."] };
+  esigiImmobile(user.id, propertyId);
 
   const files = form.getAll("foto").filter((f): f is File => f instanceof File && f.size > 0);
   if (!files.length) return { caricate: 0, errori: ["Non hai scelto nessuna foto."] };
@@ -390,6 +497,7 @@ export async function deletePhoto(form: FormData) {
     [id],
   );
   if (!foto) return;
+  esigiImmobile(user.id, foto.property_id);
 
   run(`DELETE FROM photos WHERE id = ?`, [id]);
   cancellaFile(foto.property_id, foto.file);
@@ -404,6 +512,7 @@ export async function setCoverPhoto(form: FormData) {
   const id = Number(form.get("id"));
   const foto = one<{ property_id: number }>(`SELECT property_id FROM photos WHERE id = ?`, [id]);
   if (!foto) return;
+  esigiImmobile(user.id, foto.property_id);
 
   const minima = one<{ n: number }>(
     `SELECT COALESCE(MIN(position), 0) AS n FROM photos WHERE property_id = ?`,
@@ -420,6 +529,7 @@ export async function setCoverPhoto(form: FormData) {
 export async function closeDeal(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
+  esigiImmobile(user.id, id);
 
   run(
     `UPDATE properties SET
@@ -447,6 +557,7 @@ export async function closeDeal(form: FormData) {
 export async function deleteProperty(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
+  esigiImmobile(user.id, id);
   run(`UPDATE properties SET deleted_at = datetime('now') WHERE id = ?`, [id]);
   audit(user.id, "elimina", "immobile", id);
   revalidatePath("/immobili");
@@ -481,7 +592,10 @@ export async function saveRequirement(form: FormData) {
     nullable(form, "notes"),
   ];
 
+  // La richiesta e' del cliente: si tocca solo se il cliente e' proprio.
+  esigiCliente(user.id, clientId);
   if (id) {
+    esigiRichiesta(user.id, id);
     run(
       `UPDATE requirements SET
          contract = ?, kind = ?, city = ?, zones = ?, budget_min = ?, budget_max = ?,
@@ -512,6 +626,7 @@ export async function deleteRequirement(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
   const clientId = Number(form.get("client_id"));
+  esigiRichiesta(user.id, id);
   run(`DELETE FROM requirements WHERE id = ?`, [id]);
   audit(user.id, "elimina", "richiesta", id);
   revalidatePath(`/clienti/${clientId}`);
@@ -549,7 +664,13 @@ export async function saveActivity(form: FormData) {
   const adesso = new Date().toISOString().slice(0, 19).replace("T", " ");
   const doneNow = fatto ? gia || adesso : null;
 
+  // Il cliente e l'immobile a cui l'attivita' si aggancia devono essere
+  // propri: senza questo controllo si potrebbe scrivere nello storico della
+  // scheda di un collega, che poi se la ritrova nel foglio da consegnare.
+  esigiCollegamenti(user.id, { clientId, propertyId });
+
   if (id) {
+    esigiAttivita(user.id, id);
     run(
       `UPDATE activities SET
          type = ?, title = ?, notes = ?, client_id = ?, property_id = ?, user_id = ?,
@@ -586,6 +707,7 @@ export async function saveActivity(form: FormData) {
 export async function completeActivity(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
+  esigiAttivita(user.id, id);
 
   run(
     `UPDATE activities SET done_at = datetime('now'), outcome = COALESCE(?, outcome)
@@ -613,6 +735,7 @@ export async function completeActivity(form: FormData) {
 export async function deleteActivity(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
+  esigiAttivita(user.id, id);
   const activity = one<{ client_id: number | null; property_id: number | null }>(
     `SELECT client_id, property_id FROM activities WHERE id = ?`,
     [id],
@@ -633,13 +756,15 @@ export async function deleteActivity(form: FormData) {
 export async function saveOffer(form: FormData) {
   const user = await requireUser();
   const propertyId = Number(form.get("property_id"));
+  const clientId = Number(form.get("client_id"));
+  esigiCollegamenti(user.id, { clientId, propertyId });
 
   run(
     `INSERT INTO offers (property_id, client_id, amount, offered_at, valid_until, status, notes)
      VALUES (?,?,?,?,?,?,?)`,
     [
       propertyId,
-      Number(form.get("client_id")),
+      clientId,
       integer(form, "amount") ?? 0,
       text(form, "offered_at") || new Date().toISOString().slice(0, 10),
       nullable(form, "valid_until"),
@@ -663,6 +788,7 @@ export async function updateOfferStatus(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
   const status = text(form, "status");
+  esigiProposta(user.id, id);
 
   run(`UPDATE offers SET status = ? WHERE id = ?`, [status, id]);
 
@@ -683,6 +809,9 @@ export async function updateOfferStatus(form: FormData) {
 export async function saveValuation(form: FormData) {
   const user = await requireUser();
   const propertyId = integer(form, "property_id");
+  const clientId = integer(form, "client_id");
+  esigiCollegamenti(user.id, { clientId, propertyId });
+
   const sqm = integer(form, "sqm");
   const min = integer(form, "eur_sqm_min");
   const max = integer(form, "eur_sqm_max");
@@ -694,7 +823,7 @@ export async function saveValuation(form: FormData) {
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       propertyId,
-      integer(form, "client_id"),
+      clientId,
       nullable(form, "city"),
       nullable(form, "zone"),
       sqm,
@@ -816,12 +945,19 @@ function importaImmobili(rows: Record<string, string>[], userId: number): Import
     return "";
   };
 
+  // Il confronto con quello che c'e' gia' guarda solo il proprio archivio.
+  // Fosse esteso a tutti, il conteggio dei saltati direbbe quante schede ha il
+  // collega: si caricherebbe un elenco di numeri di telefono e si leggerebbe la
+  // risposta nel totale, senza vedere una riga.
   const esistente = db.prepare(
-    `SELECT id FROM properties WHERE ref = ? AND ref != '' AND deleted_at IS NULL LIMIT 1`,
+    `SELECT id FROM properties
+      WHERE ref = ? AND ref != '' AND deleted_at IS NULL AND agent_id = ?
+      LIMIT 1`,
   );
   const proprietario = db.prepare(
     `SELECT id FROM clients
       WHERE deleted_at IS NULL
+        AND owner_id = ?
         AND REPLACE(REPLACE(COALESCE(mobile,''),' ',''),'.','') = ?
       LIMIT 1`,
   );
@@ -846,7 +982,7 @@ function importaImmobili(rows: Record<string, string>[], userId: number): Import
         return;
       }
 
-      if (ref && esistente.get(ref)) {
+      if (ref && esistente.get(ref, userId)) {
         result.skipped++;
         return;
       }
@@ -861,7 +997,7 @@ function importaImmobili(rows: Record<string, string>[], userId: number): Import
       const telefono = leggi(row, "tel", "telefono", "cellulare").replace(/[\s.]/g, "");
       const nomeProprietario = leggi(row, "proprietario", "venditore");
       const collegato = telefono
-        ? (proprietario.get(telefono) as { id: number } | undefined)
+        ? (proprietario.get(userId, telefono) as { id: number } | undefined)
         : undefined;
 
       const note = [
@@ -1012,9 +1148,11 @@ export async function importClients(
      VALUES (?,?,?,?,?,?,?,?,?,'','media','aperta',?)`,
   );
 
+  // Come sopra: si confronta con le proprie schede, non con quelle di tutti.
   const findExisting = db.prepare(
     `SELECT id FROM clients
       WHERE deleted_at IS NULL
+        AND owner_id = ?
         AND ((? != '' AND REPLACE(REPLACE(mobile,' ',''),'.','') = ?)
              OR (? != '' AND email = ? COLLATE NOCASE))
       LIMIT 1`,
@@ -1058,6 +1196,7 @@ export async function importClients(
 
       if (skipDuplicates && (mobile || email)) {
         const existing = findExisting.get(
+          user.id,
           mobile,
           mobile.replace(/[\s.]/g, ""),
           email,

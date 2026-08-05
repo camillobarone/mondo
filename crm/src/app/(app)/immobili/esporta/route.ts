@@ -9,8 +9,11 @@ export async function GET(request: Request) {
   if (!user) return new Response("Non autorizzato", { status: 401 });
 
   const params = Object.fromEntries(new URL(request.url).searchParams) as PropertyFilters;
-  const properties = listAllProperties(params);
-  const isOwner = user.role === "titolare";
+  const properties = listAllProperties(user.id, params);
+  // Prima le colonne dei soldi erano riservate al titolare, perche' vedeva
+  // anche il portafoglio degli altri. Adesso ognuno esporta solo il proprio:
+  // i propri incassi li puo' vedere chiunque li abbia fatti.
+  const isOwner = true;
 
   const headers = [
     "Codice",

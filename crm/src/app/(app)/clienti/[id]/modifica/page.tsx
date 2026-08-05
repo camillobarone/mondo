@@ -14,7 +14,7 @@ export default async function EditClientPage({
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const client = getClient(Number(id));
+  const client = getClient(user.id, Number(id));
   if (!client) notFound();
 
   return (

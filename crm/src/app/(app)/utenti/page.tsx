@@ -128,22 +128,26 @@ export default async function UsersPage({
         </Card>
 
         <Card title="Copia di sicurezza" className="lg:col-span-3">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="max-w-2xl text-sm text-slate-600">
-              <p>
-                Il server fa da sé una copia ogni notte, ma resta sullo stesso disco: se
-                quel disco muore, muore con lui. <strong>Una volta a settimana</strong>{" "}
-                scarica da qui l&apos;archivio e salvalo sul disco esterno
-                (<code className="rounded bg-slate-100 px-1">F:\Gestionale backup</code>).
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Il file contiene tutto tranne le foto. Lo scaricamento viene annotato nel
-                registro accessi.
-              </p>
-            </div>
-            <a href="/backup" className="btn-primary shrink-0">
-              Scarica l&apos;archivio
-            </a>
+          <div className="max-w-2xl text-sm text-slate-600">
+            <p>
+              Il server fa da sé una copia ogni notte. La copia va portata{" "}
+              <strong>fuori dal server</strong>: se quel disco muore, muore con lui.
+            </p>
+            <p className="mt-2">
+              Il pulsante che scaricava l&apos;archivio da qui non c&apos;è più. Adesso
+              che ogni collaboratore vede solo le proprie schede, un file con dentro
+              l&apos;intero archivio sarebbe la separazione aggirata con un clic: chi lo
+              scarica si ritrova sul computer anche i clienti degli altri.
+            </p>
+            <p className="mt-2">
+              Per portare la copia al sicuro si passa dal server, dove l&apos;archivio
+              sta già tutto insieme. Il comando è nella guida di consegna, capitolo
+              &laquo;Copie di sicurezza&raquo;.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Ognuno può comunque scaricare le <strong>proprie</strong> schede da Clienti
+              e da Immobili, con il pulsante &laquo;Esporta&raquo;.
+            </p>
           </div>
         </Card>
       </div>

@@ -13,9 +13,9 @@ export default async function RequirementsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; contract?: string; city?: string; page?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const filters = await searchParams;
-  const { rows: requirements, total, page, pages } = listRequirements({
+  const { rows: requirements, total, page, pages } = listRequirements(user.id, {
     status: "aperta",
     ...filters,
   });
@@ -91,7 +91,7 @@ export default async function RequirementsPage({
             {requirements.map((requirement) => {
               const summary =
                 requirement.status === "aperta"
-                  ? requirementSummary(requirement, 4)
+                  ? requirementSummary(user.id, requirement, 4)
                   : { count: 0, perfect: 0, top: [] };
 
               return (

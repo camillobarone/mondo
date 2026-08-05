@@ -73,7 +73,7 @@ mkdir -p "$CARTELLA"
 TEMP="$(mktemp -d)"
 curl -fsSL "$ARCHIVIO" | tar xz -C "$TEMP" --strip-components=1
 # I dati non si toccano mai: si sostituisce solo il programma.
-rsync -a --delete --exclude data --exclude backup --exclude node_modules \
+rsync -a --delete --exclude /data --exclude /backup --exclude /node_modules \
   "$TEMP/crm/" "$CARTELLA/"
 rm -rf "$TEMP"
 mkdir -p "$CARTELLA/data" "$CARTELLA/backup"

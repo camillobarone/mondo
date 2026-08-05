@@ -14,20 +14,21 @@ export default async function EditPropertyPage({
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const property = getProperty(Number(id));
+  const property = getProperty(user.id, Number(id));
   if (!property) notFound();
 
   const clients = all<{ id: number; name: string }>(
     `SELECT id, TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')) AS name
-       FROM clients WHERE deleted_at IS NULL
+       FROM clients WHERE deleted_at IS NULL AND owner_id = ?
       ORDER BY last_name COLLATE NOCASE LIMIT 1000`,
+    [user.id],
   );
 
   return (
     <>
       <PageHeader title={`Modifica ${property.title}`} />
       <PropertyForm
-        zoneOptions={knownZones()}
+        zoneOptions={knownZones(user.id)}
         property={property}
         userOptions={activeUserOptions()}
         defaultAgentId={user.id}

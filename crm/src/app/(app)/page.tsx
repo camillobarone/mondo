@@ -10,11 +10,11 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const user = await requireUser();
   const stats = dashboard(user.id);
-  const { overdue, today } = agenda(user.id);
+  const { overdue, today } = agenda(user.id, true);
 
   // Le quattro mancanze silenziose. Ognuna, lasciata li', costa qualcosa di
   // concreto: un incrocio mai proposto, una sanzione, una telefonata a vuoto.
-  const cure = daSistemare();
+  const cure = daSistemare(user.id);
   const daFare = [
     {
       quanti: cure.senzaRichiesta,

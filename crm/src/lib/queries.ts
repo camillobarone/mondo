@@ -13,6 +13,51 @@ import type {
   Valuation,
 } from "./types";
 
+/* ========================================================== visibilita' */
+
+/**
+ * Chi sta guardando.
+ *
+ * Ogni collaboratore vede soltanto la propria roba, e questo vale per tutti,
+ * titolare compreso: l'archivio e' condiviso come edificio, non come
+ * contenuto. Per questo quasi tutte le funzioni qui sotto vogliono come primo
+ * dato l'id di chi ha fatto l'accesso.
+ *
+ * E' scomodo di proposito. Se la persona che guarda si prendesse da sola —
+ * da una variabile di contesto, per dire — una funzione nuova nascerebbe
+ * senza muro e nessuno se ne accorgerebbe fino al giorno del danno. Cosi'
+ * invece il programma non si compila nemmeno finche' non si e' deciso, per
+ * ogni singola lettura, chi ha diritto di vederla.
+ *
+ * Le due colonne che decidono tutto:
+ *   clients.owner_id    -> di chi e' il cliente
+ *   properties.agent_id -> di chi e' l'immobile
+ * Tutto il resto (richieste, attivita', proposte, valutazioni, foto, storico
+ * prezzi) non ha una proprieta' sua: eredita da cliente o immobile.
+ */
+
+/** Il cliente e' mio. Richiede la tabella clients come `c`. */
+const CLIENTE_MIO = `c.owner_id = ?`;
+
+/** L'immobile e' mio. Richiede la tabella properties come `p`. */
+const IMMOBILE_MIO = `p.agent_id = ?`;
+
+/**
+ * Un'attivita' si vede se e' mia, oppure se e' attaccata a una mia scheda.
+ *
+ * Le tre strade servono tutte. La prima e' il caso normale. La seconda e la
+ * terza tengono in piedi le visite fatte a quattro mani — un mio acquirente
+ * portato a vedere l'immobile di un collega riguarda tutti e due — e rendono
+ * innocua un'attivita' rimasta senza assegnatario, che altrimenti sparirebbe
+ * dall'agenda di chiunque senza che nessuno se ne accorga.
+ *
+ * Richiede le tre tabelle come `a`, `c` e `p` (vedi ACTIVITY_SELECT).
+ */
+const ATTIVITA_MIA = `(a.user_id = ? OR c.owner_id = ? OR p.agent_id = ?)`;
+
+/** I tre parametri, nell'ordine, che ATTIVITA_MIA si aspetta. */
+const perAttivita = (utente: number) => [utente, utente, utente];
+
 /* ============================================================== clienti */
 
 export interface ClientFilters {
@@ -41,9 +86,16 @@ export type ClientRow = Client & {
   want_zones: string | null;
 };
 
-function clientWhere(filters: ClientFilters): { sql: string; params: unknown[] } {
-  const clauses = ["c.deleted_at IS NULL"];
-  const params: unknown[] = [];
+function clientWhere(
+  utente: number,
+  filters: ClientFilters,
+): { sql: string; params: unknown[] } {
+  // Il vincolo di proprieta' sta qui dentro, insieme agli altri filtri, e non
+  // nelle singole query: cosi' l'elenco e il conteggio che lo accompagna
+  // nascono dalla stessa condizione. Un conteggio calcolato per conto suo
+  // direbbe quante schede hanno i colleghi, senza mostrarne nessuna.
+  const clauses = ["c.deleted_at IS NULL", CLIENTE_MIO];
+  const params: unknown[] = [utente];
 
   const q = filters.q?.trim();
   if (q) {
@@ -109,13 +161,16 @@ function clientWhere(filters: ClientFilters): { sql: string; params: unknown[] }
   return { sql: clauses.join(" AND "), params };
 }
 
-export function listClients(filters: ClientFilters): {
+export function listClients(
+  utente: number,
+  filters: ClientFilters,
+): {
   rows: ClientRow[];
   total: number;
   page: number;
   pages: number;
 } {
-  const { sql, params } = clientWhere(filters);
+  const { sql, params } = clientWhere(utente, filters);
   const page = Math.max(1, Number(filters.page ?? 1) || 1);
   const total = count(`SELECT COUNT(*) AS n FROM clients c WHERE ${sql}`, params);
 
@@ -146,8 +201,8 @@ export function listClients(filters: ClientFilters): {
 }
 
 /** Come listClients ma senza pagina: serve all'esportazione. */
-export function listAllClients(filters: ClientFilters): ClientRow[] {
-  const { sql, params } = clientWhere(filters);
+export function listAllClients(utente: number, filters: ClientFilters): ClientRow[] {
+  const { sql, params } = clientWhere(utente, filters);
   return all<ClientRow>(
     `SELECT c.*, u.name AS owner_name, 0 AS open_requirements,
             NULL AS want_budget_min, NULL AS want_budget_max,
@@ -160,18 +215,31 @@ export function listAllClients(filters: ClientFilters): ClientRow[] {
   );
 }
 
-export function getClient(id: number): (Client & { owner_name: string | null }) | undefined {
+/**
+ * Una scheda cliente, se e' di chi la chiede.
+ *
+ * Il cliente di un collega non da' errore «non sei autorizzato»: risulta
+ * inesistente, esattamente come un numero inventato. La differenza non e'
+ * formale — un «non autorizzato» confermerebbe che quella scheda c'e', e
+ * provando gli indirizzi uno dopo l'altro si conterebbe l'archivio altrui
+ * senza vederne una riga.
+ */
+export function getClient(
+  utente: number,
+  id: number,
+): (Client & { owner_name: string | null }) | undefined {
   return one<Client & { owner_name: string | null }>(
     `SELECT c.*, u.name AS owner_name
        FROM clients c
        LEFT JOIN users u ON u.id = c.owner_id
-      WHERE c.id = ? AND c.deleted_at IS NULL`,
-    [id],
+      WHERE c.id = ? AND c.deleted_at IS NULL AND ${CLIENTE_MIO}`,
+    [id, utente],
   );
 }
 
-/** Cerca possibili doppioni prima di creare un cliente. */
+/** Cerca possibili doppioni prima di creare un cliente, fra i propri. */
 export function findDuplicates(
+  utente: number,
   mobile: string | null,
   email: string | null,
   firstName: string,
@@ -180,7 +248,7 @@ export function findDuplicates(
 ): Client[] {
   return all<Client>(
     `SELECT * FROM clients
-      WHERE deleted_at IS NULL AND id != ?
+      WHERE deleted_at IS NULL AND id != ? AND owner_id = ?
         AND (
           (? != '' AND REPLACE(REPLACE(mobile,' ',''),'.','') = ?)
           OR (? != '' AND email = ? COLLATE NOCASE)
@@ -189,6 +257,7 @@ export function findDuplicates(
       LIMIT 5`,
     [
       excludeId,
+      utente,
       mobile ?? "",
       (mobile ?? "").replace(/[\s.]/g, ""),
       email ?? "",
@@ -199,9 +268,10 @@ export function findDuplicates(
   );
 }
 
-export function clientTags(): string[] {
+export function clientTags(utente: number): string[] {
   const rows = all<{ tags: string }>(
-    `SELECT tags FROM clients WHERE deleted_at IS NULL AND tags != ''`,
+    `SELECT tags FROM clients WHERE deleted_at IS NULL AND tags != '' AND owner_id = ?`,
+    [utente],
   );
   const set = new Set<string>();
   for (const row of rows) {
@@ -235,9 +305,12 @@ export type PropertyRow = Property & {
   agent_name: string | null;
 };
 
-function propertyWhere(filters: PropertyFilters): { sql: string; params: unknown[] } {
-  const clauses = ["p.deleted_at IS NULL"];
-  const params: unknown[] = [];
+function propertyWhere(
+  utente: number,
+  filters: PropertyFilters,
+): { sql: string; params: unknown[] } {
+  const clauses = ["p.deleted_at IS NULL", IMMOBILE_MIO];
+  const params: unknown[] = [utente];
 
   const q = filters.q?.trim();
   if (q) {
@@ -288,13 +361,16 @@ function propertyWhere(filters: PropertyFilters): { sql: string; params: unknown
   return { sql: clauses.join(" AND "), params };
 }
 
-export function listProperties(filters: PropertyFilters): {
+export function listProperties(
+  utente: number,
+  filters: PropertyFilters,
+): {
   rows: PropertyRow[];
   total: number;
   page: number;
   pages: number;
 } {
-  const { sql, params } = propertyWhere(filters);
+  const { sql, params } = propertyWhere(utente, filters);
   const page = Math.max(1, Number(filters.page ?? 1) || 1);
   const total = count(`SELECT COUNT(*) AS n FROM properties p WHERE ${sql}`, params);
 
@@ -322,8 +398,8 @@ export function listProperties(filters: PropertyFilters): {
   return { rows, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
-export function listAllProperties(filters: PropertyFilters): PropertyRow[] {
-  const { sql, params } = propertyWhere(filters);
+export function listAllProperties(utente: number, filters: PropertyFilters): PropertyRow[] {
+  const { sql, params } = propertyWhere(utente, filters);
   return all<PropertyRow>(
     `SELECT p.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS owner_name,
@@ -337,7 +413,8 @@ export function listAllProperties(filters: PropertyFilters): PropertyRow[] {
   );
 }
 
-export function getProperty(id: number): PropertyRow | undefined {
+/** Un immobile, se e' di chi lo chiede. Vale la stessa regola di getClient. */
+export function getProperty(utente: number, id: number): PropertyRow | undefined {
   return one<PropertyRow>(
     `SELECT p.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS owner_name,
@@ -345,17 +422,24 @@ export function getProperty(id: number): PropertyRow | undefined {
        FROM properties p
        LEFT JOIN clients c ON c.id = p.owner_client_id
        LEFT JOIN users   u ON u.id = p.agent_id
-      WHERE p.id = ? AND p.deleted_at IS NULL`,
-    [id],
+      WHERE p.id = ? AND p.deleted_at IS NULL AND ${IMMOBILE_MIO}`,
+    [id, utente],
   );
 }
 
-export function propertiesOfClient(clientId: number): Property[] {
+/**
+ * Gli immobili intestati a un cliente.
+ *
+ * Il filtro e' sull'immobile, non sul cliente: un mio venditore puo' avere
+ * dato un secondo immobile a un collega, e quello non e' affare mio. Nella
+ * sua scheda vedro' solo cio' che seguo io.
+ */
+export function propertiesOfClient(utente: number, clientId: number): Property[] {
   return all<Property>(
     `SELECT * FROM properties
-      WHERE owner_client_id = ? AND deleted_at IS NULL
+      WHERE owner_client_id = ? AND deleted_at IS NULL AND agent_id = ?
       ORDER BY updated_at DESC`,
-    [clientId],
+    [clientId, utente],
   );
 }
 
@@ -367,23 +451,28 @@ export interface Photo {
   position: number;
 }
 
-export function photosOfProperty(propertyId: number): Photo[] {
+export function photosOfProperty(utente: number, propertyId: number): Photo[] {
   return all<Photo>(
-    `SELECT id, property_id, file, caption, position FROM photos
-      WHERE property_id = ? ORDER BY position, id`,
-    [propertyId],
+    `SELECT f.id, f.property_id, f.file, f.caption, f.position
+       FROM photos f
+       JOIN properties p ON p.id = f.property_id
+      WHERE f.property_id = ? AND ${IMMOBILE_MIO}
+      ORDER BY f.position, f.id`,
+    [propertyId, utente],
   );
 }
 
 /** La prima foto di ogni immobile, per mostrarla negli elenchi. */
-export function coverPhotos(propertyIds: number[]): Map<number, string> {
+export function coverPhotos(utente: number, propertyIds: number[]): Map<number, string> {
   if (!propertyIds.length) return new Map();
   const segnaposto = propertyIds.map(() => "?").join(",");
   const rows = all<{ property_id: number; file: string }>(
-    `SELECT property_id, file FROM photos
-      WHERE property_id IN (${segnaposto})
-      ORDER BY property_id, position, id`,
-    propertyIds,
+    `SELECT f.property_id, f.file
+       FROM photos f
+       JOIN properties p ON p.id = f.property_id
+      WHERE f.property_id IN (${segnaposto}) AND ${IMMOBILE_MIO}
+      ORDER BY f.property_id, f.position, f.id`,
+    [...propertyIds, utente],
   );
 
   const cover = new Map<number, string>();
@@ -391,22 +480,33 @@ export function coverPhotos(propertyIds: number[]): Map<number, string> {
   return cover;
 }
 
-export function priceHistory(propertyId: number) {
+export function priceHistory(utente: number, propertyId: number) {
   return all<{ id: number; price: number; changed_at: string; user_name: string | null }>(
     `SELECT h.id, h.price, h.changed_at, u.name AS user_name
        FROM price_history h
+       JOIN properties p ON p.id = h.property_id
        LEFT JOIN users u ON u.id = h.user_id
-      WHERE h.property_id = ?
+      WHERE h.property_id = ? AND ${IMMOBILE_MIO}
       ORDER BY h.changed_at DESC`,
-    [propertyId],
+    [propertyId, utente],
   );
 }
 
-export function distinctCities(): string[] {
+/**
+ * I comuni gia' presenti in archivio, per la tendina dei filtri.
+ *
+ * Anche questi sono ristretti ai propri immobili. Sembra un eccesso — un
+ * nome di paese non e' un dato di nessuno — ma la tendina direbbe comunque
+ * dove lavora il collega, e sarebbe un elenco che si allunga da solo ogni
+ * volta che acquisisce in un posto nuovo.
+ */
+export function distinctCities(utente: number): string[] {
   return all<{ city: string }>(
-    `SELECT DISTINCT city FROM properties
-      WHERE deleted_at IS NULL AND city IS NOT NULL AND city != ''
-      ORDER BY city COLLATE NOCASE`,
+    `SELECT DISTINCT p.city AS city FROM properties p
+      WHERE p.deleted_at IS NULL AND p.city IS NOT NULL AND p.city != ''
+        AND ${IMMOBILE_MIO}
+      ORDER BY p.city COLLATE NOCASE`,
+    [utente],
   ).map((row) => row.city);
 }
 
@@ -415,14 +515,19 @@ export function distinctCities(): string[] {
  * quelle di partenza. Sono suggerimenti, non una gabbia: chi inserisce puo'
  * sempre scrivere una localita' nuova, e da quel momento la ritrova qui.
  */
-export function knownZones(): string[] {
+export function knownZones(utente: number): string[] {
   const fromProperties = all<{ zone: string }>(
-    `SELECT DISTINCT zone FROM properties
-      WHERE deleted_at IS NULL AND zone IS NOT NULL AND zone != ''`,
+    `SELECT DISTINCT p.zone AS zone FROM properties p
+      WHERE p.deleted_at IS NULL AND p.zone IS NOT NULL AND p.zone != ''
+        AND ${IMMOBILE_MIO}`,
+    [utente],
   ).map((row) => row.zone);
 
   const fromRequirements = all<{ zones: string }>(
-    `SELECT DISTINCT zones FROM requirements WHERE zones IS NOT NULL AND zones != ''`,
+    `SELECT DISTINCT r.zones AS zones FROM requirements r
+       JOIN clients c ON c.id = r.client_id
+      WHERE r.zones IS NOT NULL AND r.zones != '' AND ${CLIENTE_MIO}`,
+    [utente],
   ).flatMap((row) => fromCsv(row.zones));
 
   const seen = new Map<string, string>();
@@ -442,15 +547,19 @@ export type RequirementRow = Requirement & {
   client_mobile: string | null;
 };
 
-export function listRequirements(filters: {
-  q?: string;
-  status?: string;
-  contract?: string;
-  city?: string;
-  page?: string;
-}): { rows: RequirementRow[]; total: number; page: number; pages: number } {
-  const clauses = ["c.deleted_at IS NULL"];
-  const params: unknown[] = [];
+export function listRequirements(
+  utente: number,
+  filters: {
+    q?: string;
+    status?: string;
+    contract?: string;
+    city?: string;
+    page?: string;
+  },
+): { rows: RequirementRow[]; total: number; page: number; pages: number } {
+  // La richiesta non ha un proprietario suo: e' di chi segue il cliente.
+  const clauses = ["c.deleted_at IS NULL", CLIENTE_MIO];
+  const params: unknown[] = [utente];
 
   if (filters.q?.trim()) {
     const like = `%${filters.q.trim()}%`;
@@ -497,22 +606,25 @@ export function listRequirements(filters: {
   return { rows, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
-export function getRequirement(id: number): RequirementRow | undefined {
+export function getRequirement(utente: number, id: number): RequirementRow | undefined {
   return one<RequirementRow>(
     `SELECT r.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
             c.mobile AS client_mobile
        FROM requirements r
        JOIN clients c ON c.id = r.client_id
-      WHERE r.id = ?`,
-    [id],
+      WHERE r.id = ? AND ${CLIENTE_MIO}`,
+    [id, utente],
   );
 }
 
-export function requirementsOfClient(clientId: number): Requirement[] {
+export function requirementsOfClient(utente: number, clientId: number): Requirement[] {
   return all<Requirement>(
-    `SELECT * FROM requirements WHERE client_id = ? ORDER BY updated_at DESC`,
-    [clientId],
+    `SELECT r.* FROM requirements r
+       JOIN clients c ON c.id = r.client_id
+      WHERE r.client_id = ? AND ${CLIENTE_MIO}
+      ORDER BY r.updated_at DESC`,
+    [clientId, utente],
   );
 }
 
@@ -524,33 +636,58 @@ export type ActivityRow = Activity & {
   user_name: string | null;
 };
 
+/**
+ * Le colonne di un'attivita', con i nomi collegati.
+ *
+ * Il nome del cliente e il titolo dell'immobile escono solo se quella scheda
+ * e' di chi guarda. Non e' pignoleria: un'attivita' puo' essere mia e toccare
+ * la scheda di un collega — una visita fatta insieme, un immobile passato di
+ * mano — e in quel caso l'attivita' si vede, ma il nome che ci sta attaccato
+ * no. Senza questo taglio il muro avrebbe una finestra proprio dove passa
+ * tutto il lavoro quotidiano.
+ *
+ * Vuole due parametri in testa, prima di quelli della WHERE: vedi perAttivita.
+ */
 const ACTIVITY_SELECT = `
   SELECT a.*,
-         TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
-         p.title AS property_title,
+         CASE WHEN c.owner_id = ?
+              THEN TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,''))
+              END AS client_name,
+         CASE WHEN p.agent_id = ? THEN p.title END AS property_title,
          u.name  AS user_name
     FROM activities a
     LEFT JOIN clients    c ON c.id = a.client_id
     LEFT JOIN properties p ON p.id = a.property_id
     LEFT JOIN users      u ON u.id = a.user_id`;
 
-export function activitiesOfClient(clientId: number, limit = 100): ActivityRow[] {
+/** I due parametri che ACTIVITY_SELECT si aspetta prima della WHERE. */
+const perNomiAttivita = (utente: number) => [utente, utente];
+
+export function activitiesOfClient(
+  utente: number,
+  clientId: number,
+  limit = 100,
+): ActivityRow[] {
   return all<ActivityRow>(
     `${ACTIVITY_SELECT}
-      WHERE a.client_id = ?
+      WHERE a.client_id = ? AND ${ATTIVITA_MIA}
       ORDER BY COALESCE(a.due_at, a.done_at, a.created_at) DESC
       LIMIT ?`,
-    [clientId, limit],
+    [...perNomiAttivita(utente), clientId, ...perAttivita(utente), limit],
   );
 }
 
-export function activitiesOfProperty(propertyId: number, limit = 100): ActivityRow[] {
+export function activitiesOfProperty(
+  utente: number,
+  propertyId: number,
+  limit = 100,
+): ActivityRow[] {
   return all<ActivityRow>(
     `${ACTIVITY_SELECT}
-      WHERE a.property_id = ?
+      WHERE a.property_id = ? AND ${ATTIVITA_MIA}
       ORDER BY COALESCE(a.due_at, a.done_at, a.created_at) DESC
       LIMIT ?`,
-    [propertyId, limit],
+    [...perNomiAttivita(utente), propertyId, ...perAttivita(utente), limit],
   );
 }
 
@@ -566,12 +703,14 @@ export type VisitRow = ActivityRow & { client_phone: string | null };
  * Ci sono anche gli appuntamenti ancora da fare: al proprietario interessa
  * sapere che qualcuno passa la settimana prossima.
  */
-export function visitHistory(propertyId: number): VisitRow[] {
+export function visitHistory(utente: number, propertyId: number): VisitRow[] {
   return all<VisitRow>(
     `SELECT a.*,
-            TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
-            COALESCE(c.mobile, c.phone) AS client_phone,
-            p.title AS property_title,
+            CASE WHEN c.owner_id = ?
+                 THEN TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,''))
+                 END AS client_name,
+            CASE WHEN c.owner_id = ? THEN COALESCE(c.mobile, c.phone) END AS client_phone,
+            CASE WHEN p.agent_id = ? THEN p.title END AS property_title,
             u.name  AS user_name
        FROM activities a
        LEFT JOIN clients    c ON c.id = a.client_id
@@ -579,15 +718,27 @@ export function visitHistory(propertyId: number): VisitRow[] {
        LEFT JOIN users      u ON u.id = a.user_id
       WHERE a.property_id = ?
         AND a.type IN ('visita', 'appuntamento')
+        AND ${ATTIVITA_MIA}
       ORDER BY COALESCE(a.due_at, a.done_at, a.created_at)`,
-    [propertyId],
+    [utente, utente, utente, propertyId, ...perAttivita(utente)],
   );
 }
 
-/** Cose da fare: scadute, oggi e in arrivo. */
-export function agenda(userId: number | null) {
-  const scope = userId ? "AND a.user_id = ?" : "";
-  const params = (extra: unknown[]) => (userId ? [...extra, userId] : extra);
+/**
+ * Cose da fare: scadute, oggi e in arrivo.
+ *
+ * `soloAssegnateAMe` distingue due cose che prima erano «le mie» e «quelle di
+ * tutti»: adesso «tutte» vuol dire tutte quelle che rientrano nel proprio
+ * archivio — comprese quelle che un collega ha segnato su una mia scheda
+ * durante una visita fatta insieme — e non piu' quelle dell'agenzia intera.
+ */
+export function agenda(utente: number, soloAssegnateAMe: boolean) {
+  const scope = soloAssegnateAMe ? "AND a.user_id = ?" : `AND ${ATTIVITA_MIA}`;
+  const params = (extra: unknown[]) => [
+    ...perNomiAttivita(utente),
+    ...extra,
+    ...(soloAssegnateAMe ? [utente] : perAttivita(utente)),
+  ];
 
   return {
     overdue: all<ActivityRow>(
@@ -623,8 +774,12 @@ export function agenda(userId: number | null) {
 }
 
 /** Una singola attivita', per la pagina di modifica. */
-export function getActivity(id: number): ActivityRow | undefined {
-  return one<ActivityRow>(`${ACTIVITY_SELECT} WHERE a.id = ?`, [id]);
+export function getActivity(utente: number, id: number): ActivityRow | undefined {
+  return one<ActivityRow>(`${ACTIVITY_SELECT} WHERE a.id = ? AND ${ATTIVITA_MIA}`, [
+    ...perNomiAttivita(utente),
+    id,
+    ...perAttivita(utente),
+  ]);
 }
 
 /* ==================================================================== calendario */
@@ -638,6 +793,8 @@ export function getActivity(id: number): ActivityRow | undefined {
  * non si prende appuntamento.
  */
 export function calendarActivities(userId: number): ActivityRow[] {
+  // Qui il filtro e' gia' quello giusto e resta com'e': il calendario e' di
+  // una persona sola, e contiene gli appuntamenti assegnati a lei.
   return all<ActivityRow>(
     `${ACTIVITY_SELECT}
       WHERE a.user_id = ?
@@ -645,7 +802,7 @@ export function calendarActivities(userId: number): ActivityRow[] {
         AND date(a.due_at) >= date('now','localtime','-30 days')
         AND date(a.due_at) <= date('now','localtime','+365 days')
       ORDER BY a.due_at`,
-    [userId],
+    [...perNomiAttivita(userId), userId],
   );
 }
 
@@ -697,22 +854,30 @@ export type SellerRow = Client & {
  * essere stato spuntato — l'immobile collegato dice la stessa cosa e non
  * dipende da come e' stata compilata la scheda.
  */
-export function listSellers(filters: { q?: string; page?: string } = {}): {
+export function listSellers(
+  utente: number,
+  filters: { q?: string; page?: string } = {},
+): {
   rows: SellerRow[];
   total: number;
   page: number;
   pages: number;
 } {
+  // La scorciatoia dell'immobile collegato vale solo se l'immobile e' mio:
+  // altrimenti il venditore di un collega entrerebbe nel mio elenco soltanto
+  // perche' e' intestatario di qualcosa che io non seguo.
   const clauses = [
     `c.deleted_at IS NULL`,
+    CLIENTE_MIO,
     `(
        (',' || c.roles || ',') LIKE '%,venditore,%'
        OR (',' || c.roles || ',') LIKE '%,locatore,%'
        OR EXISTS (SELECT 1 FROM properties p
-                   WHERE p.owner_client_id = c.id AND p.deleted_at IS NULL)
+                   WHERE p.owner_client_id = c.id AND p.deleted_at IS NULL
+                     AND ${IMMOBILE_MIO})
      )`,
   ];
-  const params: unknown[] = [];
+  const params: unknown[] = [utente, utente];
 
   const q = filters.q?.trim();
   if (q) {
@@ -742,10 +907,11 @@ export function listSellers(filters: { q?: string; page?: string } = {}): {
   if (ids.length) {
     const segnaposto = ids.map(() => "?").join(",");
     for (const property of all<Property>(
-      `SELECT * FROM properties
-        WHERE deleted_at IS NULL AND owner_client_id IN (${segnaposto})
-        ORDER BY status, updated_at DESC`,
-      ids,
+      `SELECT p.* FROM properties p
+        WHERE p.deleted_at IS NULL AND p.owner_client_id IN (${segnaposto})
+          AND ${IMMOBILE_MIO}
+        ORDER BY p.status, p.updated_at DESC`,
+      [...ids, utente],
     )) {
       const elenco = byOwner.get(property.owner_client_id!) ?? [];
       elenco.push(property);
@@ -766,19 +932,26 @@ export function listSellers(filters: { q?: string; page?: string } = {}): {
 }
 
 /** Immobili ancora senza proprietario collegato: il buco da riempire. */
-export function propertiesWithoutOwner(limit = 500): Property[] {
+// Nota: i parametri dopo `utente` sono tutti obbligatori, senza valore
+// predefinito, anche dove un predefinito sarebbe comodo. Il motivo e' che
+// `auditTrail(300)` — la vecchia chiamata — con un predefinito continuerebbe a
+// compilare, prendendo 300 per l'id di chi guarda. Un muro che si buca per una
+// svista di battitura non serve a niente: meglio che non compili.
+export function propertiesWithoutOwner(utente: number, limit: number): Property[] {
   return all<Property>(
-    `SELECT * FROM properties
-      WHERE deleted_at IS NULL AND owner_client_id IS NULL
-      ORDER BY status, title COLLATE NOCASE
+    `SELECT p.* FROM properties p
+      WHERE p.deleted_at IS NULL AND p.owner_client_id IS NULL AND ${IMMOBILE_MIO}
+      ORDER BY p.status, p.title COLLATE NOCASE
       LIMIT ?`,
-    [limit],
+    [utente, limit],
   );
 }
 
-export function countPropertiesWithoutOwner(): number {
+export function countPropertiesWithoutOwner(utente: number): number {
   return count(
-    `SELECT COUNT(*) AS n FROM properties WHERE deleted_at IS NULL AND owner_client_id IS NULL`,
+    `SELECT COUNT(*) AS n FROM properties p
+      WHERE p.deleted_at IS NULL AND p.owner_client_id IS NULL AND ${IMMOBILE_MIO}`,
+    [utente],
   );
 }
 
@@ -788,33 +961,39 @@ export function countPropertiesWithoutOwner(): number {
  * privacy mai raccolto, il documento antiriciclaggio scaduto, l'immobile di
  * cui non si sa chi chiamare. Ogni numero ha il suo filtro nell'elenco.
  */
-export function daSistemare(): {
+export function daSistemare(utente: number): {
   senzaProprietario: number;
   senzaRichiesta: number;
   senzaPrivacy: number;
   amlScaduti: number;
 } {
   return {
-    senzaProprietario: countPropertiesWithoutOwner(),
+    senzaProprietario: countPropertiesWithoutOwner(utente),
     senzaRichiesta: count(
       `SELECT COUNT(*) AS n FROM clients c
         WHERE c.deleted_at IS NULL
+          AND ${CLIENTE_MIO}
           AND c.status IN ('attivo','in_trattativa')
           AND ((',' || c.roles || ',') LIKE '%,acquirente,%'
             OR (',' || c.roles || ',') LIKE '%,conduttore,%')
           AND NOT EXISTS (SELECT 1 FROM requirements r
                            WHERE r.client_id = c.id AND r.status = 'aperta')`,
+      [utente],
     ),
     senzaPrivacy: count(
-      `SELECT COUNT(*) AS n FROM clients
-        WHERE deleted_at IS NULL AND privacy_consent = 0
-          AND status IN ('attivo','in_trattativa')`,
+      `SELECT COUNT(*) AS n FROM clients c
+        WHERE c.deleted_at IS NULL AND c.privacy_consent = 0
+          AND ${CLIENTE_MIO}
+          AND c.status IN ('attivo','in_trattativa')`,
+      [utente],
     ),
     amlScaduti: count(
-      `SELECT COUNT(*) AS n FROM clients
-        WHERE deleted_at IS NULL
-          AND aml_doc_expiry IS NOT NULL
-          AND date(aml_doc_expiry) < date('now','localtime')`,
+      `SELECT COUNT(*) AS n FROM clients c
+        WHERE c.deleted_at IS NULL
+          AND ${CLIENTE_MIO}
+          AND c.aml_doc_expiry IS NOT NULL
+          AND date(c.aml_doc_expiry) < date('now','localtime')`,
+      [utente],
     ),
   };
 }
@@ -830,51 +1009,58 @@ export function daSistemare(): {
  *
  * In nessun caso si riversano mille nomi in una tendina.
  */
-export function searchOwnerCandidates(q: string | undefined, limit = 15): {
+export function searchOwnerCandidates(
+  utente: number,
+  q: string | undefined,
+  limit = 15,
+): {
   rows: Client[];
   total: number;
   searched: boolean;
 } {
   const cerca = q?.trim();
 
+  // Anche la ricerca guarda solo la propria rubrica. Era il punto piu' aperto
+  // del programma: bastava scrivere tre cifre di un numero per pescare
+  // qualsiasi scheda dell'archivio, ruolo o non ruolo.
+  //
+  // Conseguenza da conoscere: se il proprietario e' gia' seguito da un
+  // collega, qui non compare, e va creata una scheda propria. E' il prezzo
+  // della separazione, ed e' anche il motivo per cui la segnalazione dei
+  // contatti in comune merita un discorso a parte.
   if (!cerca) {
+    const where = `c.deleted_at IS NULL AND ${CLIENTE_MIO}
+        AND ((',' || c.roles || ',') LIKE '%,venditore,%'
+             OR (',' || c.roles || ',') LIKE '%,locatore,%')`;
     return {
       rows: all<Client>(
-        `SELECT * FROM clients
-          WHERE deleted_at IS NULL
-            AND ((',' || roles || ',') LIKE '%,venditore,%'
-                 OR (',' || roles || ',') LIKE '%,locatore,%')
-          ORDER BY last_name COLLATE NOCASE, first_name COLLATE NOCASE
+        `SELECT c.* FROM clients c WHERE ${where}
+          ORDER BY c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE
           LIMIT ?`,
-        [limit],
+        [utente, limit],
       ),
-      total: count(
-        `SELECT COUNT(*) AS n FROM clients
-          WHERE deleted_at IS NULL
-            AND ((',' || roles || ',') LIKE '%,venditore,%'
-                 OR (',' || roles || ',') LIKE '%,locatore,%')`,
-      ),
+      total: count(`SELECT COUNT(*) AS n FROM clients c WHERE ${where}`, [utente]),
       searched: false,
     };
   }
 
   const like = `%${cerca}%`;
-  const where = `deleted_at IS NULL AND (
-      first_name LIKE ? OR last_name LIKE ? OR company LIKE ?
-      OR mobile LIKE ? OR phone LIKE ? OR email LIKE ?
-      OR (last_name || ' ' || first_name) LIKE ?
-      OR (first_name || ' ' || last_name) LIKE ?
+  const where = `c.deleted_at IS NULL AND ${CLIENTE_MIO} AND (
+      c.first_name LIKE ? OR c.last_name LIKE ? OR c.company LIKE ?
+      OR c.mobile LIKE ? OR c.phone LIKE ? OR c.email LIKE ?
+      OR (c.last_name || ' ' || c.first_name) LIKE ?
+      OR (c.first_name || ' ' || c.last_name) LIKE ?
     )`;
-  const params = [like, like, like, like, like, like, like, like];
+  const params = [utente, like, like, like, like, like, like, like, like];
 
   return {
     rows: all<Client>(
-      `SELECT * FROM clients WHERE ${where}
-        ORDER BY last_name COLLATE NOCASE, first_name COLLATE NOCASE
+      `SELECT c.* FROM clients c WHERE ${where}
+        ORDER BY c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE
         LIMIT ?`,
       [...params, limit],
     ),
-    total: count(`SELECT COUNT(*) AS n FROM clients WHERE ${where}`, params),
+    total: count(`SELECT COUNT(*) AS n FROM clients c WHERE ${where}`, params),
     searched: true,
   };
 }
@@ -912,12 +1098,14 @@ export type BirthdayRow = Client & { birthdayIn: number; age: number };
  * Compleanni dei prossimi giorni. Il confronto si fa su mese e giorno, non
  * sulla data intera: l'anno di nascita non c'entra.
  */
-export function upcomingBirthdays(days = 7): BirthdayRow[] {
+export function upcomingBirthdays(utente: number, days: number): BirthdayRow[] {
   const rows = all<Client>(
-    `SELECT * FROM clients
-      WHERE deleted_at IS NULL
-        AND birth_date IS NOT NULL AND birth_date != ''
-        AND status != 'non_interessato'`,
+    `SELECT c.* FROM clients c
+      WHERE c.deleted_at IS NULL
+        AND ${CLIENTE_MIO}
+        AND c.birth_date IS NOT NULL AND c.birth_date != ''
+        AND c.status != 'non_interessato'`,
+    [utente],
   );
 
   return rows
@@ -955,7 +1143,15 @@ export type OfferRow = Offer & {
   property_price: number | null;
 };
 
-export function offersOfProperty(propertyId: number): OfferRow[] {
+/**
+ * Una proposta d'acquisto tocca due parti: chi compra e chi vende. Si vede
+ * quindi da entrambi i lati — se e' mio l'immobile o se e' mio il cliente —
+ * perche' una proposta visibile a una sola delle due meta' sarebbe una
+ * trattativa che si segue a meta'.
+ */
+const PROPOSTA_MIA = `(${IMMOBILE_MIO} OR ${CLIENTE_MIO})`;
+
+export function offersOfProperty(utente: number, propertyId: number): OfferRow[] {
   return all<OfferRow>(
     `SELECT o.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
@@ -963,13 +1159,13 @@ export function offersOfProperty(propertyId: number): OfferRow[] {
        FROM offers o
        JOIN clients c    ON c.id = o.client_id
        JOIN properties p ON p.id = o.property_id
-      WHERE o.property_id = ?
+      WHERE o.property_id = ? AND ${PROPOSTA_MIA}
       ORDER BY o.offered_at DESC`,
-    [propertyId],
+    [propertyId, utente, utente],
   );
 }
 
-export function offersOfClient(clientId: number): OfferRow[] {
+export function offersOfClient(utente: number, clientId: number): OfferRow[] {
   return all<OfferRow>(
     `SELECT o.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS client_name,
@@ -977,18 +1173,21 @@ export function offersOfClient(clientId: number): OfferRow[] {
        FROM offers o
        JOIN clients c    ON c.id = o.client_id
        JOIN properties p ON p.id = o.property_id
-      WHERE o.client_id = ?
+      WHERE o.client_id = ? AND ${PROPOSTA_MIA}
       ORDER BY o.offered_at DESC`,
-    [clientId],
+    [clientId, utente, utente],
   );
 }
 
 /* ============================================================ valutazioni */
 
-export function valuationsOfProperty(propertyId: number): Valuation[] {
+export function valuationsOfProperty(utente: number, propertyId: number): Valuation[] {
   return all<Valuation>(
-    `SELECT * FROM valuations WHERE property_id = ? ORDER BY created_at DESC`,
-    [propertyId],
+    `SELECT v.* FROM valuations v
+       JOIN properties p ON p.id = v.property_id
+      WHERE v.property_id = ? AND ${IMMOBILE_MIO}
+      ORDER BY v.created_at DESC`,
+    [propertyId, utente],
   );
 }
 
@@ -1014,10 +1213,12 @@ export function dashboard(userId: number) {
     `SELECT p.*, NULL AS owner_name, NULL AS agent_name
        FROM properties p
       WHERE p.deleted_at IS NULL
+        AND ${IMMOBILE_MIO}
         AND p.mandate_end IS NOT NULL
         AND p.status IN ('acquisizione','in_vendita','proposta')
         AND date(p.mandate_end) <= date('now','localtime','+45 days')
       ORDER BY p.mandate_end`,
+    [userId],
   );
 
   const silentClients = all<ClientRow>(
@@ -1027,10 +1228,12 @@ export function dashboard(userId: number) {
        FROM clients c
        LEFT JOIN users u ON u.id = c.owner_id
       WHERE c.deleted_at IS NULL
+        AND ${CLIENTE_MIO}
         AND c.status IN ('attivo','in_trattativa')
         AND (c.last_contact_at IS NULL OR c.last_contact_at < datetime('now','-90 days'))
       ORDER BY COALESCE(c.last_contact_at, c.created_at)
       LIMIT 12`,
+    [userId],
   );
 
   const expiringOffers = all<OfferRow>(
@@ -1041,35 +1244,48 @@ export function dashboard(userId: number) {
        JOIN clients c    ON c.id = o.client_id
        JOIN properties p ON p.id = o.property_id
       WHERE o.status = 'in_attesa'
+        AND ${PROPOSTA_MIA}
         AND o.valid_until IS NOT NULL
         AND date(o.valid_until) <= date('now','localtime','+7 days')
       ORDER BY o.valid_until`,
+    [userId, userId],
   );
 
   return {
-    clients: count(`SELECT COUNT(*) AS n FROM clients WHERE deleted_at IS NULL`),
+    clients: count(
+      `SELECT COUNT(*) AS n FROM clients c WHERE c.deleted_at IS NULL AND ${CLIENTE_MIO}`,
+      [userId],
+    ),
     activeClients: count(
-      `SELECT COUNT(*) AS n FROM clients
-        WHERE deleted_at IS NULL AND status IN ('attivo','in_trattativa')`,
+      `SELECT COUNT(*) AS n FROM clients c
+        WHERE c.deleted_at IS NULL AND ${CLIENTE_MIO}
+          AND c.status IN ('attivo','in_trattativa')`,
+      [userId],
     ),
     forSale: count(
-      `SELECT COUNT(*) AS n FROM properties
-        WHERE deleted_at IS NULL AND status IN ('acquisizione','in_vendita')`,
+      `SELECT COUNT(*) AS n FROM properties p
+        WHERE p.deleted_at IS NULL AND ${IMMOBILE_MIO}
+          AND p.status IN ('acquisizione','in_vendita')`,
+      [userId],
     ),
     negotiations: count(
-      `SELECT COUNT(*) AS n FROM properties
-        WHERE deleted_at IS NULL AND status IN ('proposta','compromesso')`,
+      `SELECT COUNT(*) AS n FROM properties p
+        WHERE p.deleted_at IS NULL AND ${IMMOBILE_MIO}
+          AND p.status IN ('proposta','compromesso')`,
+      [userId],
     ),
     openRequirements: count(
       `SELECT COUNT(*) AS n FROM requirements r
         JOIN clients c ON c.id = r.client_id
-       WHERE r.status = 'aperta' AND c.deleted_at IS NULL`,
+       WHERE r.status = 'aperta' AND c.deleted_at IS NULL AND ${CLIENTE_MIO}`,
+      [userId],
     ),
     soldThisYear: count(
-      `SELECT COUNT(*) AS n FROM properties
-        WHERE deleted_at IS NULL AND status = 'venduto'
-          AND deed_date IS NOT NULL
-          AND strftime('%Y', deed_date) = strftime('%Y','now','localtime')`,
+      `SELECT COUNT(*) AS n FROM properties p
+        WHERE p.deleted_at IS NULL AND ${IMMOBILE_MIO} AND p.status = 'venduto'
+          AND p.deed_date IS NOT NULL
+          AND strftime('%Y', p.deed_date) = strftime('%Y','now','localtime')`,
+      [userId],
     ),
     overdueCount: count(
       `SELECT COUNT(*) AS n FROM activities
@@ -1090,7 +1306,7 @@ export function dashboard(userId: number) {
 
 /* ================================================================ report */
 
-export function reportBySource() {
+export function reportBySource(utente: number) {
   return all<{ source: string; clients: number; sold: number }>(
     `SELECT COALESCE(NULLIF(c.source,''), 'Non indicata') AS source,
             COUNT(DISTINCT c.id) AS clients,
@@ -1098,13 +1314,22 @@ export function reportBySource() {
        FROM clients c
        LEFT JOIN offers o    ON o.client_id = c.id AND o.status = 'accettata'
        LEFT JOIN properties p ON p.id = o.property_id
-      WHERE c.deleted_at IS NULL
+      WHERE c.deleted_at IS NULL AND ${CLIENTE_MIO}
       GROUP BY source
       ORDER BY clients DESC`,
+    [utente],
   );
 }
 
-export function reportByAgent() {
+/**
+ * Com'e' andato il proprio portafoglio.
+ *
+ * Prima era una classifica fra colleghi, con tanto di provvigioni incassate
+ * da ciascuno. Non e' piu' possibile e non e' piu' il senso: ognuno vede i
+ * propri numeri, che restano quello che serve davvero — quanto ho in
+ * portafoglio, quanto ho venduto, quanto ho incassato.
+ */
+export function reportByAgent(utente: number) {
   return all<{
     agent: string;
     portfolio: number;
@@ -1119,13 +1344,14 @@ export function reportByAgent() {
                      END) AS commission
        FROM properties p
        LEFT JOIN users u ON u.id = p.agent_id
-      WHERE p.deleted_at IS NULL
+      WHERE p.deleted_at IS NULL AND ${IMMOBILE_MIO}
       GROUP BY agent
       ORDER BY sold DESC, portfolio DESC`,
+    [utente],
   );
 }
 
-export function reportSalesPerformance() {
+export function reportSalesPerformance(utente: number) {
   return all<{
     id: number;
     title: string;
@@ -1138,13 +1364,22 @@ export function reportSalesPerformance() {
     `SELECT p.id, p.title, p.city, p.price, p.sold_price, p.deed_date,
             CAST(julianday(p.deed_date) - julianday(p.mandate_start) AS INTEGER) AS days_on_market
        FROM properties p
-      WHERE p.deleted_at IS NULL AND p.status = 'venduto'
+      WHERE p.deleted_at IS NULL AND ${IMMOBILE_MIO} AND p.status = 'venduto'
       ORDER BY p.deed_date DESC
       LIMIT 100`,
+    [utente],
   );
 }
 
-export function auditTrail(limit = 200) {
+/**
+ * Il registro di cosa e' stato fatto, limitato alle proprie azioni.
+ *
+ * Un registro che elencasse le mosse di tutti racconterebbe, riga per riga,
+ * il lavoro del collega: quante schede ha inserito, quando, su cosa sta
+ * lavorando. Sotto una separazione simmetrica non lo puo' vedere nessuno,
+ * nemmeno chi amministra il programma.
+ */
+export function auditTrail(utente: number, limit: number) {
   return all<{
     id: number;
     action: string;
@@ -1157,8 +1392,9 @@ export function auditTrail(limit = 200) {
     `SELECT a.id, a.action, a.entity, a.entity_id, a.detail, a.created_at, u.name AS user_name
        FROM audit_log a
        LEFT JOIN users u ON u.id = a.user_id
+      WHERE a.user_id = ?
       ORDER BY a.created_at DESC
       LIMIT ?`,
-    [limit],
+    [utente, limit],
   );
 }

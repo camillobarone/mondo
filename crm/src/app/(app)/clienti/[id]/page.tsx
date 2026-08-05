@@ -57,17 +57,18 @@ export default async function ClientPage({
   const query = await searchParams;
 
   const clientId = Number(id);
-  const client = getClient(clientId);
+  const client = getClient(user.id, clientId);
   if (!client) notFound();
 
-  const requirements = requirementsOfClient(clientId);
-  const properties = propertiesOfClient(clientId);
-  const offers = offersOfClient(clientId);
-  const activities = activitiesOfClient(clientId);
+  const requirements = requirementsOfClient(user.id, clientId);
+  const properties = propertiesOfClient(user.id, clientId);
+  const offers = offersOfClient(user.id, clientId);
+  const activities = activitiesOfClient(user.id, clientId);
   const users = activeUserOptions();
   const propertyOptions = all<{ id: number; title: string }>(
-    `SELECT id, title FROM properties WHERE deleted_at IS NULL
+    `SELECT id, title FROM properties WHERE deleted_at IS NULL AND agent_id = ?
       ORDER BY updated_at DESC LIMIT 300`,
+    [user.id],
   ).map((property) => ({ value: String(property.id), label: property.title }));
 
   const editing = query.modifica_richiesta
@@ -87,7 +88,7 @@ export default async function ClientPage({
   const alCompleanno = giorniAlCompleanno(client.birth_date);
   // Immobili ancora senza intestatario: sono gli unici che ha senso proporre
   // qui, cosi' non si porta via per sbaglio l'immobile di un altro.
-  const daCollegare = propertiesWithoutOwner();
+  const daCollegare = propertiesWithoutOwner(user.id, 500);
 
   return (
     <>
@@ -276,7 +277,7 @@ export default async function ClientPage({
               <RequirementForm
                 clientId={client.id}
                 requirement={editing}
-                zoneOptions={knownZones()}
+                zoneOptions={knownZones(user.id)}
                 cancelHref={`/clienti/${client.id}`}
               />
             ) : requirements.length === 0 ? (
@@ -289,7 +290,7 @@ export default async function ClientPage({
                 {requirements.map((requirement) => {
                   const summary =
                     requirement.status === "aperta"
-                      ? requirementSummary(requirement, 5)
+                      ? requirementSummary(user.id, requirement, 5)
                       : { count: 0, perfect: 0, top: [] };
 
                   return (

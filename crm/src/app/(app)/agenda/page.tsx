@@ -105,22 +105,27 @@ export default async function AgendaPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
+  // "Tutte" non vuol dire piu' quelle dell'agenzia: vuol dire tutte quelle
+  // che rientrano nel proprio archivio, comprese quelle segnate da un collega
+  // su una scheda mia durante un giro fatto insieme.
   const everyone = params.tutti === "1";
 
-  const { overdue, today, upcoming, done } = agenda(everyone ? null : user.id);
+  const { overdue, today, upcoming, done } = agenda(user.id, !everyone);
   // Gli auguri sono la telefonata che costa meno e vale di piu': se non
   // compaiono da soli il giorno giusto, non li fa nessuno.
-  const compleanni = upcomingBirthdays(7);
+  const compleanni = upcomingBirthdays(user.id, 7);
   const users = activeUserOptions();
 
   const clients = all<{ id: number; name: string }>(
     `SELECT id, TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')) AS name
-       FROM clients WHERE deleted_at IS NULL
+       FROM clients WHERE deleted_at IS NULL AND owner_id = ?
       ORDER BY last_name COLLATE NOCASE LIMIT 500`,
+    [user.id],
   );
   const properties = all<{ id: number; title: string }>(
-    `SELECT id, title FROM properties WHERE deleted_at IS NULL
+    `SELECT id, title FROM properties WHERE deleted_at IS NULL AND agent_id = ?
       ORDER BY updated_at DESC LIMIT 300`,
+    [user.id],
   );
 
   return (
@@ -134,7 +139,7 @@ export default async function AgendaPage({
               Calendario e avvisi
             </Link>
             <Link href={everyone ? "/agenda" : "/agenda?tutti=1"} className="btn-secondary">
-              {everyone ? "Solo le mie" : "Tutta l'agenzia"}
+              {everyone ? "Solo assegnate a me" : "Tutte le mie schede"}
             </Link>
           </>
         }

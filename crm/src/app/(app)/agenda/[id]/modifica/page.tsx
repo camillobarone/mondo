@@ -28,18 +28,20 @@ export default async function EditActivityPage({
   const { id } = await params;
   const { da } = await searchParams;
 
-  const activity = getActivity(Number(id));
+  const activity = getActivity(user.id, Number(id));
   if (!activity) notFound();
 
   const users = activeUserOptions();
   const clients = all<{ id: number; name: string }>(
     `SELECT id, TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')) AS name
-       FROM clients WHERE deleted_at IS NULL
+       FROM clients WHERE deleted_at IS NULL AND owner_id = ?
       ORDER BY last_name COLLATE NOCASE LIMIT 500`,
+    [user.id],
   );
   const properties = all<{ id: number; title: string }>(
-    `SELECT id, title FROM properties WHERE deleted_at IS NULL
+    `SELECT id, title FROM properties WHERE deleted_at IS NULL AND agent_id = ?
       ORDER BY updated_at DESC LIMIT 300`,
+    [user.id],
   );
 
   const clientOptions = clients.map((client) => ({
@@ -55,13 +57,19 @@ export default async function EditActivityPage({
   // dell'attivita' sta oltre il taglio, il select ripiegherebbe su "—" e il
   // salvataggio scollegherebbe cliente o immobile in silenzio. Chi c'e' gia',
   // in cima e sempre presente.
+  //
+  // Ma il collegamento puo' anche puntare alla scheda di un collega, se
+  // l'attivita' e' mia e la scheda no. In quel caso il nome non arriva
+  // (queries.ts lo taglia) e non va sostituito con il numero della scheda:
+  // sarebbe un modo per leggere l'archivio altrui una riga alla volta. Si
+  // dice soltanto che c'e' qualcosa che non si puo' mostrare.
   if (
     activity.client_id &&
     !clientOptions.some((option) => option.value === String(activity.client_id))
   ) {
     clientOptions.unshift({
       value: String(activity.client_id),
-      label: activity.client_name || `Cliente #${activity.client_id}`,
+      label: activity.client_name || "— (scheda di un collega)",
     });
   }
   if (
@@ -70,7 +78,7 @@ export default async function EditActivityPage({
   ) {
     propertyOptions.unshift({
       value: String(activity.property_id),
-      label: activity.property_title || `Immobile #${activity.property_id}`,
+      label: activity.property_title || "— (scheda di un collega)",
     });
   }
 

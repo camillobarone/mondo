@@ -24,7 +24,10 @@ sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && node scripts/backup.mjs" | tail -2
 echo "== 2/4  Scarico l'ultima versione =========================================="
 TEMP="$(mktemp -d)"
 curl -fsSL "$ARCHIVIO" | tar xz -C "$TEMP" --strip-components=1
-rsync -a --delete --exclude data --exclude backup --exclude node_modules \
+# Le esclusioni sono ancorate alla radice (/data, non data): senza la sbarra
+# varrebbero per qualsiasi cartella con quel nome dentro il programma, comprese
+# eventuali pagine, che verrebbero cancellate dal server a ogni aggiornamento.
+rsync -a --delete --exclude /data --exclude /backup --exclude /node_modules \
   "$TEMP/crm/" "$CARTELLA/"
 rm -rf "$TEMP"
 chown -R "$UTENTE:$UTENTE" "$CARTELLA"
