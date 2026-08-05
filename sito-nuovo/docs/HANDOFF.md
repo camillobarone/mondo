@@ -72,6 +72,31 @@ galleria sono HTML e CSS. Da qui un TBT che sta fra 0 e 40 ms.
 - **Non promettere azioni dirette sul sito**: si consegna il materiale pronto
   da applicare.
 
+### ⚠️ Una cosa alla volta — la regola che viene prima delle altre
+
+**Si consegna una cosa sola, si aspetta che Camillo l'abbia fatta, si
+verifica, e solo dopo si passa alla successiva.** Vale per i file da
+caricare, per le modifiche da approvare, per le domande da fare.
+
+Non è una preferenza di stile: è costata il sito giù. Il 5 agosto 2026 il
+controllo generale ha prodotto diciannove file, consegnati tutti insieme in
+cinque gruppi ordinati per cartella di destinazione. Camillo ne ha caricato
+uno — `Seo.php`, l'ultimo arrivato e quindi quello che aveva in mente — e
+quel file chiamava un metodo nuovo di `Content.php`, che era rimasto
+vecchio. Home, elenco immobili, blog, contatti e schede: **500 su tutto**.
+
+Cosa se ne ricava, oltre alla regola:
+
+- **un pacchetto grosso non viene caricato tutto**, viene caricato in parte,
+  e la parte la sceglie chi carica, non chi consegna;
+- **se proprio devono essere più file, vanno raggruppati per dipendenza, mai
+  per cartella**: la cartella è comoda per chi carica, la dipendenza è
+  l'unica cosa che decide se il sito sta in piedi fra un gruppo e l'altro;
+- ogni gruppo deve **lasciare il sito funzionante**, e va detto a voce quale
+  file chiama quale.
+
+Quando la consegna è una sola cosa, niente di tutto questo serve.
+
 ### Regole di questo progetto
 
 - L'importatore **non scrive mai** sul WordPress sorgente: lo legge e basta.
