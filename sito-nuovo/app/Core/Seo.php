@@ -75,27 +75,72 @@ final class Seo
 
     // ---------------------------------------------------------------- nodi
 
-    /** Il percorso del logo dentro il progetto, se qualcuno ce l'ha messo. */
-    public const FILE_LOGO = '/assets/img/logo-512.png';
+    /**
+     * Dove si cerca il logo, in ordine. Più formati perché il file lo
+     * consegna una persona, non un programma: chi lo esporta da un
+     * programma di grafica si ritrova quello che si ritrova.
+     */
+    private const FILE_LOGO = [
+        '/assets/img/logo.png',
+        '/assets/img/logo.webp',
+        '/assets/img/logo.jpg',
+    ];
 
     /**
-     * L'indirizzo del logo, o `null` se un logo non c'è.
+     * Il logo: indirizzo e misure vere, o `null` se un logo non c'è.
      *
-     * Prima qui si tornava sempre un indirizzo, che il file esistesse o no:
+     * Prima qui si tornava sempre un indirizzo, che il file esistesse o no —
      * `/assets/img/logo-512.png` era scritto come valore predefinito ma la
-     * cartella non c'era mai stata, e il nodo che identifica l'agenzia
-     * rimandava a una pagina che non risponde. Un'immagine dichiarata e non
-     * consegnabile vale meno di un'immagine non dichiarata: la prima è un
-     * errore, la seconda è solo un dato mancante.
+     * cartella non c'era mai stata — e le misure erano scritte a mano, 512
+     * per 512, qualunque cosa fosse davvero il file. Due bugie nello stesso
+     * nodo: un'immagine che non risponde e delle dimensioni inventate.
+     *
+     * Adesso il file si cerca sul disco e si misura. Se non c'è, non c'è: un
+     * dato mancante è un problema minore di un dato falso.
+     *
+     * @return array{url:string,width:int,height:int}|null
      */
-    public static function logoUrl(): ?string
+    public static function logo(): ?array
     {
-        $impostato = trim((string) Settings::get('logo_url', ''));
-        if ($impostato !== '') {
-            return $impostato;
+        static $logo = false;
+
+        if ($logo !== false) {
+            return $logo;
         }
 
-        return is_file(MIL_PUBLIC . self::FILE_LOGO) ? self::base() . self::FILE_LOGO : null;
+        foreach (self::FILE_LOGO as $percorso) {
+            $file = MIL_PUBLIC . $percorso;
+            if (!is_file($file)) {
+                continue;
+            }
+
+            $misure = @getimagesize($file);
+            if ($misure === false) {
+                continue;
+            }
+
+            return $logo = [
+                'url' => self::base() . $percorso,
+                'width' => (int) $misure[0],
+                'height' => (int) $misure[1],
+            ];
+        }
+
+        // L'impostazione resta l'ultima parola per chi tiene il logo altrove,
+        // ma di un file remoto non si possono misurare i lati: si dichiara
+        // solo l'indirizzo.
+        $impostato = trim((string) Settings::get('logo_url', ''));
+        if ($impostato !== '') {
+            return $logo = ['url' => $impostato, 'width' => 0, 'height' => 0];
+        }
+
+        return $logo = null;
+    }
+
+    /** Solo l'indirizzo, per chi non ha bisogno delle misure. */
+    public static function logoUrl(): ?string
+    {
+        return self::logo()['url'] ?? null;
     }
 
     /**
@@ -105,19 +150,24 @@ final class Seo
      */
     public static function logoNode(): array
     {
-        $logo = self::logoUrl();
+        $logo = self::logo();
         if ($logo === null) {
             return [];
         }
 
-        return [
+        $nodo = [
             '@type' => 'ImageObject',
             '@id' => self::base() . '/#logo',
-            'url' => $logo,
-            'contentUrl' => $logo,
-            'width' => 512,
-            'height' => 512,
+            'url' => $logo['url'],
+            'contentUrl' => $logo['url'],
         ];
+
+        if ($logo['width'] > 0) {
+            $nodo['width'] = $logo['width'];
+            $nodo['height'] = $logo['height'];
+        }
+
+        return $nodo;
     }
 
     /**

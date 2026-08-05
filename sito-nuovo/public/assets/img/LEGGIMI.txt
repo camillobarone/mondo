@@ -1,21 +1,34 @@
-Qui dentro vanno due file, e non ci sono ancora.
+Qui dentro vanno due immagini, e non ci sono ancora.
 
-logo-512.png
-  Il logo dell'agenzia, quadrato, 512x512.
-  Lo dichiarano `Seo::logoNode()` come `logo` e `image` dell'agenzia in
-  ogni pagina, e `Pages::immagineSociale()` come ripiego dell'anteprima.
-  Finche' manca, quel nodo dei dati strutturati punta a un file che non
-  risponde.
+--------------------------------------------------------------------
+logo.png       (vanno bene anche logo.webp o logo.jpg)
+--------------------------------------------------------------------
+Il logo dell'agenzia, nella forma che ha: non deve essere quadrato.
+Il codice lo cerca su disco e ne legge le misure vere, quindi non c'e'
+nessun formato da rispettare.
 
-  L'originale sta nella libreria del WordPress vecchio:
-  https://www.mondoimmobiliarelecce.it/wp-content/uploads/2026/07/logo-512x512-1.png
-  Va scaricato da li' e caricato qui col nome logo-512.png.
+Lo dichiarano `Seo::logoNode()` come `logo` e `image` dell'agenzia in
+ogni pagina, e `Pages::immagineSociale()` come ultimo ripiego
+dell'anteprima social.
 
+  - lato lungo almeno 512 px, meglio 1000 o piu'
+  - fondo pieno, non trasparente, se il logo ha scritte scure: finisce
+    appoggiato sia su chiaro sia su scuro
+  - senza margini larghi attorno al marchio
+
+--------------------------------------------------------------------
 social-1200x630.png
-  L'immagine che si vede quando un link del sito viene incollato in una
-  chat o su Facebook. Deve essere 1200x630: un logo quadrato messo li'
-  viene ritagliato male.
-  Non esiste ancora e va costruita a partire dal logo vero.
+--------------------------------------------------------------------
+Cio' che si vede quando un link del sito viene incollato in una chat,
+su Facebook o in una email.
 
-Finche' i due file non ci sono il sito funziona lo stesso: l'anteprima
-social semplicemente non compare, e il nodo `logo` resta senza immagine.
+  - esattamente 1200 x 630 px
+  - meglio sotto i 300 KB: le anteprime pesanti alcune app le saltano
+  - soggetto e testo al centro, perche' i bordi vengono ritagliati
+  - testo grande: su un telefono questa immagine si vede piccola
+
+--------------------------------------------------------------------
+Finche' non ci sono, il sito funziona lo stesso: il nodo `logo` non
+viene emesso — insieme ai rimandi che lo citavano, quindi niente
+riferimenti appesi — e l'anteprima social compare solo sulle pagine
+che hanno gia' la foto di un immobile.
