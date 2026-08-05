@@ -75,10 +75,40 @@ final class Seo
 
     // ---------------------------------------------------------------- nodi
 
-    /** @return array<string,mixed> */
+    /** Il percorso del logo dentro il progetto, se qualcuno ce l'ha messo. */
+    public const FILE_LOGO = '/assets/img/logo-512.png';
+
+    /**
+     * L'indirizzo del logo, o `null` se un logo non c'è.
+     *
+     * Prima qui si tornava sempre un indirizzo, che il file esistesse o no:
+     * `/assets/img/logo-512.png` era scritto come valore predefinito ma la
+     * cartella non c'era mai stata, e il nodo che identifica l'agenzia
+     * rimandava a una pagina che non risponde. Un'immagine dichiarata e non
+     * consegnabile vale meno di un'immagine non dichiarata: la prima è un
+     * errore, la seconda è solo un dato mancante.
+     */
+    public static function logoUrl(): ?string
+    {
+        $impostato = trim((string) Settings::get('logo_url', ''));
+        if ($impostato !== '') {
+            return $impostato;
+        }
+
+        return is_file(MIL_PUBLIC . self::FILE_LOGO) ? self::base() . self::FILE_LOGO : null;
+    }
+
+    /**
+     * @return array<string,mixed> vuoto se il logo non c'è: `graph()` scarta
+     *                             i nodi vuoti e i riferimenti spariscono con
+     *                             loro
+     */
     public static function logoNode(): array
     {
-        $logo = Settings::get('logo_url', self::base() . '/assets/img/logo-512.png');
+        $logo = self::logoUrl();
+        if ($logo === null) {
+            return [];
+        }
 
         return [
             '@type' => 'ImageObject',
@@ -115,6 +145,12 @@ final class Seo
             $employees[] = $person($slug, $name);
         }
 
+        // Il rimando al logo solo se un logo c'è: senza il nodo #logo nel
+        // grafo, questo sarebbe un riferimento che non si risolve.
+        $logo = self::logoUrl() === null
+            ? []
+            : ['logo' => ['@id' => $base . '/#logo'], 'image' => ['@id' => $base . '/#logo']];
+
         return [
             '@type' => 'RealEstateAgent',
             '@id' => $base . '/#agent',
@@ -122,8 +158,7 @@ final class Seo
             'legalName' => 'Studio RCS Srls',
             'foundingDate' => '1994',
             'url' => $base . '/',
-            'logo' => ['@id' => $base . '/#logo'],
-            'image' => ['@id' => $base . '/#logo'],
+            ...$logo,
             'knowsLanguage' => ['Italian', 'English'],
             'priceRange' => '€€',
             'address' => [
@@ -211,7 +246,6 @@ final class Seo
             '@id' => $base . '/#agent-portocesareo',
             'name' => 'Mondo Immobiliare — Porto Cesareo',
             'parentOrganization' => ['@id' => $base . '/#agent'],
-            'logo' => ['@id' => $base . '/#logo'],
             'priceRange' => '€€',
             'address' => [
                 '@type' => 'PostalAddress',
@@ -233,6 +267,10 @@ final class Seo
                 'name' => 'Stefano My',
             ]],
         ];
+
+        if (self::logoUrl() !== null) {
+            $nodo['logo'] = ['@id' => $base . '/#logo'];
+        }
 
         // `url` solo se la pagina della sede esiste davvero. Era scritto fisso,
         // e siccome quella pagina è ancora fra quelle da ricreare, i dati
@@ -576,6 +614,11 @@ final class Seo
      */
     public static function graph(array $nodes): string
     {
+        // I nodi vuoti si buttano: è così che un pezzo che non c'è — il logo,
+        // per esempio, finché nessuno carica il file — sparisce dal grafo
+        // invece di uscire come oggetto senza contenuto.
+        $nodes = array_filter($nodes, static fn (array $n): bool => $n !== []);
+
         $json = json_encode(
             ['@context' => 'https://schema.org', '@graph' => array_values($nodes)],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_PRETTY_PRINT

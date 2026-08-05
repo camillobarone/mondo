@@ -1,0 +1,21 @@
+Qui dentro vanno due file, e non ci sono ancora.
+
+logo-512.png
+  Il logo dell'agenzia, quadrato, 512x512.
+  Lo dichiarano `Seo::logoNode()` come `logo` e `image` dell'agenzia in
+  ogni pagina, e `Pages::immagineSociale()` come ripiego dell'anteprima.
+  Finche' manca, quel nodo dei dati strutturati punta a un file che non
+  risponde.
+
+  L'originale sta nella libreria del WordPress vecchio:
+  https://www.mondoimmobiliarelecce.it/wp-content/uploads/2026/07/logo-512x512-1.png
+  Va scaricato da li' e caricato qui col nome logo-512.png.
+
+social-1200x630.png
+  L'immagine che si vede quando un link del sito viene incollato in una
+  chat o su Facebook. Deve essere 1200x630: un logo quadrato messo li'
+  viene ritagliato male.
+  Non esiste ancora e va costruita a partire dal logo vero.
+
+Finche' i due file non ci sono il sito funziona lo stesso: l'anteprima
+social semplicemente non compare, e il nodo `logo` resta senza immagine.

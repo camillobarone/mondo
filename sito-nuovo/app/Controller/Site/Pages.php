@@ -15,6 +15,9 @@ use Mil\Repo\Redirects;
 
 final class Pages
 {
+    /** L'anteprima di cortesia per chat e social, se qualcuno l'ha caricata. */
+    public const FILE_SOCIAL = '/assets/img/social-1200x630.png';
+
     public static function home(): void
     {
         $featured = Properties::search(['status' => 'online', 'featured' => 1], 1, 6);
@@ -439,14 +442,20 @@ final class Pages
         if ($image === '') {
             $image = trim((string) Settings::get('logo_url', ''));
         }
-        // Ultimo ripiego: l'immagine di cortesia che sta nel progetto. Prima
-        // qui si tornava indietro a mani vuote, e siccome `logo_url` nelle
-        // impostazioni è vuoto finché qualcuno non lo compila, in pratica
-        // ogni pagina che non fosse una scheda immobile veniva incollata in
-        // chat senza anteprima. È larga 1200×630, la misura che vogliono
-        // WhatsApp e Facebook: un logo quadrato lì viene ritagliato male.
+        // Ultimo ripiego: l'immagine di cortesia del progetto, 1200×630 —
+        // la misura che vogliono WhatsApp e Facebook, mentre un logo quadrato
+        // lì viene ritagliato male. Si dichiara solo se il file c'è davvero:
+        // un `og:image` che punta a un indirizzo morto fa comparire il
+        // riquadro rotto invece di niente.
+        if ($image === '' && is_file(MIL_PUBLIC . self::FILE_SOCIAL)) {
+            $image = self::FILE_SOCIAL;
+        }
+
+        // Niente immagine, niente tag: senza questa riga `url('')` restituisce
+        // l'indirizzo della home, e ogni pagina dichiarava come anteprima una
+        // pagina HTML invece di una figura.
         if ($image === '') {
-            $image = '/assets/img/social-1200x630.png';
+            return '';
         }
 
         return str_starts_with($image, 'http') ? $image : url($image);
