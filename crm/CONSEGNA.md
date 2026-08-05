@@ -195,12 +195,15 @@ ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.m
 ```
 
 **Portare le copie sul PC** — da fare una volta a settimana, su disco esterno.
-La strada semplice: nel gestionale, **Utenti → Scarica l'archivio** (solo
-titolare), e salvare il file su `F:\Gestionale backup`. In alternativa, da
-PowerShell (questa porta anche le copie storiche):
+Da PowerShell, due comandi: il primo porta l'archivio (tutte le copie
+storiche), il secondo le foto.
 ```
 scp root@77.81.234.151:/opt/mondo-crm/backup/*.db "F:\Gestionale backup"
+scp -r root@77.81.234.151:/opt/mondo-crm/backup/foto "F:\Gestionale backup"
 ```
+Non c'è più un pulsante nel programma che scarichi l'intero archivio: da quando
+ognuno vede solo le proprie schede, sarebbe la separazione aggirata con un clic
+(capitolo 10-bis). Questa è la strada, ed è anche l'unica che porta via le foto.
 
 **Ripristinare** una copia (**l'ordine conta**: prima si ferma il programma):
 ```
