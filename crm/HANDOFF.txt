@@ -5,7 +5,7 @@ HANDOFF — PER RIPRENDERE IN UNA CHAT NUOVA
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-Aggiornato al 4 agosto 2026.
+Aggiornato al 5 agosto 2026.
 
   | Il documento gemello è CONSEGNA.md (anche in .txt): quello è per
   | l'agenzia, questo è per chi riprende il lavoro. README.md è il manuale
@@ -95,7 +95,7 @@ Incroci automatici · Agenda ·
 Storico visite per il proprietario ·
 Trattative · Report · Adempimenti (privacy datata, antiriciclaggio,
 registro accessi) · Importazione da Excel · Ricerca globale ·
-copia di sicurezza dal browser.
+separazione fra collaboratori (ognuno vede solo le proprie schede).
 
 
 Le cose costruite in questa sessione, in ordine
@@ -124,6 +124,49 @@ Le cose costruite in questa sessione, in ordine
    («Lecce» e «LECCE (LE)»), e la tipologia esclude solo quando entrambe le
    famiglie si riconoscono.
 10. Storico visite, e rimozione del resoconto sul prezzo (vedi sotto).
+11. Separazione fra collaboratori. Ognuno vede soltanto le proprie schede,
+    titolare compreso. Chiesta da lui cosi': *«se volessi condividere questo
+    gestionale con un collega, dove lui non vede i miei clienti e io non vedo i
+    suoi»*, e alla domanda su chi resta a vedere tutto ha risposto caso B:
+    nessuno, nemmeno lui.
+
+    Come funziona e cosa comporta: capitolo 10-bis di CONSEGNA.md.
+    In breve: clients.owner_id e properties.agent_id decidono tutto; il
+    resto eredita. In queries.ts
+    ogni funzione di lettura vuole come primo dato l'id di chi guarda —
+    e' scomodo di proposito, cosi' una funzione nuova non puo' nascere senza
+    muro: il programma non compila.
+
+    Prima di scrivere il codice e' stata fatta una mappa esaustiva di ogni
+    percorso di lettura (189 punti distinti su 30 file). Le cose che una
+    revisione a occhio non avrebbe trovato:
+    - i conteggi devono nascere dallo stesso filtro dell'elenco che
+      accompagnano, altrimenti il numero conta l'archivio altrui;
+    - il nome del cliente e il titolo dell'immobile attaccati a un'attivita'
+      arrivavano da join non filtrati;
+    - le foto controllavano solo che ci fosse un accesso, non di chi fosse
+      l'immobile;
+    - il controllo doppioni dell'importazione confrontava con tutto
+      l'archivio: il totale dei saltati era un modo per interrogarlo;
+    - lo script dei promemoria gira come processo di sistema e non passa da
+      queries.ts: il filtro e' stato riscritto anche li'.
+
+    Il pulsante Scarica l'archivio e' stato tolto: sarebbe stata la
+    separazione aggirata con un clic. Scoperta collaterale: quel pulsante
+    non era mai arrivato sul server, perche' .gitignore ignorava backup/ a
+    qualsiasi profondita' e la cartella src/app/(app)/backup non e' mai
+    entrata nel repository. Le regole (e le esclusioni rsync degli script di
+    installazione) sono ora ancorate alla radice.
+
+    Verificato in browser con due utenti veri sullo stesso archivio, meta'
+    schede a testa: 36 controlli sulle letture e 6 sulle scritture, compreso
+    l'attacco vero — aprire il proprio modulo di modifica, cambiare il numero
+    della scheda nel campo nascosto e salvare. Rifiutato, archivio intatto.
+
+    Attenzione a un tranello nelle prove: l'archivio ha
+    775 gruppi di omonimi, quindi cercare un nome e ritrovarlo non e' una
+    fuga. I controlli vanno fatti sul numero di telefono, che e' di una
+    persona sola.
 
 
 5 · COSA RESTA APERTO
@@ -144,6 +187,16 @@ Le cose costruite in questa sessione, in ordine
 
   Controllo giornaliero della PR #2
       Vedi capitolo 7.
+
+  Incroci fra colleghi
+      Da fare. E' il passo che da' senso alla separazione: quando un
+      acquirente di uno corrisponde all'immobile dell'altro, il programma
+      lo segnala. La scheda mostrata deve essere ridotta — niente nome ne'
+      telefono del cliente altrui, solo le caratteristiche e «richiesta di
+      <collega>» con un pulsante per contattare lui. Insieme a questo va
+      deciso cosa fare dei contatti in comune (oggi il rilevamento
+      doppioni non attraversa il muro) e delle richieste di cancellazione
+      GDPR, che vanno girate a voce.
 
 
 Fuori perimetro, in attesa di una sua decisione
@@ -239,5 +292,7 @@ lui.
   | Riprendo il gestionale di Mondo Immobiliare (crm/, ramo
   | claude/real-estate-client-management-app-xl7dnx, PR #2, online su
   | https://gestionale.mondoimmobiliarelecce.it). Ho letto HANDOFF.md,
-  | CONSEGNA.md e README.md. Resta da configurare l'SMTP per gli avvisi
-  | email e da inserire i dati dei venditori. Dimmi da dove ripartiamo.
+  | CONSEGNA.md e README.md. So che ogni collaboratore vede solo le proprie
+  | schede (capitolo 10-bis di CONSEGNA.md) e che il passo successivo sono gli
+  | incroci fra colleghi. Restano da configurare l'SMTP per gli avvisi email e
+  | da inserire i dati dei venditori. Dimmi da dove ripartiamo.

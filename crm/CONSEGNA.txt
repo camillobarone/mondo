@@ -6,7 +6,7 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-Aggiornato al 3 agosto 2026. Esiste anche come CONSEGNA.txt, stessa cosa
+Aggiornato al 5 agosto 2026. Esiste anche come CONSEGNA.txt, stessa cosa
 in testo semplice, da aprire con il Blocco note senza bisogno di niente.
 
   | Nessuna password è scritta qui, di proposito: questo file sta dentro il
@@ -318,6 +318,14 @@ aggiornamento non lo tocca.
   | con lui. Va portata fuori — su F:\Gestionale backup, una volta a settimana,
   | con il comando scp sopra.
 
+Il pulsante Scarica l'archivio che c'era nella pagina Utenti è stato
+tolto. Da quando ogni collaboratore vede solo le proprie schede, un file con
+dentro tutto l'archivio sarebbe la separazione aggirata con un clic. La copia si
+prende dal server, con lo scp del capitolo 6: è l'unica strada, ed è anche
+l'unica che porta via anche le foto.
+
+Chi vuole solo le proprie schede le esporta in CSV da Clienti e da Immobili.
+
 
 8 · L'ARCHIVIO DENTRO ADESSO
 ----------------------------
@@ -466,13 +474,64 @@ Escluso d'accordo, non dimenticato:
 - fatturazione
 
 
+10-BIS · LAVORARE IN DUE SENZA VEDERSI LE SCHEDE
+------------------------------------------------
+
+Ogni collaboratore vede soltanto la propria roba, e questo
+vale per tutti, titolare compreso. L'archivio è condiviso come edificio,
+non come contenuto.
+
+A decidere sono due campi soli: il referente del cliente (Seguito da) e
+l'agente di riferimento dell'immobile. Richieste, attività, proposte,
+valutazioni, foto e storico prezzi non hanno un padrone loro: seguono la scheda
+a cui sono attaccati.
+
+Il confine è lo stesso ovunque — elenchi, ricerca, incroci, agenda, cruscotto,
+report, esportazioni, foto, promemoria via email. Anche i conteggi: il
+numero in cima a un elenco è il numero di quell'elenco, mai quello
+dell'agenzia. Se fosse quello dell'agenzia, basterebbe cambiare i filtri per
+contare l'archivio del collega senza vederne una riga.
+
+Scrivere a mano l'indirizzo di una scheda altrui dà «non trovata», la stessa
+risposta di un numero inventato: un «non autorizzato» confermerebbe che quella
+scheda esiste.
+
+Quattro cose da sapere, perché si notano nell'uso:
+
+1. Un appuntamento può essere di uno e riguardare la scheda dell'altro — una
+   visita fatta insieme. Si vede, ma al posto del nome compare *«scheda di un
+   collega»*.
+2. Il rilevamento doppioni guarda solo il proprio archivio: se la stessa
+   persona è seguita da entrambi, nessuno viene avvisato. È voluto — un avviso
+   sarebbe già un modo per interrogare l'archivio altrui — ma va saputo.
+3. Per la stessa ragione, una richiesta di cancellazione GDPR va girata a
+   voce anche all'altro: ognuno cancella solo la propria copia.
+4. Il ruolo titolare non dà più accesso ai dati altrui: serve solo a creare
+   e disattivare gli utenti. Il registro accessi ce l'hanno tutti, ma
+   ciascuno vede soltanto le proprie mosse.
+
+⚠️ Il limite, detto chiaro. Questo separa gli sguardi dentro il programma,
+non l'accesso alla macchina. Chi ha le chiavi del server ha il file
+dell'archivio, e lì dentro c'è tutto; chi amministra gli utenti può anche
+cambiare la password di un altro. Se serve una separazione che regga fra due
+persone che non si fidano l'una dell'altra, la strada sono
+due installazioni distinte che si parlano solo per gli incroci.
+
+Se invece siete due soggetti giuridici diversi che condividono lo stesso
+archivio, dal punto di vista privacy siete contitolari del trattamento e
+serve un accordo scritto (art. 26 GDPR). Se il collaboratore è un incaricato
+dello Studio, resta tutto in capo al titolare ed è molto più semplice.
+
+
 11 · PRIVACY E ADEMPIMENTI
 --------------------------
 
 - consenso privacy con data e ambito, su ogni scheda cliente
 - adeguata verifica antiriciclaggio (D.lgs 231/2007): tipo e numero
   documento, scadenza, data del controllo
-- registro accessi: chi ha fatto cosa e quando
+- registro accessi: cosa è stato fatto e quando — ognuno vede il proprio
+- separazione fra collaboratori: ognuno accede soltanto alle schede di cui è
+  referente (capitolo 10-bis)
 - cancellazione logica: i clienti eliminati restano nell'archivio con la
   data di cancellazione, non spariscono
 - l'accordo art. 28 GDPR con Aruba va tenuto agli atti

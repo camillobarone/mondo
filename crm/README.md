@@ -160,11 +160,14 @@ compreso. Massimo 30 foto per immobile, 25 MB per foto.
 
 Tutto il programma vive in **un solo file**: `data/mondo.db`.
 
-**La strada semplice, dal browser:** il titolare trova in **Utenti** il
-pulsante *Scarica l'archivio*. Fa una copia coerente (anche mentre qualcuno
-lavora) e la scarica sul computer: salvala sul disco esterno, una volta a
-settimana. Lo scaricamento finisce nel registro accessi. Le foto non sono
-comprese — quelle viaggiano con la copia notturna sul server.
+Il pulsante *Scarica l'archivio* che stava in **Utenti** non c'è più. Da quando
+ognuno vede solo le proprie schede, un file con dentro l'intero archivio sarebbe
+la separazione aggirata con un clic: chi lo scarica si porta sul computer anche
+i clienti dei colleghi. La copia si prende dal server, dove l'archivio sta già
+tutto insieme (vedi il comando qui sotto).
+
+Chi vuole portarsi via **le proprie** schede lo fa da *Clienti* e da *Immobili*,
+con il pulsante *Esporta*: escono in CSV, apribili con Excel.
 
 ```bash
 npm run backup       # crea una copia in backup/, coerente anche a programma acceso
@@ -379,14 +382,47 @@ passaggio successivo, e cambia poco del programma: sposta soltanto dove gira.
 
 ## Chi vede cosa
 
-Due ruoli:
+**Ognuno vede soltanto le proprie schede.** Vale per tutti, titolare compreso:
+l'archivio è condiviso come edificio, non come contenuto. Due colleghi possono
+lavorare sullo stesso programma senza che nessuno dei due veda i clienti
+dell'altro.
 
-- **Titolare** — vede tutto, comprese le provvigioni, la gestione degli utenti e
-  il registro accessi.
-- **Collaboratore** — vede clienti, immobili, richieste e agenda; non vede
-  provvigioni né registro.
+A decidere di chi è una scheda sono due campi soli:
+
+| Cosa | Chi la vede |
+|---|---|
+| Cliente | il suo **referente** (campo *Seguito da*) |
+| Immobile | il suo **agente di riferimento** |
+| Richieste, attività, proposte, valutazioni, foto, storico prezzi | chi vede il cliente o l'immobile a cui sono attaccate |
+
+Conseguenze pratiche, da conoscere prima di aggiungere un collega:
+
+- Elenchi, ricerca, incroci, agenda, cruscotto, report ed esportazioni si
+  fermano tutti allo stesso confine. Anche i **conteggi**: il numero in cima a
+  un elenco è sempre il numero di quell'elenco, mai quello dell'agenzia.
+- Scrivere a mano l'indirizzo della scheda di un collega (`/clienti/412`) dà
+  «non trovata», la stessa risposta di un numero inventato.
+- Un appuntamento può essere di uno e riguardare la scheda dell'altro — una
+  visita fatta insieme. In quel caso l'appuntamento si vede, ma al posto del
+  nome compare *«scheda di un collega»*.
+- Il **rilevamento doppioni** guarda solo il proprio archivio. Se la stessa
+  persona è seguita da tutti e due, il programma non lo segnala: per ora è una
+  cosa che si scopre parlandosi.
+- Anche una **richiesta di cancellazione** (GDPR) va girata a voce all'altro,
+  perché ognuno cancella solo la propria copia.
+
+Il ruolo **titolare** non dà più accesso ai dati altrui. Serve solo ad
+amministrare il programma: creare e disattivare gli utenti. Il **registro
+accessi** invece adesso ce l'hanno tutti, ma ognuno vede soltanto le proprie
+mosse.
 
 Gli utenti si creano da **Utenti** (solo il titolare).
+
+⚠️ Una cosa da sapere con chiarezza: questo separa gli sguardi dentro il
+programma, non l'accesso alla macchina. **Chi ha le chiavi del server ha il file
+dell'archivio**, e in quel file c'è tutto. Se serve una separazione che regga
+anche fra chi non si fida, la strada sono due installazioni distinte che si
+parlano solo per gli incroci.
 
 ---
 
@@ -399,8 +435,9 @@ Gli utenti si creano da **Utenti** (solo il titolare).
 - Il **registro accessi** conserva chi ha creato, modificato, eliminato o
   esportato dati, con data e ora.
 - L'eliminazione di un cliente è *logica*: la scheda sparisce dagli elenchi ma
-  resta tracciata. La cancellazione definitiva su richiesta dell'interessato è
-  riservata al titolare.
+  resta tracciata. La cancellazione definitiva su richiesta dell'interessato la
+  esegue chi ha quel contatto in carico — e va girata anche agli altri
+  collaboratori, perché ognuno cancella solo la propria copia.
 
 I dati non escono mai dal computer o dal server su cui gira il programma: non ci
 sono servizi esterni coinvolti.
