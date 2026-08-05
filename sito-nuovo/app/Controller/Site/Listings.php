@@ -99,6 +99,9 @@ final class Listings
         $pageUrl = Seo::base() . '/immobili/' . $property['slug'] . '/';
 
         $description = (string) ($property['seo_description'] ?: tronca((string) $property['description'], 155));
+        if (mb_strlen($description) < 70) {
+            $description = self::descrizioneDiScorta($property, $description);
+        }
 
         // Un immobile venduto resta online per la storia, ma fuori dall'indice;
         // l'anteprima non deve finirci nemmeno per sbaglio.
@@ -131,6 +134,60 @@ final class Listings
                 'contract' => $property['contract'],
             ], 1, 4)['items'],
         ]);
+    }
+
+    /**
+     * La descrizione per i motori quando l'annuncio non ne ha una scritta.
+     *
+     * Le schede senza testo uscivano con una meta description lunga quanto il
+     * titolo — ventisette, ventotto caratteri — e sotto i cinquanta Google la
+     * butta via e se ne scrive una sua, pescando la prima riga che trova.
+     * Tanto vale dirgli noi le cose che chi cerca casa vuole sapere prima di
+     * aprire: dove, quanto è grande, quante stanze, a che prezzo.
+     *
+     * Non si inventa niente: si mettono in fila i dati della scheda, e quelli
+     * che mancano non compaiono.
+     *
+     * @param array<string,mixed> $property
+     */
+    private static function descrizioneDiScorta(array $property, string $attuale): string
+    {
+        $dove = trim((string) $property['city']);
+        if (($property['area'] ?? '') !== '') {
+            $dove .= ', ' . trim((string) $property['area']);
+        }
+
+        $pezzi = [rtrim(Vocab::label('type', (string) $property['type']), '.') . ' in vendita a ' . $dove];
+
+        $dettagli = [];
+        if ((int) $property['sqm'] > 0) {
+            $dettagli[] = (int) $property['sqm'] . ' m²';
+        }
+        if ((int) $property['rooms'] > 0) {
+            $dettagli[] = (int) $property['rooms'] . ' vani';
+        }
+        if ((int) $property['bedrooms'] > 0) {
+            $dettagli[] = (int) $property['bedrooms'] . ' camere';
+        }
+        if (($property['energy_class'] ?? '') !== '') {
+            $dettagli[] = 'classe ' . $property['energy_class'];
+        }
+        if ($dettagli !== []) {
+            $pezzi[] = implode(', ', $dettagli);
+        }
+
+        $pezzi[] = (int) $property['price_hidden'] === 1 || ($property['price'] ?? null) === null
+            ? 'Prezzo su richiesta'
+            : euro((float) $property['price']);
+
+        // Quel poco di testo che c'era resta in coda, se ci sta.
+        $testa = implode('. ', $pezzi) . '.';
+        $attuale = trim($attuale);
+        if ($attuale !== '' && mb_strlen($testa . ' ' . $attuale) <= 160) {
+            return $testa . ' ' . $attuale;
+        }
+
+        return $testa;
     }
 
     /**

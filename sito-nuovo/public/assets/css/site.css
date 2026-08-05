@@ -651,3 +651,7 @@ img { max-width: 100%; height: auto; display: block; }
   border-top: 1px solid rgba(255,255,255,.14); margin-top: 34px; padding-top: 18px; font-size: .85rem;
 }
 .foot-bottom p { margin: 0; }
+/* Privacy, cookie e area riservata sulla stessa riga: `gap` invece di un
+   separatore scritto a mano, perché il numero di voci cambia — finché
+   l'informativa non è stata scritta ce n'è una sola. */
+.foot-legale { display: flex; flex-wrap: wrap; gap: 8px 20px; }

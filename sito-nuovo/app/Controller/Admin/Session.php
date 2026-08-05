@@ -24,13 +24,28 @@ final class Session
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             Csrf::check();
             $email = (string) ($_POST['email'] ?? '');
+            $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+
+            // Troppi errori di fila: non si prova nemmeno. Prima l'unica
+            // difesa era l'attesa di tre decimi di secondo qui sotto, cioè
+            // circa tre password al secondo per sempre.
+            if (Auth::bloccato($ip, $email)) {
+                $minuti = Auth::minutiRimasti($ip, $email);
+                $error = 'Troppi tentativi. Riprova fra ' . $minuti
+                    . ($minuti === 1 ? ' minuto' : ' minuti') . '.';
+                View::show('admin/login', ['error' => $error], 'layout/vuoto');
+                return;
+            }
 
             if (Auth::attempt($email, (string) ($_POST['password'] ?? ''))) {
+                Auth::azzeraFalliti($ip, $email);
                 Log::write('login', 'user', Auth::id());
                 $after = Sess::get('_after_login');
                 Sess::forget('_after_login');
                 Router::redirect(is_string($after) ? $after : '/gestionale/');
             }
+
+            Auth::segnaFallito($ip, $email);
 
             // Messaggio identico per email inesistente e password errata:
             // non si regala l'informazione su quali account esistono.

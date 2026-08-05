@@ -34,4 +34,12 @@
   ExpiresByType image/webp "access plus 1 year"
   ExpiresByType image/jpeg "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+
+  # Il carattere tipografico e il file piu pesante servito dal sito: 38 KB,
+  # piu di tutto il resto messo insieme. Mancava dall'elenco, quindi veniva
+  # riscaricato di continuo. L'indirizzo porta gia il ?v= che cambia quando
+  # cambia il file, percio tenerlo un anno non rischia di servirne uno vecchio.
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/font-woff2 "access plus 1 year"
 </IfModule>

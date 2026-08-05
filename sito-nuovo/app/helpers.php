@@ -58,7 +58,10 @@ function srcset_url(string $srcset): string
 function favicon_svg(): string
 {
     $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
-        . '<rect width="32" height="32" rx="7" fill="#16202b"/>'
+        // `--scuro` della palette. Prima era #16202b, un blu-grigio freddo
+        // rimasto da una versione precedente: era l'unico colore del sito
+        // fuori dalla scala calda, e si vedeva accostato al resto.
+        . '<rect width="32" height="32" rx="7" fill="#2c2a24"/>'
         . '<path d="M5 15.6 16 6.4l11 9.2v1.9h-2.6V26h-5.6v-6.6h-5.6V26H7.6v-8.5H5z" fill="#a8642a"/>'
         . '</svg>';
 

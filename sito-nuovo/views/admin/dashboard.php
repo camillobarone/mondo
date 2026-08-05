@@ -101,6 +101,18 @@ use Mil\Core\Vocab;
 
   <section class="pannello">
     <h2>Adempimenti da completare</h2>
+
+    <?php /* Le pagine che devono esistere per legge. Finché non ci sono, il
+             piè di pagina non le nomina — meglio nessun collegamento che uno
+             che porta a un 404 — ma qui lo si dice, altrimenti la mancanza
+             non la vede nessuno. */ ?>
+    <?php $legaliMancanti = Mil\Core\Legali::mancanti(); ?>
+    <?php if ($legaliMancanti !== []): ?>
+      <p class="muto">Manca sul sito: <strong><?= e(implode(', ', $legaliMancanti)) ?></strong>.
+        Finché non sono pubblicate non compaiono nel piè di pagina, e il modulo
+        di contatto raccoglie dati senza informativa raggiungibile.</p>
+    <?php endif; ?>
+
     <?php if ($adempimenti === []): ?>
       <p class="vuoto">Privacy e identificazione a posto su tutti i clienti attivi.</p>
     <?php else: ?>

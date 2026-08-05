@@ -10,13 +10,34 @@ use Mil\Core\Session;
 use Mil\Core\Settings;
 
 $flash = Session::takeFlash();
+
+/* Il nome dell'agenzia in coda al titolo, ma solo se ci sta.
+   `Pages::meta()` taglia il titolo a 60 caratteri, che è il limite oltre il
+   quale Google lo riscrive da sé; poi qui si aggiungevano sempre altri 26
+   caratteri di « — Mondo Immobiliare Lecce», e ogni pagina del sito usciva
+   fra i 67 e i 79. Il taglio a monte non serviva a niente.
+   Chi ha un titolo già lungo tiene il suo e basta: dice più il titolo che il
+   nome dell'agenzia ripetuto, che comunque sta nel dominio e nello snippet. */
+$titoloPagina = (string) $meta['title'];
+$titoloCompleto = $titoloPagina;
+
+/* Si prova prima la firma per esteso, poi quella corta, poi si rinuncia:
+   sei caratteri di differenza fanno rientrare una pagina che altrimenti
+   uscirebbe senza marchio del tutto. */
+foreach ([(string) Settings::get('site_name', 'Mondo Immobiliare Lecce'), 'Mondo Immobiliare'] as $firma) {
+    $conFirma = $titoloPagina . ' — ' . $firma;
+    if (mb_strlen($conFirma) <= 60) {
+        $titoloCompleto = $conFirma;
+        break;
+    }
+}
 ?>
 <!doctype html>
 <html lang="it">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($meta['title']) ?> — <?= e(Settings::get('site_name', 'Mondo Immobiliare Lecce')) ?></title>
+<title><?= e($titoloCompleto) ?></title>
 <?php if ($meta['description'] !== ''): ?>
 <meta name="description" content="<?= e($meta['description']) ?>">
 <?php endif; ?>
@@ -132,7 +153,18 @@ $flash = Session::takeFlash();
   </div>
   <div class="wrap foot-bottom">
     <p>© <?= date('Y') ?> Studio RCS Srls</p>
-    <p><a href="<?= e(url('/gestionale/')) ?>" rel="nofollow">Area riservata</a></p>
+    <?php /* Informativa e cookie policy: un modulo che raccoglie nome,
+             telefono ed email deve avere l'informativa raggiungibile da ogni
+             pagina, non una frase discorsiva sotto al bottone.
+             Il collegamento compare solo quando la pagina c'è davvero:
+             finché non è stata scritta, un rimando a un 404 sarebbe peggio
+             del rimando mancante. */ ?>
+    <p class="foot-legale">
+      <?php foreach (Mil\Core\Legali::presenti() as $slug => $etichetta): ?>
+        <a href="<?= e(url('/' . $slug . '/')) ?>"><?= e($etichetta) ?></a>
+      <?php endforeach; ?>
+      <a href="<?= e(url('/gestionale/')) ?>" rel="nofollow">Area riservata</a>
+    </p>
   </div>
 </footer>
 </body>

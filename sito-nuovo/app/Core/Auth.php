@@ -6,8 +6,84 @@ namespace Mil\Core;
 
 final class Auth
 {
+    /** Quanti errori si perdonano prima di chiudere la porta. */
+    private const TENTATIVI_MAX = 8;
+
+    /** Per quanti minuti resta chiusa, e su quale finestra si contano gli errori. */
+    private const MINUTI_BLOCCO = 15;
+
     /** @var array<string,mixed>|null */
     private static ?array $user = null;
+
+    /**
+     * La porta è chiusa per troppi errori recenti?
+     *
+     * Si guardano insieme l'indirizzo di rete e l'email provata: contare solo
+     * l'email lascerebbe a chiunque il modo di chiudere fuori un collega
+     * sbagliandogli la password otto volte di fila.
+     */
+    public static function bloccato(string $ip, string $email): bool
+    {
+        self::dimenticaVecchi();
+
+        $da = date('Y-m-d H:i:s', time() - self::MINUTI_BLOCCO * 60);
+
+        $quanti = (int) Db::value(
+            'SELECT COUNT(*) FROM accessi_falliti
+             WHERE created_at >= :da AND (ip = :ip OR email = :e)',
+            ['da' => $da, 'ip' => $ip, 'e' => mb_strtolower(trim($email))]
+        );
+
+        return $quanti >= self::TENTATIVI_MAX;
+    }
+
+    /** Quanti minuti mancano alla riapertura, almeno uno. */
+    public static function minutiRimasti(string $ip, string $email): int
+    {
+        $ultimo = Db::value(
+            'SELECT MAX(created_at) FROM accessi_falliti WHERE ip = :ip OR email = :e',
+            ['ip' => $ip, 'e' => mb_strtolower(trim($email))]
+        );
+
+        if ($ultimo === null) {
+            return self::MINUTI_BLOCCO;
+        }
+
+        $passati = (int) floor((time() - strtotime((string) $ultimo)) / 60);
+
+        return max(1, self::MINUTI_BLOCCO - $passati);
+    }
+
+    /** Segna un tentativo andato male. */
+    public static function segnaFallito(string $ip, string $email): void
+    {
+        Db::insert('accessi_falliti', [
+            'ip' => mb_substr($ip, 0, 45),
+            'email' => mb_substr(mb_strtolower(trim($email)), 0, 191),
+            'created_at' => Db::now(),
+        ]);
+    }
+
+    /** Chi è entrato riparte pulito: gli errori di prima non contano più. */
+    public static function azzeraFalliti(string $ip, string $email): void
+    {
+        Db::run(
+            'DELETE FROM accessi_falliti WHERE ip = :ip OR email = :e',
+            ['ip' => $ip, 'e' => mb_strtolower(trim($email))]
+        );
+    }
+
+    /**
+     * Via le righe più vecchie della finestra. Si fa qui, a ogni controllo,
+     * così non serve nessun lavoro pianificato e la tabella resta corta.
+     */
+    private static function dimenticaVecchi(): void
+    {
+        Db::run(
+            'DELETE FROM accessi_falliti WHERE created_at < :da',
+            ['da' => date('Y-m-d H:i:s', time() - self::MINUTI_BLOCCO * 60)]
+        );
+    }
 
     public static function attempt(string $email, string $password): bool
     {

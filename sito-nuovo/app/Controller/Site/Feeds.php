@@ -18,13 +18,27 @@ final class Feeds
         header('Content-Type: application/xml; charset=UTF-8');
 
         $base = rtrim(Seo::base(), '/');
+
+        // Le sei pagine costruite dal codice avevano tutte `lastmod` uguale a
+        // oggi, ricalcolato a ogni lettura: una data che si sposta da sola
+        // ogni giorno senza che il contenuto cambi. Un motore che se ne
+        // accorge smette di fidarsi del `lastmod` dell'intera sitemap, e a
+        // quel punto la data non la guarda più nemmeno dove è vera.
+        //
+        // Home ed elenco cambiano quando cambiano gli immobili; il blog
+        // quando esce un articolo. Per le tre pagine che il codice disegna
+        // sempre uguali non c'è una data onesta da dare, e allora `lastmod`
+        // si omette: è facoltativo, e tacere vale più che dire il falso.
+        $immobili = self::ultimaModifica('properties', "status IN ('published','reserved')");
+        $articoli = self::ultimaModifica('posts', "status = 'published'");
+
         $urls = [
-            ['loc' => $base . '/', 'priority' => '1.0', 'lastmod' => date('Y-m-d')],
-            ['loc' => $base . '/immobili/', 'priority' => '0.9', 'lastmod' => date('Y-m-d')],
-            ['loc' => $base . '/valutazione-gratuita/', 'priority' => '0.9', 'lastmod' => date('Y-m-d')],
-            ['loc' => $base . '/calcolatore-imposte-acquisto-casa/', 'priority' => '0.7', 'lastmod' => date('Y-m-d')],
-            ['loc' => $base . '/blog/', 'priority' => '0.7', 'lastmod' => date('Y-m-d')],
-            ['loc' => $base . '/contatti/', 'priority' => '0.6', 'lastmod' => date('Y-m-d')],
+            ['loc' => $base . '/', 'priority' => '1.0', 'lastmod' => $immobili],
+            ['loc' => $base . '/immobili/', 'priority' => '0.9', 'lastmod' => $immobili],
+            ['loc' => $base . '/valutazione-gratuita/', 'priority' => '0.9', 'lastmod' => ''],
+            ['loc' => $base . '/calcolatore-imposte-acquisto-casa/', 'priority' => '0.7', 'lastmod' => ''],
+            ['loc' => $base . '/blog/', 'priority' => '0.7', 'lastmod' => $articoli],
+            ['loc' => $base . '/contatti/', 'priority' => '0.6', 'lastmod' => ''],
         ];
 
         // Gli immobili venduti restano online ma fuori dalla sitemap:
@@ -60,11 +74,26 @@ final class Feeds
         foreach ($urls as $url) {
             echo "  <url>\n";
             echo '    <loc>' . e($url['loc']) . "</loc>\n";
-            echo '    <lastmod>' . e($url['lastmod']) . "</lastmod>\n";
+            if ($url['lastmod'] !== '') {
+                echo '    <lastmod>' . e($url['lastmod']) . "</lastmod>\n";
+            }
             echo '    <priority>' . e($url['priority']) . "</priority>\n";
             echo "  </url>\n";
         }
         echo '</urlset>';
+    }
+
+    /**
+     * La data dell'ultima modifica vera in una tabella, o stringa vuota se
+     * non c'è ancora niente da datare.
+     */
+    private static function ultimaModifica(string $tabella, string $dove): string
+    {
+        $valore = Db::value(
+            "SELECT MAX(COALESCE(updated_at, published_at, created_at)) FROM {$tabella} WHERE {$dove}"
+        );
+
+        return $valore === null ? '' : substr((string) $valore, 0, 10);
     }
 
     /**

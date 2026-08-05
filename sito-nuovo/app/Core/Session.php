@@ -6,11 +6,47 @@ namespace Mil\Core;
 
 final class Session
 {
+    /** Il nome del cookie: serve anche per sapere se una sessione esiste già. */
+    private const COOKIE = 'milsess';
+
+    /**
+     * La sessione si apre solo a chi serve.
+     *
+     * Prima si apriva a chiunque, e costava due cose a ogni visitatore che
+     * non avrebbe mai fatto il login: un cookie che non gli serviva, e —
+     * più caro — l'intestazione `Cache-Control: no-store` che PHP mette da
+     * sé quando una sessione è attiva. Con quella nessuna pagina del sito
+     * poteva essere conservata da nessuno: né dal browser, né dal tasto
+     * «indietro», né da un eventuale servizio davanti al sito. Su un sito
+     * senza una riga di JavaScript, fatto apposta per essere leggero, era
+     * la parte facile del guadagno buttata via.
+     *
+     * Serve in tre casi, e sono tutti riconoscibili prima di aprirla:
+     *  - il gestionale, dove c'è qualcuno collegato;
+     *  - una POST, cioè l'invio di un modulo, che lascia il messaggio da
+     *    mostrare nella pagina dopo;
+     *  - una richiesta che porta già il cookie, che è come torna indietro
+     *    quel messaggio dopo il rinvio.
+     */
+    public static function avviaSeServe(string $path, string $method): void
+    {
+        if (
+            str_starts_with($path, '/gestionale')
+            || $method === 'POST'
+            || isset($_COOKIE[self::COOKIE])
+        ) {
+            self::start();
+        }
+    }
+
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE || PHP_SAPI === 'cli') {
             return;
         }
+        // Le intestazioni di cache le decide il front controller, non PHP:
+        // senza questa riga arriva comunque il suo `no-store` d'ufficio.
+        session_cache_limiter('');
         session_set_cookie_params([
             'lifetime' => 0,
             'path' => '/',
@@ -19,7 +55,7 @@ final class Session
             'secure' => ($_SERVER['HTTPS'] ?? '') === 'on'
                 || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https',
         ]);
-        session_name('milsess');
+        session_name(self::COOKIE);
         session_start();
     }
 

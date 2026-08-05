@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Mil\Core;
 
+use Mil\Repo\Content;
+
 /**
  * Costruzione del JSON-LD secondo le regole del progetto Mondo Immobiliare.
  *
@@ -137,6 +139,32 @@ final class Seo
                 'latitude' => 40.35834,
                 'longitude' => 18.18184,
             ],
+            // Gli orari erano scritti in chiaro nel piè di pagina e in nessun
+            // altro posto: chi legge la pagina li vedeva, chi legge i dati
+            // no. Sono i due turni veri, non un orario continuato inventato
+            // per far prima.
+            'openingHoursSpecification' => [
+                [
+                    '@type' => 'OpeningHoursSpecification',
+                    'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                    'opens' => '09:00',
+                    'closes' => '13:00',
+                ],
+                [
+                    '@type' => 'OpeningHoursSpecification',
+                    'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                    'opens' => '16:30',
+                    'closes' => '19:00',
+                ],
+            ],
+            // Dove lavora davvero l'agenzia. Non «Puglia»: il Salento è un
+            // mercato suo, e un'agenzia che dichiara mezza regione dice a chi
+            // legge che non è di nessun posto in particolare.
+            'areaServed' => [
+                ['@type' => 'City', 'name' => 'Lecce'],
+                ['@type' => 'City', 'name' => 'Porto Cesareo'],
+                ['@type' => 'AdministrativeArea', 'name' => 'Provincia di Lecce'],
+            ],
             'contactPoint' => [
                 [
                     '@type' => 'ContactPoint',
@@ -170,17 +198,19 @@ final class Seo
         ];
     }
 
+    /** L'indirizzo della pagina dedicata alla sede di Porto Cesareo. */
+    public const PAGINA_PORTO_CESAREO = 'agenzia-immobiliare-porto-cesareo';
+
     /** Filiale di Porto Cesareo, collegata alla casa madre. @return array<string,mixed> */
     public static function agentPortoCesareoNode(): array
     {
         $base = self::base();
 
-        return [
+        $nodo = [
             '@type' => 'RealEstateAgent',
             '@id' => $base . '/#agent-portocesareo',
             'name' => 'Mondo Immobiliare — Porto Cesareo',
             'parentOrganization' => ['@id' => $base . '/#agent'],
-            'url' => $base . '/agenzia-immobiliare-porto-cesareo/',
             'logo' => ['@id' => $base . '/#logo'],
             'priceRange' => '€€',
             'address' => [
@@ -203,6 +233,16 @@ final class Seo
                 'name' => 'Stefano My',
             ]],
         ];
+
+        // `url` solo se la pagina della sede esiste davvero. Era scritto fisso,
+        // e siccome quella pagina è ancora fra quelle da ricreare, i dati
+        // strutturati di ogni pagina del sito rimandavano a un 404 — proprio
+        // il nodo che dovrebbe dire a un motore dove trovare la seconda sede.
+        if (Content::pagePubblicata(self::PAGINA_PORTO_CESAREO)) {
+            $nodo['url'] = $base . '/' . self::PAGINA_PORTO_CESAREO . '/';
+        }
+
+        return $nodo;
     }
 
     /** @return array<string,mixed> */

@@ -439,8 +439,14 @@ final class Pages
         if ($image === '') {
             $image = trim((string) Settings::get('logo_url', ''));
         }
+        // Ultimo ripiego: l'immagine di cortesia che sta nel progetto. Prima
+        // qui si tornava indietro a mani vuote, e siccome `logo_url` nelle
+        // impostazioni è vuoto finché qualcuno non lo compila, in pratica
+        // ogni pagina che non fosse una scheda immobile veniva incollata in
+        // chat senza anteprima. È larga 1200×630, la misura che vogliono
+        // WhatsApp e Facebook: un logo quadrato lì viene ritagliato male.
         if ($image === '') {
-            return '';
+            $image = '/assets/img/social-1200x630.png';
         }
 
         return str_starts_with($image, 'http') ? $image : url($image);

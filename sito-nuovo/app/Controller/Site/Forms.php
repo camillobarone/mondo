@@ -35,8 +35,12 @@ final class Forms
         }
 
         // 2. Tempo minimo: un umano non compila un modulo in meno di 3 secondi.
+        //
+        // Il campo deve esserci: prima il controllo saltava quando mancava, e
+        // bastava non spedirlo per non essere mai troppo veloce. Chi compila
+        // il modulo dalla pagina ce l'ha sempre, perché lo scrive il modello.
         $started = (int) ($_POST['ts'] ?? 0);
-        if ($started > 0 && (time() - $started) < self::MIN_SECONDS) {
+        if ($started <= 0 || (time() - $started) < self::MIN_SECONDS) {
             Router::redirect($back . '?inviato=1');
         }
 
@@ -138,6 +142,15 @@ final class Forms
 
         $path = parse_url($referer, PHP_URL_PATH);
 
-        return is_string($path) && $path !== '' ? $path : '/contatti/';
+        // Un percorso che comincia con due barre non è un percorso: messo
+        // dentro un `Location:` il browser lo legge come un altro sito e ci
+        // va. Serve un indirizzo strano del nostro stesso dominio per
+        // arrivarci, quindi è più teoria che pratica — ma si chiude qui in
+        // una riga invece di lasciarlo aperto.
+        if (!is_string($path) || $path === '' || str_starts_with($path, '//')) {
+            return '/contatti/';
+        }
+
+        return $path;
     }
 }

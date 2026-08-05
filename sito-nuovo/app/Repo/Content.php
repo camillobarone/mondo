@@ -85,6 +85,30 @@ final class Content
         return Db::one('SELECT * FROM pages WHERE slug = :s', ['s' => $slug]);
     }
 
+    /**
+     * Esiste una pagina pubblicata con questo indirizzo?
+     *
+     * Serve dove il codice nomina una pagina che deve ancora essere scritta —
+     * il piè di pagina che rimanda all'informativa, lo schema che rimanda alla
+     * sede di Porto Cesareo. Senza questo controllo si pubblicano collegamenti
+     * che portano a un 404, che è peggio del collegamento mancante: chi lo
+     * segue si trova davanti a un errore, e chi legge lo schema si porta via
+     * un indirizzo che non risponde.
+     *
+     * L'elenco si legge una volta sola per richiesta: sono poche decine di
+     * righe e le pagine che lo interrogano lo fanno più volte a testa.
+     */
+    public static function pagePubblicata(string $slug): bool
+    {
+        static $slugs = null;
+
+        if ($slugs === null) {
+            $slugs = array_column(Db::all("SELECT slug FROM pages WHERE status = 'published'"), 'slug');
+        }
+
+        return in_array($slug, $slugs, true);
+    }
+
     /** @return array<string,mixed>|null */
     public static function page(int $id): ?array
     {
