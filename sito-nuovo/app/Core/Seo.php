@@ -511,9 +511,19 @@ final class Seo
      * Ripulisce un valore prima di metterlo nel JSON-LD: i valori sono testo,
      * non HTML — un "&amp;" resterebbe letterale nell'output letto da Google.
      */
+    /**
+     * Testo pulito per i dati strutturati.
+     *
+     * Passa da Testo::piano() perché i contenuti si scrivono in chat e si
+     * incollano nel gestionale con i segni del markdown: senza questo, un
+     * sommario che comincia con «## » finiva tale e quale dentro il JSON-LD,
+     * dove non significa niente e si legge male. È lo stesso motivo per cui
+     * ci passa già tronca(); qui mancava, e l'occhiello dell'articolo — che
+     * non viene troncato — ci scivolava dentro intatto.
+     */
     public static function text(string $value): string
     {
-        $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = html_entity_decode(strip_tags(Testo::piano($value)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return trim(preg_replace('/\s+/', ' ', $value) ?? '');
     }
 

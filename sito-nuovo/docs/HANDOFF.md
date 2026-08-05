@@ -197,6 +197,32 @@ Conseguenza da ricordare: articoli e pagine abitano lo stesso spazio di nomi.
 quelli su cui risponde già una rotta fissa (elenco in `Content::RISERVATI`). Chi
 aggiunge una rotta pubblica nuova alla radice deve aggiungerla anche lì.
 
+### La scala dei titoli — regola da rispettare nelle viste nuove
+Un solo `h1` per pagina, ed è il titolo della pagina (`.pagina-titolo`, o
+l'`h1` dentro `.scheda-head` per l'immobile). Sotto, i titoli di sezione sono
+`h2.titolo-sezione`; sotto ancora `h3`. Le classi servono solo a tenere il
+corpo che avevano prima: **la misura non dice il livello**, e non va usata per
+sceglierlo. `Core\Testo` segue la stessa scala: `#`/`##` diventano `h2`, il
+resto `h3`.
+
+Attenzione a `site/_card`: sta in tre pagine a due profondità diverse e riceve
+il livello da chi la include (`'livello' => 2` solo nell'elenco immobili, dove
+le schede stanno subito sotto l'`h1`). Saltare un gradino fa perdere il filo a
+chi si muove fra i titoli con lo screen reader, ed è l'unico rilievo che
+Lighthouse dava sull'accessibilità.
+
+### `llms.txt`
+`/llms.txt`, generato dal database come la sitemap: identità dell'agenzia,
+sedi, pagine principali, immobili online e articoli, in Markdown pulito.
+Serve ai modelli linguistici, che leggendo l'HTML spenderebbero gran parte
+del contesto su menù e impalcatura. Non è uno standard riconosciuto da
+Google e potrebbe non servire a niente: costa trenta righe e non toglie
+nulla al resto. I dati dell'agenzia si leggono da `Seo::agentNode()`, non
+sono ricopiati — così non possono divergere dal JSON-LD.
+
+In `robots.txt` **non** va messa una riga `LLM-Content:`: i validatori la
+contano come direttiva sconosciuta e bocciano il file intero.
+
 ### Gestionale
 Riepilogo, immobili con doppio stato (pubblicazione e trattativa), incarichi
 con scadenza, prezzo minimo riservato, storico prezzi, proposte d'acquisto,
@@ -398,10 +424,9 @@ Cosa manca davvero (verificato il 4 agosto, sera):
   Il censimento è fatto (`CENSIMENTO-URL.md`): 34 immobili e 56 articoli non
   hanno bisogno di niente, restano identici. Restano da decidere le 46 pagine di
   contenuto — che vanno prima ricreate — e le 25 pagine-residuo del tema.
-- **Manca l'`h1` in quasi tutte le pagine**: ce l'hanno solo la home e il
-  calcolatore. Elenco immobili, scheda immobile, blog, articolo, pagina
-  statica, contatti e valutazione aprono con un `<h2 class="pagina-titolo">`.
-  Non è un errore che blocca, ma è un segnale strutturale regalato.
+- Il `sameAs` dell'autore singolo: il nodo `Person` di un articolo eredita
+  l'aggancio a Wikidata da `worksFor` → `#agent`, ma non ha un proprio
+  collegamento a un profilo pubblico. Servirebbe una colonna in `users`.
 
 Fatti, non più mancanti: video e visita virtuale (colonne, campi, importazione,
 pulsanti sulla scheda, `VideoObject` nel JSON-LD), calcolatore delle imposte,

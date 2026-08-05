@@ -6,12 +6,20 @@
  *                   la piega, e caricarla subito accorcia l'LCP. Le altre
  *                   restano pigre, altrimenti si scaricano foto che nessuno
  *                   guarderà mai.
+ * @var int $livello livello del titolo della scheda. Nell'elenco degli
+ *                   immobili le schede stanno subito sotto l'`h1` della
+ *                   pagina e vogliono un `h2`; in home e in fondo alla
+ *                   scheda di un immobile stanno sotto un titolo di sezione
+ *                   e allora devono essere `h3`. La scaletta dei titoli non
+ *                   può saltare gradini, e la stessa scheda finisce in due
+ *                   posti diversi: il livello lo decide chi la include.
  */
 
 use Mil\Core\Assets;
 use Mil\Core\Vocab;
 
 $eager ??= false;
+$livello = (int) ($livello ?? 3);
 $prezzo = (int) ($p['price_hidden'] ?? 0) === 1
     ? 'Trattativa riservata'
     : euro(isset($p['price']) ? (float) $p['price'] : null);
@@ -43,7 +51,7 @@ $srcset = (string) ($p['cover_srcset'] ?? '');
 
   <div class="card-body">
     <p class="card-kicker"><?= e(Vocab::label('type', (string) $p['type'])) ?> · <?= e((string) $p['city']) ?><?= $p['area'] !== '' ? ', ' . e((string) $p['area']) : '' ?></p>
-    <h3 class="card-title"><a href="<?= e(url('/immobili/' . $p['slug'] . '/')) ?>"><?= e((string) $p['title']) ?></a></h3>
+    <h<?= $livello ?> class="card-title"><a href="<?= e(url('/immobili/' . $p['slug'] . '/')) ?>"><?= e((string) $p['title']) ?></a></h<?= $livello ?>>
     <p class="card-price"><?= e($prezzo) ?></p>
     <ul class="card-specs">
       <?php if ((int) $p['sqm'] > 0): ?><li><?= (int) $p['sqm'] ?> mq</li><?php endif; ?>

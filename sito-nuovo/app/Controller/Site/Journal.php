@@ -80,18 +80,33 @@ final class Journal
         $graph = [Seo::logoNode(), Seo::agentNode()];
 
         // L'autore è un nodo Person top-level, non inline nell'articolo.
+        //
+        // `worksFor` punta a `#agent`, che porta con sé il collegamento a
+        // Wikidata e ai profili verificati: la persona eredita da lì
+        // l'aggancio alle entità note, senza doverlo ripetere qui.
         if (!empty($post['author_name'])) {
             $authorId = $pageUrl . '#author';
-            $graph[] = [
+            $persona = [
                 '@type' => 'Person',
                 '@id' => $authorId,
                 'name' => Seo::text((string) $post['author_name']),
+                'jobTitle' => 'Agente immobiliare',
                 'worksFor' => [
                     '@type' => 'RealEstateAgent',
                     '@id' => Seo::base() . '/#agent',
                     'name' => 'Mondo Immobiliare Lecce',
                 ],
             ];
+
+            // Chi firma, e con quale esperienza. È il segnale che distingue
+            // un articolo scritto da qualcuno che il mestiere lo fa da uno
+            // che rimastica quel che si trova in giro.
+            $bio = Seo::text((string) ($post['author_bio'] ?? ''));
+            if ($bio !== '') {
+                $persona['description'] = $bio;
+            }
+
+            $graph[] = $persona;
             $article['author'] = ['@id' => $authorId];
         }
 

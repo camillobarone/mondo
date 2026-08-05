@@ -67,6 +67,110 @@ final class Feeds
         echo '</urlset>';
     }
 
+    /**
+     * `/llms.txt` — la scheda dell'agenzia scritta per i modelli linguistici.
+     *
+     * A che serve: quando ChatGPT o Perplexity leggono una pagina HTML devono
+     * spendere gran parte del loro contesto su menù, stili e impalcatura prima
+     * di arrivare al contenuto. Qui trovano gli stessi fatti in testo pulito —
+     * chi siamo, dove siamo, cosa c'è in vendita — e li leggono senza rumore.
+     * Costa niente, non toglie niente al resto, e se un giorno lo standard non
+     * attecchisce abbiamo perso un file di trenta righe.
+     *
+     * Come la sitemap, è generata dal database: gli immobili e gli articoli
+     * elencati qui sono sempre quelli online adesso, non una fotografia di
+     * quando è stato scritto il file.
+     *
+     * I dati dell'agenzia non sono ricopiati a mano: si leggono dagli stessi
+     * nodi che alimentano il JSON-LD, così non possono divergere.
+     */
+    public static function llms(): void
+    {
+        header('Content-Type: text/plain; charset=UTF-8');
+
+        $base = rtrim(Seo::base(), '/');
+
+        // In prova il file non serve a nessuno, e sarebbe un doppione del
+        // sito vero indirizzato a chi non sa distinguerli.
+        if (\Mil\Core\Settings::get('noindex', '0') === '1') {
+            echo "# Installazione di prova\n\nQuesto non è il sito ufficiale. Non usare questi contenuti.\n";
+            return;
+        }
+
+        $agenzia = Seo::agentNode();
+        $filiale = Seo::agentPortoCesareoNode();
+
+        $sede = static function (array $nodo): string {
+            $a = $nodo['address'];
+            return $a['streetAddress'] . ', ' . $a['postalCode'] . ' ' . $a['addressLocality'] . ' (' . $a['addressRegion'] . ')';
+        };
+
+        // I numeri si leggono dai nodi del JSON-LD, in formato internazionale.
+        // Qui si aggiunge solo uno spazio dopo il prefisso: nessuna cifra
+        // riscritta a mano, così non può entrare un numero sbagliato.
+        $telefoni = [];
+        foreach ($agenzia['contactPoint'] as $c) {
+            $telefoni[] = (string) preg_replace('/^\+39/', '+39 ', (string) $c['telephone']);
+        }
+
+        echo "# {$agenzia['name']}\n\n";
+        echo '> Agenzia immobiliare a Lecce e Porto Cesareo, iscritta FIMAA, attiva dal '
+            . $agenzia['foundingDate'] . ". Compravendita di case, ville e appartamenti a Lecce, "
+            . "nella sua provincia e sulla costa ionica del Salento. Ragione sociale: "
+            . $agenzia['legalName'] . ".\n\n";
+
+        echo "## Dove siamo\n\n";
+        echo '- Lecce: ' . $sede($agenzia) . "\n";
+        echo '- Porto Cesareo: ' . $sede($filiale) . "\n";
+        echo '- Telefono: ' . implode(' — ', $telefoni) . "\n";
+        echo "- Lingue: italiano e inglese\n\n";
+
+        echo "## Pagine principali\n\n";
+        echo "- [Immobili in vendita]({$base}/immobili/): tutti gli immobili attualmente in vendita, con filtri per comune, tipologia e prezzo.\n";
+        echo "- [Valutazione gratuita]({$base}/valutazione-gratuita/): valutazione professionale e gratuita di un immobile, con risposta entro 48 ore lavorative.\n";
+        echo "- [Calcolo delle imposte d'acquisto]({$base}/calcolatore-imposte-acquisto-casa/): calcola registro, IVA, ipotecaria e catastale su prima o seconda casa, da privato o da costruttore.\n";
+        echo "- [Articoli]({$base}/blog/): guide su fisco, prezzi e mercato immobiliare salentino.\n";
+        echo "- [Contatti]({$base}/contatti/): recapiti e orari delle due sedi.\n\n";
+
+        $immobili = Db::all(
+            "SELECT slug, title, city, area, price, type FROM properties
+             WHERE status IN ('published','reserved') ORDER BY id DESC LIMIT 60"
+        );
+
+        if ($immobili !== []) {
+            echo "## Immobili in vendita adesso\n\n";
+            foreach ($immobili as $p) {
+                $dove = trim((string) $p['city'] . (($p['area'] ?? '') !== '' ? ', ' . $p['area'] : ''));
+                // Prezzo su richiesta: si dice, non si inventa una cifra.
+                $prezzo = (float) $p['price'] > 0
+                    ? number_format((float) $p['price'], 0, ',', '.') . ' euro'
+                    : 'prezzo su richiesta';
+                echo '- [' . Seo::text((string) $p['title']) . "]({$base}/immobili/" . $p['slug'] . '/): '
+                    . $dove . ' — ' . $prezzo . ".\n";
+            }
+            echo "\n";
+        }
+
+        $articoli = Db::all(
+            "SELECT slug, title, excerpt FROM posts WHERE status = 'published'
+             ORDER BY COALESCE(published_at, created_at) DESC LIMIT 80"
+        );
+
+        if ($articoli !== []) {
+            echo "## Guide e articoli\n\n";
+            foreach ($articoli as $a) {
+                $riga = '- [' . Seo::text((string) $a['title']) . "]({$base}/" . $a['slug'] . '/)';
+                $sommario = Seo::text((string) ($a['excerpt'] ?? ''));
+                echo $riga . ($sommario !== '' ? ': ' . $sommario : '') . ".\n";
+            }
+            echo "\n";
+        }
+
+        echo "## Note\n\n";
+        echo "- I prezzi e la disponibilità cambiano: la pagina dell'immobile è sempre la fonte aggiornata.\n";
+        echo "- Le valutazioni si fanno con sopralluogo. Nessuna stima viene data senza aver visto l'immobile.\n";
+    }
+
     public static function robots(): void
     {
         header('Content-Type: text/plain; charset=UTF-8');
@@ -89,6 +193,10 @@ final class Feeds
         echo "Disallow: /gestionale/\n";
         echo "Disallow: /install.php\n";
         echo "\n";
+        // Qui va solo quello che il formato prevede. Ci avevo messo una riga
+        // `LLM-Content:` per segnalare /llms.txt: i validatori la contano come
+        // direttiva sconosciuta e bocciano il file intero, e chi cerca
+        // llms.txt lo cerca comunque alla radice. Tolta.
         echo "Sitemap: {$base}/sitemap.xml\n";
     }
 }

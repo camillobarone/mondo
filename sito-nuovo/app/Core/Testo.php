@@ -74,13 +74,14 @@ final class Testo
             return;
         }
 
-        // Sottotitoli. In pagina il titolo è già un `h2`, e il primo livello
-        // scritto nel testo deve stargli sotto: `#` e `##` diventano `h3`,
-        // tutto il resto `h4`. Così l'indice della pagina resta una scala, che
-        // è quello che legge un motore di ricerca.
+        // Sottotitoli. In pagina il titolo è un `h1`, e il primo livello
+        // scritto nel testo deve stargli subito sotto: `#` e `##` diventano
+        // `h2`, tutto il resto `h3`. Così l'indice della pagina resta una
+        // scala senza gradini saltati — che è quello che legge un motore di
+        // ricerca, e quello su cui si sposta chi naviga con lo screen reader.
         if (preg_match('/^(#{1,6})\s+(.+)$/u', $riga, $m) === 1) {
             $this->chiudi();
-            $livello = strlen($m[1]) <= 2 ? '3' : '4';
+            $livello = strlen($m[1]) <= 2 ? '2' : '3';
             $this->html .= '<h' . $livello . '>' . self::inline($m[2]) . '</h' . $livello . ">\n";
             return;
         }

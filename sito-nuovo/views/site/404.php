@@ -1,5 +1,5 @@
 <section class="wrap sezione">
-  <h2 class="pagina-titolo">Questa pagina non c’è</h2>
+  <h1 class="pagina-titolo">Questa pagina non c’è</h1>
   <p class="risposta-diretta">
     L’indirizzo che hai aperto non esiste più, oppure l’immobile è stato venduto e ritirato dal sito.
   </p>

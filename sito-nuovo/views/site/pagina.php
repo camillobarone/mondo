@@ -7,7 +7,7 @@
     <a href="<?= e(url('/')) ?>">Home</a> › <span><?= e((string) $page['title']) ?></span>
   </nav>
 
-  <h2 class="pagina-titolo"><?= e((string) $page['title']) ?></h2>
+  <h1 class="pagina-titolo"><?= e((string) $page['title']) ?></h1>
   <div class="testo"><?= Mil\Core\Testo::html((string) $page['body']) ?></div>
 
   <p class="firma">Mondo Immobiliare — agenzia FIMAA dal 1994<br>

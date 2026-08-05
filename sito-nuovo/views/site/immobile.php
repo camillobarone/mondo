@@ -24,7 +24,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
     <p class="scheda-kicker"><?= e(Vocab::label('type', (string) $p['type'])) ?> ·
       <?= e((string) $p['city']) ?><?= $p['area'] !== '' ? ', ' . e((string) $p['area']) : '' ?> ·
       rif. <?= e((string) $p['ref']) ?></p>
-    <h2><?= e((string) $p['title']) ?></h2>
+    <h1><?= e((string) $p['title']) ?></h1>
     <p class="scheda-prezzo"><?= e($prezzo) ?></p>
   </header>
 
@@ -90,7 +90,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
 
   <div class="wrap scheda-grid">
     <div class="scheda-corpo">
-      <h3>Caratteristiche</h3>
+      <h2 class="titolo-sezione">Caratteristiche</h2>
       <dl class="dati">
         <?php if ((int) $p['sqm'] > 0): ?><div><dt>Superficie</dt><dd><?= (int) $p['sqm'] ?> mq</dd></div><?php endif; ?>
         <?php if ((int) $p['lot_sqm'] > 0): ?><div><dt>Lotto</dt><dd><?= (int) $p['lot_sqm'] ?> mq</dd></div><?php endif; ?>
@@ -106,14 +106,14 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
       </dl>
 
       <?php if ($features !== []): ?>
-        <h3>Dotazioni</h3>
+        <h2 class="titolo-sezione">Dotazioni</h2>
         <ul class="chips">
           <?php foreach ($features as $f): ?><li><?= e($f) ?></li><?php endforeach; ?>
         </ul>
       <?php endif; ?>
 
       <?php if (trim((string) $p['description']) !== ''): ?>
-        <h3>Descrizione</h3>
+        <h2 class="titolo-sezione">Descrizione</h2>
         <div class="testo"><?= Mil\Core\Testo::html((string) $p['description']) ?></div>
       <?php endif; ?>
 
@@ -122,7 +122,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
       $tour = trim((string) ($p['tour_url'] ?? ''));
       ?>
       <?php if ($video !== '' || $tour !== ''): ?>
-        <h3>Video e visita virtuale</h3>
+        <h2 class="titolo-sezione">Video e visita virtuale</h2>
         <?php /* Link, non riquadri incorporati. Un iframe di YouTube o
                  Matterport carica centinaia di kilobyte e mette un cookie di
                  profilazione a chi apre la pagina, anche a chi il video non lo
@@ -141,7 +141,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
 
       <?php $punto = Mil\Core\Mappa::punto($p); ?>
       <?php if ($punto !== null): ?>
-        <h3>Dove si trova</h3>
+        <h2 class="titolo-sezione">Dove si trova</h2>
         <?php /* Il riquadro sta dentro un `<details>`: finché resta chiuso il
                  browser non va a prendere niente, quindi la scheda non paga
                  una mappa che quasi nessuno apre — e nessun visitatore viene
@@ -173,7 +173,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
 
       <?php $faq = Mil\Core\Faq::daJson($p['faqs'] ?? ''); ?>
       <?php if ($faq !== []): ?>
-        <h3>Domande frequenti</h3>
+        <h2 class="titolo-sezione">Domande frequenti</h2>
         <?php /* `<details>` è la fisarmonica che il browser ha già: si apre e
                  si chiude da sola, senza una riga di JavaScript, e il testo
                  delle risposte resta comunque dentro la pagina — quindi lo
@@ -237,7 +237,7 @@ $features = array_filter(array_map('trim', explode(',', (string) $p['features'])
 
   <?php if ($simili !== []): ?>
     <section class="wrap sezione">
-      <h3>Altri immobili a <?= e((string) $p['city']) ?></h3>
+      <h2 class="titolo-sezione">Altri immobili a <?= e((string) $p['city']) ?></h2>
       <div class="griglia">
         <?php foreach ($simili as $s): ?>
           <?php if ((int) $s['id'] !== (int) $p['id']): ?>

@@ -200,7 +200,19 @@ img { max-width: 100%; height: auto; display: block; }
 .sezione { padding: 76px 0; }
 .sezione-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 34px; }
 .link-more { font-size: .92rem; white-space: nowrap; }
-.pagina-titolo { margin-bottom: .3em; }
+/* Il titolo di pagina è un `h1`: è l'elemento che dice a Google, e a chi
+   naviga con lo screen reader, di cosa parla la pagina. Prima era un `h2`
+   e l'`h1` non c'era proprio. La misura però resta quella di prima — il
+   cambio è di struttura, non di aspetto — quindi qui si annulla il corpo
+   grande che `h1` porta con sé. */
+.pagina-titolo { margin-bottom: .3em; font-size: clamp(1.7rem, 3.2vw, 2.5rem); font-weight: 600; }
+
+/* Titolo di una sezione dentro la pagina: «Caratteristiche», «Descrizione»,
+   «Domande frequenti». Erano `h3` quando il titolo di pagina era un `h2`.
+   Adesso che quello è un `h1` devono essere `h2`, altrimenti la scaletta
+   salta un gradino e chi si muove fra i titoli con lo screen reader non
+   capisce dove sta. La misura resta quella di prima. */
+.titolo-sezione { font-size: 1.35rem; }
 .pagina-sub { color: var(--ink-soft); margin-bottom: 28px; }
 .vuoto { color: var(--ink-soft); background: var(--bg-soft); padding: 22px; border-radius: var(--radius); }
 .nota { font-size: .9rem; color: var(--ink-soft); }
@@ -215,8 +227,8 @@ img { max-width: 100%; height: auto; display: block; }
    e non a quello che chiudono. */
 .testo { max-width: 70ch; }
 .testo > :first-child { margin-top: 0; }
-.testo h3 { margin: 1.9em 0 .5em; }
-.testo h4 { margin: 1.6em 0 .4em; font-size: 1.1rem; }
+.testo h2 { margin: 1.9em 0 .5em; font-size: 1.35rem; }
+.testo h3 { margin: 1.6em 0 .4em; font-size: 1.1rem; }
 .testo ul, .testo ol { margin: 0 0 1em; padding-left: 1.3em; }
 .testo li { margin-bottom: .4em; }
 .testo blockquote {
@@ -230,6 +242,15 @@ img { max-width: 100%; height: auto; display: block; }
 
 .firma { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .9rem; }
 .firma span { color: var(--ink-soft); }
+
+/* Chi firma l'articolo, con la sua biografia. Non è decorazione: su un sito
+   che parla dei soldi delle persone, chi scrive e con quale esperienza è
+   parte del contenuto. La bio si scrive in Gestionale → Utenti. */
+.autore { margin-top: 46px; padding: 20px 22px; background: var(--bg-soft); border-radius: var(--radius); font-size: .92rem; }
+.autore-nome { font-weight: 600; margin-bottom: .4em; }
+.autore-bio { color: var(--ink-soft); }
+.autore-bio p:last-child { margin-bottom: 0; }
+.autore-data { color: var(--ink-soft); font-size: .85rem; margin: .8em 0 0; }
 
 /* --------------------------------------------------------------- griglia */
 
@@ -312,7 +333,7 @@ img { max-width: 100%; height: auto; display: block; }
    lasciandola sospesa in mezzo alla pagina mentre il resto partiva da sinistra.
    La misura va messa sul titolo, che è l'unica riga che deve restare corta. */
 .scheda-head { padding-top: 18px; }
-.scheda-head h2 { max-width: 26ch; }
+.scheda-head h1 { max-width: 26ch; font-size: clamp(1.7rem, 3.2vw, 2.5rem); font-weight: 600; }
 .scheda-kicker { font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .1em; }
 .scheda-prezzo { font-family: var(--serif); font-size: 2.1rem; font-weight: 600; color: var(--accent-dark); }
 
@@ -524,7 +545,10 @@ img { max-width: 100%; height: auto; display: block; }
 
 .faq { margin-top: 48px; }
 .faq-item { border-top: 1px solid var(--line); padding: 18px 0; }
-.faq-item h4 { margin-bottom: .3em; }
+/* La domanda era un `h4` quando sopra c'era `h2` pagina → `h3` sezione.
+   Adesso la scala è `h1` → `h2`, quindi la domanda è un `h3`: stessa misura
+   di prima, un gradino più su. */
+.faq-item h3 { margin-bottom: .3em; font-size: 1.0625rem; }
 .faq-item p { margin: 0; color: var(--ink-soft); max-width: 70ch; }
 
 /* --------------------------------------------------------------- filtri */

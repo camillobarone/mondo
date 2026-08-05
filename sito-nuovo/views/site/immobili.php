@@ -28,7 +28,7 @@ $qs = static function (int $page) use ($filters): string {
 };
 ?>
 <section class="wrap sezione">
-  <h2 class="pagina-titolo">Immobili in vendita a Lecce e nel Salento</h2>
+  <h1 class="pagina-titolo">Immobili in vendita a Lecce e nel Salento</h1>
   <p class="pagina-sub"><?= (int) $result['total'] ?> immobili disponibili, selezionati e verificati dai nostri agenti.</p>
 
   <?php /* Sul telefono il pannello dei filtri riempiva una schermata intera
@@ -96,7 +96,7 @@ $qs = static function (int $page) use ($filters): string {
   <?php else: ?>
     <div class="griglia">
       <?php foreach ($result['items'] as $i => $p): ?>
-        <?= View::partial('site/_card', ['p' => $p, 'eager' => $i === 0]) ?>
+        <?= View::partial('site/_card', ['p' => $p, 'eager' => $i === 0, 'livello' => 2]) ?>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>

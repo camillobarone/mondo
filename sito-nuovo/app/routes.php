@@ -52,6 +52,7 @@ $router->post('/invia-richiesta', [Forms::class, 'submit']);
 
 $router->get('/sitemap.xml', [Feeds::class, 'sitemap']);
 $router->get('/robots.txt', [Feeds::class, 'robots']);
+$router->get('/llms.txt', [Feeds::class, 'llms']);
 
 // Qualsiasi altro percorso: prima i redirect 301, poi le pagine statiche,
 // poi gli articoli del blog, e solo alla fine il 404.

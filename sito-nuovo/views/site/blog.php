@@ -3,7 +3,7 @@
 /** @var array{items:array<int,array<string,mixed>>,total:int,pages:int,page:int} $result */
 ?>
 <section class="wrap sezione">
-  <h2 class="pagina-titolo">Blog</h2>
+  <h1 class="pagina-titolo">Blog</h1>
   <p class="pagina-sub">Prezzi, fisco e mercato immobiliare a Lecce e nel Salento, spiegati da chi ci lavora.</p>
 
   <?php if ($result['items'] === []): ?>
@@ -12,7 +12,7 @@
     <div class="griglia griglia-3">
       <?php foreach ($result['items'] as $post): ?>
         <article class="post-card">
-          <h3><a href="<?= e(url('/' . $post['slug'] . '/')) ?>"><?= e((string) $post['title']) ?></a></h3>
+          <h2 class="titolo-sezione"><a href="<?= e(url('/' . $post['slug'] . '/')) ?>"><?= e((string) $post['title']) ?></a></h2>
           <p><?= e(tronca((string) ($post['excerpt'] ?: $post['body']), 160)) ?></p>
           <p class="post-meta">
             <?= e(data_it((string) ($post['published_at'] ?: $post['created_at']))) ?>
