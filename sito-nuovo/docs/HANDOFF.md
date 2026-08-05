@@ -179,6 +179,39 @@ contenuto è documentato qui sopra.
 
 ## 6. Cos'è già fatto e verificato
 
+### Il controllo generale del 5 agosto 2026
+
+Passato tutto il sito con un browser vero, 15 pagine percorse, JSON-LD
+estratto e riletto. Quello che ne è uscito è già corretto (commit `4bb84cc`);
+resta qui perché sapere **cosa era rotto** evita di rifare lo stesso errore.
+
+- **Il logo non esisteva.** `Seo.php` dichiarava `/assets/img/logo-512.png`
+  come `logo` e `image` dell'agenzia su ogni pagina, ma la cartella `img/`
+  non c'era: il nodo che identifica l'agenzia puntava a un 404, e `og:image`
+  restava vuoto ovunque non ci fosse una foto di immobile. Adesso i due file
+  ci sono. **Non sono il logo vero dell'agenzia**: vedi la sezione 10.
+- **`HEAD` rispondeva 404 su tutto**, home compresa: nessuna rotta era
+  registrata su quel metodo.
+- **Nessuna pagina era conservabile.** La sessione si apriva a chiunque e PHP
+  marcava tutto `no-store`. Ora la sessione si apre solo a chi serve e le
+  pagine pubbliche hanno un ETag.
+- **Tutti i title superavano i 60 caratteri**: `Pages::meta()` tagliava a 60,
+  poi il modello aggiungeva altri 26 di firma.
+- Il `lastmod` della sitemap era la data di oggi ricalcolata a ogni lettura.
+- Il login non contava i tentativi falliti.
+
+Cosa è stato controllato e **andava già bene**, per non riverificarlo:
+niente XSS nel motore di testo (dieci stringhe d'attacco), contrasto colori
+tutto oltre il livello AA, un solo `h1` per pagina e nessun salto nella scala
+dei titoli, URL con filtro correttamente `noindex` con canonical sull'elenco,
+caricamento foto validato dai byte iniziali con doppia serratura `.htaccess`,
+posta con iniezione di intestazioni bloccata, NAP e recensioni canonici, il
+telefono deprecato assente da tutto il codice.
+
+Gli attrezzi per rifarlo — crawler, misura dei margini, contrasto — vivono
+nello scratchpad della sessione e vanno riscritti in una chat nuova. Sono un
+centinaio di righe di Playwright in tutto.
+
 ### Sito pubblico
 Home con ricerca, elenco con filtri, scheda immobile con galleria, pagina
 valutazione con FAQ visibili, blog, pagine statiche, contatti con entrambe le
@@ -622,16 +655,29 @@ Cosa resta, in ordine di quanto pesa:
 2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
    pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
    eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
-3. **Le password.** Quella del gestionale e quella del database di prova sono
-   passate in chat e vanno cambiate; i sali di sicurezza del WordPress vanno
-   ruotati. Non è rimandabile a dopo il passaggio.
+3. **Le due pagine di legge**, `informativa-sulla-privacy-e-sulluso-dei-dati-di-mondo-immobiliare`
+   e `cookie-policy`. Sono le prime due da ricreare, prima di qualunque
+   guida: il modulo di contatto raccoglie nome, telefono ed email, e
+   l'informativa deve essere raggiungibile da ogni pagina. Gli indirizzi
+   stanno in `app/Core/Legali.php`; finché mancano, il piè di pagina non le
+   nomina — meglio nessun collegamento che uno rotto — e il riepilogo del
+   gestionale lo dice in chiaro.
 4. **Pulizia prima di andare online**: cancellare `public/install.php`, i 2
    clienti di esempio e i 3 articoli di esempio.
-5. **Il calcolatore IMU** (`calcolo-imu-2026-lecce`), rimandato: è l'unica
+5. **`agenzia-immobiliare-porto-cesareo`.** Il nodo della seconda sede nello
+   schema la nomina in ogni pagina del sito. Finché non esiste, `url` viene
+   omesso dal nodo: nessun collegamento rotto, ma nemmeno l'indirizzo della
+   sede nei dati strutturati.
+6. **Il calcolatore IMU** (`calcolo-imu-2026-lecce`), rimandato: è l'unica
    delle 46 pagine che è codice e non testo. Vedi `CENSIMENTO-URL.md`.
-6. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
+7. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
    immobili, e decidere il campo video.
-7. Più avanti: export verso i portali.
+8. **Sostituire `public/assets/img/logo-512.png`** con il logo vero
+   dell'agenzia, se ne esiste uno in file. Quello attuale è il marchio della
+   favicon portato a 512 px: chiude il 404 che c'era, ma non è il logo
+   dell'agenzia. Stessa cosa per `social-1200x630.png`, l'immagine che si
+   vede quando un link del sito viene incollato in una chat.
+9. Più avanti: export verso i portali.
 
 ### Il check-in orario sulla PR
 

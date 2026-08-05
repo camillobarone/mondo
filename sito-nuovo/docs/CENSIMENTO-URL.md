@@ -121,6 +121,20 @@ potrebbe essere ancora indicizzata.
 **Non serve crearle:** `mondoimmobiliare` (è la home, `/`), `contatti` e
 `blog` — sul sito nuovo sono rotte in `routes.php`, non righe nel database.
 
+### Le tre pagine che il codice nomina già, e conviene fare per prime
+
+Non è una preferenza editoriale: sono pagine che qualcosa nel sito richiama
+per nome, e la cui assenza si vede.
+
+| Indirizzo | Chi la nomina | Cosa succede finché manca |
+|---|---|---|
+| `informativa-sulla-privacy-e-sulluso-dei-dati-di-mondo-immobiliare` | `app/Core/Legali.php` | il piè di pagina non la mostra, e il modulo di contatto raccoglie dati senza informativa raggiungibile |
+| `cookie-policy` | `app/Core/Legali.php` | idem |
+| `agenzia-immobiliare-porto-cesareo` | `app/Core/Seo.php` | il nodo della seconda sede esce senza `url`: nei dati strutturati la sede c'è ma non ha un indirizzo dove mandare chi legge |
+
+Nessuna delle tre produce un collegamento rotto nel frattempo — il codice le
+nomina solo quando esistono davvero — ma sono le prime tre da scrivere.
+
 ### ⚠️ Gli articoli NON sono stati importati
 
 Vale la pena scriverlo perché è un errore che ho già fatto una volta in chat:
