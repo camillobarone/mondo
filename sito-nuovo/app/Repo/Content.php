@@ -41,10 +41,27 @@ final class Content
         );
     }
 
-    /** @return array<string,mixed>|null */
+    /**
+     * Un articolo per id, con l'autore già attaccato.
+     *
+     * L'unione con `users` sembra superflua qui — il gestionale l'autore lo
+     * sceglie da un menu a tendina, gli basterebbe `author_id`. Serve invece
+     * all'anteprima: quella disegna la pagina con lo stesso codice del sito,
+     * e il piè di pagina dell'articolo firma con `author_name`. Senza le due
+     * colonne l'anteprima scriveva un avviso nel log a ogni apertura, e nel
+     * frattempo perdeva la firma e il nodo `Person` dello schema — cioè
+     * proprio le cose che si va a guardare in anteprima.
+     *
+     * @return array<string,mixed>|null
+     */
     public static function post(int $id): ?array
     {
-        return Db::one('SELECT * FROM posts WHERE id = :id', ['id' => $id]);
+        return Db::one(
+            'SELECT p.*, u.name AS author_name, u.bio AS author_bio
+             FROM posts p LEFT JOIN users u ON u.id = p.author_id
+             WHERE p.id = :id',
+            ['id' => $id]
+        );
     }
 
     /** @param array<string,mixed> $data */
