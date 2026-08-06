@@ -79,6 +79,27 @@ galleria sono HTML e CSS. Da qui un TBT che sta fra 0 e 40 ms.
 - **Non promettere azioni dirette sul sito**: si consegna il materiale pronto
   da applicare.
 
+### Il document root è `public/`, ed è verificato
+
+Sul server il progetto sta tutto dentro `public_html`: `app`, `bin`, `db`,
+`docs`, `public`, `storage`, `views`. La cartella pubblica è
+**`public_html/public`**, quindi `config.php`, il database e i documenti
+interni **non sono raggiungibili dal web**.
+
+Non serve un test per stabilirlo, e un test può ingannare. Il 6 agosto
+`https://prova.mondoimmobiliarelecce.it/docs/HANDOFF.md` ha risposto **403
+con la pagina d'errore di SiteGround, in inglese** — non la 404 del sito.
+Quel 403 arriva dallo strato che sta davanti al sito, lo stesso che
+rispondeva `202` e teneva giù il connettore MCP: **non dice niente su come
+è configurato il document root.**
+
+La prova sta nel comportamento. Le foto vivono in
+`public_html/public/uploads` e il sito le chiede a `/uploads/…`
+(`Config::uploads_url`): se la cartella pubblica fosse `public_html`
+quell'indirizzo non risponderebbe e ogni scheda sarebbe senza foto. E
+`index.php` non sarebbe alla radice, quindi non funzionerebbe nemmeno la
+home. Funziona tutto: la cartella pubblica è `public`.
+
 ### ⚠️ Lecce è il centro. Porto Cesareo è una filiale
 
 Detto da Camillo il 6 agosto 2026, e definito da lui «essenziale»:
