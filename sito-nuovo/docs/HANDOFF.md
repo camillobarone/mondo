@@ -993,8 +993,8 @@ l'unica del suo gruppo che oggi non esiste. Ha già da dove essere linkata:
 quella pagina si mette in mezzo. Da lì si linka anche
 `comprare-casa-a-lecce`, che è probabilmente orfano (punto 1bis).
 
-Due cose piccole in sospeso, indipendenti: cancellare `public/install.php`
-dal server, e farsi dire da Camillo **quale data center** ospita il sito —
+Una cosa piccola in sospeso: farsi dire da Camillo **quale data center**
+ospita il sito —
 SiteGround ne ha cinque in Europa e Londra è fuori dall'Unione, quindi la
 frase dell'informativa privacy cambia. La lista delle cinque sedi non è la
 risposta: serve quella del suo sito.
@@ -1105,10 +1105,17 @@ Poi, in ordine di quanto pesa:
 
    Sui dati strutturati non serve toccare niente: il nodo `RealEstateAgent`
    principale punta alla home, che *è* la scheda dell'agenzia di Lecce.
-4. **Pulizia prima di andare online.** Restano: cancellare
-   `public/install.php` dal server, e i 2 clienti di esempio dal gestionale.
+4. **Pulizia prima di andare online.** Resta solo: cancellare i 2 clienti di
+   esempio dal gestionale.
    Gli articoli di esempio erano due, non tre, e sono stati cancellati da
-   Camillo il 6 agosto; i sei immobili `DEMO-` non c'erano già più.
+   Camillo il 6 agosto; i sei immobili `DEMO-` non c'erano già più; e
+   **`install.php` sul server non c'è**, verificato sullo screenshot del
+   Gestione File del 6 agosto — la cartella `public/` contiene solo
+   `assets`, `uploads`, `.htaccess`, `index.php` e `php_errorlog`. La voce
+   «install.php da cancellare» veniva dalla copia nel repository, che c'è
+   ancora e ci deve restare: serve a chi installerà il sito la prossima
+   volta. ⚠️ Prima di segnalare un file «ancora sul server», guardare il
+   server.
 5. **`agenzia-immobiliare-porto-cesareo` — PUBBLICATA il 6 agosto.**
    1084 parole, 5 domande frequenti che diventano schema `FAQPage` da sole,
    tre collegamenti interni tutti verso rotte fisse.
