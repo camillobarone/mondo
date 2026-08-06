@@ -834,10 +834,67 @@ alla società. Va però messa davanti prima, non dopo.
 
 ## 10. Se si riprende adesso, da dove
 
-Aggiornato alla **sera del 5 agosto 2026**. Superato tutto quello che
-riguardava il codice: il sito gira su `prova.mondoimmobiliarelecce.it` con
-MySQL e gestionale, i file sul server sono allineati al repo, il logo vero è
-al suo posto e il log del server è vuoto.
+Aggiornato al **6 agosto 2026**. Superato tutto quello che riguardava il
+codice: il sito gira su `prova.mondoimmobiliarelecce.it` con MySQL e
+gestionale, i file sul server sono allineati al repo, il logo vero è al suo
+posto, il log del server è vuoto e la home si muove.
+
+**Contenuti pubblicati sul sito nuovo, in ordine:** informativa privacy,
+cookie policy. **Consegnata e in attesa di pubblicazione:**
+`agenzia-immobiliare-porto-cesareo`.
+
+### Il connettore WordPress: come si è rimesso in piedi
+
+Vale la pena averlo scritto, perché ci è voluta mezza giornata e la prossima
+volta si risolve in cinque minuti.
+
+**Il sintomo:** il connettore risultava collegato su claude.ai, e da qui non
+si vedeva nemmeno uno dei suoi 101 strumenti. Nel plugin, «Token attivi: 1»
+e «Client attivi: 0».
+
+**La causa**, trovata col pulsante *Diagnose Connection* dentro il plugin
+Easy MCP AI: **SiteGround intercetta le richieste prima di WordPress** e
+risponde `202` a tutto. Tre cose davanti al sito — la cache del server, il
+firewall Cloudflare che SiteGround mette per conto suo, e il blocco di
+`/.well-known/` che SiteGround applica su tutti i suoi server. L'ultimo è
+quello che rompe la scoperta OAuth, e non si disattiva da nessuna parte.
+
+**La soluzione**, che non richiede di toccare la configurazione del sito:
+collegarsi **col token invece che con OAuth**. Il plugin lo offre in
+Bacheca → Avvio rapido → Claude.ai → «Alternativa: token manuale»: un
+indirizzo con il token dentro, da incollare come URL del server in un
+connettore nuovo. Così `/.well-known/` non serve più.
+
+**Quello che resta rotto, e va saputo:** le chiamate pesanti vanno in
+timeout dopo 60 secondi. `wp_get_page` su una pagina Elementor non torna
+mai — si porta dietro `_elementor_data`. Funzionano invece
+`wp_ability_core_get_site_info` (istantaneo) e **`wp_search_posts` con
+`snippet: true` e `snippet_length: 1000`**, che è il modo per leggere un
+pezzo di una pagina pesante. Per una pagina intera la via più rapida resta
+chiedere a Camillo di aprirla e incollare il testo.
+
+**Da non dimenticare, ed è una bomba a orologeria:** sul sito vecchio gira il
+frammento JS di **Cloudflare Web Analytics**. Quando il sito nuovo prenderà
+il posto di quello vecchio, o quel frammento resta fuori, o la cookie policy
+appena pubblicata — dove c'è scritto che non gira codice di terze parti —
+diventa falsa.
+
+### I prezzi: due listini che non si contraddicono
+
+Sembravano in conflitto e non lo sono. Camillo l'ha chiarito il 6 agosto:
+
+- il listino canonico della skill — **marine 1.100–2.200 €/mq** — riguarda le
+  **marine in generale, compreso il litorale adriatico**;
+- **Porto Cesareo ha i suoi**, più alti, ed è il mercato costiero ionico:
+  fronte mare 2.000–3.500, ville con giardino 1.800–2.500, zona centrale
+  1.500–2.200, Torre Lapillo ed Eurovillage 1.200–1.800, Sant'Isidoro e
+  Punta Prosciutto 1.400–2.000.
+
+⚠️ **Per Porto Cesareo non si cita l'OMI.** I dati OMI disponibili coprono il
+**Comune di Lecce** — sedici zone, fino al litorale di Frigole e Torre
+Chianca, che sta a 520–720 €/mq. Porto Cesareo è un altro comune e in quei
+dati non c'è. La fonte dichiarata è «dati delle compravendite Mondo
+Immobiliare, 2025–2026».
 
 **L'informativa privacy è scritta e pubblicata**, ed è la prima pagina di
 contenuto del sito nuovo. Non è la copia di quella vecchia: quella (pagina WP
@@ -890,18 +947,34 @@ Poi, in ordine di quanto pesa:
 2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
    pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
    eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
-3. **La `cookie-policy`.** L'informativa privacy è fatta; questa è l'altra
-   pagina che `app/Core/Legali.php` nomina, ed è l'ultima che manca perché il
-   piè di pagina sia completo. È corta — il sito ha un cookie solo, tecnico —
-   e rimanda all'informativa per il resto. La vecchia, da cui **non** si
-   copia per lo stesso motivo dell'altra, è WP `30757`.
+3. **La pagina dell'agenzia di Lecce**, WP `31519`
+   («La nostra agenzia a Lecce: metodo, team e prezzi per quartiere»). È il
+   centro verso cui tutto il resto deve puntare, ed è la pagina che pesa di
+   più fra quelle rimaste. Qui i prezzi OMI per quartiere ci sono e si
+   citano — con «Fonte: OMI – Agenzia delle Entrate, II semestre 2025» — e
+   qui va dichiarato che Camillo siede nella Commissione OMI di Lecce, che è
+   la credenziale che nessun concorrente della città ha.
 4. **Pulizia prima di andare online**: cancellare `public/install.php`, i 2
    clienti di esempio e i 3 articoli di esempio.
-5. **`agenzia-immobiliare-porto-cesareo`.** Il nodo della seconda sede nello
-   schema la nomina in ogni pagina del sito. Finché non esiste, `url` viene
-   omesso dal nodo: nessun collegamento rotto, ma nemmeno l'indirizzo della
-   sede nei dati strutturati. La pagina vecchia da cui partire è WP `30534`,
-   pubblicata e aggiornata a luglio 2026.
+5. **`agenzia-immobiliare-porto-cesareo` — consegnata, da pubblicare.**
+   Il testo è pronto: 1084 parole, 5 domande frequenti che diventano schema
+   `FAQPage` da sole, tre collegamenti interni tutti verso rotte fisse.
+   Appena è pubblicata, `Seo::agentPortoCesareoNode()` smette di omettere
+   `url` e l'indirizzo della sede entra nei dati strutturati di ogni pagina.
+
+   **Tre scelte fatte riscrivendola, da conoscere prima di rimetterci mano:**
+   via il riquadro Google Maps, che smentiva la cookie policy appena
+   pubblicata (e che comunque non passerebbe: `Testo` non accetta HTML); il
+   pulsante di valutazione porta a `/valutazione-gratuita/` invece che ad
+   `agentpricing.com`, così il contatto resta nel gestionale — se Camillo
+   preferisce il servizio esterno, va rimesso; e il taglio è ribaltato
+   secondo la regola «Lecce è il centro».
+
+   I numeri che la pagina vecchia dava come verità generali — rendimento
+   5–7%, occupazione oltre il 70%, tempi di vendita 150–180 e 90–120 giorni —
+   sono stati **tenuti ma attribuiti**: «sulle case che seguiamo», «i tempi
+   medi delle nostre vendite». Non sono verificabili da fonte pubblica, e
+   attribuiti sono difendibili.
 6. **Il calcolatore IMU** (`calcolo-imu-2026-lecce`), rimandato: è l'unica
    delle 46 pagine che è codice e non testo. Vedi `CENSIMENTO-URL.md`.
 7. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
