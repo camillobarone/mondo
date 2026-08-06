@@ -89,9 +89,23 @@ foreach ([(string) Settings::get('site_name', 'Mondo Immobiliare Lecce'), 'Mondo
 
 <header class="site-head">
   <div class="wrap head-row">
+    <?php /* Il marchio in testata è il solo simbolo, senza la scritta che il
+             logo si porta dentro: rimpicciolita a 46 punti quella scritta
+             diventa una macchia, e comunque ripeterebbe il nome che sta già
+             qui accanto in Playfair. `alt` vuoto di proposito — il nome
+             dell'agenzia è nel testo del collegamento, e chi ascolta la
+             pagina non ha bisogno di sentirlo due volte. */ ?>
+    <?php $simbolo = marchio('logo-simbolo.png'); ?>
     <a class="brand" href="<?= e(url('/')) ?>">
-      <span class="brand-name"><?= e(Settings::get('site_name', 'Mondo Immobiliare')) ?></span>
-      <span class="brand-claim">Agenzia FIMAA dal 1994 · Lecce e Porto Cesareo</span>
+      <?php if ($simbolo !== null): ?>
+      <img class="brand-mark" src="<?= e($simbolo['src']) ?>"
+           width="<?= $simbolo['width'] ?>" height="<?= $simbolo['height'] ?>"
+           alt="" decoding="async" fetchpriority="high">
+      <?php endif; ?>
+      <span class="brand-testo">
+        <span class="brand-name"><?= e(Settings::get('site_name', 'Mondo Immobiliare')) ?></span>
+        <span class="brand-claim">Agenzia FIMAA dal 1994 · Lecce e Porto Cesareo</span>
+      </span>
     </a>
 
     <?php /* Il numero resta fuori dal menu che si chiude: quando la testata

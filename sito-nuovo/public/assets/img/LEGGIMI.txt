@@ -1,7 +1,7 @@
-Le due immagini che il codice cerca qui dentro CI SONO SUL SERVER, ma NON
-stanno in questo repo: Camillo le ha disegnate e caricate a mano il 5 agosto
-2026 con il Gestione File di SiteGround. Chi clona il repo non le ha, e il
-sito gira lo stesso — vedi in fondo.
+Le tre immagini che il codice cerca qui dentro CI SONO SUL SERVER, ma NON
+stanno in questo repo: Camillo le ha caricate a mano con il Gestione File
+di SiteGround. Chi clona il repo non le ha, e il sito gira lo stesso —
+vedi in fondo.
 
 Il blu del marchio e' #1b82d8. E' il valore da usare ovunque serva il colore
 dell'agenzia: lo usa gia' la favicon in app/helpers.php.
@@ -23,6 +23,33 @@ dell'anteprima social.
   - fondo pieno, non trasparente, se il logo ha scritte scure: finisce
     appoggiato sia su chiaro sia su scuro
   - senza margini larghi attorno al marchio
+
+--------------------------------------------------------------------
+logo-simbolo.png
+--------------------------------------------------------------------
+Sul server: 640 x 510, ricavato da logo.png il 6 agosto 2026.
+
+E' lo stesso marchio SENZA la scritta MONDO IMMOBILIARE: solo lo
+skyline con il globo, ritagliato stretto. E' quello che si vede in
+testata, alto 46 punti (38 sul telefono).
+
+La scritta e' stata tolta apposta. Rimpicciolita a 46 punti diventa
+una macchia azzurra illeggibile, e comunque ripeterebbe il nome che in
+testata sta gia' accanto, scritto in Playfair.
+
+  - fondo BIANCO PIENO, non trasparente: in testata lo fa sparire il
+    `mix-blend-mode: multiply` di `.brand-mark`, che moltiplicando per
+    bianco lascia il fondo com'e'
+  - ritaglio stretto attorno al marchio: i margini bianchi larghi qui
+    diventano spazio vuoto fra simbolo e nome
+  - lato lungo almeno 400 px
+
+Il ritaglio si rifa' in un minuto: si apre logo.png in Canva (o in
+qualunque programma di grafica), si taglia via la fascia con la
+scritta e si stringe fino a toccare il blu sui quattro lati.
+
+Se il file non c'e', in testata resta il solo nome: `marchio()` in
+app/helpers.php cerca il file su disco e, se manca, non stampa il tag.
 
 --------------------------------------------------------------------
 social-1200x630.png

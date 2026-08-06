@@ -27,6 +27,39 @@ function asset(string $path): string
 }
 
 /**
+ * Un'immagine del marchio pronta da stampare: indirizzo e misure vere.
+ *
+ * Le misure si leggono dal file e finiscono nel tag, altrimenti il browser
+ * non sa quanto spazio tenere e la testata sobbalza quando il logo arriva.
+ *
+ * Il file si cerca sul disco perché sul server c'è ma nel repository no: chi
+ * clona non ce l'ha, e la pagina deve uscire lo stesso — senza logo, non
+ * rotta. Vale la stessa regola di `Seo::logo()`: un dato mancante è un
+ * problema minore di un dato falso.
+ *
+ * @return array{src:string,width:int,height:int}|null
+ */
+function marchio(string $nome): ?array
+{
+    $rel = 'img/' . ltrim($nome, '/');
+    $file = MIL_PUBLIC . '/assets/' . $rel;
+    if (!is_file($file)) {
+        return null;
+    }
+
+    $misure = @getimagesize($file);
+    if ($misure === false) {
+        return null;
+    }
+
+    return [
+        'src' => asset($rel),
+        'width' => (int) $misure[0],
+        'height' => (int) $misure[1],
+    ];
+}
+
+/**
  * Rende assoluti i percorsi dentro un `srcset`.
  *
  * A database stanno relativi (`/uploads/…-960.webp 960w`), in pagina devono

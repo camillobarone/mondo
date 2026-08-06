@@ -71,13 +71,34 @@ img { max-width: 100%; height: auto; display: block; }
 /* ---------------------------------------------------------------- header */
 
 .site-head {
-  border-bottom: 1px solid var(--line); background: rgba(253,251,247,.92);
-  backdrop-filter: saturate(1.4) blur(8px); position: sticky; top: 0; z-index: 20;
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 20;
+}
+/* Il fondo della testata sta qui e non sulla testata stessa.
+   `mix-blend-mode` del marchio si fonde con quello che ha dietro *dentro* il
+   proprio contesto di impilamento, e lo sfondo dell'elemento che quel
+   contesto lo crea — la testata appiccicata, con il suo `z-index` — resta
+   fuori dal calcolo: il bianco del logo non trovava niente da moltiplicare e
+   restava bianco. Spostato in un pseudo-elemento, il fondo entra nel gruppo
+   e il riquadro bianco attorno al simbolo sparisce. */
+.site-head::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: rgba(253,251,247,.92); backdrop-filter: saturate(1.4) blur(8px);
 }
 .head-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 84px; }
-.brand { text-decoration: none; color: inherit; display: block; }
+.brand { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 13px; }
+.brand-testo { display: block; }
+/* Il file del simbolo ha il fondo bianco pieno, e deve averlo: è lo stesso
+   marchio che serve al JSON-LD e all'anteprima social, dove la trasparenza
+   non è ammessa. `multiply` lo fa sparire qui senza un secondo file da
+   tenere allineato a mano — moltiplicare per bianco lascia il fondo com'è,
+   e sull'avorio della testata il blu resta blu. */
+.brand-mark { width: auto; height: 46px; flex: none; mix-blend-mode: multiply; }
 .brand-name { display: block; font-family: var(--serif); font-weight: 600; font-size: 1.35rem; letter-spacing: -.01em; }
 .brand-claim { display: block; font-size: .76rem; color: var(--ink-soft); }
+/* Sul telefono stretto il simbolo scende a 38 punti: più grande, fra nome
+   dell'agenzia e burger non resta larghezza per stare tutti su una riga. */
+@media (max-width: 560px) { .brand { gap: 10px; } .brand-mark { height: 38px; } }
 
 .nav { display: flex; align-items: center; gap: 22px; }
 /* `nowrap`: una voce di menu spezzata su due righe («Valutazione / gratuita»)
@@ -797,13 +818,19 @@ img { max-width: 100%; height: auto; display: block; }
      di scatto mentre si scorre. Si muove quindi solo ciò che non sposta
      nulla — `scale` e `opacity` — e la testata acquista un'ombra, che è il
      segnale con cui si capisce che il contenuto le scorre sotto. */
+  /* A stringersi è il blocco del testo, non tutto `.brand`: uno `scale` crea
+     un contesto di impilamento, e dentro a quel contesto il `multiply` del
+     marchio non trova più il fondo della testata con cui fondersi — il
+     riquadro bianco attorno al simbolo tornerebbe visibile. Il simbolo resta
+     quindi della sua misura mentre il nome si stringe: fa anche da àncora,
+     l'occhio ha un punto fermo mentre la scritta si muove. */
   @supports (animation-timeline: scroll()) {
-    .brand, .brand-claim, .site-head {
+    .brand-testo, .brand-claim, .site-head {
       animation: linear both;
       animation-timeline: scroll();
       animation-range: 0 180px;
     }
-    .brand { animation-name: testata-nome; transform-origin: left center; }
+    .brand-testo { animation-name: testata-nome; transform-origin: left center; }
     .brand-claim { animation-name: testata-claim; }
     .site-head { animation-name: testata-ombra; }
   }
