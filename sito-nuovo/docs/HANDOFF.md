@@ -79,6 +79,26 @@ galleria sono HTML e CSS. Da qui un TBT che sta fra 0 e 40 ms.
 - **Non promettere azioni dirette sul sito**: si consegna il materiale pronto
   da applicare.
 
+### ⚠️ Lecce è il centro. Porto Cesareo è una filiale
+
+Detto da Camillo il 6 agosto 2026, e definito da lui «essenziale»:
+**l'agenzia primaria è Lecce, tutto gira intorno a Lecce, Porto Cesareo è
+una sede secondaria.** Vale per i contenuti, per i collegamenti interni e per
+i dati strutturati.
+
+Nei dati strutturati **è già così, ed è verificato**: in `Seo.php` il nodo
+`#agent-portocesareo` dichiara `parentOrganization` verso `#agent`, cioè
+Lecce, e non porta `aggregateRating` — le recensioni stanno solo sul nodo di
+Lecce. Un secondo `RealEstateAgent` alla pari, o le recensioni ripetute sulla
+filiale, sarebbero l'errore da non fare.
+
+Nei testi la conseguenza è che la pagina di Porto Cesareo non si scrive come
+«l'agenzia immobiliare di Porto Cesareo», ma come **la sede sulla costa di
+un'agenzia di Lecce**. I collegamenti interni salgono verso Lecce e la home;
+il titolo porta il marchio di Lecce. Vale per ogni futura pagina di zona —
+e il sito vecchio ne ha una rete: Nardò, Leverano, «Dove operiamo nel
+Salento», oltre alla pagina dell'agenzia di Lecce.
+
 ### ⚠️ Una cosa alla volta — la regola che viene prima delle altre
 
 **Si consegna una cosa sola, si aspetta che Camillo l'abbia fatta, si
