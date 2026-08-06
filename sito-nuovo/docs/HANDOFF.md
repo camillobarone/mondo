@@ -818,10 +818,12 @@ Cosa manca davvero (verificato il 4 agosto, sera):
   stati importati** — l'importatore legge solo `estate_property` — e vanno
   ricreati a mano come le pagine. Restano da decidere le 25 pagine-residuo del
   tema.
-- **Il contenuto da ricreare**: 35 pagine e 54 articoli al 5 agosto 2026. Il
-  conto aggiornato, l'elenco di cosa è già fatto e la regola con cui si
-  scelgono i collegamenti interni stanno in `CENSIMENTO-URL.md`, sezione «A che
-  punto siamo».
+- **Il contenuto da ricreare**: 30 pagine e 56 articoli, contati sulla sitemap
+  del 6 agosto 2026 (erano 35 e 54 il 5 agosto: il conto delle pagine è sceso,
+  quello degli articoli è salito perché il numero vecchio era sbagliato — gli
+  articoli fatti sono zero, i due online sono gli esempi dell'installazione).
+  L'elenco di cosa è già fatto e la regola con cui si scelgono i collegamenti
+  interni stanno in `CENSIMENTO-URL.md`, sezione «A che punto siamo».
 - Il `sameAs` dell'autore singolo: il nodo `Person` di un articolo eredita
   l'aggancio a Wikidata da `worksFor` → `#agent`, ma non ha un proprio
   collegamento a un profilo pubblico. Servirebbe una colonna in `users`.
@@ -984,11 +986,51 @@ video, se i collegamenti risolvono e se le FAQ sono partite senza volerlo.
 
 Poi, in ordine di quanto pesa:
 
-1. **Ricreare il contenuto: 35 pagine e 54 articoli.** È il collo di
-   bottiglia, e non è lavoro tecnico — sono testi da riscrivere uno per uno
-   nel gestionale, con lo stesso slug del sito vecchio. Finché non ci sono,
-   il sito nuovo non può sostituire quello vero. Elenco, conteggio e regole
-   in `CENSIMENTO-URL.md`.
+0. 🔴 **Due articoli di esempio dell'installazione sono pubblici e nella
+   sitemap.** `quanto-costa-al-metro-quadro-una-casa-a-lecce` e
+   `vendere-casa-nel-salento-i-tempi-reali` nascono da `db/seed.php` con
+   `status = published`, e il loro corpo dice testualmente «Questo è un
+   articolo di esempio, inserito con l'installazione… Va sostituito con un
+   contenuto vero prima di pubblicare il sito». Vanno cancellati dal
+   gestionale, non riscritti: il primo occupa lo stesso intento di
+   `prezzi-case-lecce-2026`, il secondo di `vendere-casa-lecce`.
+   Stessa origine e stesso problema per `chi-siamo`, il cui testo di
+   installazione si chiude con «Questa pagina è un segnaposto
+   dell'installazione: va riscritta con i contenuti veri» — da aprire e
+   controllare se è ancora quello.
+   I sei immobili `DEMO-0001…0006` invece **non ci sono più**: nessuno dei
+   loro slug compare nella sitemap del 6 agosto.
+
+1. **Ricreare il contenuto: 30 pagine e 56 articoli** (conteggio verificato
+   sulla sitemap del 6 agosto 2026). È il collo di bottiglia, e non è lavoro
+   tecnico — sono testi da riscrivere uno per uno nel gestionale, con lo
+   stesso slug del sito vecchio. Finché non ci sono, il sito nuovo non può
+   sostituire quello vero. Elenco, conteggio e regole in
+   `CENSIMENTO-URL.md`.
+
+   **Fatte (13 su 43):** `agenzia-immobiliare-lecce`,
+   `agenzia-immobiliare-porto-cesareo`, `quotazioni-omi-lecce`,
+   `agevolazioni-prima-casa-lecce`, `comprare-casa-a-lecce`, `libro`,
+   `chi-siamo` (da verificare, vedi punto 0), le quattro schede delle
+   persone, `cookie-policy` e l'informativa privacy. Le 46 pagine del
+   censimento diventano 43 perché home, `blog` e `contatti` sul sito nuovo
+   sono rotte fisse, non pagine del gestionale.
+
+   **Articoli: zero.** I due online sono gli esempi del punto 0.
+
+1bis. 🔴 **Collegamenti interni mancanti.** Una pagina senza link in entrata
+   resta «Rilevata ma non indicizzata», e la sitemap non basta. Verificato
+   sul codice dei template: nav e piè di pagina raggiungono solo `/`,
+   `/immobili/`, `/blog/`, `/contatti/`, `/valutazione-gratuita/`,
+   `/calcolatore-imposte-acquisto-casa/` e — condizionati — privacy e cookie.
+   Tutto il resto vive solo dei collegamenti scritti dentro i testi.
+   **Orfane certe: `quotazioni-omi-lecce`** (nessuna pagina la nomina) e
+   **`stefano-my`** (il collegamento c'era in `agenzia-immobiliare-lecce` ed
+   è stato tolto il 6 agosto — scelta di Camillo, ma il collegamento va
+   rimesso da qualche altra parte, per esempio dalla pagina di Porto
+   Cesareo). **Da verificare a mano: `chi-siamo`, `libro`,
+   `agevolazioni-prima-casa-lecce`, `comprare-casa-a-lecce`** — nessun
+   template li nomina, quindi dipendono da cosa scrivono le altre pagine.
 2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
    pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
    eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
