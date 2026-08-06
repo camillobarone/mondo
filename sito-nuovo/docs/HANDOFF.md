@@ -1176,15 +1176,60 @@ Poi, in ordine di quanto pesa:
    pubblicati** contati nella sitemap coincidono esattamente col censimento
    (34 pubblicati, 15 bozze) — non ne manca nessuno all'appello.
 8. **Il logo in testata — FATTO il 6 agosto.** Vedi la scheda qui sotto.
-9. **Collegare Git al server**, così le modifiche non si copiano più a mano.
-   Il piano SiteGround lo permette: Site Tools → Sviluppatori ha sia **Git**
-   sia **Gestione chiavi SSH**. ⚠️ Non si collega com'è adesso: nel repo non
-   ci sono — di proposito — `config.php` e `public/uploads/`, e un deploy che
-   sovrascrive `public_html` cancella la password del database e tutte le
-   foto degli immobili. Va anche risolto che il sito vive in `sito-nuovo/`
-   mentre lo strumento si aspetta la radice del repository. È un lavoro a sé,
-   da fare con un backup fatto prima.
+9. **Collegare Git al server — È IL PROSSIMO LAVORO.** Piano concordato con
+   Camillo il 6 agosto, backup del server già fatto da lui la sera stessa.
+   Vedi la scheda qui sotto.
 10. Più avanti: export verso i portali.
+
+### Collegare Git al server: il piano concordato
+
+**Perché.** Oggi ogni modifica al codice si copia a mano, file per file, nel
+Gestione File. Una serata di lavoro sul logo è costata tre file incollati e
+due giri di correzione. Da qui al passaggio del dominio le modifiche saranno
+molte di più.
+
+**Si può fare:** Site Tools → Sviluppatori ha sia **Git** sia **Gestione
+chiavi SSH**, verificato sulle schermate del pannello di Camillo.
+
+**Camillo ha approvato un repository nuovo dedicato al sito.** Il repository
+attuale non ha la forma giusta e non è discutibile che la abbia: il ramo
+principale si chiama `jules-4092590956749443987-c47f811b`, il sito vive nella
+sottocartella `sito-nuovo/` mentre gli strumenti di deploy vogliono il sito
+nella radice, e accanto ci sono i resti di due esperimenti abbandonati
+(`web-auditor/`, e un `crm/` su un altro ramo). Il repository vecchio resta
+come archivio, con dentro la PR #3 che racconta come è nato il sito.
+
+**La storia non si perde, ed è verificato.** Il ramo con il sito nella radice
+si produce con:
+
+    git subtree split --prefix=sito-nuovo -b <ramo>
+
+Provato il 6 agosto: **76 commit**, e la radice del ramo contiene esattamente
+`app`, `bin`, `db`, `docs`, `public`, `storage`, `views`, `.htaccess`,
+`.gitignore`, `README.md` — le stesse cartelle che stanno in `public_html`
+sul server.
+
+**L'ordine, e dove si sta:**
+
+0. ✅ Backup manuale del server — fatto da Camillo il 6 agosto.
+1. ⬜ Creare il repository nuovo (nome proposto `mondo-sito`, privato) e
+   spingerci il ramo prodotto dallo split come `main`.
+2. ⬜ Camillo apre Site Tools → Sviluppatori → Git e manda le schermate.
+   ⚠️ **Nessuno qui conosce a memoria quello strumento e da questo ambiente
+   non è raggiungibile** — la rete blocca tutto tranne GitHub. Non inventare
+   i passaggi: farsi mandare cosa chiede e rispondere su quello.
+3. ⬜ Primo collegamento **su una cartella di prova, non su `public_html`**.
+   Si verifica che il codice arrivi intero.
+4. ⬜ Solo dopo, il collegamento vero.
+
+**La regola di sicurezza che regge tutto:** git tocca soltanto i file che
+conosce. `config.php` e `public/uploads/` sono esclusi dal repository
+(`.gitignore` di `sito-nuovo/`), quindi un *aggiornamento* non li vede
+nemmeno. Il pericolo esiste solo se lo strumento fa «svuota e riscarica»
+invece di «aggiorna»: è precisamente ciò che il passo 3 serve a scoprire, su
+una cartella che non serve a nessuno. Perdere `config.php` significa perdere
+la password del database; perdere `public/uploads/` significa perdere tutte
+le foto degli immobili, caricate una per una.
 
 ### Il logo in testata: com'è andata, e i due numeri da non toccare a caso
 
