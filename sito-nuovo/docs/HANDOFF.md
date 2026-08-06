@@ -994,10 +994,23 @@ Poi, in ordine di quanto pesa:
    contenuto vero prima di pubblicare il sito». Vanno cancellati dal
    gestionale, non riscritti: il primo occupa lo stesso intento di
    `prezzi-case-lecce-2026`, il secondo di `vendere-casa-lecce`.
-   Stessa origine e stesso problema per `chi-siamo`, il cui testo di
-   installazione si chiude con «Questa pagina è un segnaposto
-   dell'installazione: va riscritta con i contenuti veri» — da aprire e
-   controllare se è ancora quello.
+   **Fatto il 6 agosto: cancellati da Camillo.**
+   `chi-siamo` era lo stesso caso — testo dell'installazione, con dentro
+   «Questa pagina è un segnaposto dell'installazione: va riscritta con i
+   contenuti veri» — verificato aprendola e **riscritto lo stesso giorno**.
+
+   ⚠️ **Nella nuova `chi-siamo` ci sono due frasi che non sono dati ma
+   impegni verso il cliente, sottoposte a Camillo e approvate da lui il 6
+   agosto:** «Preferiamo perdere l'incarico che prenderlo a una cifra che
+   sappiamo già non reggerà» e «Molte proposte si chiudono prima di
+   comparire online». Sono il motivo per cui la pagina non suona come le
+   altre: non vanno ammorbidite in una revisione futura senza richiederlo a
+   lui.
+
+   La pagina è anche il rimedio al punto 1bis: dà una porta d'ingresso a
+   `quotazioni-omi-lecce`, `stefano-my` e `libro`, che erano irraggiungibili
+   dal resto del sito. Non porta domande frequenti, di proposito: sarebbero
+   nate vicine a quelle di `agenzia-immobiliare-lecce`.
    I sei immobili `DEMO-0001…0006` invece **non ci sono più**: nessuno dei
    loro slug compare nella sitemap del 6 agosto.
 
