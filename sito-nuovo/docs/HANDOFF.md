@@ -758,14 +758,20 @@ riguardava il codice: il sito gira su `prova.mondoimmobiliarelecce.it` con
 MySQL e gestionale, i file sul server sono allineati al repo, il logo vero è
 al suo posto e il log del server è vuoto.
 
-**Il passo successivo è già cominciato, e si è fermato su due dati.** Si stava
-scrivendo l'**informativa privacy**. Quella del sito vecchio (pagina WP
-`24677`) non si può ricopiare: descrive Google Analytics, il retargeting e una
-newsletter, e il sito nuovo non ha niente di tutto questo — zero JavaScript,
-nessun cookie di tracciamento, nessun modulo di iscrizione. Ricopiarla
-sarebbe dichiarare il falso.
+**L'informativa privacy è scritta e pubblicata**, ed è la prima pagina di
+contenuto del sito nuovo. Non è la copia di quella vecchia: quella (pagina WP
+`24677`) descrive Google Analytics, il retargeting e una newsletter, e il sito
+nuovo non ha niente di tutto questo — ricopiarla sarebbe stato dichiarare il
+falso. È stata riscritta su quello che il sito fa davvero, letto dal codice.
+Mille parole, dodici sottotitoli, nessun collegamento orfano.
 
-Quello che il sito fa davvero, letto dal codice e già pronto per il testo:
+I due dati che mancavano li ha dati Camillo il 6 agosto, e valgono anche per
+tutto il resto: l'indirizzo per le richieste privacy è
+**info@mondoimmobiliarelecce.it**, la conservazione delle richieste di
+contatto è di **24 mesi dall'ultimo contatto**.
+
+I fatti su cui è costruita, tutti verificati nel codice — servono anche alla
+cookie policy e a chiunque debba riscriverla:
 
 - i moduli raccolgono **nome, telefono, email, zona, messaggio e indirizzo
   IP** (`Forms.php` → tabella `leads`)
@@ -779,14 +785,19 @@ Quello che il sito fa davvero, letto dal codice e già pronto per il testo:
 - titolare: Studio RCS Srls, Via Giuseppe Parini 48/a, Lecce, P.IVA
   IT05004730759, tel 0832 391489
 
-**Le due domande da fare a Camillo appena si riprende**, e finché non
-risponde il testo non si scrive perché sarebbero dati inventati:
+Una cosa non è stata scritta perché non si sapeva: **in quale paese stanno
+fisicamente i server**. Il datacenter è indicato in SiteGround → Site Tools;
+quando Camillo lo dice, va aggiunta una frase all'informativa.
 
-1. quale **indirizzo email** pubblicare per le richieste privacy (accesso,
-   cancellazione). Non compare da nessuna parte nel codice: cercato, zero
-   risultati.
-2. **per quanto tempo tiene le richieste di contatto** prima di cancellarle.
-   Proposta fatta e in attesa di conferma: 24 mesi dall'ultimo contatto.
+**Come si scrive una pagina qui.** Il testo si incolla nel gestionale in
+`/gestionale/pagine/nuova`, scritto con i pochi segni che `Mil\Core\Testo`
+riconosce: `##` per i sottotitoli, `-` per gli elenchi, `**` per il grassetto,
+`[testo](indirizzo)` per i collegamenti. **Niente tabelle**, che non sono
+supportate e finirebbero a video con i trattini e le barre. Un `##` intitolato
+«Domande frequenti» fa scattare l'estrattore delle FAQ: da usare quando lo si
+vuole davvero, da evitare per caso. Ogni testo prodotto va passato per
+`Testo::html()` prima di consegnarlo — si vede subito se un segno resta a
+video, se i collegamenti risolvono e se le FAQ sono partite senza volerlo.
 
 Poi, in ordine di quanto pesa:
 
@@ -798,15 +809,11 @@ Poi, in ordine di quanto pesa:
 2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
    pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
    eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
-3. **Le due pagine di legge**, `informativa-sulla-privacy-e-sulluso-dei-dati-di-mondo-immobiliare`
-   e `cookie-policy`. Sono le prime due da ricreare, prima di qualunque
-   guida: il modulo di contatto raccoglie nome, telefono ed email, e
-   l'informativa deve essere raggiungibile da ogni pagina. Gli indirizzi
-   stanno in `app/Core/Legali.php`; finché mancano, il piè di pagina non le
-   nomina — meglio nessun collegamento che uno rotto — e il riepilogo del
-   gestionale lo dice in chiaro. Le pagine vecchie da cui partire: WP `24677`
-   (privacy) e WP `30757` (cookie). La cookie policy sarà corta: il sito ha
-   un cookie solo, tecnico.
+3. **La `cookie-policy`.** L'informativa privacy è fatta; questa è l'altra
+   pagina che `app/Core/Legali.php` nomina, ed è l'ultima che manca perché il
+   piè di pagina sia completo. È corta — il sito ha un cookie solo, tecnico —
+   e rimanda all'informativa per il resto. La vecchia, da cui **non** si
+   copia per lo stesso motivo dell'altra, è WP `30757`.
 4. **Pulizia prima di andare online**: cancellare `public/install.php`, i 2
    clienti di esempio e i 3 articoli di esempio.
 5. **`agenzia-immobiliare-porto-cesareo`.** Il nodo della seconda sede nello
