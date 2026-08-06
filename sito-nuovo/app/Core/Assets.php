@@ -92,7 +92,16 @@ final class Assets
         // non valgono il rischio di scoprirlo in produzione.
         $css = preg_replace('/\s*([{}:;,>])\s*/', '$1', $css) ?? $css;
         // `and(` non è valido: le media query hanno bisogno dello spazio.
-        $css = str_replace(['and(', 'not(', ';}'], [' and (', ' not (', '}'], $css);
+        //
+        // Il `not(` invece va toccato solo quando è la parola chiave di una
+        // media query o di un `@supports`. Quando segue i due punti è tutta
+        // un'altra cosa — `:not(.hero-sequenza)` è un selettore — e infilarci
+        // uno spazio in mezzo lo rendeva `: not (.hero-sequenza)`, che non è
+        // un selettore valido: il browser buttava via l'intera regola senza
+        // dire niente. È così che lo zoom lento della foto grande in cima
+        // aveva smesso di funzionare sulle pagine con una foto sola.
+        $css = preg_replace('/(?<!:)\bnot\(/', 'not (', $css) ?? $css;
+        $css = str_replace(['and(', ';}'], [' and (', '}'], $css);
 
         return trim($css);
     }
