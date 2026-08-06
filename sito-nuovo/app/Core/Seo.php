@@ -180,11 +180,25 @@ final class Seo
     {
         $base = self::base();
 
-        $person = static fn (string $slug, string $name): array => [
-            '@type' => 'Person',
-            '@id' => $base . '/' . $slug . '/#person',
-            'name' => $name,
-        ];
+        // L'`@id` c'è sempre: serve a legare la persona all'agenzia dentro il
+        // grafo, e vale anche quando la scheda non è ancora stata scritta.
+        // L'`url` invece è un indirizzo che qualcuno andrà a chiedere, quindi
+        // esce solo se quella pagina esiste davvero — stessa regola della
+        // sede di Porto Cesareo, qui sotto. Si accende da sé man mano che le
+        // schede vengono pubblicate: nessuno deve ricordarsi di tornare qui.
+        $person = static function (string $slug, string $name) use ($base): array {
+            $nodo = [
+                '@type' => 'Person',
+                '@id' => $base . '/' . $slug . '/#person',
+                'name' => $name,
+            ];
+
+            if (Content::pagePubblicata($slug)) {
+                $nodo['url'] = $base . '/' . $slug . '/';
+            }
+
+            return $nodo;
+        };
 
         $founders = [];
         foreach (self::FOUNDERS as $slug => $name) {
