@@ -103,7 +103,19 @@ img { max-width: 100%; height: auto; display: block; }
    margine bianco attorno al marchio: dei 54 punti dichiarati il blu ne
    occupa una cinquantina scarsa. Chi rifà il ritaglio più stretto deve
    rifare anche questi due numeri. */
-@media (max-width: 560px) { .brand { gap: 7px; } .brand-mark { height: 42px; } }
+@media (max-width: 560px) {
+  .brand { gap: 7px; }
+  .brand-mark { height: 42px; }
+  /* Il nome scende a 1.08rem perché sul telefono deve stare su UNA riga.
+     Spezzato in due — «Mondo Immobiliare» sopra e «Lecce» sotto — la
+     testata cresceva a 116 punti e si mangiava la prima schermata; il
+     sottotitolo, che va a capo comunque, restava fuori dal fondo.
+     Il nome vero è quello del gestionale e può cambiare: se un giorno
+     diventa più lungo di «Mondo Immobiliare Lecce», questa misura va
+     rimisurata a 360 punti di larghezza, che è lo schermo più stretto
+     ancora in giro. */
+  .brand-name { font-size: 1.08rem; }
+}
 
 .nav { display: flex; align-items: center; gap: 22px; }
 /* `nowrap`: una voce di menu spezzata su due righe («Valutazione / gratuita»)
