@@ -1,8 +1,8 @@
 import { requireOwner } from "@/lib/auth";
-import { listUsers } from "@/lib/queries";
-import { saveUser } from "@/lib/actions";
+import { usersWithLoad } from "@/lib/queries";
+import { saveUser, eliminaUtente } from "@/lib/actions";
 import { shortDate } from "@/lib/format";
-import { SubmitButton } from "@/components/client";
+import { SubmitButton, ConfirmButton } from "@/components/client";
 import { PageHeader, Card, TextField, SelectField, CheckboxRow, Chip } from "@/components/ui";
 import { OFFICES } from "@/lib/types";
 
@@ -18,9 +18,9 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<{ modifica?: string }>;
 }) {
-  await requireOwner();
+  const io = await requireOwner();
   const params = await searchParams;
-  const users = listUsers();
+  const users = usersWithLoad();
   const editing = params.modifica ? users.find((u) => u.id === Number(params.modifica)) : undefined;
 
   return (
@@ -91,6 +91,7 @@ export default async function UsersPage({
                 <th>Ruolo</th>
                 <th>Ufficio</th>
                 <th>Stato</th>
+                <th className="text-right">In carico</th>
                 <th></th>
               </tr>
             </thead>
@@ -112,6 +113,18 @@ export default async function UsersPage({
                       <Chip tone="red">disattivato</Chip>
                     )}
                   </td>
+                  <td className="text-right text-xs text-slate-600">
+                    {user.clienti || user.immobili ? (
+                      <>
+                        {user.clienti} client{user.clienti === 1 ? "e" : "i"}
+                        <div>
+                          {user.immobili} immobil{user.immobili === 1 ? "e" : "i"}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-slate-400">niente</span>
+                    )}
+                  </td>
                   <td className="text-right">
                     <a
                       href={`/utenti?modifica=${user.id}`}
@@ -119,6 +132,30 @@ export default async function UsersPage({
                     >
                       modifica
                     </a>
+                    {/*
+                      Su se stessi il pulsante non c'e' proprio: l'azione lo
+                      rifiuterebbe comunque, ma un pulsante che non si puo'
+                      premere e' un pulsante che si prova a premere.
+                    */}
+                    {user.id === io.id ? null : (
+                      <form action={eliminaUtente} className="mt-1">
+                        <input type="hidden" name="id" value={user.id} />
+                        <ConfirmButton
+                          variant="nudo"
+                          className="text-xs text-red-700 hover:underline"
+                          message={
+                            user.clienti || user.immobili
+                              ? `Elimini l'utenza di ${user.name}.\n\n` +
+                                `Le sue schede NON vengono cancellate: ${user.clienti} clienti e ` +
+                                `${user.immobili} immobili passano a te, e da quel momento li vedi ` +
+                                `nel tuo archivio.\n\nProcedere?`
+                              : `Elimini l'utenza di ${user.name}. Non ha nessuna scheda in carico.\n\nProcedere?`
+                          }
+                        >
+                          elimina
+                        </ConfirmButton>
+                      </form>
+                    )}
                     <div className="text-xs text-slate-400">dal {shortDate(user.created_at)}</div>
                   </td>
                 </tr>

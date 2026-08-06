@@ -3,7 +3,7 @@
 import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { db, run, one, audit } from "./db";
+import { db, run, one, count, audit } from "./db";
 import {
   requireUser, requireOwner, hashPassword,
   login as doLogin, logout as doLogout,
@@ -883,6 +883,74 @@ export async function saveUser(form: FormData) {
 
   revalidatePath("/utenti");
   redirect("/utenti");
+}
+
+/**
+ * Elimina un'utenza e prende in carico il suo archivio.
+ *
+ * Il punto delicato non e' la riga da cancellare, e' quello che le sta
+ * attaccato. Nel database `clients.owner_id` e `properties.agent_id` sono
+ * dichiarati ON DELETE SET NULL: cancellando l'utente le sue schede non
+ * spariscono, restano senza intestatario. E una scheda senza intestatario, al
+ * primo riavvio, viene assegnata al primo titolare da `assegnaTitolareMancante`.
+ *
+ * Cioe': un "elimina" scritto come si fa di solito — una DELETE e via — avrebbe
+ * comunque passato l'archivio a qualcuno, ma di nascosto e a un utente scelto
+ * dal database invece che da chi preme il pulsante. Qui il passaggio si fa
+ * prima, esplicito, a chi sta eliminando, e la pagina lo dice sul pulsante.
+ *
+ * Restano fuori di proposito due colonne: `price_history.user_id` (chi ha
+ * cambiato il prezzo) e `audit_log.user_id` (chi ha fatto cosa). Quelle non
+ * sono proprieta', sono cronaca: riscriverle vorrebbe dire far risultare a
+ * registro operazioni fatte da qualcun altro. Diventano vuote, ed e' giusto.
+ */
+export async function eliminaUtente(form: FormData) {
+  const owner = await requireOwner();
+  const id = Number(form.get("id") ?? 0);
+
+  const daEliminare = one<{ id: number; name: string; role: string }>(
+    `SELECT id, name, role FROM users WHERE id = ?`,
+    [id],
+  );
+  if (!daEliminare) throw new Error("Utente non trovato.");
+
+  // Chi elimina se stesso si chiude fuori: se poi era l'ultimo titolare, alla
+  // pagina Utenti non entra piu' nessuno e si rimedia solo dal server.
+  if (daEliminare.id === owner.id) {
+    throw new Error("Non puoi eliminare l'utenza con cui sei entrato.");
+  }
+
+  // Senza nessun titolare attivo non resta nessuno che possa gestire le utenze.
+  if (daEliminare.role === "titolare") {
+    const altriTitolari = count(
+      `SELECT COUNT(*) FROM users WHERE role = 'titolare' AND active = 1 AND id <> ?`,
+      [id],
+    );
+    if (!altriTitolari) {
+      throw new Error("È l'ultimo titolare attivo: prima nominane un altro.");
+    }
+  }
+
+  db.transaction(() => {
+    // Anche le schede nel cestino, non solo quelle in elenco: una scheda
+    // cestinata con l'intestatario cancellato tornerebbe fuori dalla porta di
+    // servizio, riassegnata dalla migrazione a un utente qualsiasi.
+    run(`UPDATE clients    SET owner_id = ? WHERE owner_id = ?`, [owner.id, id]);
+    run(`UPDATE properties SET agent_id = ? WHERE agent_id = ?`, [owner.id, id]);
+    // Le attivita' e le valutazioni seguono chi le ha fatte: senza questo, una
+    // visita non attaccata a nessuna scheda resterebbe senza padrone e non la
+    // vedrebbe piu' nessuno.
+    run(`UPDATE activities  SET user_id = ? WHERE user_id = ?`, [owner.id, id]);
+    run(`UPDATE valuations  SET user_id = ? WHERE user_id = ?`, [owner.id, id]);
+    run(`DELETE FROM users WHERE id = ?`, [id]);
+  })();
+
+  audit(owner.id, "elimina", "utente", id);
+  // Niente redirect: il pulsante sta gia' sulla pagina Utenti, e rimandare una
+  // pagina a se stessa fa ricomparire l'elenco dalla cache del browser —
+  // l'utenza appena eliminata resterebbe a schermo fino a un ricaricamento.
+  // Senza redirect, la risposta dell'azione porta con se' l'elenco aggiornato.
+  revalidatePath("/utenti");
 }
 
 /* ========================================================= importazione */

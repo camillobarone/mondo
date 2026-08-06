@@ -1200,6 +1200,27 @@ export function listUsers(includeInactive = true): User[] {
   );
 }
 
+/**
+ * Gli utenti con quante schede hanno in carico.
+ *
+ * Serve alla pagina Utenti prima di eliminare qualcuno: eliminare un'utenza
+ * non cancella il suo archivio, lo passa a chi preme il pulsante. Chi preme
+ * deve vedere prima quanta roba sta per ereditare.
+ *
+ * I conteggi escludono il cestino, perche' e' quello che l'interessato si
+ * vedrebbe elencato: contare anche le schede cestinate darebbe un numero che
+ * non torna con nessuna pagina del programma.
+ */
+export function usersWithLoad(): (User & { clienti: number; immobili: number })[] {
+  return all<User & { clienti: number; immobili: number }>(
+    `SELECT u.*,
+            (SELECT COUNT(*) FROM clients    c WHERE c.owner_id = u.id AND c.deleted_at IS NULL) AS clienti,
+            (SELECT COUNT(*) FROM properties p WHERE p.agent_id = u.id AND p.deleted_at IS NULL) AS immobili
+       FROM users u
+      ORDER BY u.active DESC, u.name COLLATE NOCASE`,
+  );
+}
+
 export function activeUserOptions(): { value: string; label: string }[] {
   return all<User>(`SELECT * FROM users WHERE active = 1 ORDER BY name COLLATE NOCASE`).map(
     (user) => ({ value: String(user.id), label: user.name }),
