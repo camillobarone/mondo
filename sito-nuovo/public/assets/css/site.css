@@ -727,9 +727,13 @@ img { max-width: 100%; height: auto; display: block; }
     .post-card {
       animation: entra-salendo linear both;
       animation-timeline: view();
-      /* Il tragitto si misura **solo** sull'ingresso dell'elemento, da un
-         settimo a tre quarti: quando ne sono entrati tre quarti è già
-         opaco, cioè prima ancora di essere tutto sullo schermo.
+      /* Il tragitto si misura **solo** sull'ingresso dell'elemento, e va
+         quasi per intero: si chiude quando l'elemento è quasi tutto sullo
+         schermo, non prima. La prima versione finiva al 76% e non la
+         vedeva nessuno — misurata, era già ferma quando la scheda arrivava
+         a metà bassa dello schermo, dove uno comincia a guardarla. Un
+         movimento che finisce prima di essere guardato non è discreto, è
+         assente.
 
          `entry` e non `cover`, e non è una sfumatura. `cover` va
          dall'istante in cui l'elemento entra a quello in cui esce, e un
@@ -739,7 +743,7 @@ img { max-width: 100%; height: auto; display: block; }
          alto 2800 due riquadri si fermavano a 0,74 di opacità. Con `entry`
          il tragitto si chiude appena l'elemento è dentro, e dentro ci
          finisce sempre — anche su una pagina che non si scorre affatto. */
-      animation-range: entry 14% entry 76%;
+      animation-range: entry 5% entry 92%;
     }
 
     /* Le schede di una stessa riga entrano insieme, e insieme è meccanico.
@@ -748,9 +752,9 @@ img { max-width: 100%; height: auto; display: block; }
        arrivare una dopo l'altra. Un ritardo a tempo qui non esisterebbe —
        non c'è un cronometro, c'è la posizione. */
     .griglia > :nth-child(2),
-    .post-card:nth-child(2) { animation-range: entry 6% entry 68%; }
+    .post-card:nth-child(2) { animation-range: entry 0% entry 84%; }
     .griglia > :nth-child(3),
-    .post-card:nth-child(3) { animation-range: entry 0% entry 60%; }
+    .post-card:nth-child(3) { animation-range: entry 0% entry 76%; }
   }
 
   @supports (animation-timeline: scroll()) {
@@ -766,16 +770,17 @@ img { max-width: 100%; height: auto; display: block; }
    usano già `transform` per sollevarsi al passaggio del mouse. Scritte sulla
    stessa proprietà, l'ultima delle due cancellerebbe l'altra. */
 @keyframes entra-salendo {
-  from { opacity: 0; translate: 0 22px; }
+  from { opacity: 0; translate: 0 42px; }
   to   { opacity: 1; translate: 0 0; }
 }
 
-/* La foto scende di poco mentre la pagina sale: sembra più lontana. È
-   ingrandita del 6% per tutto il tragitto, altrimenti scendendo scoprirebbe
-   una striscia vuota in cima. */
+/* La foto scende mentre la pagina sale: sembra più lontana. L'ingrandimento
+   del 12% non è estetico ed è il minimo che serve: scendendo di 11vh, senza
+   niente che la allarghi, la foto scoprirebbe una striscia di fondo scuro in
+   cima all'hero. Cambiando lo spostamento va rifatto il conto. */
 @keyframes hero-lento {
-  from { translate: 0 0;   scale: 1.06; }
-  to   { translate: 0 7vh; scale: 1.06; }
+  from { translate: 0 0;    scale: 1.12; }
+  to   { translate: 0 11vh; scale: 1.12; }
 }
 
 /* Chi ha chiesto meno movimento non lo riceve da nessuna parte, comprese le
