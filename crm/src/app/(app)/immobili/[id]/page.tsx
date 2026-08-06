@@ -130,9 +130,7 @@ export default async function PropertyPage({
                   </span>
                 ) : null}
               </DataRow>
-              {user.role === "titolare" || property.agent_id === user.id ? (
-                <DataRow label="Minimo accettato">{euro(property.min_price)}</DataRow>
-              ) : null}
+              <DataRow label="Minimo accettato">{euro(property.min_price)}</DataRow>
               <DataRow label="Contratto">{property.contract}</DataRow>
               <DataRow label="Stato">{label(property.status, PROPERTY_STATUSES)}</DataRow>
               <DataRow label="Codice">{property.ref}</DataRow>
@@ -288,7 +286,19 @@ export default async function PropertyPage({
             </Card>
           ) : null}
 
-          {property.status === "venduto" && user.role === "titolare" ? (
+          {/*
+            Rogito e provvigioni li vede chi ha in carico l'immobile, non chi ha
+            un certo ruolo. Prima erano riservati al titolare, e allora aveva
+            senso: era l'unico a vedere anche il portafoglio degli altri. Da
+            quando ognuno vede solo il proprio — e da quando fra gli utenti c'e'
+            un'agenzia indipendente che lavora per conto suo — nasconderli
+            all'agente significa nascondergli i propri incassi.
+
+            Qui non serve nessun controllo: questa scheda si apre solo se
+            l'immobile e' tuo, altrimenti getProperty non lo restituisce
+            proprio e la pagina risponde "non trovato".
+          */}
+          {property.status === "venduto" ? (
             <Card title="Chiusura">
               <dl>
                 <DataRow label="Prezzo di rogito">{euro(property.sold_price)}</DataRow>

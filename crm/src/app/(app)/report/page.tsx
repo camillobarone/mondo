@@ -8,7 +8,11 @@ export const dynamic = "force-dynamic";
 
 export default async function ReportPage() {
   const user = await requireUser();
-  const isOwner = user.role === "titolare";
+  // Le provvigioni le vede chi le ha fatte. Il report e' gia' ristretto al
+  // proprio archivio — reportByAgent conta solo i propri immobili — quindi la
+  // colonna non puo' mostrare i soldi di nessun altro, e legarla al ruolo
+  // servirebbe solo a nascondere a un'agenzia indipendente i suoi.
+  const isOwner = true;
 
   const sources = reportBySource(user.id);
   const agents = reportByAgent(user.id);
