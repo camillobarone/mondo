@@ -25,6 +25,7 @@ final class Listings
             'bedrooms_min' => int_or_null(q('camere')),
             'q' => q('cerca'),
             'sort' => q('ordina'),
+            'lecce_prima' => true,
         ];
 
         $page = max(1, (int) q('pagina', '1'));
@@ -32,8 +33,12 @@ final class Listings
 
         // Le pagine di risultato filtrate non vanno indicizzate: sono
         // combinazioni infinite dello stesso contenuto.
+        // `lecce_prima` sta fra le esclusioni con `status` e `sort`: è un
+        // ordinamento, non un filtro. Contarlo avrebbe fatto passare per
+        // «pagina filtrata» anche /immobili/ senza parametri, mandando in
+        // noindex l'elenco principale del sito.
         $isFiltered = array_filter($filters, static fn (mixed $v, string $k): bool =>
-            !in_array($k, ['status', 'sort'], true) && !empty($v), ARRAY_FILTER_USE_BOTH) !== [];
+            !in_array($k, ['status', 'sort', 'lecce_prima'], true) && !empty($v), ARRAY_FILTER_USE_BOTH) !== [];
 
         $pageUrl = Seo::base() . '/immobili/';
         $graph = [

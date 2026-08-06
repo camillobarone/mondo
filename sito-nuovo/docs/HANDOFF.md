@@ -92,6 +92,31 @@ Lecce, e non porta `aggregateRating` — le recensioni stanno solo sul nodo di
 Lecce. Un secondo `RealEstateAgent` alla pari, o le recensioni ripetute sulla
 filiale, sarebbero l'errore da non fare.
 
+**Negli elenchi del sito è nel codice, dal 6 agosto.** `Properties::search()`
+accetta il filtro `lecce_prima`, che antepone all'ordinamento un
+`CASE WHEN LOWER(p.city) IN (…) THEN 0 ELSE 1 END`: il comune di Lecce resta
+in cima anche quando l'ultimo immobile caricato è di un altro paese. L'elenco
+dei comuni è `Vocab::COMUNE_LECCE` — città più le marine San Cataldo, Frigole
+e Torre Chianca — ed è il punto unico da cambiare se un giorno la regola va
+stretta alla sola città.
+
+Tre limiti voluti, da non "correggere" per sbaglio:
+
+- **vale solo dove il flag viene passato** — home ed `/immobili/`. Il
+  gestionale continua a vedere l'ultimo caricato per primo, che è quello che
+  serve a chi lavora, e gli immobili simili in fondo alla scheda filtrano già
+  per comune;
+- **vale solo sull'ordine predefinito**: se chi guarda sceglie «prezzo
+  crescente», quella scelta vince, o il filtro sembra rotto;
+- **batte anche il flag «in evidenza»**: un immobile della costa messo in
+  evidenza sta comunque sotto quelli di Lecce. È la richiesta di Camillo —
+  «sempre primi» — non una svista.
+
+⚠️ `lecce_prima` è un ordinamento, non un filtro: in `Listings::index` sta
+nell'elenco delle chiavi escluse dal calcolo di `$isFiltered`, insieme a
+`status` e `sort`. Contarlo manderebbe in `noindex` `/immobili/` anche senza
+parametri, cioè l'elenco principale del sito.
+
 Nei testi la conseguenza è che la pagina di Porto Cesareo non si scrive come
 «l'agenzia immobiliare di Porto Cesareo», ma come **la sede sulla costa di
 un'agenzia di Lecce**. I collegamenti interni salgono verso Lecce e la home;

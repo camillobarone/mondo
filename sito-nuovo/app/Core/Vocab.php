@@ -88,6 +88,22 @@ final class Vocab
         "Sant'Isidoro",
     ];
 
+    /**
+     * Il comune di Lecce, marine comprese.
+     *
+     * Serve a una cosa sola: tenere gli immobili di Lecce in testa agli
+     * elenchi pubblici, qualunque sia l'ultimo caricato. Lecce è la sede
+     * principale e il mercato su cui il sito deve posizionarsi; Porto Cesareo
+     * è una filiale, e un annuncio della costa non deve scalzare la città
+     * solo perché è arrivato dopo.
+     *
+     * San Cataldo, Frigole e Torre Chianca sono marine del comune di Lecce,
+     * non comuni a sé: stanno qui perché chi cerca «casa a Lecce» le
+     * considera Lecce. Per restringere la regola alla sola città basta
+     * togliere le tre righe.
+     */
+    public const COMUNE_LECCE = ['Lecce', 'San Cataldo', 'Frigole', 'Torre Chianca'];
+
     public const FEATURES = [
         'Giardino', 'Terrazzo', 'Balcone', 'Posto auto', 'Box auto', 'Piscina',
         'Aria condizionata', 'Ascensore', 'Cantina', 'Mansarda', 'Taverna',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mil\Repo;
 
 use Mil\Core\Db;
+use Mil\Core\Vocab;
 
 final class Properties
 {
@@ -23,12 +24,27 @@ final class Properties
         $pages = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($page, $pages));
 
-        $order = match ((string) ($filters['sort'] ?? '')) {
+        $sceltaOrdine = (string) ($filters['sort'] ?? '');
+        $order = match ($sceltaOrdine) {
             'prezzo-asc' => 'CASE WHEN p.price IS NULL OR p.price = 0 THEN 1 ELSE 0 END, p.price ASC',
             'prezzo-desc' => 'p.price DESC',
             'mq-desc' => 'p.sqm DESC',
             default => 'p.featured DESC, COALESCE(p.published_at, p.created_at) DESC',
         };
+
+        // Lecce in testa, quando lo chiede chi mostra l'elenco al pubblico.
+        //
+        // Vale solo sull'ordine predefinito: se chi guarda ha scelto «prezzo
+        // crescente», l'elenco deve rispettare quella scelta e basta, o il
+        // filtro sembra rotto. E vale solo dove il flag viene passato — il
+        // gestionale continua a vedere l'ultimo caricato per primo, che è
+        // quello che serve a chi lavora.
+        $ordiniEspliciti = ['prezzo-asc', 'prezzo-desc', 'mq-desc'];
+        $orderParams = [];
+        if (!empty($filters['lecce_prima']) && !in_array($sceltaOrdine, $ordiniEspliciti, true)) {
+            [$primaLecce, $orderParams] = self::ordineLeccePrima();
+            $order = $primaLecce . ', ' . $order;
+        }
 
         $sql = "SELECT p.*,
                        (SELECT path  FROM property_images i WHERE i.property_id = p.id ORDER BY i.sort, i.id LIMIT 1) AS cover,
@@ -39,7 +55,10 @@ final class Properties
                 ORDER BY {$order}
                 LIMIT {$perPage} OFFSET " . (($page - 1) * $perPage);
 
-        $items = Db::all($sql, $params);
+        // I parametri dell'ordinamento vanno solo qui: la COUNT qui sopra non
+        // ha ORDER BY, e su MySQL — dove le prepare non sono emulate — un
+        // parametro legato e mai usato fa fallire la query.
+        $items = Db::all($sql, $params + $orderParams);
 
         // Il prezzo minimo del proprietario non esce da qui. search() alimenta
         // anche le pagine pubbliche: toglierlo alla fonte vale più che
@@ -54,6 +73,35 @@ final class Properties
             'total' => $total,
             'pages' => $pages,
             'page' => $page,
+        ];
+    }
+
+    /**
+     * Il pezzo di ORDER BY che porta il comune di Lecce in cima.
+     *
+     * Zero per Lecce e le sue marine, uno per tutto il resto: gli immobili
+     * della sede principale restano in testa anche quando l'ultimo caricato
+     * è di un altro comune. Dentro ciascuno dei due gruppi l'ordine non
+     * cambia — prima quelli in evidenza, poi i più recenti.
+     *
+     * Il confronto è in minuscolo perché il comune arriva da WordPress e da
+     * chi compila la scheda a mano: «Lecce» e «lecce» sono lo stesso posto.
+     * `LOWER()` esiste identica su MySQL e SQLite.
+     *
+     * @return array{0:string,1:array<string,string>}
+     */
+    private static function ordineLeccePrima(): array
+    {
+        $segnaposti = [];
+        $params = [];
+        foreach (Vocab::COMUNE_LECCE as $i => $comune) {
+            $segnaposti[] = ':sede' . $i;
+            $params['sede' . $i] = mb_strtolower($comune);
+        }
+
+        return [
+            'CASE WHEN LOWER(p.city) IN (' . implode(', ', $segnaposti) . ') THEN 0 ELSE 1 END',
+            $params,
         ];
     }
 

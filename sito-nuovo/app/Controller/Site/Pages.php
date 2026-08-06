@@ -20,9 +20,17 @@ final class Pages
 
     public static function home(): void
     {
-        $featured = Properties::search(['status' => 'online', 'featured' => 1], 1, 6);
+        // `lecce_prima`: la sede principale è Lecce, e la home deve aprirsi su
+        // Lecce. Senza questo, bastava caricare una villa sulla costa perché
+        // la prima cosa che si vede del sito fosse un altro comune — comprese
+        // le foto grandi in cima, che escono da qui.
+        $featured = Properties::search(
+            ['status' => 'online', 'featured' => 1, 'lecce_prima' => true],
+            1,
+            6
+        );
         if ($featured['total'] === 0) {
-            $featured = Properties::search(['status' => 'online'], 1, 6);
+            $featured = Properties::search(['status' => 'online', 'lecce_prima' => true], 1, 6);
         }
 
         $pageUrl = Seo::base() . '/';
