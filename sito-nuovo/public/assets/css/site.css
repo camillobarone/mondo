@@ -757,11 +757,77 @@ img { max-width: 100%; height: auto; display: block; }
     .post-card:nth-child(3) { animation-range: entry 0% entry 76%; }
   }
 
+  /* Più foto in cima: si sciolgono una nell'altra, e ognuna si allarga
+     pianissimo per tutto il tempo in cui si vede. Il giro e il ritardo di
+     ciascuna li scrive il PHP: dipendono da quante foto ci sono. */
+  .hero-sequenza .hero-sfondo {
+    opacity: 0;
+    animation-duration: var(--giro, 18s);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-delay: var(--ritardo, 0s);
+  }
+  /* Due serie di fotogrammi e non una. Il momento in cui una foto sfuma non
+     si può scrivere in secondi: dentro `@keyframes` si scrive in percentuale
+     del giro, e mezzo giro con due foto non è un terzo di giro con tre. Con
+     una serie sola tarata su tre, a due foto restava più di un secondo in
+     cui non se ne vedeva nessuna e appariva il fondo scuro. */
+  .hero-sequenza[data-foto="2"] .hero-sfondo { animation-name: hero-dissolvi-2; }
+  .hero-sequenza[data-foto="3"] .hero-sfondo { animation-name: hero-dissolvi-3; }
+
+  /* Una foto sola non ha niente in cui sciogliersi: le resta il movimento
+     lento con la pagina. Le due cose non convivono sullo stesso elemento —
+     userebbero tutte e due `scale` e l'ultima cancellerebbe l'altra — e non
+     serve che convivano: dove c'è la sequenza il movimento c'è già. */
   @supports (animation-timeline: scroll()) {
-    .hero-sfondo {
+    .hero:not(.hero-sequenza) .hero-sfondo {
+      scale: 1.12;
       animation: hero-lento linear both;
       animation-timeline: scroll();
       animation-range: 0 100vh;
+    }
+  }
+
+  /* La testata si posa. Scendendo, la riga sotto il nome sparisce e il nome
+     si stringe verso sinistra; risalendo torna com'era.
+
+     L'altezza della testata **non** cambia, ed è voluto: `.site-head` è
+     appiccicata in cima ma sta nel flusso della pagina: farla rimpicciolire
+     accorcerebbe il documento, e tutto quello che sta sotto salterebbe su
+     di scatto mentre si scorre. Si muove quindi solo ciò che non sposta
+     nulla — `scale` e `opacity` — e la testata acquista un'ombra, che è il
+     segnale con cui si capisce che il contenuto le scorre sotto. */
+  @supports (animation-timeline: scroll()) {
+    .brand, .brand-claim, .site-head {
+      animation: linear both;
+      animation-timeline: scroll();
+      animation-range: 0 180px;
+    }
+    .brand { animation-name: testata-nome; transform-origin: left center; }
+    .brand-claim { animation-name: testata-claim; }
+    .site-head { animation-name: testata-ombra; }
+  }
+
+  /* Le foto delle schede respirano mentre la scheda attraversa lo schermo.
+     Prima si muovevano solo col mouse sopra, cioè mai sul telefono — dove
+     sta la metà di chi guarda. `scale` e non `transform`: il passaggio del
+     mouse usa già `transform`, e sulla stessa proprietà una delle due
+     sparirebbe. */
+  @supports (animation-timeline: view()) {
+    /* La linea del tempo la dichiara la scheda e la usa la foto dentro.
+       Sembra un giro largo per niente, e invece è obbligatorio: `view()`
+       misura l'attraversamento rispetto al primo antenato che scorre, e per
+       la foto quell'antenato è `.card`, che ha `overflow: hidden` per via
+       degli angoli arrotondati. `.card` non scorre, quindi la misura non si
+       muoveva mai: la foto restava ferma a metà animazione, ingrandita del
+       4,5% e basta. Dichiarandola sulla scheda, la misura è
+       l'attraversamento della scheda nella pagina — che è quello che si
+       voleva. */
+    .card { view-timeline: --scheda block; }
+    .card-media img {
+      animation: foto-respira linear both;
+      animation-timeline: --scheda;
+      animation-range: entry 0% exit 100%;
     }
   }
 }
@@ -777,10 +843,45 @@ img { max-width: 100%; height: auto; display: block; }
 /* La foto scende mentre la pagina sale: sembra più lontana. L'ingrandimento
    del 12% non è estetico ed è il minimo che serve: scendendo di 11vh, senza
    niente che la allarghi, la foto scoprirebbe una striscia di fondo scuro in
-   cima all'hero. Cambiando lo spostamento va rifatto il conto. */
+   cima all'hero. Sta sulla regola e non qui dentro, così `scale` resta libera
+   per la sequenza. Cambiando lo spostamento va rifatto il conto. */
 @keyframes hero-lento {
-  from { translate: 0 0;    scale: 1.12; }
-  to   { translate: 0 11vh; scale: 1.12; }
+  from { translate: 0 0; }
+  to   { translate: 0 11vh; }
+}
+
+/* Il giro di una foto della sequenza, in quattro atti: si vede, sfuma via,
+   aspetta il suo turno, rientra mentre quella prima di lei se ne va.
+   La dissolvenza dura 1,2 secondi in tutti e due i casi — cambia la
+   percentuale perché cambia la lunghezza del giro.
+   L'ingrandimento va da 1,12 a 1,19 mentre la foto si vede, e torna indietro
+   piano mentre è invisibile: chi guarda vede solo un lento avvicinarsi. Il
+   minimo è 1,12 e non 1: sotto quel valore la foto non riempirebbe l'hero. */
+@keyframes hero-dissolvi-2 {   /* giro di 12s: 4,8 visibile, 1,2 di sfumatura */
+  0%    { opacity: 1; scale: 1.12; }
+  40%   { opacity: 1; }
+  50%   { opacity: 0; scale: 1.19; }
+  90%   { opacity: 0; scale: 1.13; }
+  100%  { opacity: 1; scale: 1.12; }
+}
+@keyframes hero-dissolvi-3 {   /* giro di 18s, stessi 4,8 e stessi 1,2 */
+  0%     { opacity: 1; scale: 1.12; }
+  26.7%  { opacity: 1; }
+  33.3%  { opacity: 0; scale: 1.19; }
+  93.3%  { opacity: 0; scale: 1.13; }
+  100%   { opacity: 1; scale: 1.12; }
+}
+
+/* La testata che si posa. Niente che cambi l'ingombro: solo `scale`,
+   `opacity` e un'ombra. */
+@keyframes testata-nome  { to { scale: .9; } }
+@keyframes testata-claim { to { opacity: 0; } }
+@keyframes testata-ombra { to { box-shadow: 0 10px 30px -18px rgba(34, 31, 26, .5); } }
+
+/* Le foto delle schede: entrano un filo più grandi e si posano. */
+@keyframes foto-respira {
+  from { scale: 1.09; }
+  to   { scale: 1; }
 }
 
 /* Chi ha chiesto meno movimento non lo riceve da nessuna parte, comprese le

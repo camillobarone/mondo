@@ -376,13 +376,42 @@ final class Pages
      */
     public static function heroImage(array $featured): ?array
     {
+        return self::heroImages($featured, 1)[0] ?? null;
+    }
+
+    /**
+     * Le foto che si alternano in cima alla home.
+     *
+     * Sono le copertine degli immobili in vetrina, prese in ordine: nessun
+     * file nuovo da produrre, e la home cambia faccia da sola quando cambia
+     * la vetrina. Ne bastano tre — la quarta la vedrebbe solo chi resta
+     * fermo sulla home diciotto secondi.
+     *
+     * Il tetto non è un vezzo: ogni foto in più è una foto che ogni
+     * visitatore scarica per vedere la home. Tre è il punto in cui si
+     * smette di essere una cartolina senza far pagare il viaggio a chi
+     * arriva con la rete del telefono.
+     *
+     * @param array<int,array<string,mixed>> $featured
+     * @return array<int,array<string,mixed>>
+     */
+    public static function heroImages(array $featured, int $quante = 3): array
+    {
+        $con = [];
+
         foreach ($featured as $p) {
-            if (trim((string) ($p['cover'] ?? '')) !== '') {
-                return $p;
+            if (trim((string) ($p['cover'] ?? '')) === '') {
+                continue;
+            }
+
+            $con[] = $p;
+
+            if (count($con) >= $quante) {
+                break;
             }
         }
 
-        return null;
+        return $con;
     }
 
     /**

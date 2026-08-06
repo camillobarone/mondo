@@ -10,22 +10,47 @@ use Mil\Core\Assets;
 use Mil\Core\View;
 use Mil\Core\Vocab;
 
-// Lo sfondo dell'hero è la copertina di un immobile in evidenza: nessun file
-// in più da caricare, e la home cambia faccia da sola quando cambia la
-// vetrina. Se nessuno ha foto resta il fondo scuro, senza buchi.
-$sfondo = Mil\Controller\Site\Pages::heroImage($featured);
-$sfondoSrc = $sfondo === null ? '' : (string) $sfondo['cover'];
+/* Lo sfondo dell'hero sono le copertine degli immobili in evidenza: nessun
+   file in più da caricare, e la home cambia faccia da sola quando cambia la
+   vetrina. Se nessuno ha foto resta il fondo scuro, senza buchi.
+
+   Da una in su si alternano sciogliendosi una nell'altra. I due numeri del
+   giro li calcola qui il PHP e non il CSS, perché dipendono da quante foto
+   ci sono davvero: con due il giro dura dodici secondi, con tre diciotto. */
+$sfondi = Mil\Controller\Site\Pages::heroImages($featured);
+$quante = count($sfondi);
+$secondi = 6;
+$giro = $quante * $secondi;
 ?>
-<section class="hero<?= $sfondoSrc === '' ? ' hero-senza-foto' : '' ?>">
-  <?php if ($sfondoSrc !== ''): ?>
-    <img class="hero-sfondo" src="<?= e(url($sfondoSrc)) ?>"
+<?php /* `data-foto` serve al CSS: la durata del giro si passa come numero, ma
+         *quando* una foto sfuma non è un numero — è una percentuale del giro,
+         e cambia se le foto sono due o tre. Due serie di fotogrammi, e questo
+         attributo dice quale usare. */ ?>
+<section class="hero<?= $quante === 0 ? ' hero-senza-foto' : '' ?><?= $quante > 1 ? ' hero-sequenza' : '' ?>"
+         <?= $quante > 1 ? 'data-foto="' . $quante . '" style="--giro:' . $giro . 's"' : '' ?>>
+  <?php foreach ($sfondi as $i => $sfondo): ?>
+    <?php
+    /* Il ritardo è negativo, cioè l'animazione parte già a metà strada: è
+       il modo di far apparire le foto una dopo l'altra senza aspettare un
+       primo giro a vuoto. La prima parte da zero ed è subito visibile; le
+       altre entrano al loro turno, in ordine. */
+    $ritardo = $i === 0 ? 0 : -(($quante - $i) * $secondi);
+    ?>
+    <img class="hero-sfondo" src="<?= e(url((string) $sfondo['cover'])) ?>"
          <?php if (($sfondo['cover_srcset'] ?? '') !== ''): ?>
          srcset="<?= e(srcset_url((string) $sfondo['cover_srcset'])) ?>"
          sizes="100vw"
          <?php endif; ?>
          alt="" role="presentation"
-         width="1600" height="1120" fetchpriority="high" decoding="async">
-  <?php endif; ?>
+         width="1600" height="1120"
+         <?php /* Solo la prima ha fretta: è quella su cui viene misurata
+                  l'apertura della pagina. Le altre si vedono dopo sei
+                  secondi e possono aspettare il loro turno anche per
+                  scaricarsi, senza rubarle banda. */ ?>
+         <?= $i === 0 ? 'fetchpriority="high"' : 'fetchpriority="low"' ?>
+         decoding="async"
+         <?= $quante > 1 ? 'style="--ritardo:' . $ritardo . 's"' : '' ?>>
+  <?php endforeach; ?>
   <div class="wrap">
     <p class="hero-kicker">Lecce · Porto Cesareo · Salento</p>
     <h1>La casa giusta la si riconosce entrando.<br>Il prezzo giusto, prima.</h1>
