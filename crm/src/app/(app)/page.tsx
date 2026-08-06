@@ -7,6 +7,56 @@ import { CompleteButton } from "./agenda/complete-button";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Una riga dell'agenda nel cruscotto.
+ *
+ * Vale sia per oggi sia per i giorni scorsi: cambia solo il colore e il fatto
+ * che sull'arretrato compaia da quanto aspetta.
+ */
+function RigaAgenda({
+  item,
+  arretrata,
+}: {
+  item: Awaited<ReturnType<typeof agenda>>["today"][number];
+  arretrata: boolean;
+}) {
+  return (
+    <li className="flex items-start gap-3 px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip tone={arretrata ? "red" : "brand"}>{item.type}</Chip>
+          <span className="text-sm font-medium text-slate-800">
+            {item.title || "(senza titolo)"}
+          </span>
+          {arretrata ? (
+            <span className="text-xs font-medium text-red-600">{relative(item.due_at)}</span>
+          ) : null}
+        </div>
+        <p className="mt-0.5 text-xs text-slate-500">
+          {item.client_name ? (
+            <Link
+              href={`/clienti/${item.client_id}`}
+              className="hover:text-brand-700 hover:underline"
+            >
+              {item.client_name}
+            </Link>
+          ) : null}
+          {item.client_name && item.property_title ? " · " : null}
+          {item.property_title ? (
+            <Link
+              href={`/immobili/${item.property_id}`}
+              className="hover:text-brand-700 hover:underline"
+            >
+              {item.property_title}
+            </Link>
+          ) : null}
+        </p>
+      </div>
+      <CompleteButton id={item.id} />
+    </li>
+  );
+}
+
 export default async function DashboardPage() {
   const user = await requireUser();
   const stats = dashboard(user.id);
@@ -70,7 +120,7 @@ export default async function DashboardPage() {
         {/* ------------------------------------------------ da fare oggi */}
         <div className="space-y-5 lg:col-span-2">
           <Card
-            title={`Da fare oggi (${today.length + overdue.length})`}
+            title={`Da fare oggi (${today.length})`}
             actions={
               <Link href="/agenda" className="text-xs text-brand-700 hover:underline">
                 Tutta l&apos;agenda
@@ -78,56 +128,45 @@ export default async function DashboardPage() {
             }
             bodyClassName=""
           >
-            {overdue.length === 0 && today.length === 0 ? (
+            {today.length === 0 ? (
               <EmptyState
-                title="Niente in sospeso."
-                hint="Quando registri una telefonata o un appuntamento con una data, compare qui."
+                title="Niente in programma per oggi."
+                hint="Quando registri una telefonata o un appuntamento con la data di oggi, compare qui."
               />
             ) : (
               <ul className="divide-y divide-slate-100">
-                {[...overdue, ...today].map((item) => {
-                  const late = overdue.includes(item);
-                  return (
-                    <li key={item.id} className="flex items-start gap-3 px-4 py-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Chip tone={late ? "red" : "brand"}>{item.type}</Chip>
-                          <span className="text-sm font-medium text-slate-800">
-                            {item.title || "(senza titolo)"}
-                          </span>
-                          {late ? (
-                            <span className="text-xs font-medium text-red-600">
-                              {relative(item.due_at)}
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          {item.client_name ? (
-                            <Link
-                              href={`/clienti/${item.client_id}`}
-                              className="hover:text-brand-700 hover:underline"
-                            >
-                              {item.client_name}
-                            </Link>
-                          ) : null}
-                          {item.client_name && item.property_title ? " · " : null}
-                          {item.property_title ? (
-                            <Link
-                              href={`/immobili/${item.property_id}`}
-                              className="hover:text-brand-700 hover:underline"
-                            >
-                              {item.property_title}
-                            </Link>
-                          ) : null}
-                        </p>
-                      </div>
-                      <CompleteButton id={item.id} />
-                    </li>
-                  );
-                })}
+                {today.map((item) => (
+                  <RigaAgenda key={item.id} item={item} arretrata={false} />
+                ))}
               </ul>
             )}
           </Card>
+
+          {/*
+            L'arretrato sta per conto suo, sotto, e la scheda compare solo se
+            c'e' qualcosa dentro. Prima le cose di ieri erano mescolate a quelle
+            di oggi: la lista di oggi cresceva di roba vecchia e il conteggio in
+            testa non diceva piu' quanto c'era da fare in giornata.
+
+            Non serve nessun filtro nuovo: `overdue` sono gia' le attivita' con
+            data passata e senza spunta, quindi la scheda si svuota da se' mano
+            a mano che le segni fatte, e sparisce quando non ne resta nessuna.
+          */}
+          {overdue.length > 0 ? (
+            <Card
+              title={`Giorni scorsi (${overdue.length})`}
+              actions={
+                <span className="text-xs text-slate-500">rimaste senza spunta</span>
+              }
+              bodyClassName=""
+            >
+              <ul className="divide-y divide-slate-100">
+                {overdue.map((item) => (
+                  <RigaAgenda key={item.id} item={item} arretrata />
+                ))}
+              </ul>
+            </Card>
+          ) : null}
 
           {/* -------------------------------------------- clienti dormienti */}
           <Card
