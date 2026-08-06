@@ -325,6 +325,67 @@ in fondo e il nodo `Person` dello schema — due delle cose che si va a
 guardare proprio in anteprima. Corretto in `0b2a6ab`: ora `post()` fa la
 stessa unione che `postBySlug()` faceva già.
 
+### Il sito si muove, e senza JavaScript — 6 agosto 2026
+
+Camillo voleva una home «dinamica» e proponeva componenti React presi da
+librerie di componenti. Non sono installabili qui e non è solo una questione
+tecnica: uno faceva orbitare i loghi di Supabase, Figma e Slack — su un sito
+immobiliare non significano niente — e caricava le immagini da un server
+terzo, cioè contraddiceva la cookie policy pubblicata il giorno prima, che
+dice che sul sito non gira una riga di codice di altri. La strada giusta era
+un'altra: le stesse qualità, ottenute in CSS, mostrando le case invece dei
+loghi altrui.
+
+Cosa c'è adesso, tutto legato allo scorrimento o al tempo, zero JavaScript:
+
+- **le foto in cima alla home si alternano** — fino a tre copertine di
+  immobili in vetrina, sei secondi ciascuna, con l'ingrandimento lento
+  mentre si vedono. Nessun file nuovo: le prende dalla vetrina;
+- **la testata si posa** scendendo: il claim sfuma, il nome si stringe,
+  compare un'ombra;
+- **le foto delle schede respirano** mentre la scheda attraversa lo schermo,
+  anche senza mouse — cioè anche sul telefono;
+- **le sezioni entrano salendo** quando arrivano in vista;
+- **la galleria dell'immobile si sfoglia col dito** sul telefono.
+
+**Cinque trappole trovate misurando.** Sono la parte che vale la pena
+rileggere prima di toccare le animazioni: nessuna si vede a occhio, tutte
+rompono qualcosa.
+
+1. **`opacity: 0` va sempre dentro `@supports`.** Un browser che non conosce
+   `animation-timeline` applicherebbe il punto di partenza e ignorerebbe il
+   resto: pagina bianca per sempre. Dentro `@supports`, dove il moto non
+   esiste non esiste nemmeno il punto di partenza.
+2. **`cover` come fine del tragitto non si chiude mai in fondo alla pagina.**
+   Un elemento in fondo non esce mai dallo schermo. Su uno schermo alto 2800,
+   con 212px da scorrere, due riquadri restavano a 0,74 di opacità per
+   sempre. Si usa `entry`, che si chiude appena l'elemento è dentro.
+3. **`view()` misura rispetto al primo antenato che scorre.** Per la foto
+   dentro una scheda quell'antenato è `.card`, che ha `overflow: hidden` per
+   gli angoli arrotondati e non scorre mai: l'animazione restava ferma a
+   metà. Si dichiara `view-timeline` sulla scheda e la si richiama per nome.
+4. **Una testata appiccicata in cima non si può rimpicciolire.** Sta nel
+   flusso: accorciarla accorcia il documento, e tutto quello che sta sotto
+   salta su di scatto mentre si scorre. Si muove solo ciò che non sposta
+   nulla — `scale`, `opacity`, l'ombra.
+5. **Dentro `@keyframes` i tempi sono percentuali, non secondi.** Mezzo giro
+   con due foto non è un terzo di giro con tre: con una serie sola tarata su
+   tre, a due foto restava più di un secondo di fondo scuro scoperto. Servono
+   due serie, scelte da `data-foto`.
+
+E una cosa che mancava del tutto: il sito adesso rispetta
+**`prefers-reduced-motion`**. Chi lo chiede non riceve nessun movimento,
+comprese le transizioni scritte prima.
+
+**Come si provano.** Non a occhio — a occhio la prima versione sembrava a
+posto, e Camillo ha risposto «non noto differenze». Con un browser vero, in
+Playwright, misurando: l'opacità di ogni elemento dopo aver scorso tutto, a
+sette altezze di schermo e su sette pagine; la somma delle opacità dell'hero
+campionata ogni 200 ms per un giro intero, con due e con tre foto; la
+distanza fra il bordo della foto e il bordo dell'hero a passi di 40px per
+escludere strisce scoperte. Gli attrezzi vivono nello scratchpad della
+sessione e vanno riscritti: sono una trentina di righe l'uno.
+
 ### Sito pubblico
 Home con ricerca, elenco con filtri, scheda immobile con galleria, pagina
 valutazione con FAQ visibili, blog, pagine statiche, contatti con entrambe le
