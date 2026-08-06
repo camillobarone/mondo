@@ -922,8 +922,11 @@ export async function eliminaUtente(form: FormData) {
 
   // Senza nessun titolare attivo non resta nessuno che possa gestire le utenze.
   if (daEliminare.role === "titolare") {
+    // L'alias `n` non e' un vezzo: count() legge la colonna che si chiama cosi'
+    // e senza restituisce zero. Con zero, questo controllo scatta sempre e
+    // nessun titolare si puo' piu' eliminare.
     const altriTitolari = count(
-      `SELECT COUNT(*) FROM users WHERE role = 'titolare' AND active = 1 AND id <> ?`,
+      `SELECT COUNT(*) AS n FROM users WHERE role = 'titolare' AND active = 1 AND id <> ?`,
       [id],
     );
     if (!altriTitolari) {
