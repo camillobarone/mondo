@@ -90,7 +90,7 @@ foreach ([(string) Settings::get('site_name', 'Mondo Immobiliare Lecce'), 'Mondo
 <header class="site-head">
   <div class="wrap head-row">
     <?php /* Il marchio in testata è il solo simbolo, senza la scritta che il
-             logo si porta dentro: rimpicciolita a 46 punti quella scritta
+             logo si porta dentro: rimpicciolita a 54 punti quella scritta
              diventa una macchia, e comunque ripeterebbe il nome che sta già
              qui accanto in Playfair. `alt` vuoto di proposito — il nome
              dell'agenzia è nel testo del collegamento, e chi ascolta la

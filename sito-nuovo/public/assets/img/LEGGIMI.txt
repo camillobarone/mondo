@@ -27,21 +27,25 @@ dell'anteprima social.
 --------------------------------------------------------------------
 logo-simbolo.png
 --------------------------------------------------------------------
-Sul server: 640 x 510, ricavato da logo.png il 6 agosto 2026.
+Sul server: 710 x 510, ricavato da logo.png il 6 agosto 2026.
 
 E' lo stesso marchio SENZA la scritta MONDO IMMOBILIARE: solo lo
-skyline con il globo, ritagliato stretto. E' quello che si vede in
-testata, alto 46 punti (38 sul telefono).
+skyline con il globo. E' quello che si vede in testata, alto 54 punti
+(42 sul telefono).
 
-La scritta e' stata tolta apposta. Rimpicciolita a 46 punti diventa
+La scritta e' stata tolta apposta. Rimpicciolita a 54 punti diventa
 una macchia azzurra illeggibile, e comunque ripeterebbe il nome che in
 testata sta gia' accanto, scritto in Playfair.
+
+Attenzione: questo ritaglio NON e' stretto, ha un margine bianco
+attorno al marchio. E' il motivo per cui in CSS le misure sono 54 e 42
+invece di 46 e 38 — dei 54 punti dichiarati il blu ne occupa una
+cinquantina scarsa. Chi rifa' il ritaglio piu' stretto deve rifare
+anche quei due numeri, altrimenti il simbolo cresce di colpo.
 
   - fondo BIANCO PIENO, non trasparente: in testata lo fa sparire il
     `mix-blend-mode: multiply` di `.brand-mark`, che moltiplicando per
     bianco lascia il fondo com'e'
-  - ritaglio stretto attorno al marchio: i margini bianchi larghi qui
-    diventano spazio vuoto fra simbolo e nome
   - lato lungo almeno 400 px
 
 Il ritaglio si rifa' in un minuto: si apre logo.png in Canva (o in

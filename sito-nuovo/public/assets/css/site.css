@@ -86,19 +86,24 @@ img { max-width: 100%; height: auto; display: block; }
   background: rgba(253,251,247,.92); backdrop-filter: saturate(1.4) blur(8px);
 }
 .head-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 84px; }
-.brand { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 13px; }
+.brand { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px; }
 .brand-testo { display: block; }
 /* Il file del simbolo ha il fondo bianco pieno, e deve averlo: è lo stesso
    marchio che serve al JSON-LD e all'anteprima social, dove la trasparenza
    non è ammessa. `multiply` lo fa sparire qui senza un secondo file da
    tenere allineato a mano — moltiplicare per bianco lascia il fondo com'è,
    e sull'avorio della testata il blu resta blu. */
-.brand-mark { width: auto; height: 46px; flex: none; mix-blend-mode: multiply; }
+.brand-mark { width: auto; height: 54px; flex: none; mix-blend-mode: multiply; }
 .brand-name { display: block; font-family: var(--serif); font-weight: 600; font-size: 1.35rem; letter-spacing: -.01em; }
 .brand-claim { display: block; font-size: .76rem; color: var(--ink-soft); }
-/* Sul telefono stretto il simbolo scende a 38 punti: più grande, fra nome
-   dell'agenzia e burger non resta larghezza per stare tutti su una riga. */
-@media (max-width: 560px) { .brand { gap: 10px; } .brand-mark { height: 38px; } }
+/* Sul telefono stretto il simbolo scende a 42 punti: più grande, fra nome
+   dell'agenzia e burger non resta larghezza per stare tutti su una riga.
+
+   Le misure sono 54 e 42 e non 46 e 38 perché il file del simbolo ha un
+   margine bianco attorno al marchio: dei 54 punti dichiarati il blu ne
+   occupa una cinquantina scarsa. Chi rifà il ritaglio più stretto deve
+   rifare anche questi due numeri. */
+@media (max-width: 560px) { .brand { gap: 7px; } .brand-mark { height: 42px; } }
 
 .nav { display: flex; align-items: center; gap: 22px; }
 /* `nowrap`: una voce di menu spezzata su due righe («Valutazione / gratuita»)
