@@ -873,22 +873,22 @@ mai — si porta dietro `_elementor_data`. Funzionano invece
 pezzo di una pagina pesante. Per una pagina intera la via più rapida resta
 chiedere a Camillo di aprirla e incollare il testo.
 
-**Cloudflare Web Analytics: allarme rientrato.** Sembrava una bomba a
+**Cloudflare Web Analytics: falso allarme, chiuso.** Sembrava una bomba a
 orologeria — un frammento JS di terze parti che, sopravvivendo alla
 migrazione, avrebbe reso false due frasi della cookie policy («non usiamo
 strumenti di statistica», «non gira una riga di codice scritto da altri»).
-Verificato il 6 agosto: **la pagina di `prova.mondoimmobiliarelecce.it` non
-contiene `cloudflareinsights`**, quindi il frammento non viene iniettato
-dallo strato SiteGround, ma sta dentro WordPress. Muore insieme a
-WordPress, e sul sito nuovo non può arrivare.
+Verificato da Camillo il 6 agosto sul sorgente di **entrambi** i siti:
+`cloudflareinsights` **non compare né su `prova.` né sul sito vecchio**. Su
+Cloudflare esiste solo una scheda Web Analytics creata e mai attivata — il
+servizio si usa incollando un frammento, senza spostare i DNS, e quel
+frammento non è mai stato incollato. Non c'è niente da rimuovere e non c'è
+nessun rischio per la cookie policy.
 
-Due cose che restano vere e vanno sapute: il servizio **non usa cookie né
-fingerprinting**, quindi sul sito vecchio non richiede alcun banner; e su
-Cloudflare esiste una scheda Web Analytics creata senza registrare il
-dominio — si può usare Web Analytics incollando il frammento, senza
-spostare i DNS. Se un giorno servono i numeri delle visite sul sito nuovo,
-si contano **lato PHP**: nessun JavaScript, nessun cookie, nessuna terza
-parte, e la cookie policy resta vera com'è scritta.
+Da sapere comunque: il servizio **non usa cookie né fingerprinting**,
+quindi non avrebbe richiesto alcun banner. E se un giorno servono i numeri
+delle visite sul sito nuovo, si contano **lato PHP** — nessun JavaScript,
+nessun cookie, nessuna terza parte, e la cookie policy resta vera com'è
+scritta.
 
 ### I prezzi: due listini che non si contraddicono
 
