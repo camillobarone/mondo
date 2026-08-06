@@ -117,6 +117,15 @@ nell'elenco delle chiavi escluse dal calcolo di `$isFiltered`, insieme a
 `status` e `sort`. Contarlo manderebbe in `noindex` `/immobili/` anche senza
 parametri, cioè l'elenco principale del sito.
 
+**Le persone hanno un peso diverso, e non è un dettaglio di stile.** Detto da
+Camillo il 6 agosto: i titolari sono **Camillo Barone, Antonio Renna e
+Alessandro Ciullo**; **Stefano My è un collaboratore**, e sulla pagina di
+Lecce non va messo in mostra. Dalla sezione «Chi lavora in agenzia» il suo
+nome è stato tolto da Camillo dopo la pubblicazione. Sulla pagina di Porto
+Cesareo invece ci sta, ed è giusto: lì è il riferimento della costa.
+Nei dati strutturati resta fra gli `employee` — è un fatto, non una vetrina,
+e in pagina non si vede.
+
 Nei testi la conseguenza è che la pagina di Porto Cesareo non si scrive come
 «l'agenzia immobiliare di Porto Cesareo», ma come **la sede sulla costa di
 un'agenzia di Lecce**. I collegamenti interni salgono verso Lecce e la home;
