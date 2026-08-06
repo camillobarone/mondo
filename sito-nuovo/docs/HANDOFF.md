@@ -141,6 +141,43 @@ sito-nuovo/
 
 ### Cose da sapere prima di toccare il codice
 
+**⚠️ `public/.htaccess` non si tocca senza provarlo sul server.** Il file nel
+repo è tenuto **identico byte per byte** a quello che gira su SiteGround —
+1390 byte — e va tenuto così, commenti compresi: è l'unica versione di cui si
+sappia che funziona lì.
+
+Il 6 agosto 2026 ci erano state aggiunte tre righe di cache per SVG e
+caratteri tipografici — `ExpiresByType image/svg+xml`, `font/woff2`,
+`application/font-woff2` — e il sito ha smesso di rispondere su **ogni
+indirizzo tranne la home**: 404 su `/immobili/`, sulle schede, sul blog. La
+home continuava a rispondere perché `index.php` è un file vero e ci arriva da
+`DirectoryIndex`, senza bisogno della riscrittura.
+
+Tre cose lo rendono un caso chiuso e non un'ipotesi:
+
+- **non era un 500** ma un 404, quindi Apache non stava rifiutando il file per
+  errore di sintassi;
+- la pagina di errore era **quella di SiteGround, in inglese** («We searched
+  the space…»), non quella del sito, che è in italiano e dice «Questa pagina
+  non c'è». La richiesta non arrivava nemmeno a PHP;
+- le stesse identiche righe su un **Apache normale** con `mod_rewrite` e
+  `mod_expires`, provate in locale, non rompono niente: `/immobili/` e
+  `/contatti/` rispondono 200.
+
+Quindi non è la sintassi Apache: è il modo in cui SiteGround rilegge questo
+file — davanti ad Apache c'è un NGINX che se lo interpreta per conto suo, ed è
+lui a rispondere quel 404. **Quale delle tre righe non gli piaccia non è stato
+stabilito**: per scoprirlo servivano altre interruzioni del sito, e il
+guadagno erano pochi KB di cache.
+
+Si è tornati indietro rinominando: il vecchio era stato conservato come
+`htaccess.vecchio` prima di sovrascrivere, ed è bastato riscambiare i nomi. È
+il motivo per cui **una copia del vecchio va sempre lasciata sul server**
+prima di toccare questo file.
+
+Se un giorno serve davvero: una riga per volta, aprendo `/immobili/` dopo
+ognuna, con la copia pronta da rimettere.
+
 **`Db` è a doppio dialetto.** Un solo `schema.sql` per MySQL (produzione) e
 SQLite (prova in locale), con i token `{PK}` `{NOW}` `{MONEY}` `{SUFFIX}`
 `{TEXT}` risolti a runtime da `Db::dialect()`. Per concatenare stringhe si usa

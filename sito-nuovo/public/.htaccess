@@ -35,23 +35,3 @@
   ExpiresByType image/jpeg "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
 </IfModule>
-
-# ATTENZIONE — non aggiungere righe a questo file senza provarle sul server.
-#
-# Il 6 agosto 2026 qui dentro erano state aggiunte tre righe di cache per
-# SVG e caratteri tipografici (`ExpiresByType image/svg+xml`, `font/woff2`,
-# `application/font-woff2`). Su SiteGround il sito ha smesso di rispondere
-# su ogni indirizzo tranne la home: 404 su /immobili/, sulle schede, su
-# tutto. Non un 500 — un 404, e con la pagina di errore di SiteGround, non
-# con quella del sito. Cioe la richiesta non arrivava nemmeno a PHP.
-#
-# Le stesse tre righe, su un Apache normale con mod_rewrite e mod_expires,
-# non rompono niente: provate, /immobili/ e /contatti/ rispondono 200. Il
-# problema e nel modo in cui SiteGround legge questo file — davanti ad
-# Apache c'e un NGINX che se lo rilegge per conto suo, ed e lui a
-# rispondere quel 404. Quale delle tre righe non gli piaccia non e stato
-# stabilito: costava un'altra interruzione del sito per scoprirlo, e il
-# guadagno era qualche KB di cache.
-#
-# Se un giorno serve davvero: una riga per volta, provando /immobili/
-# dopo ognuna, e con una copia di questo file da rimettere al suo posto.
