@@ -906,7 +906,8 @@ alla società. Va però messa davanti prima, non dopo.
 Aggiornato al **6 agosto 2026**. Superato tutto quello che riguardava il
 codice: il sito gira su `prova.mondoimmobiliarelecce.it` con MySQL e
 gestionale, i file sul server sono allineati al repo, il logo vero è al suo
-posto, il log del server è vuoto e la home si muove.
+posto — e dal 6 agosto **si vede anche in testata**, non solo nei dati
+strutturati — il log del server è vuoto e la home si muove.
 
 **Contenuti pubblicati sul sito nuovo, in ordine:** informativa privacy,
 cookie policy. **Consegnata e in attesa di pubblicazione:**
@@ -1174,11 +1175,70 @@ Poi, in ordine di quanto pesa:
    immobili, e decidere il campo video. Nota del 6 agosto: i **34 immobili
    pubblicati** contati nella sitemap coincidono esattamente col censimento
    (34 pubblicati, 15 bozze) — non ne manca nessuno all'appello.
-8. **Decidere se mettere il logo in testata.** Adesso il sito scrive il nome
-   dell'agenzia in caratteri, non lo disegna: il logo esiste come file e sta
-   nei dati strutturati, ma in pagina non si vede. Non è una svista ed è una
-   scelta di Camillo, non da fare per conto suo.
-9. Più avanti: export verso i portali.
+8. **Il logo in testata — FATTO il 6 agosto.** Vedi la scheda qui sotto.
+9. **Collegare Git al server**, così le modifiche non si copiano più a mano.
+   Il piano SiteGround lo permette: Site Tools → Sviluppatori ha sia **Git**
+   sia **Gestione chiavi SSH**. ⚠️ Non si collega com'è adesso: nel repo non
+   ci sono — di proposito — `config.php` e `public/uploads/`, e un deploy che
+   sovrascrive `public_html` cancella la password del database e tutte le
+   foto degli immobili. Va anche risolto che il sito vive in `sito-nuovo/`
+   mentre lo strumento si aspetta la radice del repository. È un lavoro a sé,
+   da fare con un backup fatto prima.
+10. Più avanti: export verso i portali.
+
+### Il logo in testata: com'è andata, e i due numeri da non toccare a caso
+
+Il logo c'era sul server dal 5 agosto ma si vedeva **solo nei dati
+invisibili** — JSON-LD e anteprima social. In pagina, testata e piede erano
+solo testo. Dal 6 agosto in testata c'è il marchio.
+
+**In testata va il solo simbolo** — skyline e globo — non il logo intero. Il
+logo dell'agenzia è impilato e si porta dentro la scritta MONDO IMMOBILIARE:
+rimpicciolita all'altezza di una testata diventa una macchia illeggibile, e
+ripeterebbe il nome che sta già lì accanto in Playfair. Il file è
+`public/assets/img/logo-simbolo.png`, 710 × 510, ricavato da `logo.png` con
+Canva. Come tutti i file di quella cartella **non sta nel repo**: senza,
+`marchio()` non stampa il tag e la testata resta di solo testo.
+
+**Il fondo bianco resta bianco, e non è una dimenticanza.** Lo stesso marchio
+serve al JSON-LD e alle anteprime social, dove la trasparenza non è ammessa.
+In testata lo fa sparire `mix-blend-mode: multiply`: moltiplicare per bianco
+lascia il fondo com'è. Un secondo file trasparente sarebbe una copia in più
+da tenere allineata a mano.
+
+Perché quel `multiply` funzioni sono servite **due cose non ovvie**, e sono
+la parte fragile:
+
+- il fondo della testata sta in `.site-head::before`, non su `.site-head`. Il
+  `multiply` si fonde con ciò che ha dietro *dentro il proprio contesto di
+  impilamento*, e lo sfondo dell'elemento che quel contesto lo crea resta
+  fuori dal calcolo;
+- l'animazione di scorrimento sta su `.brand-testo`, non su `.brand`. Uno
+  `scale` crea un contesto di impilamento: applicato a tutto `.brand` ci
+  chiudeva dentro anche il marchio.
+
+Se un domani il riquadro bianco ricompare attorno al simbolo, il colpevole è
+uno di questi due: qualcosa ha rimesso uno sfondo o una trasformazione sul
+genitore. La prova è meccanica: schermata della testata, e il pixel bianco
+dentro il riquadro del logo deve uscire `#fdfbf8`, non `#ffffff`.
+
+**I due numeri:** simbolo alto **54 punti**, 42 sul telefono; spazio dal nome
+**8 punti**, 7 sul telefono. Non sono misure di gusto: **il ritaglio ha un
+margine bianco attorno al marchio**, quindi dei 54 punti dichiarati il blu ne
+occupa una cinquantina scarsa. Chi rifà il ritaglio più stretto deve rifare
+anche questi numeri, o il simbolo cresce di colpo.
+
+**Sul telefono il nome scende a 1.08rem** sotto i 560 punti. Serve a tenerlo
+su **una riga sola**: spezzato in due la testata passava da 85 a 116 punti e
+si mangiava la prima schermata.
+
+⚠️ **La lezione, che vale oltre il logo.** Quel difetto sul telefono era
+sfuggito perché la copia locale aveva ancora `site_name` = «Mondo
+Immobiliare», mentre sul server è «Mondo Immobiliare Lecce». Sei caratteri, e
+la verifica non stava misurando il sito vero. **Prima di dichiarare provato
+un layout, controllare che le impostazioni della copia locale siano quelle
+del server** — a partire dal nome del sito, che entra in testata, nei titoli
+e nei dati strutturati. Il locale adesso ha il nome giusto.
 
 ### Il check-in orario sulla PR
 
