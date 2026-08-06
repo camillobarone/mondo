@@ -100,6 +100,18 @@ quell'indirizzo non risponderebbe e ogni scheda sarebbe senza foto. E
 `index.php` non sarebbe alla radice, quindi non funzionerebbe nemmeno la
 home. Funziona tutto: la cartella pubblica è `public`.
 
+### Il log degli errori parte da zero
+
+`public/php_errorlog` conteneva una riga sola, delle 14:00 del 5 agosto: il
+`PHP Warning: Undefined array key "author_name"` in
+`views/site/articolo.php:36`. È l'avviso che quel giorno ha fatto scoprire
+il difetto di `Content::post()`, corretto in `0b2a6ab`; la versione sul
+server è già quella giusta, verificata riga per riga il 6 agosto.
+
+**Il file è stato svuotato il 6 agosto.** Da lì in poi ogni riga che compare
+è un problema nuovo, non un residuo: è la prima cosa da guardare quando
+qualcosa non torna, e va letta sapendo che parte da quella data.
+
 ### ⚠️ Lecce è il centro. Porto Cesareo è una filiale
 
 Detto da Camillo il 6 agosto 2026, e definito da lui «essenziale»:
