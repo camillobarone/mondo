@@ -983,7 +983,7 @@ Poi, in ordine di quanto pesa:
 2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
    pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
    eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
-3. **`agenzia-immobiliare-lecce` — consegnata il 6 agosto, da pubblicare.**
+3. **`agenzia-immobiliare-lecce` — PUBBLICATA il 6 agosto.**
    WP `31519`, titolo «La nostra agenzia a Lecce». È il centro verso cui
    tutto il resto punta. 1.140 parole, 9 `##`, 5 domande frequenti che
    diventano `FAQPage` da sole, 7 collegamenti verificati: quattro rotte
