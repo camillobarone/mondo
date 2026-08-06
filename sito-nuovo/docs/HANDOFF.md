@@ -984,9 +984,26 @@ vuole davvero, da evitare per caso. Ogni testo prodotto va passato per
 `Testo::html()` prima di consegnarlo — si vede subito se un segno resta a
 video, se i collegamenti risolvono e se le FAQ sono partite senza volerlo.
 
+### 👉 Da dove si riparte
+
+**Scrivere `vendere-casa-lecce`.** È la pagina con l'intenzione commerciale
+più alta fra le trenta rimaste — chi vende è il cliente che conta — ed è
+l'unica del suo gruppo che oggi non esiste. Ha già da dove essere linkata:
+`quotazioni-omi-lecce` e `chi-siamo` mandano entrambe alla valutazione, e
+quella pagina si mette in mezzo. Da lì si linka anche
+`comprare-casa-a-lecce`, che è probabilmente orfano (punto 1bis).
+
+Due cose piccole in sospeso, indipendenti: cancellare `public/install.php`
+dal server, e farsi dire da Camillo **quale data center** ospita il sito —
+SiteGround ne ha cinque in Europa e Londra è fuori dall'Unione, quindi la
+frase dell'informativa privacy cambia. La lista delle cinque sedi non è la
+risposta: serve quella del suo sito.
+
+Stato al 6 agosto sera: **34 immobili, 14 pagine, 0 articoli** pubblicati.
+
 Poi, in ordine di quanto pesa:
 
-0. 🔴 **Due articoli di esempio dell'installazione sono pubblici e nella
+0. ✅ **Due articoli di esempio dell'installazione erano pubblici e nella
    sitemap.** `quanto-costa-al-metro-quadro-una-casa-a-lecce` e
    `vendere-casa-nel-salento-i-tempi-reali` nascono da `db/seed.php` con
    `status = published`, e il loro corpo dice testualmente «Questo è un
@@ -1031,19 +1048,26 @@ Poi, in ordine di quanto pesa:
 
    **Articoli: zero.** I due online sono gli esempi del punto 0.
 
-1bis. 🔴 **Collegamenti interni mancanti.** Una pagina senza link in entrata
-   resta «Rilevata ma non indicizzata», e la sitemap non basta. Verificato
-   sul codice dei template: nav e piè di pagina raggiungono solo `/`,
-   `/immobili/`, `/blog/`, `/contatti/`, `/valutazione-gratuita/`,
-   `/calcolatore-imposte-acquisto-casa/` e — condizionati — privacy e cookie.
-   Tutto il resto vive solo dei collegamenti scritti dentro i testi.
-   **Orfane certe: `quotazioni-omi-lecce`** (nessuna pagina la nomina) e
-   **`stefano-my`** (il collegamento c'era in `agenzia-immobiliare-lecce` ed
-   è stato tolto il 6 agosto — scelta di Camillo, ma il collegamento va
-   rimesso da qualche altra parte, per esempio dalla pagina di Porto
-   Cesareo). **Da verificare a mano: `chi-siamo`, `libro`,
-   `agevolazioni-prima-casa-lecce`, `comprare-casa-a-lecce`** — nessun
-   template li nomina, quindi dipendono da cosa scrivono le altre pagine.
+1bis. **Collegamenti interni — la regola, e chi resta scoperto.** Una pagina
+   senza link in entrata resta «Rilevata ma non indicizzata», e la sitemap
+   non basta. Verificato sul codice dei template: nav e piè di pagina
+   raggiungono solo `/`, `/immobili/`, `/blog/`, `/contatti/`,
+   `/valutazione-gratuita/`, `/calcolatore-imposte-acquisto-casa/` e —
+   condizionati — privacy e cookie. **Tutto il resto vive solo dei
+   collegamenti scritti dentro i testi**, quindi ogni pagina nuova nasce
+   orfana finché qualcun'altra non la nomina: è un passaggio della consegna,
+   non un dettaglio da rimandare.
+
+   Le tre orfane trovate il 6 agosto — `quotazioni-omi-lecce`, `stefano-my`,
+   `libro` — sono **risolte da `chi-siamo`**, pubblicata lo stesso giorno,
+   che le linka tutte e tre.
+
+   **Restano da verificare a mano: `agevolazioni-prima-casa-lecce` e
+   `comprare-casa-a-lecce`.** Nessun template li nomina e nessuna delle
+   pagine scritte finora li linka: probabile che siano orfani anche loro.
+   Il modo di controllarlo senza accesso al server è aprirli e guardare chi
+   li cita, oppure linkarli dalla prossima pagina che tratta lo stesso tema
+   — `vendere-casa-lecce` è il candidato naturale per il secondo.
 2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
    pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
    eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
@@ -1081,8 +1105,10 @@ Poi, in ordine di quanto pesa:
 
    Sui dati strutturati non serve toccare niente: il nodo `RealEstateAgent`
    principale punta alla home, che *è* la scheda dell'agenzia di Lecce.
-4. **Pulizia prima di andare online**: cancellare `public/install.php`, i 2
-   clienti di esempio e i 3 articoli di esempio.
+4. **Pulizia prima di andare online.** Restano: cancellare
+   `public/install.php` dal server, e i 2 clienti di esempio dal gestionale.
+   Gli articoli di esempio erano due, non tre, e sono stati cancellati da
+   Camillo il 6 agosto; i sei immobili `DEMO-` non c'erano già più.
 5. **`agenzia-immobiliare-porto-cesareo` — PUBBLICATA il 6 agosto.**
    1084 parole, 5 domande frequenti che diventano schema `FAQPage` da sole,
    tre collegamenti interni tutti verso rotte fisse.
@@ -1105,7 +1131,9 @@ Poi, in ordine di quanto pesa:
 6. **Il calcolatore IMU** (`calcolo-imu-2026-lecce`), rimandato: è l'unica
    delle 46 pagine che è codice e non testo. Vedi `CENSIMENTO-URL.md`.
 7. **Lanciare `--campi` sul database vero** per il censimento completo sui 49
-   immobili, e decidere il campo video.
+   immobili, e decidere il campo video. Nota del 6 agosto: i **34 immobili
+   pubblicati** contati nella sitemap coincidono esattamente col censimento
+   (34 pubblicati, 15 bozze) — non ne manca nessuno all'appello.
 8. **Decidere se mettere il logo in testata.** Adesso il sito scrive il nome
    dell'agenzia in caratteri, non lo disegna: il logo esiste come file e sta
    nei dati strutturati, ma in pagina non si vede. Non è una svista ed è una
