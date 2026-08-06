@@ -958,20 +958,47 @@ Poi, in ordine di quanto pesa:
 2. **La tabella dei reindirizzamenti è ancora vuota.** Serve solo per le 25
    pagine-residuo del tema (410 o 301 verso la home: da decidere) e per
    eventuali slug che cambiano. Immobili e articoli non ne hanno bisogno.
-3. **La pagina dell'agenzia di Lecce**, WP `31519`
-   («La nostra agenzia a Lecce: metodo, team e prezzi per quartiere»). È il
-   centro verso cui tutto il resto deve puntare, ed è la pagina che pesa di
-   più fra quelle rimaste. Qui i prezzi OMI per quartiere ci sono e si
-   citano — con «Fonte: OMI – Agenzia delle Entrate, II semestre 2025» — e
-   qui va dichiarato che Camillo siede nella Commissione OMI di Lecce, che è
-   la credenziale che nessun concorrente della città ha.
+3. **`agenzia-immobiliare-lecce` — consegnata il 6 agosto, da pubblicare.**
+   WP `31519`, titolo «La nostra agenzia a Lecce». È il centro verso cui
+   tutto il resto punta. 1.140 parole, 9 `##`, 5 domande frequenti che
+   diventano `FAQPage` da sole, 7 collegamenti verificati: quattro rotte
+   fisse (`/immobili/`, `/valutazione-gratuita/`, `/contatti/`,
+   `/calcolatore-imposte-acquisto-casa/`), la pagina di Porto Cesareo, e
+   due esterni (fimaa.it, agenziaentrate.gov.it).
+
+   **Quattro scelte da conoscere prima di rimetterci mano:**
+
+   - **Il listino completo per quartiere non c'è, ed è voluto.** Le sedici
+     zone OMI appartengono a `quotazioni-omi-lecce` e `prezzi-case-lecce-2026`,
+     che devono ancora nascere: metterle qui le cannibalizza in partenza. In
+     pagina i numeri servono a dimostrare il metodo, non a fare il listino.
+   - **Il cuore è lo scarto fra OMI e mercato reale**, ed è la cosa che
+     nessun concorrente può raccontare. La periferia coincide (Stadio–167
+     850–1.050, Santa Rosa 820–1.150: OMI e listino Camillo dicono lo
+     stesso); il centro no, perché un restaurato dentro le mura sta nella
+     categoria «signorili» (1.750–2.600) e non in «civili» (1.200–1.500).
+     Il listino canonico — centro storico 1.900–2.500 — sta dentro la fascia
+     signorile: i due listini **non si contraddicono**, misurano segmenti
+     diversi. Chi tocca questa pagina deve saperlo, o "correggerà" un dato
+     giusto.
+   - **Le schede dei soci non sono linkate**: `camillo-barone-…`,
+     `antonio-renna-…`, `alessandro-ciullo-…`, `stefano-my` non esistono
+     ancora sul sito nuovo. Appena ci sono, i nomi nella sezione «Chi lavora
+     in agenzia» diventano collegamenti.
+   - **Una sola affermazione normativa senza link**: la legge 39/1989 sulla
+     mediazione, citata per nome e numero. Dal container la rete verso quei
+     domini è bloccata e l'indirizzo esatto non è confermabile: un link
+     inventato è peggio di un link mancante.
+
+   Sui dati strutturati non serve toccare niente: il nodo `RealEstateAgent`
+   principale punta alla home, che *è* la scheda dell'agenzia di Lecce.
 4. **Pulizia prima di andare online**: cancellare `public/install.php`, i 2
    clienti di esempio e i 3 articoli di esempio.
-5. **`agenzia-immobiliare-porto-cesareo` — consegnata, da pubblicare.**
-   Il testo è pronto: 1084 parole, 5 domande frequenti che diventano schema
-   `FAQPage` da sole, tre collegamenti interni tutti verso rotte fisse.
-   Appena è pubblicata, `Seo::agentPortoCesareoNode()` smette di omettere
-   `url` e l'indirizzo della sede entra nei dati strutturati di ogni pagina.
+5. **`agenzia-immobiliare-porto-cesareo` — PUBBLICATA il 6 agosto.**
+   1084 parole, 5 domande frequenti che diventano schema `FAQPage` da sole,
+   tre collegamenti interni tutti verso rotte fisse.
+   `Seo::agentPortoCesareoNode()` adesso emette `url` e l'indirizzo della
+   sede entra nei dati strutturati di ogni pagina.
 
    **Tre scelte fatte riscrivendola, da conoscere prima di rimetterci mano:**
    via il riquadro Google Maps, che smentiva la cookie policy appena
