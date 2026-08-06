@@ -691,3 +691,102 @@ img { max-width: 100%; height: auto; display: block; }
    separatore scritto a mano, perché il numero di voci cambia — finché
    l'informativa non è stata scritta ce n'è una sola. */
 .foot-legale { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
+/* ------------------------------------------------------------------ moto
+
+   Le sezioni entrano salendo mentre si scorre, e la foto in cima scorre più
+   lenta della pagina. Legate allo scorrimento e non a un cronometro: il moto
+   lo calcola il browser, e non c'è una riga di JavaScript da scaricare.
+
+   Tre cose tengono in piedi tutto il blocco, e nessuna è un dettaglio.
+
+   La prima è `@supports`. Senza, un browser che non conosce queste regole
+   applicherebbe `opacity: 0` — e leggerebbe il resto come rumore, lasciando
+   la home bianca per sempre. Chiuso lì dentro, dove il moto non esiste non
+   esiste nemmeno il punto di partenza: la pagina si vede esattamente come
+   prima. Oggi funziona su Chrome, su Edge e sulle versioni recenti di
+   Safari; su Firefox no, e va benissimo così.
+
+   La seconda è `prefers-reduced-motion`. Chi soffre di vertigini o di mal
+   d'auto chiede al telefono di ridurre le animazioni, e quella richiesta va
+   rispettata: qui non è una preferenza estetica, per qualcuno è la
+   differenza fra leggere una pagina e doverla chiudere.
+
+   La terza è che non si anima **niente** dentro l'hero a parte lo sfondo.
+   Il titolo e la foto grande sono ciò su cui viene misurata la velocità di
+   apertura della pagina: farli comparire in dissolvenza vorrebbe dire
+   peggiorare il voto proprio dove pesa di più. Devono esserci già. Lo
+   sfondo si muove soltanto — non compare — e uno spostamento non ritarda
+   nessun disegno. */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .sezione-head,
+    .griglia > *,
+    .fascia-grid > *,
+    .post-card {
+      animation: entra-salendo linear both;
+      animation-timeline: view();
+      /* Il tragitto si misura **solo** sull'ingresso dell'elemento, da un
+         settimo a tre quarti: quando ne sono entrati tre quarti è già
+         opaco, cioè prima ancora di essere tutto sullo schermo.
+
+         `entry` e non `cover`, e non è una sfumatura. `cover` va
+         dall'istante in cui l'elemento entra a quello in cui esce, e un
+         elemento in fondo alla pagina non esce mai: se lo schermo è alto e
+         resta poco da scorrere, il tragitto non arriva in fondo e quel
+         blocco resta semitrasparente per sempre. Misurato: su uno schermo
+         alto 2800 due riquadri si fermavano a 0,74 di opacità. Con `entry`
+         il tragitto si chiude appena l'elemento è dentro, e dentro ci
+         finisce sempre — anche su una pagina che non si scorre affatto. */
+      animation-range: entry 14% entry 76%;
+    }
+
+    /* Le schede di una stessa riga entrano insieme, e insieme è meccanico.
+       Qui si accorcia di poco il tragitto della seconda e della terza: allo
+       stesso punto della pagina sono un filo più indietro, e si vedono
+       arrivare una dopo l'altra. Un ritardo a tempo qui non esisterebbe —
+       non c'è un cronometro, c'è la posizione. */
+    .griglia > :nth-child(2),
+    .post-card:nth-child(2) { animation-range: entry 6% entry 68%; }
+    .griglia > :nth-child(3),
+    .post-card:nth-child(3) { animation-range: entry 0% entry 60%; }
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .hero-sfondo {
+      animation: hero-lento linear both;
+      animation-timeline: scroll();
+      animation-range: 0 100vh;
+    }
+  }
+}
+
+/* `translate` e non `transform`: sono due proprietà distinte, e le schede
+   usano già `transform` per sollevarsi al passaggio del mouse. Scritte sulla
+   stessa proprietà, l'ultima delle due cancellerebbe l'altra. */
+@keyframes entra-salendo {
+  from { opacity: 0; translate: 0 22px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+/* La foto scende di poco mentre la pagina sale: sembra più lontana. È
+   ingrandita del 6% per tutto il tragitto, altrimenti scendendo scoprirebbe
+   una striscia vuota in cima. */
+@keyframes hero-lento {
+  from { translate: 0 0;   scale: 1.06; }
+  to   { translate: 0 7vh; scale: 1.06; }
+}
+
+/* Chi ha chiesto meno movimento non lo riceve da nessuna parte, comprese le
+   transizioni scritte prima di questo blocco: la scheda che si solleva, la
+   foto che si allarga, il bottone che cambia colore. Restano tutti gli stati
+   — quello che sparisce è il tragitto per arrivarci. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
