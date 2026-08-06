@@ -29,8 +29,23 @@ final class Assets
     /** `sizes` della foto grande nella scheda immobile. */
     public const SIZES_GALLERIA = '(max-width: 1180px) 100vw, 1100px';
 
-    /** `sizes` delle foto piccole sotto quella grande: quattro per riga, due su telefono. */
-    public const SIZES_GALLERIA_MINI = '(max-width: 700px) 50vw, 270px';
+    /**
+     * `sizes` delle foto piccole sotto quella grande: quattro per riga sul
+     * computer, una striscia che si sfoglia col dito sul telefono.
+     *
+     * I 77vw sono la misura vera, non una stima: sul telefono ogni foto
+     * occupa l'86% dello spazio interno al riempimento di 20 punti per lato
+     * di `.wrap`, cioè `0,86 × (larghezza − 40)`. Su uno schermo da 390
+     * punti fanno 301, che sono il 77% dei 390.
+     *
+     * Vale la pena averla giusta: le varianti generate sono 480, 960 e 1600,
+     * e il browser sceglie moltiplicando questo valore per la densità dello
+     * schermo. Con 77vw un telefono a densità doppia o tripla chiede la
+     * variante da 960 — nitida su 301 punti, e la metà dei byte di quella da
+     * 1600. Lasciando il vecchio 50vw ne chiederebbe una troppo piccola e le
+     * foto verrebbero sgranate.
+     */
+    public const SIZES_GALLERIA_MINI = '(max-width: 700px) 77vw, 270px';
 
     /** @var array<string,string> */
     private static array $memoria = [];

@@ -374,7 +374,43 @@ img { max-width: 100%; height: auto; display: block; }
   background: rgba(22, 32, 43, .62); color: #fff; font-weight: 700; font-size: .95rem;
 }
 .galleria-cella:focus-visible { outline: 3px solid var(--accent-dark); outline-offset: 2px; }
-@media (max-width: 700px) { .galleria { grid-template-columns: repeat(2, 1fr); } .galleria-main { grid-column: span 2; } }
+/* Sul telefono la griglia diventa una striscia che si sfoglia col dito.
+   Prima erano una foto grande e quattro francobolli 2×2: su uno schermo da
+   390 punti ogni francobollo veniva 165 punti, troppo poco per capire una
+   stanza. Adesso ognuna occupa l'86% della larghezza, e del vicino se ne
+   vede un pezzo — che è come si capisce, senza scritte, che c'è dell'altro
+   e si trascina.
+   Tutto in CSS: `scroll-snap` è lo scorrimento agganciato del browser, lo
+   stesso delle app. Zero JavaScript, come il resto del sito.
+   Il tocco su una foto continua ad aprire l'ingrandimento con tutte le
+   foto: la striscia ne mostra cinque, l'ingrandimento le ha tutte. */
+@media (max-width: 700px) {
+  .galleria {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* L'aggancio si ferma qui, non al bordo dello schermo. Senza questa
+       riga la prima foto sta allineata al titolo — glielo impone il
+       riempimento di `.wrap` — e tutte le altre, agganciandosi, finiscono
+       venti punti più a sinistra: la colonna del testo balla a ogni
+       trascinamento. */
+    scroll-padding-inline: 20px;
+    /* Senza questo, arrivati in fondo alla striscia il gesto prosegue sulla
+       pagina e su alcuni telefoni fa tornare indietro nella cronologia. */
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .galleria::-webkit-scrollbar { display: none; }
+  .galleria-cella {
+    flex: 0 0 86%;
+    scroll-snap-align: start;
+    /* 3:2 su una striscia lascia foto basse e larghe: 4:3 riempie lo
+       schermo del telefono, che è alto. */
+    aspect-ratio: 4 / 3;
+  }
+  .galleria-main { aspect-ratio: 4 / 3; }
+}
 
 /* Foto a schermo intero, senza JavaScript: le apre e le chiude `:target`.
    Finché non sono aperte stanno fuori dal flusso e non caricano nulla. */
