@@ -1286,8 +1286,19 @@ sul server.
 **L'ordine, e dove si sta:**
 
 0. ✅ Backup manuale del server — fatto da Camillo il 6 agosto.
-1. ⬜ Creare il repository nuovo (nome proposto `mondo-sito`, privato) e
-   spingerci il ramo prodotto dallo split come `main`.
+1. ✅ **Repository creato il 7 agosto: `camillobarone/mondo-sito`, privato.**
+   Contiene `main` con **79 commit** e la radice giusta — `app`, `bin`, `db`,
+   `docs`, `public`, `storage`, `views`, `.htaccess`, `.gitignore`,
+   `README.md`. Verificato dopo il caricamento: `config.php` non c'è e le foto
+   degli immobili non ci sono; di `public/uploads/` sono tracciati solo
+   `.gitkeep` e `.htaccess`, ammessi apposta dal `.gitignore`.
+
+   ⚠️ **Il repository non l'ha creato Claude**: l'accesso a GitHub di queste
+   sessioni è limitato al solo `camillobarone/mondo` e la creazione torna
+   «Resource not accessible by integration». L'ha creato Camillo dal sito, poi
+   è stato agganciato alla sessione con permesso di scrittura. Chi riprende e
+   deve creare un repository non ci perda tempo: si chiede a Camillo.
+
 2. ⬜ Camillo apre Site Tools → Sviluppatori → Git e manda le schermate.
    ⚠️ **Nessuno qui conosce a memoria quello strumento e da questo ambiente
    non è raggiungibile** — la rete blocca tutto tranne GitHub. Non inventare
@@ -1295,6 +1306,19 @@ sul server.
 3. ⬜ Primo collegamento **su una cartella di prova, non su `public_html`**.
    Si verifica che il codice arrivi intero.
 4. ⬜ Solo dopo, il collegamento vero.
+
+**Come si tengono allineati i due repository, adesso che sono due.** Il lavoro
+continua a farsi qui, in `sito-nuovo/` del repository vecchio, perché è dove
+sta l'ambiente di prova già montato. Dopo ogni commit, il ramo del sito si
+rigenera e si spinge con:
+
+    git subtree split --prefix=sito-nuovo -b sito-radice
+    git push sito sito-radice:main        # `sito` = camillobarone/mondo-sito
+
+Lo split è deterministico: a parità di storia rifà gli stessi commit con gli
+stessi identificativi, quindi è sempre un avanzamento e mai una forzatura. Se
+un giorno il vecchio repository si abbandona del tutto, si lavora direttamente
+dentro `mondo-sito` e questi due comandi spariscono.
 
 **La regola di sicurezza che regge tutto:** git tocca soltanto i file che
 conosce. `config.php` e `public/uploads/` sono esclusi dal repository
