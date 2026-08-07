@@ -1,0 +1,75 @@
+Le tre immagini che il codice cerca qui dentro CI SONO SUL SERVER, ma NON
+stanno in questo repo: Camillo le ha caricate a mano con il Gestione File
+di SiteGround. Chi clona il repo non le ha, e il sito gira lo stesso —
+vedi in fondo.
+
+Il blu del marchio e' #1b82d8. E' il valore da usare ovunque serva il colore
+dell'agenzia: lo usa gia' la favicon in app/helpers.php.
+
+--------------------------------------------------------------------
+logo.png       (vanno bene anche logo.webp o logo.jpg)
+--------------------------------------------------------------------
+Sul server: 1024 x 1024, marchio blu su fondo bianco pieno.
+
+Il logo dell'agenzia, nella forma che ha: non deve essere quadrato.
+Il codice lo cerca su disco e ne legge le misure vere, quindi non c'e'
+nessun formato da rispettare.
+
+Lo dichiarano `Seo::logoNode()` come `logo` e `image` dell'agenzia in
+ogni pagina, e `Pages::immagineSociale()` come ultimo ripiego
+dell'anteprima social.
+
+  - lato lungo almeno 512 px, meglio 1000 o piu'
+  - fondo pieno, non trasparente, se il logo ha scritte scure: finisce
+    appoggiato sia su chiaro sia su scuro
+  - senza margini larghi attorno al marchio
+
+--------------------------------------------------------------------
+logo-simbolo.png
+--------------------------------------------------------------------
+Sul server: 710 x 510, ricavato da logo.png il 6 agosto 2026.
+
+E' lo stesso marchio SENZA la scritta MONDO IMMOBILIARE: solo lo
+skyline con il globo. E' quello che si vede in testata, alto 54 punti
+(42 sul telefono).
+
+La scritta e' stata tolta apposta. Rimpicciolita a 54 punti diventa
+una macchia azzurra illeggibile, e comunque ripeterebbe il nome che in
+testata sta gia' accanto, scritto in Playfair.
+
+Attenzione: questo ritaglio NON e' stretto, ha un margine bianco
+attorno al marchio. E' il motivo per cui in CSS le misure sono 54 e 42
+invece di 46 e 38 — dei 54 punti dichiarati il blu ne occupa una
+cinquantina scarsa. Chi rifa' il ritaglio piu' stretto deve rifare
+anche quei due numeri, altrimenti il simbolo cresce di colpo.
+
+  - fondo BIANCO PIENO, non trasparente: in testata lo fa sparire il
+    `mix-blend-mode: multiply` di `.brand-mark`, che moltiplicando per
+    bianco lascia il fondo com'e'
+  - lato lungo almeno 400 px
+
+Il ritaglio si rifa' in un minuto: si apre logo.png in Canva (o in
+qualunque programma di grafica), si taglia via la fascia con la
+scritta e si stringe fino a toccare il blu sui quattro lati.
+
+Se il file non c'e', in testata resta il solo nome: `marchio()` in
+app/helpers.php cerca il file su disco e, se manca, non stampa il tag.
+
+--------------------------------------------------------------------
+social-1200x630.png
+--------------------------------------------------------------------
+Sul server: 1200 x 630, lo stesso marchio su fondo bianco.
+
+Cio' che si vede quando un link del sito viene incollato in una chat,
+su Facebook o in una email.
+
+  - esattamente 1200 x 630 px
+  - meglio sotto i 300 KB: le anteprime pesanti alcune app le saltano
+  - soggetto e testo al centro, perche' i bordi vengono ritagliati
+  - testo grande: su un telefono questa immagine si vede piccola
+
+--------------------------------------------------------------------
+Dove non ci sono — ogni copia locale del repo — il sito funziona lo
+stesso: il nodo `logo` non viene emesso, insieme ai rimandi che lo
+citavano, quindi niente riferimenti appesi; e l'anteprima social
+compare solo sulle pagine che hanno gia' la foto di un immobile.

@@ -1,0 +1,1029 @@
+/* Mondo Immobiliare — sito pubblico.
+   Un file solo, niente framework: meno byte da scaricare, niente build. */
+
+/* I titoli hanno le grazie, il testo no. È la combinazione che usano le
+   agenzie che vendono case importanti: il serif dice mestiere e anni di
+   lavoro, il sans tiene leggibile tutto il resto. Il file sta sul nostro
+   server e non su quello di Google — una richiesta esterna in meno prima di
+   disegnare un titolo, e nessun visitatore consegnato a terzi. */
+@font-face {
+  font-family: "Playfair Display";
+  src: url("../font/playfair-display.woff2") format("woff2");
+  font-weight: 500 700;
+  font-style: normal;
+  /* `swap`: il titolo compare subito col carattere di sistema e viene
+     sostituito quando il serif è pronto. Mai una pagina bianca in attesa. */
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2122, U+2191, U+2193, U+2212;
+}
+
+:root {
+  /* Palette calda invece di bianco e blu freddo: la pietra leccese, il
+     terracotta, il verde degli ulivi. Il bianco puro su uno schermo è duro e
+     fa sembrare vuota qualunque pagina; questi toni scaldano senza sporcare. */
+  --ink: #221f1a;
+  --ink-soft: #6a6156;
+  --line: #e4dcd0;
+  --bg: #fdfbf7;
+  --bg-soft: #f5efe5;
+  --bg-card: #ffffff;
+  --scuro: #2c2a24;
+  --accent: #a8642a;
+  --accent-dark: #874f1e;
+  --accent-chiaro: #f3d9bd;
+  --ok: #1c6b46;
+  --warn: #8a6100;
+  --err: #97231f;
+  --radius: 4px;
+  --ombra: 0 1px 2px rgba(34, 31, 26, .05), 0 8px 24px -12px rgba(34, 31, 26, .18);
+  --wrap: 1180px;
+  --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font: 17px/1.7 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--serif);
+  line-height: 1.15;
+  margin: 0 0 .5em;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+h1 { font-size: clamp(2.3rem, 5.2vw, 4rem); font-weight: 500; }
+h2 { font-size: clamp(1.7rem, 3.2vw, 2.5rem); }
+h3 { font-size: 1.35rem; }
+p { margin: 0 0 1em; }
+a { color: var(--accent-dark); }
+img { max-width: 100%; height: auto; display: block; }
+
+.wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 20px; }
+.sr, .skip { position: absolute; left: -9999px; }
+.skip:focus { left: 12px; top: 12px; background: #fff; padding: 10px; z-index: 99; position: fixed; }
+
+/* ---------------------------------------------------------------- header */
+
+.site-head {
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 20;
+}
+/* Il fondo della testata sta qui e non sulla testata stessa.
+   `mix-blend-mode` del marchio si fonde con quello che ha dietro *dentro* il
+   proprio contesto di impilamento, e lo sfondo dell'elemento che quel
+   contesto lo crea — la testata appiccicata, con il suo `z-index` — resta
+   fuori dal calcolo: il bianco del logo non trovava niente da moltiplicare e
+   restava bianco. Spostato in un pseudo-elemento, il fondo entra nel gruppo
+   e il riquadro bianco attorno al simbolo sparisce. */
+.site-head::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: rgba(253,251,247,.92); backdrop-filter: saturate(1.4) blur(8px);
+}
+.head-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 84px; }
+.brand { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px; }
+.brand-testo { display: block; }
+/* Il file del simbolo ha il fondo bianco pieno, e deve averlo: è lo stesso
+   marchio che serve al JSON-LD e all'anteprima social, dove la trasparenza
+   non è ammessa. `multiply` lo fa sparire qui senza un secondo file da
+   tenere allineato a mano — moltiplicare per bianco lascia il fondo com'è,
+   e sull'avorio della testata il blu resta blu. */
+.brand-mark { width: auto; height: 54px; flex: none; mix-blend-mode: multiply; }
+.brand-name { display: block; font-family: var(--serif); font-weight: 600; font-size: 1.35rem; letter-spacing: -.01em; }
+.brand-claim { display: block; font-size: .76rem; color: var(--ink-soft); }
+/* Sul telefono stretto il simbolo scende a 42 punti: più grande, fra nome
+   dell'agenzia e burger non resta larghezza per stare tutti su una riga.
+
+   Le misure sono 54 e 42 e non 46 e 38 perché il file del simbolo ha un
+   margine bianco attorno al marchio: dei 54 punti dichiarati il blu ne
+   occupa una cinquantina scarsa. Chi rifà il ritaglio più stretto deve
+   rifare anche questi due numeri. */
+@media (max-width: 560px) {
+  .brand { gap: 7px; }
+  .brand-mark { height: 42px; }
+  /* Il nome scende a 1.08rem perché sul telefono deve stare su UNA riga.
+     Spezzato in due — «Mondo Immobiliare» sopra e «Lecce» sotto — la
+     testata cresceva a 116 punti e si mangiava la prima schermata; il
+     sottotitolo, che va a capo comunque, restava fuori dal fondo.
+     Il nome vero è quello del gestionale e può cambiare: se un giorno
+     diventa più lungo di «Mondo Immobiliare Lecce», questa misura va
+     rimisurata a 360 punti di larghezza, che è lo schermo più stretto
+     ancora in giro. */
+  .brand-name { font-size: 1.08rem; }
+}
+
+.nav { display: flex; align-items: center; gap: 22px; }
+/* `nowrap`: una voce di menu spezzata su due righe («Valutazione / gratuita»)
+   non si legge come una voce sola, e fa crescere in altezza tutta la testata.
+   Meglio che il menu resti largo e, quando non ci sta, diventi il burger. */
+.nav a { text-decoration: none; color: var(--ink); font-size: .95rem; white-space: nowrap; }
+.nav a:hover { color: var(--accent-dark); }
+.nav-cta {
+  background: var(--accent); color: #fff !important; padding: 11px 20px;
+  border-radius: 999px; font-weight: 600; font-size: .9rem !important;
+}
+.nav-cta:hover { background: var(--accent-dark); color: #fff !important; }
+.nav-burger { display: none; }
+/* Il gemello del bottone che vive fuori dal menu richiudibile: si accende solo
+   nella fascia in cui c'è il burger ma lo schermo è ancora largo. */
+.nav-cta-fissa { display: none; text-decoration: none; }
+
+/* Il menu passa al burger a 1060 e non a 880: con cinque voci più il numero di
+   telefono, sotto quella misura il nome dell'agenzia si stringeva e le voci
+   andavano a capo. La soglia si ricava dalla larghezza vera del menu, non da
+   un numero tondo: cambiando una voce va rimisurata. */
+@media (max-width: 1060px) {
+  .nav-burger {
+    display: block; width: 48px; height: 48px; cursor: pointer; position: relative;
+    margin-right: -11px;
+  }
+  .nav-burger span { position: absolute; left: 7px; right: 7px; top: 23px; height: 2px; background: var(--ink); }
+  .nav-burger span::before,
+  .nav-burger span::after {
+    content: ""; position: absolute; left: 0; right: 0; height: 2px; background: var(--ink);
+  }
+  .nav-burger span::before { top: -8px; }
+  .nav-burger span::after { top: 8px; }
+  .nav {
+    display: none; position: absolute; top: 84px; left: 0; right: 0;
+    flex-direction: column; align-items: stretch; gap: 0;
+    background: #fff; border-bottom: 1px solid var(--line); padding: 8px 20px 18px;
+  }
+  .nav a { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .nav .nav-cta { text-align: center; margin-top: 12px; border-bottom: 0; }
+  .nav-toggle:checked ~ .nav { display: flex; }
+}
+
+/* Fra il burger e il telefono stretto il numero resta in testata, e allora
+   dentro al menu aperto non serve ripeterlo. */
+@media (min-width: 561px) and (max-width: 1060px) {
+  /* `margin-left: auto`: senza, lo spazio si distribuisce e il bottone finisce
+     in mezzo alla testata, lontano sia dal nome sia dal burger. */
+  .nav-cta-fissa { display: inline-block; margin-left: auto; margin-right: 14px; }
+  .nav .nav-cta { display: none; }
+}
+
+/* ------------------------------------------------------------------ hero */
+
+/* L'hero porta una foto vera a tutta larghezza: è la casa che vende la casa.
+   L'immagine è la copertina di un immobile in evidenza, quindi non c'è
+   nessun file in più da caricare e cambia da sola quando cambia la vetrina. */
+/* L'hero è una fotografia grande con le parole appoggiate in fondo, non un
+   riquadro scuro con dentro una foto. Su un sito immobiliare la casa è il
+   prodotto: se il velo la copre, resta una pagina di testo su fondo marrone. */
+.hero {
+  position: relative; min-height: min(82vh, 660px);
+  display: flex; align-items: flex-end;
+  padding: 132px 0 52px; color: #fff; overflow: hidden; background: var(--scuro);
+}
+.hero-sfondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Due veli invece di uno. Quello verticale scurisce solo il fondo, dove stanno
+   le parole, e lascia in chiaro la parte alta della foto; quello obliquo tiene
+   il margine sinistro leggibile anche se lì la foto è chiara. Il testo bianco
+   resta sopra la zona più scura, quindi il contrasto non dipende dalla foto
+   che capita in vetrina. */
+.hero::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(to top, rgba(22,20,17,.94) 0%, rgba(22,20,17,.80) 34%, rgba(22,20,17,.34) 66%, rgba(22,20,17,.20) 100%),
+    linear-gradient(100deg, rgba(22,20,17,.58) 0%, rgba(22,20,17,.12) 58%, rgba(22,20,17,0) 100%);
+}
+/* `.wrap` qui è figlio di un flex: senza `width` si stringe sul contenuto e i
+   margini automatici lo centrano, sfasandolo rispetto a tutte le altre
+   sezioni della pagina. */
+.hero > .wrap { position: relative; z-index: 1; width: 100%; }
+.hero-kicker { text-transform: uppercase; letter-spacing: .18em; font-size: .72rem; color: var(--accent-chiaro); font-weight: 700; }
+.hero h1 { max-width: 17ch; color: #fff; text-wrap: balance; }
+.hero-lead { max-width: 56ch; color: rgba(255,255,255,.86); font-size: 1.08rem; }
+
+/* Senza foto non c'è niente da velare, e l'hero non deve restare alto e vuoto. */
+.hero-senza-foto { background: var(--scuro); min-height: 0; padding-top: 96px; }
+.hero-senza-foto::after { background: none; }
+
+/* Le scorciatoie sotto la ricerca. Un menu a tendina chiede di sapere già cosa
+   si cerca; queste dicono cosa c'è, con le parole con cui la gente lo chiede
+   davvero al telefono. Sono link normali verso l'elenco già filtrato: nessuna
+   riga di JavaScript, e le pagine che aprono esistono e hanno risultati. */
+.scorciatoie { display: flex; flex-wrap: wrap; gap: 9px; margin: 0 0 34px; padding: 0; list-style: none; }
+.scorciatoie a {
+  display: inline-block; padding: 8px 16px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.34); color: #fff; text-decoration: none;
+  font-size: .88rem; background: rgba(255,255,255,.07);
+  transition: background .18s ease, border-color .18s ease;
+}
+.scorciatoie a:hover, .scorciatoie a:focus-visible { background: rgba(255,255,255,.18); border-color: #fff; color: #fff; }
+
+.hero-search {
+  display: flex; flex-wrap: wrap; gap: 10px; margin: 32px 0 18px;
+  background: var(--bg-card); padding: 14px; border-radius: var(--radius); box-shadow: var(--ombra);
+}
+/* Il campo che si allarga è la label, perché è lei il figlio del flex. */
+.hero-search label { flex: 1 1 190px; display: flex; }
+.hero-search select, .hero-search input {
+  flex: 1 1 auto; width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px;
+  font: inherit; background: #fff;
+}
+
+.trust { list-style: none; display: flex; flex-wrap: wrap; gap: 40px; margin: 0; padding: 0; }
+.trust strong { display: block; font-family: var(--serif); font-size: 1.9rem; font-weight: 500; color: #fff; }
+.trust span { color: rgba(255,255,255,.66); font-size: .84rem; letter-spacing: .02em; }
+
+/* --------------------------------------------------------------- sezioni */
+
+/* `padding-block` e non `padding: 76px 0`.
+   Quasi tutte le pagine sono un `<article class="wrap sezione">`: le due
+   classi stanno sullo stesso elemento e pesano uguale, quindi vinceva
+   l'ultima scritta nel file — `.sezione` — che azzerando il riempimento
+   laterale portava via i 20px di `.wrap`. Sul computer non si vedeva,
+   perché sotto i 1180px di `--wrap` la finestra è comunque più larga e i
+   margini restano ai lati. Sul telefono invece `.wrap` è largo quanto lo
+   schermo, e il testo finiva appoggiato al vetro.
+   Scrivendo solo il verticale il riempimento laterale non viene toccato. */
+.sezione { padding-block: 76px; }
+.sezione-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 34px; }
+.link-more { font-size: .92rem; white-space: nowrap; }
+/* Il titolo di pagina è un `h1`: è l'elemento che dice a Google, e a chi
+   naviga con lo screen reader, di cosa parla la pagina. Prima era un `h2`
+   e l'`h1` non c'era proprio. La misura però resta quella di prima — il
+   cambio è di struttura, non di aspetto — quindi qui si annulla il corpo
+   grande che `h1` porta con sé. */
+.pagina-titolo { margin-bottom: .3em; font-size: clamp(1.7rem, 3.2vw, 2.5rem); font-weight: 600; }
+
+/* Titolo di una sezione dentro la pagina: «Caratteristiche», «Descrizione»,
+   «Domande frequenti». Erano `h3` quando il titolo di pagina era un `h2`.
+   Adesso che quello è un `h1` devono essere `h2`, altrimenti la scaletta
+   salta un gradino e chi si muove fra i titoli con lo screen reader non
+   capisce dove sta. La misura resta quella di prima. */
+.titolo-sezione { font-size: 1.35rem; }
+
+/* Copertina di una pagina o di un articolo. Sta sotto il titolo e non sopra:
+   il lettore arriva dal risultato di ricerca, e la prima cosa che deve
+   ritrovare è il titolo che ha cliccato, non una fotografia.
+   Larga quanto il testo, non quanto la pagina: a tutta larghezza una foto
+   3:2 riempie lo schermo da sola e spinge sotto la piega ogni parola. */
+.copertina { margin: 0 0 32px; max-width: 70ch; }
+.copertina img { width: 100%; border-radius: var(--radius); }
+.pagina-sub { color: var(--ink-soft); margin-bottom: 28px; }
+.vuoto { color: var(--ink-soft); background: var(--bg-soft); padding: 22px; border-radius: var(--radius); }
+.nota { font-size: .9rem; color: var(--ink-soft); }
+
+.risposta-diretta {
+  font-size: 1.1rem; border-left: 3px solid var(--accent); padding-left: 18px; max-width: 68ch;
+}
+/* Il corpo di un articolo: sottotitoli, elenchi e citazioni nascono dal testo
+   scritto nel gestionale (vedi `Core\Testo`). La misura resta stretta perché
+   una riga lunga più di settanta caratteri si legge male, e i sottotitoli
+   hanno più aria sopra che sotto: così appartengono al paragrafo che aprono
+   e non a quello che chiudono. */
+.testo { max-width: 70ch; }
+.testo > :first-child { margin-top: 0; }
+.testo h2 { margin: 1.9em 0 .5em; font-size: 1.35rem; }
+.testo h3 { margin: 1.6em 0 .4em; font-size: 1.1rem; }
+.testo ul, .testo ol { margin: 0 0 1em; padding-left: 1.3em; }
+.testo li { margin-bottom: .4em; }
+.testo blockquote {
+  margin: 1.4em 0; padding: 2px 0 2px 20px;
+  border-left: 3px solid var(--accent-chiaro); color: var(--ink-soft);
+}
+.testo blockquote p:last-child { margin-bottom: 0; }
+.testo hr { margin: 2em 0; border: 0; border-top: 1px solid var(--line); }
+.elenco { max-width: 70ch; padding-left: 1.2em; }
+.elenco li { margin-bottom: .4em; }
+
+.firma { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .9rem; }
+.firma span { color: var(--ink-soft); }
+
+/* Chi firma l'articolo, con la sua biografia. Non è decorazione: su un sito
+   che parla dei soldi delle persone, chi scrive e con quale esperienza è
+   parte del contenuto. La bio si scrive in Gestionale → Utenti. */
+.autore { margin-top: 46px; padding: 20px 22px; background: var(--bg-soft); border-radius: var(--radius); font-size: .92rem; }
+.autore-nome { font-weight: 600; margin-bottom: .4em; }
+.autore-bio { color: var(--ink-soft); }
+.autore-bio p:last-child { margin-bottom: 0; }
+.autore-data { color: var(--ink-soft); font-size: .85rem; margin: .8em 0 0; }
+
+/* --------------------------------------------------------------- griglia */
+
+/* `min(330px, 100%)` e non `330px` secco: la misura minima di una colonna è
+   un pavimento, e su uno schermo da 320 punti restano 280 di spazio utile —
+   la colonna teneva i suoi 330 e le schede uscivano dallo schermo di 30
+   punti, con la pagina che si trascinava di lato. Con `min()` la colonna
+   non chiede mai più di quanto ce n'è. */
+.griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 34px 30px; }
+.griglia-3 { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
+
+/* La scheda torna a essere un oggetto con un suo bordo. Senza, il titolo e il
+   prezzo galleggiavano sul fondo della pagina e la griglia sembrava un elenco
+   di ritagli: è il «troppo spoglia» detto guardandola. Il contorno non toglie
+   spazio alla foto — la foto occupa comunque tutta la larghezza della scheda —
+   ma dice dove finisce un immobile e dove comincia il successivo. */
+.card {
+  background: var(--bg-card); border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--ombra); display: flex; flex-direction: column;
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgba(34,31,26,.06), 0 18px 40px -18px rgba(34,31,26,.34); }
+.card-media {
+  display: block; position: relative; aspect-ratio: 4 / 3; overflow: hidden;
+  background: var(--bg-soft);
+}
+.card-media img { transition: transform .5s ease; }
+.card:hover .card-media img { transform: scale(1.03); }
+.card-media img { width: 100%; height: 100%; object-fit: cover; }
+.card-noimg {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--ink-soft); font-size: .85rem;
+}
+.badge {
+  position: absolute; top: 12px; left: 12px; padding: 5px 11px; border-radius: 999px;
+  font-size: .74rem; font-weight: 700; color: #fff; background: var(--ink);
+}
+.badge-warn { background: var(--warn); }
+.badge-off { background: var(--ink-soft); }
+
+.card-body { padding: 20px 22px 22px; display: flex; flex-direction: column; flex: 1; }
+.card-kicker { font-size: .74rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .12em; margin-bottom: .55em; }
+.card-title { font-size: 1.22rem; margin-bottom: .3em; line-height: 1.3; }
+.card-title a { text-decoration: none; color: inherit; }
+.card-title a:hover { color: var(--accent-dark); }
+/* Il prezzo e la voce che si cerca per prima: sta piu grande del titolo e in
+   fondo alla scheda, dove l'occhio torna dopo aver guardato la foto. */
+.card-price {
+  font-family: var(--serif); font-weight: 600; font-size: 1.42rem;
+  margin: auto 0 0; padding-top: 14px; color: var(--accent-dark);
+}
+/* I dati tecnici separati da una barretta invece che da uno spazio: senza,
+   «105 mq 2 bagni» si legge come una frase sola. */
+.card-specs {
+  list-style: none; display: flex; flex-wrap: wrap; padding: 0;
+  margin: 10px 0 0; font-size: .85rem; color: var(--ink-soft);
+}
+.card-specs li + li { margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--line); }
+
+.post-card { border-top: 3px solid var(--ink); padding-top: 16px; }
+.post-card h3 { font-size: 1.08rem; }
+.post-card h3 a { text-decoration: none; color: inherit; }
+.post-meta { font-size: .85rem; color: var(--ink-soft); }
+
+/* ---------------------------------------------------------------- fascia */
+
+.fascia { background: var(--scuro); color: #fff; padding: 84px 0; }
+.fascia h2 { color: #fff; }
+.fascia a { color: var(--accent-chiaro); }
+/* Il sabbia dei link della fascia scura vince per specificità su .btn-primary
+   e lasciava il bottone a 3:1 sull'arancio. I bottoni restano bianchi. */
+.fascia .btn-primary { color: #fff; }
+.fascia .btn-ghost { color: var(--ink); }
+.fascia-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 44px; }
+.fascia-box { background: rgba(255,255,255,.07); padding: 30px; border-radius: var(--radius); }
+.fascia-box h3 { color: #fff; }
+@media (max-width: 820px) { .fascia-grid { grid-template-columns: 1fr; } }
+
+/* ---------------------------------------------------------------- scheda */
+
+/* Il margine laterale lo mette `.wrap`, qui resta solo l'aspetto: la
+   briciola si portava dietro una copia di `--wrap` e dei 20px, e dentro a un
+   `.wrap` faceva 40px — rientrava rispetto al titolo che le sta sotto. */
+.briciole { padding-top: 18px; font-size: .85rem; color: var(--ink-soft); }
+.briciole a { color: var(--ink-soft); }
+/* `.scheda-head` porta anche la classe `.wrap`, che centra con margini
+   automatici: un `max-width` qui stringeva e centrava tutta l'intestazione,
+   lasciandola sospesa in mezzo alla pagina mentre il resto partiva da sinistra.
+   La misura va messa sul titolo, che è l'unica riga che deve restare corta. */
+.scheda-head { padding-top: 18px; }
+.scheda-head h1 { max-width: 26ch; font-size: clamp(1.7rem, 3.2vw, 2.5rem); font-weight: 600; }
+.scheda-kicker { font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .1em; }
+.scheda-prezzo { font-family: var(--serif); font-size: 2.1rem; font-weight: 600; color: var(--accent-dark); }
+
+.galleria { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 22px auto; }
+.galleria-cella {
+  display: block; position: relative; margin: 0; border-radius: 8px; overflow: hidden;
+  aspect-ratio: 3 / 2; background: var(--bg-soft);
+}
+.galleria-cella img { width: 100%; height: 100%; object-fit: cover; }
+.galleria-main { grid-column: span 4; aspect-ratio: 16 / 8; }
+.galleria-piu {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(22, 32, 43, .62); color: #fff; font-weight: 700; font-size: .95rem;
+}
+.galleria-cella:focus-visible { outline: 3px solid var(--accent-dark); outline-offset: 2px; }
+/* Sul telefono la griglia diventa una striscia che si sfoglia col dito.
+   Prima erano una foto grande e quattro francobolli 2×2: su uno schermo da
+   390 punti ogni francobollo veniva 165 punti, troppo poco per capire una
+   stanza. Adesso ognuna occupa l'86% della larghezza, e del vicino se ne
+   vede un pezzo — che è come si capisce, senza scritte, che c'è dell'altro
+   e si trascina.
+   Tutto in CSS: `scroll-snap` è lo scorrimento agganciato del browser, lo
+   stesso delle app. Zero JavaScript, come il resto del sito.
+   Il tocco su una foto continua ad aprire l'ingrandimento con tutte le
+   foto: la striscia ne mostra cinque, l'ingrandimento le ha tutte. */
+@media (max-width: 700px) {
+  .galleria {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* L'aggancio si ferma qui, non al bordo dello schermo. Senza questa
+       riga la prima foto sta allineata al titolo — glielo impone il
+       riempimento di `.wrap` — e tutte le altre, agganciandosi, finiscono
+       venti punti più a sinistra: la colonna del testo balla a ogni
+       trascinamento. */
+    scroll-padding-inline: 20px;
+    /* Senza questo, arrivati in fondo alla striscia il gesto prosegue sulla
+       pagina e su alcuni telefoni fa tornare indietro nella cronologia. */
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .galleria::-webkit-scrollbar { display: none; }
+  .galleria-cella {
+    flex: 0 0 86%;
+    scroll-snap-align: start;
+    /* 3:2 su una striscia lascia foto basse e larghe: 4:3 riempie lo
+       schermo del telefono, che è alto. */
+    aspect-ratio: 4 / 3;
+  }
+  .galleria-main { aspect-ratio: 4 / 3; }
+}
+
+/* Foto a schermo intero, senza JavaScript: le apre e le chiude `:target`.
+   Finché non sono aperte stanno fuori dal flusso e non caricano nulla. */
+
+.lente { display: none; }
+.lente:target {
+  display: flex; flex-direction: column; justify-content: center;
+  position: fixed; inset: 0; z-index: 60; background: #0e151c; padding: 16px;
+}
+.lente-fondo { position: absolute; inset: 0; }
+.lente-corpo { position: relative; margin: 0 auto; max-width: 1100px; text-align: center; }
+.lente-corpo img {
+  margin: 0 auto; max-height: calc(100vh - 130px); width: auto; max-width: 100%;
+  border-radius: 8px; object-fit: contain;
+}
+.lente-corpo figcaption { color: #c8d0d8; font-size: .88rem; padding-top: 10px; }
+.lente-barra {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 10px; padding-top: 14px;
+}
+.lente-barra a {
+  color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.32);
+  border-radius: 999px; padding: 11px 18px; min-height: 48px; min-width: 48px;
+  display: inline-flex; align-items: center; gap: 6px; font-size: .92rem;
+}
+.lente-barra a:hover { background: rgba(255,255,255,.12); }
+.lente-barra a:focus-visible { outline: 3px solid #f0c9a4; outline-offset: 2px; }
+.lente-conta { color: #c8d0d8; font-size: .88rem; min-width: 6em; text-align: center; }
+.lente-chiudi { margin-left: auto; }
+/* Su schermo stretto restano le frecce e le parole si spostano fuori campo:
+   sparite alla vista, ancora lette dallo screen reader. */
+@media (max-width: 620px) {
+  .lente-barra a span { position: absolute; left: -9999px; }
+  .lente-chiudi { margin-left: 0; }
+}
+
+.scheda-grid { display: grid; grid-template-columns: 1fr 330px; gap: 46px; padding-top: 26px; }
+@media (max-width: 900px) { .scheda-grid { grid-template-columns: 1fr; } }
+
+.dati { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); gap: 2px 20px; margin: 0 0 28px; }
+.dati div { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.dati dt { font-size: .74rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
+.dati dd { margin: 0; font-weight: 600; font-size: 1.05rem; }
+
+.chips { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0 0 28px; }
+.chips li { background: var(--bg-soft); padding: 7px 15px; border-radius: 2px; font-size: .87rem; }
+
+/* Domande frequenti. `<details>` porta con sé il triangolino del browser, che
+   cambia forma da un browser all'altro: si spegne e si disegna il segno `+`
+   con un pseudo-elemento, così è lo stesso ovunque e ruota all'apertura. */
+.faq { margin: 0 0 32px; max-width: 70ch; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary {
+  cursor: pointer; list-style: none; padding: 16px 34px 16px 0; position: relative;
+  font-family: var(--serif); font-size: 1.08rem; font-weight: 600; color: var(--ink);
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "+"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  font: 300 1.5rem/1 system-ui, sans-serif; color: var(--accent);
+  transition: transform .18s ease;
+}
+.faq details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+.faq summary:hover { color: var(--accent-dark); }
+/* La mappa: chiusa non costa niente, aperta è alta quanto serve per capire
+   dove si è senza spingere fuori schermo tutto il resto della scheda. */
+.mappa { margin: 0 0 14px; }
+.mappa > summary {
+  cursor: pointer; display: inline-block; padding: 11px 18px;
+  background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius);
+  font-weight: 600; font-size: .95rem;
+}
+.mappa[open] > summary { margin-bottom: 14px; }
+.mappa-riquadro {
+  display: block; width: 100%; height: 340px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--bg-soft);
+}
+@media (max-width: 700px) { .mappa-riquadro { height: 260px; } }
+
+.faq-risposta { padding: 0 34px 20px 0; color: var(--ink-soft); }
+.faq-risposta p:last-child, .faq-risposta ul:last-child, .faq-risposta ol:last-child { margin-bottom: 0; }
+.faq-risposta ul, .faq-risposta ol { padding-left: 1.3em; }
+
+/* Barra dei contatti in fondo alla scheda, solo sul telefono. */
+.barra-contatto { display: none; }
+@media (max-width: 900px) {
+  .barra-contatto {
+    display: flex; align-items: center; gap: 10px;
+    position: sticky; bottom: 0; z-index: 15;
+    margin-top: 28px; padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(253,251,247,.96); border-top: 1px solid var(--line);
+    backdrop-filter: saturate(1.4) blur(8px);
+  }
+  .barra-prezzo { flex: 1; font-family: var(--serif); font-weight: 600; font-size: 1.05rem; color: var(--accent-dark); }
+  .barra-contatto .btn { padding: 12px 18px; font-size: .9rem; }
+}
+
+/* Fascia dell'anteprima dal gestionale. Volutamente stonata rispetto al resto
+   della grafica: deve essere impossibile scambiarla per parte del sito. */
+.fascia-anteprima { background: #2c2a24; color: #fdfbf7; padding: 10px 0; font-size: .9rem; }
+.fascia-riga { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; }
+.fascia-riga p { margin: 0; }
+.fascia-anteprima a { color: #fdfbf7; text-decoration: underline; }
+
+.box-contatto {
+  background: var(--bg-card); border-radius: var(--radius); padding: 26px;
+  position: sticky; top: 104px; box-shadow: var(--ombra);
+}
+.box-prezzo { font-family: var(--serif); font-size: 1.7rem; font-weight: 600; margin-bottom: .3em; color: var(--accent-dark); }
+.nota-sede { font-size: .88rem; color: var(--ink-soft); margin-top: 18px; }
+
+/* ---------------------------------------------------------------- moduli */
+
+.modulo { background: var(--bg-soft); border-radius: var(--radius); padding: 40px; margin: 56px 0; }
+.modulo h3 { font-size: 1.6rem; }
+.modulo-sub { color: var(--ink-soft); }
+.modulo-ok { background: #e6f2ec; border: 1px solid #b9dcc9; color: var(--ok); padding: 14px; border-radius: 8px; }
+
+.form label { display: block; margin-bottom: 16px; font-size: .9rem; font-weight: 600; }
+.form label small { display: block; font-weight: 400; color: var(--ink-soft); }
+.form input[type=text], .form input[type=email], .form input[type=tel],
+.form input[type=number], .form input[type=password], .form select, .form textarea {
+  width: 100%; padding: 12px; margin-top: 6px; border: 1px solid var(--line);
+  border-radius: 8px; font: inherit; background: #fff;
+}
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 0 18px; }
+.hp { position: absolute; left: -9999px; }
+.privacy { font-size: .82rem; color: var(--ink-soft); }
+
+.btn {
+  display: inline-block; padding: 15px 28px; border-radius: 2px; border: 1px solid transparent;
+  font: inherit; font-weight: 600; font-size: .95rem; letter-spacing: .02em;
+  cursor: pointer; text-decoration: none; text-align: center; transition: background .2s, color .2s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn-ghost:hover { background: var(--ink); color: var(--bg); }
+
+/* --------------------------------------------------------- calcolatore */
+
+.testata { max-width: 62ch; margin-bottom: 40px; }
+.testata h1 { font-size: clamp(2rem, 4vw, 3rem); }
+.occhiello { color: var(--ink-soft); font-size: 1.06rem; }
+.sezione-testo { max-width: 70ch; margin-top: 56px; }
+
+.calcolo-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 34px; align-items: start; }
+@media (max-width: 860px) { .calcolo-grid { grid-template-columns: 1fr; } }
+
+.form-calcolo { background: var(--bg-card); border-radius: var(--radius); padding: 26px; box-shadow: var(--ombra); }
+.form-calcolo fieldset { border: 0; padding: 0; margin: 0 0 22px; }
+.form-calcolo legend {
+  padding: 0; margin-bottom: 10px; font-size: .74rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--ink-soft);
+}
+/* La riga intera fa da bersaglio, non il solo pallino: su un telefono
+   centrare un cerchio di 13 pixel è un esercizio di mira. */
+/* `.form label` vale 0-1-1 di specificita e vincerebbe su `.scelta`, che vale
+   0-1-0: senza il prefisso `.form` il `display: block` generale resterebbe in
+   piedi e il pallino finirebbe su una riga sua, sopra il testo. */
+.form .scelta {
+  display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px;
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px;
+  cursor: pointer; font-weight: 400; background: #fff;
+}
+.form .scelta:hover { border-color: var(--accent); }
+.form .scelta input { margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.form .scelta strong { display: block; font-size: .95rem; }
+.form .scelta small { display: block; color: var(--ink-soft); }
+.form .scelta-riga { margin-top: 4px; margin-bottom: 20px; }
+.form .scelta:has(input:checked) { border-color: var(--accent); background: var(--bg-soft); }
+.form .scelta:has(input:focus-visible) { outline: 3px solid var(--accent-dark); outline-offset: 2px; }
+
+.calcolo-esito { background: var(--scuro); color: #fff; border-radius: var(--radius); padding: 30px; }
+.calcolo-esito h2 { color: #fff; font-size: 1.5rem; }
+.esito-vuoto { color: rgba(255,255,255,.78); }
+.esito-base { color: rgba(255,255,255,.72); font-size: .9rem; margin-bottom: 22px; }
+.esito-base strong { color: #fff; }
+.calcolo-esito .nota { color: rgba(255,255,255,.62); }
+.calcolo-esito .btn-ghost { color: #fff; border-color: rgba(255,255,255,.6); }
+.calcolo-esito .btn-ghost:hover { background: #fff; color: var(--scuro); }
+
+.tabella-imposte { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.tabella-imposte th, .tabella-imposte td { text-align: left; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.16); }
+.tabella-imposte th { font-weight: 600; font-size: .95rem; }
+.tabella-imposte th small { display: block; font-weight: 400; color: rgba(255,255,255,.6); font-size: .82rem; }
+.tabella-imposte td { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tabella-imposte tfoot th, .tabella-imposte tfoot td {
+  border-bottom: 0; padding-top: 16px; font-family: var(--serif); font-size: 1.35rem; color: var(--accent-chiaro);
+}
+
+/* ------------------------------------------------- calcolo rata del mutuo */
+
+.campo-opzionale {
+  font-weight: 400; font-size: .78rem; color: var(--ink-soft);
+  text-transform: uppercase; letter-spacing: .08em; margin-left: 6px;
+}
+
+/* La rata è il numero per cui si è aperta la pagina: sta da sola, grande,
+   nel serif dei titoli. Tutto il resto del riquadro le gira intorno. */
+.rata-grande {
+  font-family: var(--serif); font-size: clamp(2.6rem, 7vw, 3.6rem); line-height: 1.05;
+  color: var(--accent-chiaro); margin: 0 0 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 120 e non 140: dentro il riquadro, su un telefono da 390, restano circa 290
+   punti utili. A 140 le quattro voci finiscono una sotto l'altra e il riquadro
+   diventa una colonna lunga; a 120 stanno a due a due. */
+.rata-voci {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 18px 20px; margin: 0 0 22px; padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,.16);
+}
+.rata-voci dt { font-size: .82rem; color: rgba(255,255,255,.62); }
+.rata-voci dd { margin: 2px 0 0; font-size: 1.1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.calcolo-esito .nota-attenzione { color: var(--accent-chiaro); font-weight: 600; }
+
+.mutuo-blocco { margin-top: 48px; }
+.mutuo-blocco-testa {
+  display: flex; flex-wrap: wrap; gap: 8px 20px;
+  align-items: baseline; justify-content: space-between; margin-bottom: 14px;
+}
+.mutuo-blocco-testa h2 { margin: 0; font-size: 1.4rem; }
+
+.legenda { margin: 0; font-size: .85rem; color: var(--ink-soft); }
+.pallino { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+.pallino + .pallino, .legenda .pallino:not(:first-child) { margin-left: 14px; }
+
+/* I due colori delle barre stanno qui e non dentro l'SVG: il grafico lo
+   stampa PHP, ma il colore resta una decisione del foglio di stile. Cambiarli
+   qui li cambia nel grafico e nella legenda insieme. */
+.grafico-rata { --barra-cap: var(--accent); --barra-int: #e3c9a6; }
+.pallino-cap { background: var(--accent); }
+.pallino-int { background: #e3c9a6; }
+.grafico-rata svg { display: block; width: 100%; height: auto; }
+.grafico-rata .barra-cap { fill: var(--barra-cap); }
+.grafico-rata .barra-int { fill: var(--barra-int); }
+.grafico-rata .barra-anno { font: 11px system-ui, sans-serif; fill: var(--ink-soft); }
+
+/* Le due viste del piano sono due indirizzi, non due bottoni: senza
+   JavaScript è l'unico modo, ed è anche quello che si può mandare a qualcuno
+   già aperto sulla vista giusta. */
+.piano-scelta { margin: 0; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.piano-scelta a {
+  padding: 8px 16px; font-size: .85rem; font-weight: 600; text-decoration: none;
+  color: var(--ink-soft); background: var(--bg-card);
+}
+.piano-scelta a + a { border-left: 1px solid var(--line); }
+.piano-scelta a:hover { color: var(--accent-dark); }
+.piano-scelta a[aria-current] { background: var(--accent); color: #fff; }
+
+/* Quattrocentottanta righe non stanno in una pagina: il riquadro scorre da
+   solo e l'intestazione resta attaccata in alto. `overflow` da solo non basta
+   a rendere il riquadro raggiungibile da tastiera, per questo c'è tabindex
+   nel markup della pagina. */
+.piano-riquadro { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-card); }
+.piano-tabella { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.piano-tabella th, .piano-tabella td {
+  padding: 9px 14px; text-align: right; white-space: nowrap;
+  border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums;
+}
+.piano-tabella thead th {
+  position: sticky; top: 0; z-index: 1; background: var(--bg-soft);
+  font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-soft);
+}
+.piano-tabella tbody th { text-align: left; font-weight: 600; }
+.piano-tabella thead th:first-child { text-align: left; }
+.piano-tabella tbody tr:last-child td, .piano-tabella tbody tr:last-child th { border-bottom: 0; }
+
+/* Cinque colonne di euro non stanno in 350 punti e la tabella scorre di lato.
+   Su uno schermo stretto però il taglio a metà di una cifra non si legge come
+   «c'è dell'altro», si legge come un difetto: la riga sotto lo dice. */
+.solo-stretto { display: none; }
+@media (max-width: 760px) { .solo-stretto { display: block; } }
+
+/* ------------------------------------------------------------------- FAQ */
+
+.faq { margin-top: 48px; }
+.faq-item { border-top: 1px solid var(--line); padding: 18px 0; }
+/* La domanda era un `h4` quando sopra c'era `h2` pagina → `h3` sezione.
+   Adesso la scala è `h1` → `h2`, quindi la domanda è un `h3`: stessa misura
+   di prima, un gradino più su. */
+.faq-item h3 { margin-bottom: .3em; font-size: 1.0625rem; }
+.faq-item p { margin: 0; color: var(--ink-soft); max-width: 70ch; }
+
+/* --------------------------------------------------------------- filtri */
+
+.filtri {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 12px;
+  align-items: end; background: var(--bg-soft); padding: 18px; border-radius: var(--radius); margin-bottom: 32px;
+}
+.filtri label { display: block; font-size: .8rem; font-weight: 600; }
+.filtri select, .filtri input {
+  width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: #fff;
+}
+.filtri .btn { padding: 11px 18px; }
+
+/* Sul computer i filtri stanno sempre aperti e questa etichetta non esiste. */
+.filtri-toggle { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.filtri-apri { display: none; }
+
+/* ------------------------------------------------------------- telefono */
+
+/* Misurato su uno schermo da 412 punti: fra il riempimento della sezione, il
+   titolo, il sottotitolo e i sei campi del filtro, la prima fotografia — la
+   cosa che si è venuti a vedere — compariva dopo 1.761 punti di scorrimento,
+   due schermate piene. Qui il testo si stringe e i filtri si aprono al tocco. */
+@media (max-width: 700px) {
+  .sezione { padding-block: 44px; }
+  .sezione-head { margin-bottom: 22px; }
+  .pagina-titolo { font-size: 1.95rem; line-height: 1.2; }
+  .pagina-sub, .occhiello { font-size: 1rem; line-height: 1.55; }
+  .risposta-diretta { font-size: 1.02rem; }
+
+  .filtri-apri {
+    display: block; margin-bottom: 20px; padding: 13px 18px;
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius);
+    font-weight: 600; text-align: center; cursor: pointer;
+  }
+  .filtri-apri::after { content: " ▾"; color: var(--ink-soft); }
+  .filtri-toggle:focus-visible + .filtri-apri { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .filtri-toggle:checked + .filtri-apri::after { content: " ▴"; }
+
+  .filtri { display: none; padding: 14px; gap: 10px; margin-bottom: 24px; }
+  .filtri-toggle:checked ~ .filtri { display: grid; }
+}
+
+.paginazione { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
+/* 48px pieni: sul telefono un numero di pagina si sbaglia con niente. */
+.paginazione a, .paginazione span {
+  min-width: 48px; min-height: 48px; padding: 0 12px; border: 1px solid var(--line);
+  border-radius: 8px; text-decoration: none; color: var(--ink);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.paginazione .on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+.sedi { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 28px; margin-bottom: 20px; }
+.sede { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+
+/* ---------------------------------------------------------------- flash */
+
+.flash { padding: 13px 18px; border-radius: 8px; margin: 18px 0; font-size: .93rem; }
+.flash-ok { background: #e6f2ec; color: var(--ok); }
+.flash-warn { background: #fdf3dd; color: var(--warn); }
+.flash-error { background: #fbeae9; color: var(--err); }
+
+/* ---------------------------------------------------------------- footer */
+
+.site-foot { background: var(--scuro); color: #cfc7ba; padding: 72px 0 30px; margin-top: 0; font-size: .93rem; }
+.site-foot a { color: #fff; }
+.foot-title { font-family: var(--serif); font-weight: 500; }
+.foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 34px; }
+.foot-title { color: #fff; font-size: 1rem; }
+.rating { color: var(--accent-chiaro); }
+.piva { font-size: .82rem; opacity: .75; }
+.foot-bottom {
+  display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,.14); margin-top: 34px; padding-top: 18px; font-size: .85rem;
+}
+.foot-bottom p { margin: 0; }
+/* Privacy, cookie e area riservata sulla stessa riga: `gap` invece di un
+   separatore scritto a mano, perché il numero di voci cambia — finché
+   l'informativa non è stata scritta ce n'è una sola. */
+.foot-legale { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
+/* ------------------------------------------------------------------ moto
+
+   Le sezioni entrano salendo mentre si scorre, e la foto in cima scorre più
+   lenta della pagina. Legate allo scorrimento e non a un cronometro: il moto
+   lo calcola il browser, e non c'è una riga di JavaScript da scaricare.
+
+   Tre cose tengono in piedi tutto il blocco, e nessuna è un dettaglio.
+
+   La prima è `@supports`. Senza, un browser che non conosce queste regole
+   applicherebbe `opacity: 0` — e leggerebbe il resto come rumore, lasciando
+   la home bianca per sempre. Chiuso lì dentro, dove il moto non esiste non
+   esiste nemmeno il punto di partenza: la pagina si vede esattamente come
+   prima. Oggi funziona su Chrome, su Edge e sulle versioni recenti di
+   Safari; su Firefox no, e va benissimo così.
+
+   La seconda è `prefers-reduced-motion`. Chi soffre di vertigini o di mal
+   d'auto chiede al telefono di ridurre le animazioni, e quella richiesta va
+   rispettata: qui non è una preferenza estetica, per qualcuno è la
+   differenza fra leggere una pagina e doverla chiudere.
+
+   La terza è che non si anima **niente** dentro l'hero a parte lo sfondo.
+   Il titolo e la foto grande sono ciò su cui viene misurata la velocità di
+   apertura della pagina: farli comparire in dissolvenza vorrebbe dire
+   peggiorare il voto proprio dove pesa di più. Devono esserci già. Lo
+   sfondo si muove soltanto — non compare — e uno spostamento non ritarda
+   nessun disegno. */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .sezione-head,
+    .griglia > *,
+    .fascia-grid > *,
+    .post-card {
+      animation: entra-salendo linear both;
+      animation-timeline: view();
+      /* Il tragitto si misura **solo** sull'ingresso dell'elemento, e va
+         quasi per intero: si chiude quando l'elemento è quasi tutto sullo
+         schermo, non prima. La prima versione finiva al 76% e non la
+         vedeva nessuno — misurata, era già ferma quando la scheda arrivava
+         a metà bassa dello schermo, dove uno comincia a guardarla. Un
+         movimento che finisce prima di essere guardato non è discreto, è
+         assente.
+
+         `entry` e non `cover`, e non è una sfumatura. `cover` va
+         dall'istante in cui l'elemento entra a quello in cui esce, e un
+         elemento in fondo alla pagina non esce mai: se lo schermo è alto e
+         resta poco da scorrere, il tragitto non arriva in fondo e quel
+         blocco resta semitrasparente per sempre. Misurato: su uno schermo
+         alto 2800 due riquadri si fermavano a 0,74 di opacità. Con `entry`
+         il tragitto si chiude appena l'elemento è dentro, e dentro ci
+         finisce sempre — anche su una pagina che non si scorre affatto. */
+      animation-range: entry 5% entry 92%;
+    }
+
+    /* Le schede di una stessa riga entrano insieme, e insieme è meccanico.
+       Qui si accorcia di poco il tragitto della seconda e della terza: allo
+       stesso punto della pagina sono un filo più indietro, e si vedono
+       arrivare una dopo l'altra. Un ritardo a tempo qui non esisterebbe —
+       non c'è un cronometro, c'è la posizione. */
+    .griglia > :nth-child(2),
+    .post-card:nth-child(2) { animation-range: entry 0% entry 84%; }
+    .griglia > :nth-child(3),
+    .post-card:nth-child(3) { animation-range: entry 0% entry 76%; }
+  }
+
+  /* Più foto in cima: si sciolgono una nell'altra, e ognuna si allarga
+     pianissimo per tutto il tempo in cui si vede. Il giro e il ritardo di
+     ciascuna li scrive il PHP: dipendono da quante foto ci sono. */
+  .hero-sequenza .hero-sfondo {
+    opacity: 0;
+    animation-duration: var(--giro, 18s);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-delay: var(--ritardo, 0s);
+  }
+  /* Due serie di fotogrammi e non una. Il momento in cui una foto sfuma non
+     si può scrivere in secondi: dentro `@keyframes` si scrive in percentuale
+     del giro, e mezzo giro con due foto non è un terzo di giro con tre. Con
+     una serie sola tarata su tre, a due foto restava più di un secondo in
+     cui non se ne vedeva nessuna e appariva il fondo scuro. */
+  .hero-sequenza[data-foto="2"] .hero-sfondo { animation-name: hero-dissolvi-2; }
+  .hero-sequenza[data-foto="3"] .hero-sfondo { animation-name: hero-dissolvi-3; }
+
+  /* Una foto sola non ha niente in cui sciogliersi: le resta il movimento
+     lento con la pagina. Le due cose non convivono sullo stesso elemento —
+     userebbero tutte e due `scale` e l'ultima cancellerebbe l'altra — e non
+     serve che convivano: dove c'è la sequenza il movimento c'è già. */
+  @supports (animation-timeline: scroll()) {
+    .hero:not(.hero-sequenza) .hero-sfondo {
+      scale: 1.12;
+      animation: hero-lento linear both;
+      animation-timeline: scroll();
+      animation-range: 0 100vh;
+    }
+  }
+
+  /* La testata si posa. Scendendo, la riga sotto il nome sparisce e il nome
+     si stringe verso sinistra; risalendo torna com'era.
+
+     L'altezza della testata **non** cambia, ed è voluto: `.site-head` è
+     appiccicata in cima ma sta nel flusso della pagina: farla rimpicciolire
+     accorcerebbe il documento, e tutto quello che sta sotto salterebbe su
+     di scatto mentre si scorre. Si muove quindi solo ciò che non sposta
+     nulla — `scale` e `opacity` — e la testata acquista un'ombra, che è il
+     segnale con cui si capisce che il contenuto le scorre sotto. */
+  /* A stringersi è il blocco del testo, non tutto `.brand`: uno `scale` crea
+     un contesto di impilamento, e dentro a quel contesto il `multiply` del
+     marchio non trova più il fondo della testata con cui fondersi — il
+     riquadro bianco attorno al simbolo tornerebbe visibile. Il simbolo resta
+     quindi della sua misura mentre il nome si stringe: fa anche da àncora,
+     l'occhio ha un punto fermo mentre la scritta si muove. */
+  @supports (animation-timeline: scroll()) {
+    .brand-testo, .brand-claim, .site-head {
+      animation: linear both;
+      animation-timeline: scroll();
+      animation-range: 0 180px;
+    }
+    .brand-testo { animation-name: testata-nome; transform-origin: left center; }
+    .brand-claim { animation-name: testata-claim; }
+    .site-head { animation-name: testata-ombra; }
+  }
+
+  /* Le foto delle schede respirano mentre la scheda attraversa lo schermo.
+     Prima si muovevano solo col mouse sopra, cioè mai sul telefono — dove
+     sta la metà di chi guarda. `scale` e non `transform`: il passaggio del
+     mouse usa già `transform`, e sulla stessa proprietà una delle due
+     sparirebbe. */
+  @supports (animation-timeline: view()) {
+    /* La linea del tempo la dichiara la scheda e la usa la foto dentro.
+       Sembra un giro largo per niente, e invece è obbligatorio: `view()`
+       misura l'attraversamento rispetto al primo antenato che scorre, e per
+       la foto quell'antenato è `.card`, che ha `overflow: hidden` per via
+       degli angoli arrotondati. `.card` non scorre, quindi la misura non si
+       muoveva mai: la foto restava ferma a metà animazione, ingrandita del
+       4,5% e basta. Dichiarandola sulla scheda, la misura è
+       l'attraversamento della scheda nella pagina — che è quello che si
+       voleva. */
+    .card { view-timeline: --scheda block; }
+    .card-media img {
+      animation: foto-respira linear both;
+      animation-timeline: --scheda;
+      animation-range: entry 0% exit 100%;
+    }
+  }
+}
+
+/* `translate` e non `transform`: sono due proprietà distinte, e le schede
+   usano già `transform` per sollevarsi al passaggio del mouse. Scritte sulla
+   stessa proprietà, l'ultima delle due cancellerebbe l'altra. */
+@keyframes entra-salendo {
+  from { opacity: 0; translate: 0 42px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+/* La foto scende mentre la pagina sale: sembra più lontana. L'ingrandimento
+   del 12% non è estetico ed è il minimo che serve: scendendo di 11vh, senza
+   niente che la allarghi, la foto scoprirebbe una striscia di fondo scuro in
+   cima all'hero. Sta sulla regola e non qui dentro, così `scale` resta libera
+   per la sequenza. Cambiando lo spostamento va rifatto il conto. */
+@keyframes hero-lento {
+  from { translate: 0 0; }
+  to   { translate: 0 11vh; }
+}
+
+/* Il giro di una foto della sequenza, in quattro atti: si vede, sfuma via,
+   aspetta il suo turno, rientra mentre quella prima di lei se ne va.
+   La dissolvenza dura 1,2 secondi in tutti e due i casi — cambia la
+   percentuale perché cambia la lunghezza del giro.
+   L'ingrandimento va da 1,12 a 1,19 mentre la foto si vede, e torna indietro
+   piano mentre è invisibile: chi guarda vede solo un lento avvicinarsi. Il
+   minimo è 1,12 e non 1: sotto quel valore la foto non riempirebbe l'hero. */
+@keyframes hero-dissolvi-2 {   /* giro di 12s: 4,8 visibile, 1,2 di sfumatura */
+  0%    { opacity: 1; scale: 1.12; }
+  40%   { opacity: 1; }
+  50%   { opacity: 0; scale: 1.19; }
+  90%   { opacity: 0; scale: 1.13; }
+  100%  { opacity: 1; scale: 1.12; }
+}
+@keyframes hero-dissolvi-3 {   /* giro di 18s, stessi 4,8 e stessi 1,2 */
+  0%     { opacity: 1; scale: 1.12; }
+  26.7%  { opacity: 1; }
+  33.3%  { opacity: 0; scale: 1.19; }
+  93.3%  { opacity: 0; scale: 1.13; }
+  100%   { opacity: 1; scale: 1.12; }
+}
+
+/* La testata che si posa. Niente che cambi l'ingombro: solo `scale`,
+   `opacity` e un'ombra. */
+@keyframes testata-nome  { to { scale: .9; } }
+@keyframes testata-claim { to { opacity: 0; } }
+@keyframes testata-ombra { to { box-shadow: 0 10px 30px -18px rgba(34, 31, 26, .5); } }
+
+/* Le foto delle schede: entrano un filo più grandi e si posano. */
+@keyframes foto-respira {
+  from { scale: 1.09; }
+  to   { scale: 1; }
+}
+
+/* Chi ha chiesto meno movimento non lo riceve da nessuna parte, comprese le
+   transizioni scritte prima di questo blocco: la scheda che si solleva, la
+   foto che si allarga, il bottone che cambia colore. Restano tutti gli stati
+   — quello che sparisce è il tragitto per arrivarci. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

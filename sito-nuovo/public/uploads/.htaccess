@@ -1,0 +1,17 @@
+# Qui dentro finiscono le foto caricate dal gestionale. Un file caricato non
+# deve mai poter essere eseguito: chi riuscisse a farci arrivare uno script
+# lo lancerebbe con i permessi del sito.
+#
+# Si nega l'accesso ai file eseguibili invece di spegnere PHP con `php_flag`:
+# quella direttiva vale solo dove PHP gira come modulo Apache, e dove gira in
+# FPM — su SiteGround, per esempio — manda il sito in errore 500.
+
+<FilesMatch "\.(?i:php|phtml|phps|phar|cgi|pl|py|sh)$">
+  Require all denied
+</FilesMatch>
+
+# L'uploader accetta e riscrive solo immagini, quindi qui sotto non dovrebbe
+# esserci altro. Questa e la seconda serratura, per il giorno in cui la prima
+# dovesse cedere.
+Options -ExecCGI
+RemoveHandler .php .phtml .phar .cgi .pl .py
