@@ -570,7 +570,7 @@ img { max-width: 100%; height: auto; display: block; }
 .form label { display: block; margin-bottom: 16px; font-size: .9rem; font-weight: 600; }
 .form label small { display: block; font-weight: 400; color: var(--ink-soft); }
 .form input[type=text], .form input[type=email], .form input[type=tel],
-.form input[type=password], .form select, .form textarea {
+.form input[type=number], .form input[type=password], .form select, .form textarea {
   width: 100%; padding: 12px; margin-top: 6px; border: 1px solid var(--line);
   border-radius: 8px; font: inherit; background: #fff;
 }
@@ -639,6 +639,93 @@ img { max-width: 100%; height: auto; display: block; }
 .tabella-imposte tfoot th, .tabella-imposte tfoot td {
   border-bottom: 0; padding-top: 16px; font-family: var(--serif); font-size: 1.35rem; color: var(--accent-chiaro);
 }
+
+/* ------------------------------------------------- calcolo rata del mutuo */
+
+.campo-opzionale {
+  font-weight: 400; font-size: .78rem; color: var(--ink-soft);
+  text-transform: uppercase; letter-spacing: .08em; margin-left: 6px;
+}
+
+/* La rata è il numero per cui si è aperta la pagina: sta da sola, grande,
+   nel serif dei titoli. Tutto il resto del riquadro le gira intorno. */
+.rata-grande {
+  font-family: var(--serif); font-size: clamp(2.6rem, 7vw, 3.6rem); line-height: 1.05;
+  color: var(--accent-chiaro); margin: 0 0 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 120 e non 140: dentro il riquadro, su un telefono da 390, restano circa 290
+   punti utili. A 140 le quattro voci finiscono una sotto l'altra e il riquadro
+   diventa una colonna lunga; a 120 stanno a due a due. */
+.rata-voci {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 18px 20px; margin: 0 0 22px; padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,.16);
+}
+.rata-voci dt { font-size: .82rem; color: rgba(255,255,255,.62); }
+.rata-voci dd { margin: 2px 0 0; font-size: 1.1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.calcolo-esito .nota-attenzione { color: var(--accent-chiaro); font-weight: 600; }
+
+.mutuo-blocco { margin-top: 48px; }
+.mutuo-blocco-testa {
+  display: flex; flex-wrap: wrap; gap: 8px 20px;
+  align-items: baseline; justify-content: space-between; margin-bottom: 14px;
+}
+.mutuo-blocco-testa h2 { margin: 0; font-size: 1.4rem; }
+
+.legenda { margin: 0; font-size: .85rem; color: var(--ink-soft); }
+.pallino { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+.pallino + .pallino, .legenda .pallino:not(:first-child) { margin-left: 14px; }
+
+/* I due colori delle barre stanno qui e non dentro l'SVG: il grafico lo
+   stampa PHP, ma il colore resta una decisione del foglio di stile. Cambiarli
+   qui li cambia nel grafico e nella legenda insieme. */
+.grafico-rata { --barra-cap: var(--accent); --barra-int: #e3c9a6; }
+.pallino-cap { background: var(--accent); }
+.pallino-int { background: #e3c9a6; }
+.grafico-rata svg { display: block; width: 100%; height: auto; }
+.grafico-rata .barra-cap { fill: var(--barra-cap); }
+.grafico-rata .barra-int { fill: var(--barra-int); }
+.grafico-rata .barra-anno { font: 11px system-ui, sans-serif; fill: var(--ink-soft); }
+
+/* Le due viste del piano sono due indirizzi, non due bottoni: senza
+   JavaScript è l'unico modo, ed è anche quello che si può mandare a qualcuno
+   già aperto sulla vista giusta. */
+.piano-scelta { margin: 0; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.piano-scelta a {
+  padding: 8px 16px; font-size: .85rem; font-weight: 600; text-decoration: none;
+  color: var(--ink-soft); background: var(--bg-card);
+}
+.piano-scelta a + a { border-left: 1px solid var(--line); }
+.piano-scelta a:hover { color: var(--accent-dark); }
+.piano-scelta a[aria-current] { background: var(--accent); color: #fff; }
+
+/* Quattrocentottanta righe non stanno in una pagina: il riquadro scorre da
+   solo e l'intestazione resta attaccata in alto. `overflow` da solo non basta
+   a rendere il riquadro raggiungibile da tastiera, per questo c'è tabindex
+   nel markup della pagina. */
+.piano-riquadro { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-card); }
+.piano-tabella { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.piano-tabella th, .piano-tabella td {
+  padding: 9px 14px; text-align: right; white-space: nowrap;
+  border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums;
+}
+.piano-tabella thead th {
+  position: sticky; top: 0; z-index: 1; background: var(--bg-soft);
+  font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-soft);
+}
+.piano-tabella tbody th { text-align: left; font-weight: 600; }
+.piano-tabella thead th:first-child { text-align: left; }
+.piano-tabella tbody tr:last-child td, .piano-tabella tbody tr:last-child th { border-bottom: 0; }
+
+/* Cinque colonne di euro non stanno in 350 punti e la tabella scorre di lato.
+   Su uno schermo stretto però il taglio a metà di una cifra non si legge come
+   «c'è dell'altro», si legge come un difetto: la riga sotto lo dice. */
+.solo-stretto { display: none; }
+@media (max-width: 760px) { .solo-stretto { display: block; } }
 
 /* ------------------------------------------------------------------- FAQ */
 

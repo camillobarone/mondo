@@ -47,6 +47,7 @@ $router->get('/blog/{slug}', static function (string $slug): void {
 $router->get('/contatti', [Pages::class, 'contatti']);
 $router->get('/valutazione-gratuita', [Pages::class, 'valutazione']);
 $router->get('/calcolatore-imposte-acquisto-casa', [Pages::class, 'calcolatore']);
+$router->get('/calcolatore-rata-mutuo', [Pages::class, 'mutuo']);
 
 $router->post('/invia-richiesta', [Forms::class, 'submit']);
 

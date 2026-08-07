@@ -128,6 +128,19 @@ function preload_image(string $src, string $srcset = '', string $sizes = ''): st
     return $tag . '>';
 }
 
+/**
+ * Importo in euro con i centesimi.
+ *
+ * `euro()` arrotonda all'unità, che va bene per il prezzo di una casa e non
+ * per una rata o un'imposta: «€ 731,42» è la cifra che si paga davvero,
+ * «€ 731» no. Sta qui e non dentro una classe perché la usano due calcolatori
+ * che non hanno niente in comune fra loro.
+ */
+function euro_cent(float $importo): string
+{
+    return '€ ' . number_format($importo, 2, ',', '.');
+}
+
 /** Prezzo in euro, formato italiano. Null o 0 => "Trattativa riservata". */
 function euro(?float $value, string $fallback = 'Trattativa riservata'): string
 {

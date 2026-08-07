@@ -167,6 +167,7 @@ final class Content
         'contatti',
         'valutazione-gratuita',
         'calcolatore-imposte-acquisto-casa',
+        'calcolatore-rata-mutuo',
         'invia-richiesta',
         'gestionale',
         'assets',

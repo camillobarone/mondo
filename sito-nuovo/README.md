@@ -238,7 +238,9 @@ Non è un elenco di scuse: è quello che va deciso prima di considerarlo finito.
   comando `--campi` che stampa i nomi reali prima di importare.
 - **Report ridotti all'osso**: provenienza dei contatti, rogiti e provvigioni
   dell'anno, tempo medio fino al rogito. Niente grafici.
-- **Nessun virtual tour**, nessun calcolatore imposte, nessun tool OMI: tre
-  funzioni che sul sito attuale esistono e qui no.
+- **Nessun virtual tour e nessun tool OMI**: due funzioni che sul sito attuale
+  esistono e qui no. I calcolatori invece ci sono tutti e due — imposte
+  d'acquisto e rata del mutuo — e il terzo, l'IMU, aspetta le aliquote del
+  Comune di Lecce.
 - **Le FAQ della pagina valutazione sono scritte nel codice**, non modificabili
   dal pannello.

@@ -161,7 +161,8 @@ foreach ([(string) Settings::get('site_name', 'Mondo Immobiliare Lecce'), 'Mondo
     <div>
       <h2 class="foot-title">Orari</h2>
       <p>Lunedì – venerdì<br>9:00 – 13:00 · 16:30 – 19:00</p>
-      <p><a href="<?= e(url('/calcolatore-imposte-acquisto-casa/')) ?>">Calcolo imposte d’acquisto</a></p>
+      <p><a href="<?= e(url('/calcolatore-imposte-acquisto-casa/')) ?>">Calcolo imposte d’acquisto</a><br>
+         <a href="<?= e(url('/calcolatore-rata-mutuo/')) ?>">Calcolo rata mutuo</a></p>
       <p class="piva">P. IVA IT05004730759</p>
     </div>
   </div>

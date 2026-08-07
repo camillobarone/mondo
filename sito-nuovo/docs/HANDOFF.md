@@ -677,6 +677,66 @@ WordPress**: è l'unico punto in cui un contenuto vive in due posti. Se i due
 siti dovessero coesistere sullo stesso dominio va risolto, un intent = un
 contenuto.
 
+### Calcolatore della rata del mutuo
+`/calcolatore-rata-mutuo/`. Stesso schema di quello delle imposte: modulo in
+GET, conto in `Mil\Core\Mutuo`, zero JavaScript, `noindex, follow` sul
+risultato e `index, follow` sul modulo vuoto.
+
+**Da dove viene.** Camillo aveva già un calcolatore, scritto in HTML+CSS+JS
+come frammento autonomo da incollare in un widget di Elementor. Quel file
+**non è stato incollato nel sito**: era JavaScript, e il sito non ne ha. È
+stato rifatto lato server tenendo tutte le sue funzioni — rata, interessi
+totali, totale da rimborsare, numero di rate, interessi nella prima rata,
+rapporto mutuo/prezzo con avviso sopra l'80%, grafico anno per anno, piano di
+ammortamento per anno o rata per rata.
+
+Cosa si è perso e cosa si è guadagnato, detto chiaro: **spariscono i cursori
+che aggiornavano il numero mentre li muovi** (senza JS non esistono), e in
+cambio il risultato ha un indirizzo suo che si manda su WhatsApp a un cliente
+— cosa che l'originale non poteva fare — e **i numeri stanno nell'HTML**,
+quindi Google e gli assistenti li leggono invece di trovare dei trattini.
+
+**Tutto in centesimi interi.** In virgola mobile una rata moltiplicata per 480
+mesi accumula errore e il piano chiude con qualche centesimo di debito
+residuo. L'ultima rata non è la rata costante: è il residuo più i suoi
+interessi, e assorbe tutti gli arrotondamenti. Verificato su sette casi
+(compresi tasso 0%, 40 anni al 15%, trimestrale e semestrale): somma delle
+quote capitale = capitale iniziale al centesimo, residuo finale esattamente 0.
+Il valore di riferimento — 144.000 a 25 anni al 3,30% mensile = **€ 705,54** —
+coincide col calcolo a mano.
+
+⚠️ **Nel codice non c'è nessun tasso.** È la differenza con `Imposte`, che di
+costanti da mantenere ne ha undici. Qui l'unico numero che invecchierebbe è il
+TAN, e lo scrive chi compila: un tasso di esempio stampato in pagina diventa
+falso in pochi mesi. Per lo stesso motivo **le quattro FAQ parlano solo di
+aritmetica** — come si compone la rata, perché all'inizio sono quasi tutti
+interessi, perché non è il TAEG, quanto presta la banca — e non citano
+condizioni di mercato: una FAQ che cita un tasso va riscritta ogni trimestre,
+e quella riscrittura non la fa nessuno.
+
+L'unica affermazione non aritmetica è la soglia **80% del rapporto
+mutuo/prezzo**, dichiarata come prassi («di norma») e non come regola di
+legge, perché è quello che è. Veniva già dal calcolatore di Camillo.
+
+**Il grafico è SVG generato da PHP** (`Mutuo::grafico()`): rettangoli calcolati
+sul server, nessuna libreria. I due colori stanno nel CSS (`.grafico-rata`) e
+non dentro l'SVG, così cambiarli cambia insieme le barre e la legenda.
+
+**Il piano «tutte le rate» pesa.** 300 righe portano la pagina da 58 a 124 KB.
+Non è un problema per l'indice — quella vista è `noindex` e ci si arriva solo
+cliccando — ma se un giorno la pagina dovesse alleggerirsi, il taglio è lì.
+
+Due errori trovati **solo guardando la pagina renderizzata**, non leggendo il
+codice, e vale la pena ricordarli:
+
+1. Nel modulo l'importo tornava «144» invece di «144000». Il risultato era
+   giusto, il campo no: il `rtrim` che toglie gli zeri decimali stava
+   mangiando anche gli zeri delle migliaia. Lo stesso numero mutilato finiva
+   nel collegamento «Tutte le rate».
+2. A tasso 0% gli interessi totali uscivano «Trattativa riservata», perché
+   `euro()` legge lo zero come prezzo mancante. Su un immobile è giusto, su un
+   mutuo agevolato no: `Mutuo::tondi()` formatta da sé.
+
 ### Anteprima della scheda immobile
 Dal gestionale, `Salva e vedi l'anteprima` porta su
 `/gestionale/immobili/{id}/anteprima/`: la scheda pubblica vera, disegnata da

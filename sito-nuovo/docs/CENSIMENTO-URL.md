@@ -162,6 +162,8 @@ Regola fissa, applicata a ogni pagina ricreata:
    un'àncora sulla home vecchia — diventa `/calcolatore-imposte-acquisto-casa/`,
    che è una pagina intera e funzionante; «Richiedi una valutazione gratuita»
    va su `/valutazione-gratuita/` invece che su una pagina non ancora creata.
+   Dal 7 agosto vale anche per il mutuo: qualunque «calcola la rata» va su
+   `/calcolatore-rata-mutuo/`.
 2. **Altrimenti tiene lo slug del sito vecchio.** Punta a un 404 finché quella
    pagina non esiste, e si ripara da solo il giorno che la crei. Il sito di
    prova non è pubblico, quindi non fa danno — mentre togliere il collegamento
@@ -219,7 +221,7 @@ perde la posizione che ha oggi.
 | `tasse-acquisto-seconda-casa-salento` | Tasse seconda casa |
 | `costi-notarili-rogito-salento` | Costi notarili rogito |
 | `costo-agenzia-immobiliare-lecce` | Costo agenzia immobiliare |
-| `mutuo-prima-casa-lecce` | Mutuo prima casa |
+| `mutuo-prima-casa-lecce` | Mutuo prima casa — quando si scrive, il collegamento «calcola la rata» va su `/calcolatore-rata-mutuo/`, che esiste già |
 | `tempi-rogito-lecce` | Dal compromesso al rogito |
 | `comprare-casa-a-lecce` | Comprare casa a Lecce |
 | `calcolo-imu-2026-lecce` | Calcolo IMU 2026 — ⚠️ **è un calcolatore, non testo** (vedi sotto) |

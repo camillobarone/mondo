@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mil\Controller\Site;
 
 use Mil\Core\Imposte;
+use Mil\Core\Mutuo;
 use Mil\Core\Seo;
 use Mil\Core\Settings;
 use Mil\Core\Testo;
@@ -346,6 +347,157 @@ final class Pages
                 'a' => 'No. Qui ci sono solo le imposte dovute allo Stato sull’atto di acquisto. '
                     . 'L’onorario del notaio, l’imposta di bollo, la tassa ipotecaria e la provvigione '
                     . 'dell’agenzia sono voci separate e vanno aggiunte a parte.',
+            ],
+        ];
+    }
+
+    /**
+     * Calcolo della rata del mutuo.
+     *
+     * Stesso schema del calcolatore delle imposte: modulo in `GET`, conto in
+     * PHP, zero JavaScript. Il `GET` non è una comodità — è la funzione che
+     * l'originale in JavaScript non aveva: l'indirizzo che si forma contiene
+     * tutti i dati, quindi un agente può mandarlo su WhatsApp a un cliente e
+     * il cliente riapre esattamente quel conto.
+     */
+    public static function mutuo(): void
+    {
+        $pageUrl = Seo::base() . '/calcolatore-rata-mutuo/';
+
+        $compilato = q('importo') !== '' || q('tasso') !== '';
+
+        // La periodicità e la durata partono da un valore: sono scelte di
+        // struttura, non dati di mercato, e un modulo che si apre già
+        // impostato su «25 anni, rata mensile» chiede una cosa in meno.
+        // L'importo e il tasso restano vuoti di proposito.
+        $rate = (int) q('rate', '12');
+        if (!isset(Mutuo::RATE_ANNO[$rate])) {
+            $rate = 12;
+        }
+
+        $anni = int_or_null(q('anni', '25'));
+        if ($anni !== null) {
+            $anni = (int) Mutuo::dentro((float) $anni, (float) Mutuo::ANNI_MIN, (float) Mutuo::ANNI_MAX);
+        }
+
+        $importo = float_or_null(q('importo'));
+        if ($importo !== null) {
+            $importo = Mutuo::dentro($importo, 0.0, Mutuo::IMPORTO_MAX);
+        }
+
+        $prezzo = float_or_null(q('prezzo'));
+        if ($prezzo !== null) {
+            $prezzo = Mutuo::dentro($prezzo, 0.0, Mutuo::IMPORTO_MAX);
+        }
+
+        // Il tasso non passa da `float_or_null()`: quella funzione toglie i
+        // punti perché li legge come separatore delle migliaia, e «3.3»
+        // diventerebbe 33. Un tasso non ha migliaia, quindi qui il punto e la
+        // virgola valgono tutti e due come separatore decimale.
+        $tasso = self::decimale(q('tasso'));
+        if ($tasso !== null) {
+            $tasso = Mutuo::dentro($tasso, 0.0, Mutuo::TASSO_MAX);
+        }
+
+        $dati = [
+            'importo' => $importo,
+            'anni' => $anni,
+            'tasso' => $tasso,
+            'rate' => $rate,
+            'prezzo' => $prezzo,
+        ];
+
+        $faq = self::faqMutuo();
+
+        $graph = [
+            Seo::logoNode(),
+            Seo::agentNode(),
+            [
+                '@type' => 'WebPage',
+                '@id' => $pageUrl . '#webpage',
+                'url' => $pageUrl,
+                'name' => 'Calcolo della rata del mutuo',
+                'inLanguage' => 'it',
+                'about' => ['@id' => Seo::base() . '/#agent'],
+            ],
+            Seo::faqNode($faq, $pageUrl),
+            Seo::breadcrumbNode([
+                ['name' => 'Home', 'url' => Seo::base() . '/'],
+                ['name' => 'Calcolo rata mutuo', 'url' => $pageUrl],
+            ], $pageUrl),
+        ];
+
+        View::show('site/mutuo', [
+            'meta' => self::meta(
+                'Calcolo rata mutuo: quanto si paga al mese',
+                'Calcola la rata del mutuo con l’ammortamento alla francese: rata, interessi totali e piano completo. Con il rapporto fra mutuo e prezzo della casa.',
+                $pageUrl,
+                Seo::graph($graph),
+                // Una pagina per ogni combinazione di importo e tasso sarebbe
+                // un numero infinito di indirizzi quasi uguali. Indicizzabile
+                // è solo il modulo vuoto; i conti compilati restano
+                // condivisibili e seguibili, ma fuori dall'indice.
+                $compilato ? 'noindex, follow' : 'index, follow'
+            ),
+            'dati' => $dati,
+            'compilato' => $compilato,
+            'esito' => $compilato ? Mutuo::calcola($dati) : null,
+            'tutte' => q('piano') === 'tutte',
+            'faq' => $faq,
+        ]);
+    }
+
+    /**
+     * Numero decimale scritto all'italiana o all'inglese: «3,3» e «3.3» sono
+     * lo stesso tasso, e chi compila non deve indovinare quale vuole il sito.
+     */
+    private static function decimale(string $valore): ?float
+    {
+        $pulito = str_replace([',', ' ', '%'], ['.', '', ''], trim($valore));
+
+        return is_numeric($pulito) ? (float) $pulito : null;
+    }
+
+    /**
+     * Le domande sono sull'aritmetica del mutuo, non sulle condizioni di
+     * mercato: restano vere qualunque sia il tasso del momento. È di
+     * proposito — una FAQ che cita un tasso va riscritta ogni trimestre, e
+     * quella riscrittura non la fa nessuno.
+     *
+     * @return array<int,array{q:string,a:string}>
+     */
+    public static function faqMutuo(): array
+    {
+        return [
+            [
+                'q' => 'Come si calcola la rata del mutuo?',
+                'a' => 'Con l’ammortamento alla francese, che è quello di quasi tutti i mutui italiani: '
+                    . 'la rata resta uguale per tutta la durata. Si divide il tasso annuo per il numero '
+                    . 'di rate in un anno, si applica quel tasso al debito che resta e si trova l’importo '
+                    . 'che azzera il debito esattamente all’ultima rata. Cambiando la durata cambia la '
+                    . 'rata, ma cambiano anche gli interessi complessivi, e in direzione opposta.',
+            ],
+            [
+                'q' => 'Perché all’inizio si pagano quasi solo interessi?',
+                'a' => 'Perché gli interessi si calcolano ogni volta sul debito che resta, e all’inizio '
+                    . 'il debito è tutto intero. La rata è sempre la stessa, ma la parte che va a '
+                    . 'ridurre il capitale è piccola all’inizio e cresce a ogni rata. È la ragione per '
+                    . 'cui estinguere in anticipo conviene molto nei primi anni e molto meno negli ultimi: '
+                    . 'nel grafico qui sopra è la fascia scura che si allarga.',
+            ],
+            [
+                'q' => 'Questa rata è il TAEG?',
+                'a' => 'No. Qui si calcola solo la restituzione del capitale con i suoi interessi, '
+                    . 'partendo dal TAN. Il TAEG comprende anche l’imposta sostitutiva, l’istruttoria, '
+                    . 'la perizia, le assicurazioni obbligatorie e le spese di incasso rata: sono voci '
+                    . 'che variano da banca a banca e che solo il prospetto della banca può quantificare.',
+            ],
+            [
+                'q' => 'Quanto mi può prestare la banca rispetto al prezzo della casa?',
+                'a' => 'Di norma fino all’80% del valore dell’immobile, che la banca stabilisce con una '
+                    . 'perizia e che non coincide sempre con il prezzo pattuito. Sopra quella soglia il '
+                    . 'mutuo si ottiene, ma con garanzie aggiuntive. Se compili anche il prezzo, il '
+                    . 'calcolatore mostra il rapporto e avvisa quando lo supera.',
             ],
         ];
     }

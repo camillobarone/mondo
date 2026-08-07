@@ -134,6 +134,9 @@ $valore = static fn (?float $v): string => $v === null ? '' : rtrim(rtrim(number
       <?php endforeach; ?>
     </div>
 
+    <p>Se la casa si compra con un mutuo, la rata è un conto a parte e si fa qui:
+      <a href="<?= e(url('/calcolatore-rata-mutuo/')) ?>">calcolo della rata del mutuo</a>.</p>
+
     <p class="firma">Aliquote e coefficienti secondo la guida fiscale di Mondo Immobiliare,
       basata su Agenzia delle Entrate e Consiglio Nazionale del Notariato.<br>
       <span>Il calcolo è una stima: l’importo definitivo lo determina il notaio in sede di rogito.</span></p>

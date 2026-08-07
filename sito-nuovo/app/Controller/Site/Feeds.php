@@ -37,6 +37,7 @@ final class Feeds
             ['loc' => $base . '/immobili/', 'priority' => '0.9', 'lastmod' => $immobili],
             ['loc' => $base . '/valutazione-gratuita/', 'priority' => '0.9', 'lastmod' => ''],
             ['loc' => $base . '/calcolatore-imposte-acquisto-casa/', 'priority' => '0.7', 'lastmod' => ''],
+            ['loc' => $base . '/calcolatore-rata-mutuo/', 'priority' => '0.7', 'lastmod' => ''],
             ['loc' => $base . '/blog/', 'priority' => '0.7', 'lastmod' => $articoli],
             ['loc' => $base . '/contatti/', 'priority' => '0.6', 'lastmod' => ''],
         ];
@@ -158,6 +159,7 @@ final class Feeds
         echo "- [Immobili in vendita]({$base}/immobili/): tutti gli immobili attualmente in vendita, con filtri per comune, tipologia e prezzo.\n";
         echo "- [Valutazione gratuita]({$base}/valutazione-gratuita/): valutazione professionale e gratuita di un immobile, con risposta entro 48 ore lavorative.\n";
         echo "- [Calcolo delle imposte d'acquisto]({$base}/calcolatore-imposte-acquisto-casa/): calcola registro, IVA, ipotecaria e catastale su prima o seconda casa, da privato o da costruttore.\n";
+        echo "- [Calcolo della rata del mutuo]({$base}/calcolatore-rata-mutuo/): rata, interessi totali e piano di ammortamento alla francese, con il rapporto fra mutuo e prezzo della casa.\n";
         echo "- [Articoli]({$base}/blog/): guide su fisco, prezzi e mercato immobiliare salentino.\n";
         echo "- [Contatti]({$base}/contatti/): recapiti e orari delle due sedi.\n\n";
 

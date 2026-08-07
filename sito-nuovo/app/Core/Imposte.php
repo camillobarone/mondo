@@ -141,13 +141,14 @@ final class Imposte
     }
 
     /**
-     * Importo con i centesimi. `euro()` arrotonda all'unità, che va bene per
-     * il prezzo di una casa e non per un'imposta: «€ 1.732,50» è la cifra che
-     * il notaio scriverà, «€ 1.733» no.
+     * Importo con i centesimi: «€ 1.732,50» è la cifra che il notaio
+     * scriverà, «€ 1.733» no. Da quando serve anche al calcolo della rata del
+     * mutuo la formattazione vive in `euro_cent()`; questo nome resta perché
+     * lo usa già la pagina delle imposte.
      */
     public static function soldi(float $importo): string
     {
-        return '€ ' . number_format($importo, 2, ',', '.');
+        return euro_cent($importo);
     }
 
     /** «2%» invece di «0.02». */
