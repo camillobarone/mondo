@@ -1299,13 +1299,42 @@ sul server.
    è stato agganciato alla sessione con permesso di scrittura. Chi riprende e
    deve creare un repository non ci perda tempo: si chiede a Camillo.
 
-2. ⬜ Camillo apre Site Tools → Sviluppatori → Git e manda le schermate.
-   ⚠️ **Nessuno qui conosce a memoria quello strumento e da questo ambiente
-   non è raggiungibile** — la rete blocca tutto tranne GitHub. Non inventare
-   i passaggi: farsi mandare cosa chiede e rispondere su quello.
-3. ⬜ Primo collegamento **su una cartella di prova, non su `public_html`**.
+2. ❌ **Lo strumento Git di SiteGround non serve a questo. Verificato il 7
+   agosto sulle schermate, non dedotto.**
+
+   Fa l'opposto di quello che serviva: crea un repository **a partire da
+   un'applicazione già installata sul server**, che poi si scarica e si
+   modifica in locale. Server → git, non GitHub → server. L'unico campo della
+   pagina è «Scegli installazione» e non esiste nessun posto dove incollare
+   l'indirizzo di un repository esterno.
+
+   La tendina «Scegli installazione» contiene **solo i due WordPress** —
+   `mondoimmobiliarelecce.it` e `staging2.mondoimmobiliarelecce.it`.
+   `prova.mondoimmobiliarelecce.it` **non c'è**, perché quello strumento vede
+   solo ciò che ha installato SiteGround, e i file del sito nuovo li ha
+   caricati Camillo a mano dal Gestione File. Non è una configurazione da
+   sistemare: è fuori portata per costruzione.
+
+   Si aggiunge un secondo motivo, indipendente dal primo: da queste sessioni
+   **si raggiunge solo GitHub**, quindi anche volendo nessuno potrebbe
+   scrivere in un repository ospitato da SiteGround. Il lavoro tornerebbe
+   tutto sulle spalle di Camillo.
+
+   ⚠️ Non premere **CREA** su quella pagina. Punterebbe a un WordPress vero, e
+   l'avviso arancione dice che creare il repository può disattivargli gli
+   aggiornamenti automatici.
+
+3. ⬜ **La strada da provare adesso è l'SSH.** Nel menu Sviluppatori ci sono
+   anche `Gestione chiavi SSH` e `Cron job`. L'assetto da verificare — non
+   ancora confermato, si guarda prima di dire come si fa:
+   il server scarica il codice da GitHub con `git clone`, autenticandosi con
+   una **chiave di distribuzione** (deploy key, sola lettura) generata sul
+   server e registrata su `mondo-sito`; poi ogni aggiornamento è un `git
+   pull`, eventualmente affidato a un Cron job. Nessuna credenziale finisce
+   su GitHub e nessuna passa dalla chat.
+4. ⬜ Primo collegamento **su una cartella di prova, non su `public_html`**.
    Si verifica che il codice arrivi intero.
-4. ⬜ Solo dopo, il collegamento vero.
+5. ⬜ Solo dopo, il collegamento vero.
 
 **Come si tengono allineati i due repository, adesso che sono due.** Il lavoro
 continua a farsi qui, in `sito-nuovo/` del repository vecchio, perché è dove
