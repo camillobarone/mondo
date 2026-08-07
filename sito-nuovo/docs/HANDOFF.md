@@ -1324,17 +1324,37 @@ sul server.
    l'avviso arancione dice che creare il repository può disattivargli gli
    aggiornamenti automatici.
 
-3. ⬜ **La strada da provare adesso è l'SSH.** Nel menu Sviluppatori ci sono
-   anche `Gestione chiavi SSH` e `Cron job`. L'assetto da verificare — non
-   ancora confermato, si guarda prima di dire come si fa:
-   il server scarica il codice da GitHub con `git clone`, autenticandosi con
-   una **chiave di distribuzione** (deploy key, sola lettura) generata sul
-   server e registrata su `mondo-sito`; poi ogni aggiornamento è un `git
-   pull`, eventualmente affidato a un Cron job. Nessuna credenziale finisce
-   su GitHub e nessuna passa dalla chat.
-4. ⬜ Primo collegamento **su una cartella di prova, non su `public_html`**.
+3. ✅ **L'SSH c'è.** Verificato il 7 agosto su Site Tools → Sviluppatori →
+   Gestione chiavi SSH: la pagina mostra nome host, nome utente e porta
+   dedicata, ha le due schede `GENERA` e `IMPORTA`, e in elenco ci sono già
+   tre chiavi `ssh-ed25519`, fra cui una chiamata `camillo`.
+
+   ⚠️ **I valori di connessione non si scrivono qui.** Questo file vive nel
+   repository `camillobarone/mondo`, che è **pubblico**: nome host, utente e
+   porta di un accesso SSH non ci vanno. Stanno nel pannello, in quella
+   pagina, riquadro «Credenziali SSH». Chi ne ha bisogno li legge lì.
+
+4. ⬜ **L'assetto scelto**, da montare via SSH una volta sola:
+   sul server si genera una coppia di chiavi, la metà pubblica si registra su
+   `mondo-sito` come **chiave di distribuzione in sola lettura** (Settings →
+   Deploy keys, senza spuntare l'accesso in scrittura), il codice arriva con
+   `git clone` e ogni aggiornamento successivo è un `git pull`. Alla fine il
+   `pull` si affida a un **Cron job** di Site Tools e non lo lancia più
+   nessuno a mano.
+
+   Perché questo e non un caricamento via FTP da GitHub: **git tocca soltanto
+   i file che conosce**. È la stessa proprietà su cui si regge tutta la
+   sicurezza del piano — un sincronizzatore FTP, invece, ragiona per
+   differenza fra due cartelle e può cancellare ciò che nel repository non
+   c'è, cioè `config.php` e le foto degli immobili.
+
+   ⚠️ **Questo passo non lo può eseguire una sessione come questa**: da qui si
+   raggiunge solo GitHub, il server SSH no. Lo esegue Claude Code sul PC di
+   Camillo, che la rete ce l'ha aperta. Prima cosa da controllare una volta
+   entrati: **se sul server `git` esista**, perché tutto il resto ne dipende.
+5. ⬜ Primo collegamento **su una cartella di prova, non su `public_html`**.
    Si verifica che il codice arrivi intero.
-5. ⬜ Solo dopo, il collegamento vero.
+6. ⬜ Solo dopo, il collegamento vero.
 
 **Come si tengono allineati i due repository, adesso che sono due.** Il lavoro
 continua a farsi qui, in `sito-nuovo/` del repository vecchio, perché è dove
