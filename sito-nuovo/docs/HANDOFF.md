@@ -705,6 +705,20 @@ quote capitale = capitale iniziale al centesimo, residuo finale esattamente 0.
 Il valore di riferimento — 144.000 a 25 anni al 3,30% mensile = **€ 705,54** —
 coincide col calcolo a mano.
 
+⚠️ **Nessun campo è precompilato** — richiesta esplicita di Camillo, 7 agosto.
+Non solo il tasso: anche durata e periodicità partono vuote, e la tendina si
+apre su «Da scegliere». Il modulo chiede una scelta in più all'apertura e in
+cambio non suggerisce niente: chi compila non legge come «normale» una durata
+che avremmo scelto noi. Ogni campo mancante ha il suo messaggio, compresa la
+periodicità — lì un valore di riserva sarebbe stato il peggiore dei difetti,
+perché avrebbe calcolato una rata mensile a chi ne voleva una semestrale, e il
+risultato sarebbe stato sbagliato senza sembrarlo.
+
+Restano solo dei limiti di sicurezza, non delle opinioni: durata 1-40 anni,
+tasso fino al 15%, importo fino a 5 milioni. Servono a impedire che qualcuno
+chieda un piano da duemila rate; i valori fuori scala vengono riportati dentro
+e il modulo mostra il valore usato, non tace.
+
 ⚠️ **Nel codice non c'è nessun tasso.** È la differenza con `Imposte`, che di
 costanti da mantenere ne ha undici. Qui l'unico numero che invecchierebbe è il
 TAN, e lo scrive chi compila: un tasso di esempio stampato in pagina diventa

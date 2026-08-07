@@ -364,18 +364,28 @@ final class Pages
     {
         $pageUrl = Seo::base() . '/calcolatore-rata-mutuo/';
 
-        $compilato = q('importo') !== '' || q('tasso') !== '';
-
-        // La periodicità e la durata partono da un valore: sono scelte di
-        // struttura, non dati di mercato, e un modulo che si apre già
-        // impostato su «25 anni, rata mensile» chiede una cosa in meno.
-        // L'importo e il tasso restano vuoti di proposito.
-        $rate = (int) q('rate', '12');
-        if (!isset(Mutuo::RATE_ANNO[$rate])) {
-            $rate = 12;
+        // Basta un campo qualsiasi perché la pagina si consideri compilata.
+        // Con il solo importo si finiva a mostrare «il risultato compare qui»
+        // a chi aveva appena premuto «Calcola» riempiendo altro: sembra che il
+        // bottone non funzioni, invece manca un dato e nessuno lo dice.
+        $compilato = false;
+        foreach (['importo', 'tasso', 'anni', 'rate', 'prezzo'] as $campo) {
+            if (q($campo) !== '') {
+                $compilato = true;
+                break;
+            }
         }
 
-        $anni = int_or_null(q('anni', '25'));
+        // Nessun campo parte da un valore: il modulo si apre vuoto e ogni
+        // numero lo mette chi compila. Costa una scelta in più all'apertura e
+        // toglie il rischio che qualcuno legga come «normale» una durata o una
+        // periodicità che gli abbiamo suggerito noi.
+        $rate = (int) q('rate');
+        if (!isset(Mutuo::RATE_ANNO[$rate])) {
+            $rate = 0;
+        }
+
+        $anni = int_or_null(q('anni'));
         if ($anni !== null) {
             $anni = (int) Mutuo::dentro((float) $anni, (float) Mutuo::ANNI_MIN, (float) Mutuo::ANNI_MAX);
         }

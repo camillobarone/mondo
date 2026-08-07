@@ -63,6 +63,13 @@ final class Mutuo
         if ($dati['tasso'] === null) {
             return self::vuoto('Serve il tasso annuo (TAN): lo trovi sul preventivo della banca.');
         }
+        // Nessuna periodicità di scorta: se non è una delle tre previste il
+        // conto non parte. Un valore di riserva qui vorrebbe dire calcolare
+        // una rata mensile a qualcuno che ne voleva una semestrale, e il
+        // risultato sarebbe sbagliato senza sembrarlo.
+        if (!isset(self::RATE_ANNO[$dati['rate']])) {
+            return self::vuoto('Serve la periodicità della rata: mensile, trimestrale o semestrale.');
+        }
 
         $rateAnno = $dati['rate'];
         $numero = $dati['anni'] * $rateAnno;

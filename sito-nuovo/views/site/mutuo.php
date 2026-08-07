@@ -37,7 +37,7 @@ $conPiano = static function (string $piano) use ($dati, $base, $valore): string 
         'importo' => $valore($dati['importo']),
         'anni' => $dati['anni'] === null ? '' : (string) $dati['anni'],
         'tasso' => $valore($dati['tasso'], 2),
-        'rate' => (string) $dati['rate'],
+        'rate' => $dati['rate'] === 0 ? '' : (string) $dati['rate'],
         'piano' => $piano,
     ], static fn (string $v): bool => $v !== '');
 
@@ -66,7 +66,8 @@ $conPiano = static function (string $piano) use ($dati, $base, $valore): string 
 
       <label>Durata
         <input type="number" name="anni" inputmode="numeric" min="<?= Mutuo::ANNI_MIN ?>"
-               max="<?= Mutuo::ANNI_MAX ?>" step="1" value="<?= e($dati['anni'] === null ? '' : (string) $dati['anni']) ?>">
+               max="<?= Mutuo::ANNI_MAX ?>" step="1" placeholder="es. 25"
+               value="<?= e($dati['anni'] === null ? '' : (string) $dati['anni']) ?>">
         <small>In anni, da <?= Mutuo::ANNI_MIN ?> a <?= Mutuo::ANNI_MAX ?>.</small>
       </label>
 
@@ -77,12 +78,16 @@ $conPiano = static function (string $piano) use ($dati, $base, $valore): string 
           preimpostato perché cambierebbe da un mese all’altro.</small>
       </label>
 
+      <?php /* Anche la periodicità parte vuota: la prima voce non è una
+               scelta, è il posto in cui la scelta non è stata ancora fatta. */ ?>
       <label>Periodicità della rata
         <select name="rate">
+          <option value=""<?= $dati['rate'] === 0 ? ' selected' : '' ?>>Da scegliere</option>
           <?php foreach (Mutuo::RATE_ANNO as $quante => $etichetta): ?>
             <option value="<?= $quante ?>"<?= $dati['rate'] === $quante ? ' selected' : '' ?>><?= e($etichetta) ?></option>
           <?php endforeach; ?>
         </select>
+        <small>Quasi tutti i mutui sono a rata mensile.</small>
       </label>
 
       <?php /* Il prezzo non entra nel calcolo della rata: serve solo a far
