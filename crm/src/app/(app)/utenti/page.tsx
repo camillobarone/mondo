@@ -3,7 +3,7 @@ import { usersWithLoad } from "@/lib/queries";
 import { saveUser, eliminaUtente } from "@/lib/actions";
 import { shortDate } from "@/lib/format";
 import { SubmitButton, ConfirmButton } from "@/components/client";
-import { PageHeader, Card, TextField, SelectField, CheckboxRow, Chip } from "@/components/ui";
+import { PageHeader, Card, TextField, SelectField, CheckboxRow, Chip, Banner } from "@/components/ui";
 import { OFFICES } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ const ROLES = [
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ modifica?: string }>;
+  searchParams: Promise<{ modifica?: string; motivo?: string }>;
 }) {
   const io = await requireOwner();
   const params = await searchParams;
@@ -30,26 +30,60 @@ export default async function UsersPage({
         subtitle="Chi può entrare nel programma e cosa può vedere."
       />
 
+      {/*
+        Il motivo per cui l'ultima operazione e' stata rifiutata. Ci arriva
+        nell'indirizzo perche' il testo di un errore lanciato da un'azione, una
+        volta pubblicato il programma, non esce dal server e a schermo resta
+        solo la pagina bianca. Sparisce da se' al primo clic altrove: e' la
+        risposta a quello che si e' appena provato a fare, non un avviso da
+        tenere li'.
+      */}
+      {params.motivo ? (
+        <div className="mb-4">
+          <Banner tone="red">{params.motivo}</Banner>
+        </div>
+      ) : null}
+
       <div className="grid gap-5 lg:grid-cols-3">
         <Card
           title={editing ? `Modifica ${editing.name}` : "Nuovo utente"}
           className="lg:col-span-1"
         >
-          <form action={saveUser} className="space-y-4">
+          {/*
+            `autoComplete` su tutti e tre i campi non e' pignoleria. Questo
+            modulo, per il browser, e' identico a una schermata di accesso:
+            email piu' password. Chrome ci rovesciava dentro le credenziali
+            salvate, cosi' il riquadro "Nuovo utente" si presentava gia' pieno
+            con l'indirizzo di un utente che esiste — e chi lo trovava cosi'
+            era a un clic dal creare un doppione o dal cambiare la password di
+            qualcun altro senza volerlo. "new-password" sul campo password e'
+            la parte che conta: dice al browser che qui una password si
+            imposta, non si ripete, e questo gli toglie anche la voglia di
+            riempire l'email abbinata.
+          */}
+          <form action={saveUser} className="space-y-4" autoComplete="off">
             {editing ? <input type="hidden" name="id" value={editing.id} /> : null}
 
-            <TextField label="Nome e cognome" name="name" defaultValue={editing?.name} required />
+            <TextField
+              label="Nome e cognome"
+              name="name"
+              defaultValue={editing?.name}
+              autoComplete="off"
+              required
+            />
             <TextField
               label="Email"
               name="email"
               type="email"
               defaultValue={editing?.email}
+              autoComplete="off"
               required
             />
             <TextField
               label={editing ? "Nuova password" : "Password"}
               name="password"
               type="password"
+              autoComplete="new-password"
               required={!editing}
               hint={
                 editing

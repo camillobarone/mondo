@@ -106,6 +106,7 @@ export function TextField({
   className = "",
   step,
   min,
+  autoComplete,
 }: {
   label: string;
   name: string;
@@ -117,6 +118,12 @@ export function TextField({
   className?: string;
   step?: string;
   min?: string;
+  /**
+   * Cosa puo' metterci dentro da solo il browser. Serve quasi solo nella pagina
+   * Utenti: li' il modulo somiglia a una schermata di accesso e Chrome ci
+   * ribalta dentro le credenziali che ha in memoria.
+   */
+  autoComplete?: string;
 }) {
   return (
     <Field label={label} name={name} hint={hint} className={className}>
@@ -128,6 +135,7 @@ export function TextField({
         min={min}
         required={required}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         defaultValue={defaultValue ?? ""}
         className="field"
       />

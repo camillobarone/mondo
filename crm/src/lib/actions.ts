@@ -848,6 +848,29 @@ export async function saveValuation(form: FormData) {
 
 /* =============================================================== utenti */
 
+/**
+ * Rimanda alla pagina Utenti con un motivo da mostrare.
+ *
+ * Nelle azioni di questo file un controllo che non passa si scriveva `throw`.
+ * In sviluppo si legge il messaggio e sembra tutto a posto; una volta
+ * pubblicato, pero', Next non fa uscire il testo dell'errore dal server — per
+ * non lasciarsi sfuggire dettagli interni — e a chi sta davanti allo schermo
+ * arriva soltanto la pagina bianca «A server error occurred». Il motivo del
+ * rifiuto, che era la parte utile, si perde per strada.
+ *
+ * Qui invece il motivo torna indietro nell'indirizzo e la pagina lo stampa in
+ * cima. Non e' un ripiego: sono rifiuti previsti — un indirizzo gia' usato,
+ * una password corta — non guasti del programma, e vanno raccontati, non
+ * nascosti dietro una pagina di errore.
+ */
+function tornaConMotivo(motivo: string, modificaId = 0): never {
+  // Se il rifiuto e' arrivato modificando qualcuno, si torna sulla modifica di
+  // quella persona. Senza, il riquadro si ripresenterebbe come "Nuovo utente" e
+  // sembrerebbe che il rifiuto riguardasse una creazione mai tentata.
+  const modifica = modificaId ? `modifica=${modificaId}&` : "";
+  redirect(`/utenti?${modifica}motivo=${encodeURIComponent(motivo)}`);
+}
+
 export async function saveUser(form: FormData) {
   const owner = await requireOwner();
   const id = Number(form.get("id") ?? 0);
@@ -859,20 +882,44 @@ export async function saveUser(form: FormData) {
   const office = text(form, "office") || "Lecce";
   const active = bool(form, "active");
 
+  // Nel database l'email e' dichiarata UNIQUE: senza questo controllo il
+  // doppione lo fermava SQLite, ma con un errore suo, e a chi stava davanti
+  // allo schermo arrivava la pagina bianca invece di una spiegazione. Vale
+  // anche in modifica, dove si puo' scrivere nel campo l'indirizzo di un altro.
+  // `id` e' 0 quando si crea, e allora `id <> 0` guarda tutte le righe.
+  const giaPreso = one<{ name: string }>(
+    `SELECT name FROM users WHERE email = ? AND id <> ?`,
+    [email, id],
+  );
+  if (giaPreso) {
+    tornaConMotivo(
+      `L'indirizzo ${email} è già dell'utenza di ${giaPreso.name}. ` +
+        `Ogni utenza deve avere il suo.`,
+      id,
+    );
+  }
+
+  // La password si controlla qui, prima di scrivere qualsiasi cosa. Stava piu'
+  // in basso, dentro i due rami: in modifica il nome e il ruolo erano gia'
+  // stati salvati quando la password veniva rifiutata, e si restava con meta'
+  // della modifica fatta e un errore a schermo.
+  if (password && password.length < 8) {
+    tornaConMotivo("La password deve avere almeno 8 caratteri.", id);
+  }
+  if (!id && !password) {
+    tornaConMotivo("Un'utenza nuova ha bisogno di una password.");
+  }
+
   if (id) {
     run(
       `UPDATE users SET email = ?, name = ?, role = ?, office = ?, active = ? WHERE id = ?`,
       [email, name, role, office, active, id],
     );
     if (password) {
-      // Stesso requisito della creazione: senza, da qui si poteva impostare
-      // una password di una lettera a un utente esistente.
-      if (password.length < 8) throw new Error("La password deve avere almeno 8 caratteri.");
       run(`UPDATE users SET password_hash = ? WHERE id = ?`, [hashPassword(password), id]);
     }
     audit(owner.id, "modifica", "utente", id);
   } else {
-    if (password.length < 8) throw new Error("La password deve avere almeno 8 caratteri.");
     const result = run(
       `INSERT INTO users (email, name, password_hash, role, office, active)
        VALUES (?,?,?,?,?,1)`,
@@ -912,12 +959,12 @@ export async function eliminaUtente(form: FormData) {
     `SELECT id, name, role FROM users WHERE id = ?`,
     [id],
   );
-  if (!daEliminare) throw new Error("Utente non trovato.");
+  if (!daEliminare) tornaConMotivo("Quell'utenza non esiste più.");
 
   // Chi elimina se stesso si chiude fuori: se poi era l'ultimo titolare, alla
   // pagina Utenti non entra piu' nessuno e si rimedia solo dal server.
   if (daEliminare.id === owner.id) {
-    throw new Error("Non puoi eliminare l'utenza con cui sei entrato.");
+    tornaConMotivo("Non puoi eliminare l'utenza con cui sei entrato.");
   }
 
   // Senza nessun titolare attivo non resta nessuno che possa gestire le utenze.
@@ -930,7 +977,10 @@ export async function eliminaUtente(form: FormData) {
       [id],
     );
     if (!altriTitolari) {
-      throw new Error("È l'ultimo titolare attivo: prima nominane un altro.");
+      tornaConMotivo(
+        `${daEliminare.name} è l'ultimo titolare attivo: prima nominane un altro, ` +
+          `altrimenti non resta nessuno che possa gestire le utenze.`,
+      );
     }
   }
 
