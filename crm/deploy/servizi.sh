@@ -84,6 +84,10 @@ TZ=Europe/Rome
 # Copia dell'archivio ogni notte alle 2. Le copie oltre i 60 giorni si
 # cancellano da sole.
 0 2 * * * $UTENTE cd $CARTELLA && /usr/bin/node scripts/backup.mjs >> $CARTELLA/backup/backup.log 2>&1
+# Copia fuori dal server, il primo di ogni mese alle 3 — un'ora dopo quella
+# notturna, cosi' trova sempre una copia fresca pronta da mandare. Finche'
+# rclone non e' installato e collegato a Google Drive non fa nulla di male.
+0 3 1 * * $UTENTE cd $CARTELLA && bash deploy/backup-esterno.sh
 # Avviso per email 30 minuti prima degli appuntamenti. Gira ogni 5 minuti;
 # senza la configurazione della posta esce subito senza fare niente.
 */5 * * * * $UTENTE set -a; . /etc/mondo-crm.env; set +a; cd $CARTELLA && CRM_BASE_URL=https://$DOMINIO /usr/bin/node scripts/promemoria.mjs >> $CARTELLA/backup/promemoria.log 2>&1

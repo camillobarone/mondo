@@ -155,6 +155,7 @@ resta sulla macchina.
 | Certificato | Let's Encrypt via certbot, si rinnova da sé |
 | Firewall | ufw: aperte solo 22, 80, 443 |
 | Copia notturna | cron, `/etc/cron.d/mondo-crm`, ogni notte alle **02:00** |
+| Copia fuori dal server | stesso cron, il **primo di ogni mese** alle 03:00, su Google Drive via `rclone` (capitolo 7-bis) |
 | Avvisi email | stesso cron, ogni **5 minuti**, `scripts/promemoria.mjs` |
 | Configurazione posta | `/etc/mondo-crm.env` (fuori dal programma, sopravvive agli aggiornamenti) |
 | Fuso orario | `TZ=Europe/Rome` nel servizio e nel cron |
@@ -298,16 +299,66 @@ aggiornamento non lo tocca.
 - vengono copiate anche le **foto**
 
 > Una copia sullo stesso server **non è una copia**. Se quel disco muore, muore
-> con lui. Va portata fuori — su `F:\Gestionale backup`, una volta a settimana,
-> con il comando `scp` sopra.
+> con lui. Va portata fuori: in automatico ogni mese su Google Drive (capitolo
+> 7-bis), oppure a mano su `F:\Gestionale backup`, con il comando `scp` sopra.
 
 Il pulsante *Scarica l'archivio* che c'era nella pagina **Utenti** è stato
 tolto. Da quando ogni collaboratore vede solo le proprie schede, un file con
 dentro tutto l'archivio sarebbe la separazione aggirata con un clic. La copia si
-prende dal server, con lo `scp` del capitolo 6: è l'unica strada, ed è anche
-l'unica che porta via **anche le foto**.
+prende dal server, con lo `scp` del capitolo 6: è l'unica strada a mano, ed è
+anche l'unica che porta via **anche le foto**.
 
 Chi vuole solo le proprie schede le esporta in CSV da *Clienti* e da *Immobili*.
+
+---
+
+## 7-bis · Mandare le copie fuori dal server, in automatico
+
+**Si fa una volta sola.** Da quel momento, il primo giorno di ogni mese alle
+3 di notte, il server manda da solo l'ultima copia dell'archivio e le foto
+nuove su Google Drive — senza bisogno di ricordarsene, senza disco esterno.
+
+```
+ssh root@77.81.234.151 "curl https://rclone.org/install.sh | sudo bash"
+ssh root@77.81.234.151 -t "rclone config"
+```
+
+Il secondo comando fa una serie di domande, una alla volta:
+
+| Domanda | Risposta |
+|---|---|
+| tipo di operazione | `n` — nuovo collegamento (new remote) |
+| nome | `gdrive` — esattamente così, minuscolo |
+| tipo di spazio | cerca nell'elenco `Google Drive` e scrivi il suo numero |
+| client_id | vuoto, solo Invio |
+| client_secret | vuoto, solo Invio |
+| scope | `1` — accesso completo |
+| root_folder_id | vuoto, solo Invio |
+| service_account_file | vuoto, solo Invio |
+| Edit advanced config? | `n` |
+| Use auto config? | `n` — il server non ha un browser proprio |
+
+A quel punto compare un indirizzo lungo. Aprilo su un browser qualsiasi —
+anche dal telefono — accedi con l'account **Google** dove vuoi salvare le
+copie (può essere `camillo.barone@gmail.com` o uno dedicato solo a questo), e
+incolla nel terminale il codice che ti restituisce alla fine. Poi:
+
+| Domanda | Risposta |
+|---|---|
+| Configure as Shared Drive? | `n` |
+| conferma finale | `y`, poi `q` per uscire |
+
+Da quel momento è collegato per sempre: non va rifatto, nemmeno dopo un
+aggiornamento del programma. Le copie finiscono in una cartella
+`mondo-crm-backup` dentro quel Google Drive, divise in `database/` e `foto/`.
+
+**Per controllare che sia partito bene**, il mese dopo:
+```
+ssh root@77.81.234.151 "cat /opt/mondo-crm/backup/esterno.log"
+```
+
+Finché rclone non è installato o non è ancora collegato, questo passaggio non
+fa nulla — né di buono né di dannoso: aspetta in silenzio che tu lo colleghi.
 
 ---
 

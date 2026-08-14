@@ -90,11 +90,46 @@ journalctl -u mondo-crm -n 50   # cos'è successo
 quelle oltre i 60 giorni si cancellano da sole.
 
 > ⚠️ Una copia sullo stesso server non è una copia. Se quel disco muore, muore
-> con lui. **Portane una fuori** — sul tuo PC, una volta a settimana:
+> con lui. **Portane una fuori**, in un posto diverso.
+>
+> La via automatica è sotto, "Copia fuori dal server": una volta collegata,
+> il server manda da solo l'ultima copia su Google Drive ogni mese. In più, a
+> mano, quando vuoi:
 >
 > ```bash
 > scp root@<IP>:/opt/mondo-crm/backup/*.db .
 > ```
+
+**Copia fuori dal server** — da collegare una volta sola, poi funziona da sé:
+
+```bash
+curl https://rclone.org/install.sh | sudo bash
+rclone config
+```
+
+`rclone config` fa qualche domanda, una alla volta:
+
+1. `n` — nuovo collegamento (new remote)
+2. Nome: `gdrive` (esattamente così, minuscolo — lo script lo cerca con questo nome)
+3. Tipo di spazio: cerca nell'elenco quello con scritto `Google Drive`, e scrivi il suo numero
+4. `client_id` — vuoto, premi solo Invio
+5. `client_secret` — vuoto, premi solo Invio
+6. `scope` — `1` (accesso completo)
+7. `root_folder_id` — vuoto, premi solo Invio
+8. `service_account_file` — vuoto, premi solo Invio
+9. `Edit advanced config?` — `n`
+10. `Use auto config?` — `n` (il server non ha un browser). Compare un indirizzo lungo: aprilo su un browser qualsiasi — anche dal telefono — accedi con l'account Google dove vuoi salvare le copie, e incolla nel terminale il codice che ti dà alla fine
+11. `Configure this as a Shared Drive?` — `n`
+12. `y` poi `q` per chiudere
+
+Da quel momento il collegamento resta. Il primo giorno di ogni mese, alle 3 di
+notte, il server manda da solo l'ultima copia dell'archivio e le foto nuove
+dentro una cartella `mondo-crm-backup` su quel Google Drive. Per controllare
+che sia partita bene, il mese dopo:
+
+```bash
+cat /opt/mondo-crm/backup/esterno.log
+```
 
 **Ripristinare** una copia:
 
