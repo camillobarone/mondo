@@ -251,38 +251,101 @@ ssh root@IP "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
 
 ## 6-bis · Far partire gli avvisi per email
 
-Trenta minuti prima di ogni appuntamento parte un'email a chi ce l'ha in agenda.
-Il meccanismo è già installato e gira ogni 5 minuti; manca solo dirgli da quale
-casella spedire. **Si fa una volta sola.**
+Da questa configurazione dipendono **due cose**: l'avviso 30 minuti prima di
+ogni appuntamento, e il collegamento di *Password dimenticata?*. Il meccanismo è
+già installato e gira; manca solo dirgli da quale casella spedire.
+**Si fa una volta sola.**
+
+### La casella è su SiteGround, non su Aruba
+
+Sono due macchine diverse e si confondono facilmente: il **gestionale** sta su
+Aruba, la **posta** del dominio sta su SiteGround insieme al sito. Lo dicono i
+DNS del dominio:
+
+| Cosa dice il DNS | Come si legge |
+|---|---|
+| MX → `mx10.antispam.mailspamprotection.com` | il filtro antispam di SiteGround: la posta in arrivo va lì |
+| `mail.mondoimmobiliarelecce.it` → `35.214.190.219` | un indirizzo SiteGround |
+| SPF → `include:…spf.auto.dnssmarthost.net` | sempre SiteGround |
+
+Quindi l'host da mettere è **`mail.mondoimmobiliarelecce.it`**. Un esempio con
+`smtps.aruba.it` — che stava scritto qui fino al 27 agosto 2026 — porta a una
+configurazione che non funziona e non dice perché.
+
+**Perché non far spedire direttamente il server del gestionale.** L'SPF del
+dominio elenca chi è autorizzato a spedire per `@mondoimmobiliarelecce.it`, e
+l'IP del server Aruba (`77.81.234.151`) **non c'è**. Spedendo da lì le email
+risulterebbero non autorizzate e finirebbero nello spam. Appoggiandosi alla
+casella SiteGround spedisce SiteGround, che l'SPF autorizza già: nessun record
+DNS da toccare.
+
+### I tre comandi
+
+**1.** Apri il file:
 
 ```
 ssh root@77.81.234.151 "nano /etc/mondo-crm.env"
 ```
 
-Compila le cinque righe (esempio con una casella Aruba):
+Compila le cinque righe. La casella dev'essere una che esiste davvero in
+*Site Tools → Email → Accounts* su SiteGround:
 
 ```
-SMTP_HOST=smtps.aruba.it
+SMTP_HOST=mail.mondoimmobiliarelecce.it
 SMTP_PORT=465
 SMTP_USER=info@mondoimmobiliarelecce.it
 SMTP_PASS=la-password-della-casella
 SMTP_FROM=info@mondoimmobiliarelecce.it
 ```
 
-Salva con `Ctrl+O`, `Invio`, poi esci con `Ctrl+X`. Quindi:
+`SMTP_USER` è **l'indirizzo completo**, non solo `info`, e la password è quella
+della **casella**, non quella del pannello SiteGround. Se la password contiene
+spazi, apici o `$`, mettila fra apici singoli. Salva con `Ctrl+O`, `Invio`, ed
+esci con `Ctrl+X`.
+
+**2.** Prova che sia giusta, **prima** di riavviare:
 
 ```
+ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo npm run posta"
+```
+
+Non spedisce niente: apre la connessione, fa l'accesso e dice se ha funzionato.
+Se qualcosa non va **dice quale delle cinque righe è sbagliata** — nome
+inesistente, porta chiusa, cifratura sbagliata per quella porta, utenza o
+password rifiutate, mittente rifiutato. Si corregge il file e si ridà lo stesso
+comando.
+
+Se la 465 non risponde, prova `SMTP_PORT=587`: SiteGround accetta tutte e due,
+e alcune reti bloccano una delle due in uscita.
+
+**3.** Mandane una vera a te stesso, poi riavvia:
+
+```
+ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo npm run posta -- --manda"
 ssh root@77.81.234.151 "systemctl restart mondo-crm"
 ```
 
-**Per provare senza spedire niente:**
+Il riavvio serve perché il programma legge quel file solo all'avvio: finché non
+lo fai, gli avvisi partono dal cron ma *Password dimenticata?* continua a dire
+che la posta non è configurata.
+
+### Se l'email non arriva
+
+Il comando ha detto «spedita» ma in casella non c'è niente: allora non è più un
+problema di configurazione. Guarda nella **posta indesiderata**; se è lì, è la
+reputazione del mittente. Il registro degli invii automatici sta in
+`/opt/mondo-crm/backup/promemoria.log`.
+
+Per vedere quali avvisi manderebbe il cron in questo momento, senza spedirli:
 
 ```
 ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo node scripts/promemoria.mjs --prova"
 ```
 
-Stampa cosa manderebbe. Senza configurazione dice «Posta non configurata» ed
-esce: il calendario funziona lo stesso, è solo l'email che non parte.
+Attenzione: questo comando **non prova la configurazione**. Non apre nessuna
+connessione, quindi passa anche con la password sbagliata, e se non ci sono
+appuntamenti nella mezz'ora dice solo «nessun appuntamento». Per sapere se la
+posta funziona serve `npm run posta`.
 
 Il file contiene una password, quindi lo leggono solo `root` e il programma
 (`chmod 640`). Sta fuori dalla cartella del gestionale apposta: un

@@ -52,20 +52,28 @@ scrivi_posta() {
   [[ -f /etc/mondo-crm.env ]] && return 0
 
   cat > /etc/mondo-crm.env <<'POSTA'
-# Avviso per email 30 minuti prima degli appuntamenti.
-# Compila queste righe con i dati della tua casella, poi:
+# Avviso per email 30 minuti prima degli appuntamenti, e collegamento per
+# rifare la password. Compila queste righe con i dati della tua casella, poi:
+#   npm run posta            # controlla che siano giuste, senza spedire
 #   systemctl restart mondo-crm
 # Finche' restano vuote l'avviso non parte, e il resto funziona lo stesso.
 #
+# SMTP_USER e' l'indirizzo completo (info@tuodominio.it, non solo "info").
 # Se la password contiene spazi, apici o il simbolo del dollaro, mettila fra
 # apici singoli:  SMTP_PASS='pa$$word con spazi'
 #
-# Esempio con la posta Aruba:
-#   SMTP_HOST=smtps.aruba.it
-#   SMTP_PORT=465
+# L'host e' quello di chi ospita la CASELLA, che spesso non e' chi ospita
+# questo server: si trova dal record MX del dominio, o nel pannello del
+# fornitore alla voce "impostazioni client di posta".
+#   SMTP_HOST=mail.tuodominio.it
+#   SMTP_PORT=465      # 465 cifrata subito, 587 con STARTTLS
 #   SMTP_USER=info@tuodominio.it
 #   SMTP_PASS=la-password-della-casella
 #   SMTP_FROM=info@tuodominio.it
+#
+# Non far spedire direttamente a questo server se l'SPF del dominio non elenca
+# il suo IP: le email finirebbero nello spam. Appoggiarsi alla casella e' la
+# strada che non richiede di toccare i DNS.
 SMTP_HOST=
 SMTP_PORT=587
 SMTP_USER=

@@ -9,6 +9,7 @@
     "seed": "node scripts/seed.mjs",
     "backup": "node scripts/backup.mjs",
     "promemoria": "node scripts/promemoria.mjs",
+    "posta": "node scripts/posta.mjs",
     "password": "node scripts/password.mjs"
   },
   "dependencies": {

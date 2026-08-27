@@ -164,6 +164,9 @@ for (const riga of daAvvisare) {
       to: riga.email,
       subject: oggetto,
       text: righe.join("\n"),
+      // Come in src/lib/posta.ts: il modo predefinito spezza le righe oltre i
+      // 76 caratteri, e qui dentro ci sono indirizzi di schede e note lunghe.
+      textEncoding: "base64",
     });
     segna.run(riga.id);
     inviati++;

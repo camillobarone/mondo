@@ -327,8 +327,18 @@ con l'ora, il cliente, il suo numero e l'indirizzo dell'immobile. Non c'è nient
 da attivare per singolo appuntamento: parte da sé.
 
 Serve però che il server sappia spedire posta — è **una configurazione da fare
-una volta sola**, spiegata in `CONSEGNA.md`. Finché non c'è, l'avviso per email
-semplicemente non parte e tutto il resto funziona lo stesso.
+una volta sola**, spiegata nel capitolo 6-bis di `CONSEGNA.md`. Finché non c'è,
+l'avviso per email semplicemente non parte e tutto il resto funziona lo stesso.
+
+Per sapere se quella configurazione è giusta c'è un comando apposta:
+
+```bash
+npm run posta              # apre la connessione e fa l'accesso, senza spedire
+npm run posta -- --manda   # manda un'email di prova a se stessi
+```
+
+Quando qualcosa non va dice **quale delle cinque righe è sbagliata** invece del
+codice d'errore del server di posta.
 
 ---
 

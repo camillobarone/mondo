@@ -257,13 +257,36 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     indirizzo). L'utente ha poi confermato di persona sul gestionale in
     produzione: **«ok tutto funzionante»**.
 
+14. **Preparata la configurazione della posta** (27 agosto 2026). La
+    configurazione in sé la fa lui sul server — da qui non c'è rotta, la porta
+    22 va in timeout — ma tutto il resto è pronto:
+
+    - **`npm run posta`** (`scripts/posta.mjs`), nuovo. Apre davvero la
+      connessione, fa l'accesso e, con `--manda`, spedisce un'email di prova.
+      Traduce l'errore SMTP nella **riga da correggere**: nome inesistente,
+      porta chiusa, cifratura sbagliata per quella porta (il classico 465↔587),
+      utenza o password rifiutate, mittente rifiutato. Serviva perché
+      `promemoria.mjs --prova` non apre nessuna connessione: passa anche con la
+      password sbagliata, e senza appuntamenti nella mezz'ora non prova niente.
+      I codici di nodemailer non sono quelli di sistema — `EDNS` per il nome,
+      `ESOCKET` per la porta — quindi si guardano sia il codice sia il testo.
+    - **Trovato l'host giusto**: la posta è su SiteGround, non su Aruba (vedi le
+      trappole, capitolo 6). L'esempio che stava in `CONSEGNA.md` e in
+      `deploy/servizi.sh` era `smtps.aruba.it` e non avrebbe mai funzionato.
+    - `promemoria.mjs` ora spedisce in **base64** come `src/lib/posta.ts`: era
+      l'unica via d'invio rimasta senza, e dentro ci sono indirizzi di schede.
+
+    Provato con un finto server SMTP scritto per l'occasione: 8 casi, i 6 modi
+    di sbagliare più il controllo che passa e l'invio vero, riletto sul filo per
+    verificare `Content-Transfer-Encoding: base64` e gli accenti intatti.
+
 ---
 
 ## 5 · Cosa resta aperto
 
 | Cosa | Stato |
 |---|---|
-| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Non fatto.** Finché manca, l'avviso *email* 30 minuti prima non parte (il calendario funziona lo stesso). Procedimento nel capitolo **6-bis** di `CONSEGNA.md`. Serve la casella da cui spedire e la sua password: le ha solo lui. |
+| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Non fatto, ma pronto.** Finché manca non partono né l'avviso *email* 30 minuti prima né *Password dimenticata?* (il calendario funziona lo stesso). Procedimento riscritto nel capitolo **6-bis** di `CONSEGNA.md`, con i dati giusti e il comando di prova `npm run posta`. **Lo deve fare lui**: da qui non c'è rotta verso il server (porta 22 in timeout, verificato) e la password della casella ce l'ha solo lui. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Completare l'indirizzo degli immobili vecchi** | L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi. Gli immobili già in archivio senza via continuano a mostrare il titolo al posto della via nelle liste, finché qualcuno non li apre e lo aggiunge. Nessuna fretta, nessun automatismo previsto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
@@ -313,6 +336,12 @@ email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
   oltre il taglio: il valore attuale va sempre inserito fra le opzioni.
 - **I numeri di telefono dell'archivio sono senza +39**: per WhatsApp si passa
   da `whatsappHref()` in `src/lib/format.ts`, mai da `wa.me` a mano.
+- **La posta del dominio non sta dove sta il gestionale.** Il server è su Aruba,
+  ma le caselle `@mondoimmobiliarelecce.it` sono su **SiteGround** insieme al
+  sito: lo dicono l'MX (`mailspamprotection.com`) e `mail.mondoimmobiliarelecce.it`
+  (35.214.x.x). `SMTP_HOST` è `mail.mondoimmobiliarelecce.it`. E l'IP di Aruba
+  non è nell'SPF del dominio: far spedire il server per conto suo manderebbe
+  tutto nello spam.
 
 ---
 
