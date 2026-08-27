@@ -286,11 +286,76 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 
 | Cosa | Stato |
 |---|---|
-| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Non fatto, ma pronto.** Finché manca non partono né l'avviso *email* 30 minuti prima né *Password dimenticata?* (il calendario funziona lo stesso). Procedimento riscritto nel capitolo **6-bis** di `CONSEGNA.md`, con i dati giusti e il comando di prova `npm run posta`. **Lo deve fare lui**: da qui non c'è rotta verso il server (porta 22 in timeout, verificato) e la password della casella ce l'ha solo lui. |
+| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password.** Vedi il punto della situazione qui sotto. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Completare l'indirizzo degli immobili vecchi** | L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi. Gli immobili già in archivio senza via continuano a mostrare il titolo al posto della via nelle liste, finché qualcuno non li apre e lo aggiunge. Nessuna fretta, nessun automatismo previsto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
+
+### SMTP — dove siamo rimasti (sera del 27 agosto 2026)
+
+**Si riprende da qui.** Manca **una cosa sola**: una password di posta che
+funzioni. Tutto il resto è fatto e verificato.
+
+**Fatto e confermato:**
+
+- Il server ha già `scripts/posta.mjs` (`aggiorna.sh` lanciato, file da 7.992
+  byte, identico a quello del repository).
+- `/etc/mondo-crm.env` è scritto: 5 righe, `SMTP_HOST=mail.mondoimmobiliarelecce.it`,
+  `SMTP_PORT=465`, `SMTP_USER` e `SMTP_FROM` su `info@mondoimmobiliarelecce.it`,
+  `SMTP_PASS` con dentro una password di 15 caratteri. Permessi `640 root:mondo`.
+  La copia del file com'era prima sta in **`/etc/mondo-crm.env.prima`**.
+- **Host e porta sono giusti per certo.** Non è più una deduzione dai DNS: il
+  pannello SiteGround li scrive uguali — *server in uscita*
+  `mail.mondoimmobiliarelecce.it`, *porta SMTP* `465` (e IMAP 993). Il comando
+  di prova arriva fino alla richiesta di accesso, quindi nome risolto,
+  connessione aperta e SSL stabilito.
+
+**Dov'è il muro:** la password di `info@mondoimmobiliarelecce.it` che lui aveva
+trovato **non è più valida**. Provate tutte e due le forme dell'utenza —
+`info@mondoimmobiliarelecce.it` e `info` — e il server le rifiuta entrambe con
+la stessa password. Da qui non c'è altro da provare.
+
+Escluse per strada, così non si rifanno:
+
+- **la `@` nella password non c'entra.** Provato: `@`, `!` e `#` arrivano
+  interi al server di posta. L'unico carattere che si perde è il **`$`**, che
+  il sistema si mangia insieme a tutto quello che segue.
+- **il file non è mangiato.** 5 righe (nessuna riga spezzata da un ritorno a
+  capo incollato) e la password lunga come dev'essere.
+
+**Le due strade, da decidere con lui:**
+
+1. **Casella nuova dedicata** (`gestionale@` o `crm@`), password scelta da lui
+   sul momento. È la strada che aveva scelto, perché non tocca `info@`.
+   Primo tentativo **fallito** con un errore generico di SiteGround — *«An
+   error occurred. Please try again later»* — che di solito è passeggero. Se
+   fallisce ancora: controllare quante caselle esistono (tetto del piano) e lo
+   spazio su disco (se è pieno, SiteGround rifiuta con errori vaghi così).
+2. **Rifare la password di `info@`** da *Site Tools → Email → Accounts*, tre
+   puntini → *Change Password*. Funziona di sicuro. Costo: dove quella casella
+   è configurata (Outlook, telefoni) va rimessa anche lì.
+
+**La domanda da fargli per prima:** `info@` è configurata su Outlook o sui
+telefoni dell'ufficio? Se **no**, strada 2 e si chiude in cinque minuti. Se
+**sì**, si insiste sulla 1.
+
+**Quando avrà una password certa**, mancano due passaggi:
+
+```
+ssh root@77.81.234.151 -t "nano /etc/mondo-crm.env"     # freccia giù ×3, Fine, riscrive la password
+ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo node scripts/posta.mjs"
+```
+
+Se ha creato una casella nuova, **prima** vanno cambiate anche `SMTP_USER` e
+`SMTP_FROM` — con un `printf` come quello che ha già dato le quattro righe, così
+in nano tocca sempre e solo la riga della password. Poi `--manda` per l'email
+vera e `systemctl restart mondo-crm`.
+
+> Nota per chi guida i comandi: `ssh` gli chiede **la password di root a ogni
+> comando** (si vede negli screenshot), non usa la chiave come dice il capitolo
+> 2 di `CONSEGNA.md`. Non è un problema, ma vuol dire che ogni comando in più
+> gli costa una digitazione: meglio pochi comandi lunghi che molti corti.
 
 ### Fuori perimetro, in attesa di una sua decisione
 
@@ -395,7 +460,8 @@ lui.
 > fatti, e che l'ultima cosa costruita (27 agosto 2026) è il primo contatto
 > del cliente più gli elenchi dedicati «Immobili proposti»/«Immobili
 > visionati» con inserimento diretto — capitolo 4, punto 13. Restano da
-> configurare l'SMTP per gli avvisi email, da inserire i dati dei venditori e
-> da completare l'indirizzo sugli immobili vecchi che non ce l'hanno. Vale la
-> regola fissa del capitolo 0: in questa finestra si lavora solo su `crm/`.
-> Dimmi da dove ripartiamo.
+> configurare l'SMTP per gli avvisi email — **cominciato, fermo su una password
+> di posta da rifare su SiteGround: leggi «SMTP, dove siamo rimasti» nel
+> capitolo 5** — da inserire i dati dei venditori e da completare l'indirizzo
+> sugli immobili vecchi che non ce l'hanno. Vale la regola fissa del capitolo 0:
+> in questa finestra si lavora solo su `crm/`. Dimmi da dove ripartiamo.

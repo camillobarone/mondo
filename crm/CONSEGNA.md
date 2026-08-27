@@ -272,6 +272,11 @@ Quindi l'host da mettere è **`mail.mondoimmobiliarelecce.it`**. Un esempio con
 `smtps.aruba.it` — che stava scritto qui fino al 27 agosto 2026 — porta a una
 configurazione che non funziona e non dice perché.
 
+Lo conferma il pannello stesso: in *Site Tools → Email → Accounts*, il riquadro
+**Configurazione email** riporta *server in uscita* `mail.mondoimmobiliarelecce.it`,
+**porta SMTP 465** (e IMAP 993 per la posta in arrivo). Se un domani cambiassero,
+è lì che si guarda.
+
 **Perché non far spedire direttamente il server del gestionale.** L'SPF del
 dominio elenca chi è autorizzato a spedire per `@mondoimmobiliarelecce.it`, e
 l'IP del server Aruba (`77.81.234.151`) **non c'è**. Spedendo da lì le email
