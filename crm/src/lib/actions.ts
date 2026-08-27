@@ -178,6 +178,8 @@ export async function saveClient(form: FormData) {
     birth_date: nullable(form, "birth_date"),
     roles: csvField(form, "roles"),
     source: nullable(form, "source"),
+    contact_reason: nullable(form, "contact_reason"),
+    contact_property_id: integer(form, "contact_property_id"),
     status: text(form, "status") || "attivo",
     owner_id: integer(form, "owner_id"),
     tags: tagField(form, "tags"),
@@ -192,6 +194,10 @@ export async function saveClient(form: FormData) {
   if (!values.first_name && !values.last_name && !values.company) {
     throw new Error("Serve almeno il cognome o la ragione sociale.");
   }
+
+  // L'immobile di primo contatto deve essere uno dei propri: altrimenti si
+  // potrebbe agganciare alla propria scheda l'immobile di un collega.
+  esigiCollegamenti(user.id, { propertyId: values.contact_property_id });
 
   if (id) {
     esigiCliente(user.id, id);
@@ -211,6 +217,7 @@ export async function saveClient(form: FormData) {
       `UPDATE clients SET
          first_name = ?, last_name = ?, company = ?, phone = ?, mobile = ?, email = ?,
          address = ?, city = ?, tax_code = ?, birth_date = ?, roles = ?, source = ?,
+         contact_reason = ?, contact_property_id = ?,
          status = ?, owner_id = ?, tags = ?, notes = ?,
          privacy_consent = ?, privacy_date = ?, privacy_scope = ?,
          aml_doc_type = ?, aml_doc_number = ?, aml_doc_expiry = ?,
@@ -222,7 +229,9 @@ export async function saveClient(form: FormData) {
         values.email, values.address, values.city, values.tax_code, values.birth_date,
         // Mai NULL: una scheda senza responsabile non sarebbe di tutti, sarebbe
         // di nessuno, e sparirebbe dagli elenchi di chiunque.
-        values.roles, values.source, values.status, values.owner_id ?? user.id,
+        values.roles, values.source,
+        values.contact_reason, values.contact_property_id,
+        values.status, values.owner_id ?? user.id,
         values.tags, values.notes,
         values.privacy_consent, privacyDate, values.privacy_scope,
         values.aml_doc_type, values.aml_doc_number, values.aml_doc_expiry,
@@ -239,14 +248,16 @@ export async function saveClient(form: FormData) {
   const result = run(
     `INSERT INTO clients (
        first_name, last_name, company, phone, mobile, email, address, city, tax_code,
-       birth_date, roles, source, status, owner_id, tags, notes,
+       birth_date, roles, source, contact_reason, contact_property_id,
+       status, owner_id, tags, notes,
        privacy_consent, privacy_date, privacy_scope,
        aml_doc_type, aml_doc_number, aml_doc_expiry, aml_checked_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       values.first_name, values.last_name, values.company, values.phone, values.mobile,
       values.email, values.address, values.city, values.tax_code, values.birth_date,
-      values.roles, values.source, values.status, values.owner_id ?? user.id,
+      values.roles, values.source, values.contact_reason, values.contact_property_id,
+      values.status, values.owner_id ?? user.id,
       values.tags, values.notes,
       values.privacy_consent,
       values.privacy_consent ? new Date().toISOString().slice(0, 10) : null,

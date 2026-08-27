@@ -82,6 +82,14 @@ export default async function ClientPage({
   );
   const missingRequirement = buyer && requirements.every((r) => r.status !== "aperta");
   const alCompleanno = giorniAlCompleanno(client.birth_date);
+  // Cosa gli e' stato proposto e cosa ha gia' visionato: due viste sulla stessa
+  // cronologia (activities), cosi' non si scrive due volte la stessa cosa.
+  const proposedProperties = activities.filter(
+    (activity) => activity.type === "proposta" && activity.property_id,
+  );
+  const visitedProperties = activities.filter(
+    (activity) => activity.type === "visita" && activity.property_id,
+  );
   // Immobili ancora senza intestatario: sono gli unici che ha senso proporre
   // qui, cosi' non si porta via per sbaglio l'immobile di un altro.
   const daCollegare = propertiesWithoutOwner(user.id, 500);
@@ -198,6 +206,19 @@ export default async function ClientPage({
               <DataRow label="Stato">{label(client.status, CLIENT_STATUSES)}</DataRow>
               <DataRow label="Seguito da">{client.owner_name}</DataRow>
               <DataRow label="Provenienza">{client.source}</DataRow>
+              <DataRow label="Per cosa ci ha contattato">{client.contact_reason}</DataRow>
+              <DataRow label="Immobile per cui ci ha contattato">
+                {client.contact_property_id ? (
+                  <Link
+                    href={`/immobili/${client.contact_property_id}`}
+                    className="text-brand-700 hover:underline"
+                  >
+                    {[client.contact_property_ref, client.contact_property_title]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Link>
+                ) : null}
+              </DataRow>
               <DataRow label="In archivio dal">{shortDate(client.created_at)}</DataRow>
               <DataRow label="Ultimo contatto">
                 {client.last_contact_at ? (
@@ -378,6 +399,83 @@ export default async function ClientPage({
                     </li>
                   );
                 })}
+              </ul>
+            )}
+          </Card>
+
+          {/* -------------------------------------------- immobili proposti */}
+          <Card title={`Immobili proposti (${proposedProperties.length})`} bodyClassName="">
+            {proposedProperties.length === 0 ? (
+              <EmptyState
+                title="Nessun immobile proposto."
+                hint={
+                  'Quando gli segnali un immobile, registralo qui sotto scegliendo "Proposta immobile" come tipo di contatto.'
+                }
+              />
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {proposedProperties.map((activity) => (
+                  <li key={activity.id} className="px-4 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Link
+                        href={`/immobili/${activity.property_id}`}
+                        className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                      >
+                        {activity.property_title}
+                      </Link>
+                      <span className="text-xs text-slate-500">
+                        {shortDate(activity.due_at ?? activity.done_at ?? activity.created_at)}
+                      </span>
+                    </div>
+                    {activity.outcome ? (
+                      <p className="mt-0.5 text-xs text-slate-600">{activity.outcome}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {/* -------------------------------------------- immobili visionati */}
+          <Card title={`Immobili visionati (${visitedProperties.length})`} bodyClassName="">
+            {visitedProperties.length === 0 ? (
+              <EmptyState
+                title="Nessuna visita registrata."
+                hint="Le visite registrate nello storico contatti compaiono qui."
+              />
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {visitedProperties.map((activity) => (
+                  <li key={activity.id} className="px-4 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Link
+                        href={`/immobili/${activity.property_id}`}
+                        className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                      >
+                        {activity.property_title}
+                      </Link>
+                      <span className="flex items-center gap-2 text-xs text-slate-500">
+                        {activity.interest ? (
+                          <Chip
+                            tone={
+                              activity.interest === "alto"
+                                ? "green"
+                                : activity.interest === "basso"
+                                  ? "red"
+                                  : "amber"
+                            }
+                          >
+                            interesse {activity.interest}
+                          </Chip>
+                        ) : null}
+                        {shortDate(activity.due_at ?? activity.done_at ?? activity.created_at)}
+                      </span>
+                    </div>
+                    {activity.outcome ? (
+                      <p className="mt-0.5 text-xs text-slate-600">{activity.outcome}</p>
+                    ) : null}
+                  </li>
+                ))}
               </ul>
             )}
           </Card>

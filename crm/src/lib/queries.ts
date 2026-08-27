@@ -238,11 +238,24 @@ export function listAllClients(utente: number, filters: ClientFilters): ClientRo
 export function getClient(
   utente: number,
   id: number,
-): (Client & { owner_name: string | null }) | undefined {
-  return one<Client & { owner_name: string | null }>(
-    `SELECT c.*, u.name AS owner_name
+): (Client & {
+  owner_name: string | null;
+  contact_property_ref: string | null;
+  contact_property_title: string | null;
+}) | undefined {
+  return one<
+    Client & {
+      owner_name: string | null;
+      contact_property_ref: string | null;
+      contact_property_title: string | null;
+    }
+  >(
+    `SELECT c.*, u.name AS owner_name,
+            cp.ref   AS contact_property_ref,
+            cp.title AS contact_property_title
        FROM clients c
-       LEFT JOIN users u ON u.id = c.owner_id
+       LEFT JOIN users      u  ON u.id = c.owner_id
+       LEFT JOIN properties cp ON cp.id = c.contact_property_id
       WHERE c.id = ? AND c.deleted_at IS NULL AND ${CLIENTE_MIO}`,
     [id, utente],
   );

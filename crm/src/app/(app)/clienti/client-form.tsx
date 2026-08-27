@@ -9,10 +9,12 @@ import type { Client } from "@/lib/types";
 export function ClientForm({
   client,
   userOptions,
+  propertyOptions,
   defaultOwnerId,
 }: {
   client?: Client;
   userOptions: { value: string; label: string }[];
+  propertyOptions: { value: string; label: string }[];
   defaultOwnerId: number;
 }) {
   return (
@@ -89,6 +91,23 @@ export function ClientForm({
               defaultValue={client?.tags}
               placeholder="investitore, cliente storico"
               hint="Separate da virgola"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              label="Per cosa ci ha contattato"
+              name="contact_reason"
+              defaultValue={client?.contact_reason}
+              placeholder="Es. ha visto l'annuncio di un trilocale a Frigole"
+              hint="Il motivo del primo contatto"
+            />
+            <SelectField
+              label="Immobile per cui ci ha contattato"
+              name="contact_property_id"
+              options={propertyOptions}
+              defaultValue={client?.contact_property_id}
+              placeholder="Nessuno in particolare"
             />
           </div>
 

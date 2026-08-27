@@ -57,6 +57,11 @@ const COLONNE_AGGIUNTE: { tabella: string; colonna: string; definizione: string 
   // di Greenwich da SQLite, e due ore di differenza qui vorrebbero dire
   // sessioni che cadono quando non devono.
   { tabella: "users", colonna: "password_changed_at", definizione: "INTEGER" },
+  // Per cosa il cliente ci ha contattato la prima volta, e per quale immobile:
+  // senza queste due colonne l'unica cosa che restava del primo contatto era
+  // la provenienza generica ("Sito web", "Passaparola"...), non il motivo.
+  { tabella: "clients", colonna: "contact_reason", definizione: "TEXT" },
+  { tabella: "clients", colonna: "contact_property_id", definizione: "INTEGER REFERENCES properties(id) ON DELETE SET NULL" },
 ];
 
 function aggiungiColonneMancanti(database: Database.Database) {

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { getClient, activeUserOptions } from "@/lib/queries";
+import { getClient, activeUserOptions, propertyOptionsFor } from "@/lib/queries";
 import { fullName } from "@/lib/format";
 import { PageHeader } from "@/components/ui";
 import { ClientForm } from "../../client-form";
@@ -23,6 +23,7 @@ export default async function EditClientPage({
       <ClientForm
         client={client}
         userOptions={activeUserOptions()}
+        propertyOptions={propertyOptionsFor(user.id)}
         defaultOwnerId={user.id}
       />
     </>

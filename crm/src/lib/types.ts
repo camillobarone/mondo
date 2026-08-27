@@ -27,6 +27,8 @@ export interface Client {
   birth_date: string | null;
   roles: string;
   source: string | null;
+  contact_reason: string | null;
+  contact_property_id: number | null;
   status: string;
   owner_id: number | null;
   tags: string;
@@ -218,6 +220,7 @@ export const ACTIVITY_TYPES = [
   { value: "chiamata", label: "Telefonata" },
   { value: "email", label: "Email" },
   { value: "whatsapp", label: "WhatsApp" },
+  { value: "proposta", label: "Proposta immobile" },
   { value: "visita", label: "Visita" },
   { value: "appuntamento", label: "Appuntamento" },
   { value: "nota", label: "Nota" },

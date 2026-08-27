@@ -53,7 +53,9 @@ CREATE TABLE IF NOT EXISTS clients (
   tax_code        TEXT,
   birth_date      TEXT,
   roles           TEXT    NOT NULL DEFAULT '',       -- csv: venditore,acquirente,locatore,conduttore,segnalatore,collega
-  source          TEXT,                              -- provenienza del contatto
+  source          TEXT,                              -- provenienza del contatto (dove ci ha trovato)
+  contact_reason  TEXT,                              -- per cosa ci ha contattato inizialmente
+  contact_property_id INTEGER REFERENCES properties(id) ON DELETE SET NULL, -- l'immobile per cui ci ha contattato
   status          TEXT    NOT NULL DEFAULT 'attivo', -- attivo|in_trattativa|dormiente|chiuso|non_interessato
   owner_id        INTEGER REFERENCES users(id) ON DELETE SET NULL,
   tags            TEXT    NOT NULL DEFAULT '',

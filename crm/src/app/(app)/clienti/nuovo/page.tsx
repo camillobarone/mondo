@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth";
-import { activeUserOptions } from "@/lib/queries";
+import { activeUserOptions, propertyOptionsFor } from "@/lib/queries";
 import { PageHeader } from "@/components/ui";
 import { ClientForm } from "../client-form";
 
@@ -14,7 +14,11 @@ export default async function NewClientPage() {
         title="Nuovo cliente"
         subtitle="Bastano cognome e un recapito: il resto si completa strada facendo."
       />
-      <ClientForm userOptions={activeUserOptions()} defaultOwnerId={user.id} />
+      <ClientForm
+        userOptions={activeUserOptions()}
+        propertyOptions={propertyOptionsFor(user.id)}
+        defaultOwnerId={user.id}
+      />
     </>
   );
 }
