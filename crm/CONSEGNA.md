@@ -284,8 +284,12 @@ DNS da toccare.
 **1.** Apri il file:
 
 ```
-ssh root@77.81.234.151 "nano /etc/mondo-crm.env"
+ssh root@77.81.234.151 -t "nano /etc/mondo-crm.env"
 ```
+
+Il **`-t`** non è un dettaglio: senza, `ssh` non apre un terminale vero e nano
+non parte («unable to open the terminal»). Serve per qualunque programma a
+schermate — nano, `rclone config`, `top`.
 
 Compila le cinque righe. La casella dev'essere una che esiste davvero in
 *Site Tools → Email → Accounts* su SiteGround:
