@@ -414,12 +414,13 @@ export default async function ClientPage({
                                       href={`/immobili/${match.property.id}`}
                                       className="font-medium text-brand-700 hover:underline"
                                     >
-                                      {match.property.title}
+                                      {match.property.address || match.property.title}
                                     </Link>
                                     <span className="text-slate-500">
                                       {" "}
                                       — {euro(match.property.price)}
-                                      {match.property.zone ? `, ${match.property.zone}` : ""}
+                                      {match.property.city ? `, ${match.property.city}` : ""}
+                                      {match.property.zone ? ` (${match.property.zone})` : ""}
                                     </span>
                                     {match.warnings.length ? (
                                       <span className="text-amber-700">

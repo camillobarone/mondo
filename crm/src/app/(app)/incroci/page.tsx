@@ -129,10 +129,11 @@ export default async function MatchesPage({
                         href={`/immobili/${match.property.id}`}
                         className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
                       >
-                        {match.property.title}
+                        {match.property.address || match.property.title}
                       </Link>
                       <p className="text-xs text-slate-500">
                         {euro(match.property.price)}
+                        {match.property.city ? ` · ${match.property.city}` : ""}
                         {match.property.zone ? ` · ${match.property.zone}` : ""}
                         {match.property.sqm ? ` · ${match.property.sqm} mq` : ""}
                       </p>

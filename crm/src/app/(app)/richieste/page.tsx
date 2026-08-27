@@ -167,7 +167,7 @@ export default async function RequirementsPage({
                             className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs hover:border-brand-300"
                           >
                             <span className="font-medium text-slate-700">
-                              {match.property.title}
+                              {match.property.address || match.property.title}
                             </span>
                             <span className="text-slate-500">{euro(match.property.price)}</span>
                           </Link>
