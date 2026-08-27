@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { all } from "@/lib/db";
-import { getActivity, activeUserOptions } from "@/lib/queries";
+import { getActivity, activeUserOptions, propertyOptionsFor } from "@/lib/queries";
 import { dateTime } from "@/lib/format";
 import { PageHeader, Card } from "@/components/ui";
 import { ActivityForm } from "../../activity-form";
@@ -38,20 +38,11 @@ export default async function EditActivityPage({
       ORDER BY last_name COLLATE NOCASE LIMIT 500`,
     [user.id],
   );
-  const properties = all<{ id: number; title: string }>(
-    `SELECT id, title FROM properties WHERE deleted_at IS NULL AND agent_id = ?
-      ORDER BY updated_at DESC LIMIT 300`,
-    [user.id],
-  );
-
   const clientOptions = clients.map((client) => ({
     value: String(client.id),
     label: client.name || `Cliente #${client.id}`,
   }));
-  const propertyOptions = properties.map((property) => ({
-    value: String(property.id),
-    label: property.title,
-  }));
+  const propertyOptions = propertyOptionsFor(user.id);
 
   // Le tendine sono troncate (500 clienti, 300 immobili): se il collegamento
   // dell'attivita' sta oltre il taglio, il select ripiegherebbe su "—" e il

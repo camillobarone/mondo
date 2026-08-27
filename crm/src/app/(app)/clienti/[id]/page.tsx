@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { all } from "@/lib/db";
 import {
   getClient,
   activitiesOfClient,
@@ -12,6 +11,7 @@ import {
   knownZones,
   giorniAlCompleanno,
   propertiesWithoutOwner,
+  propertyOptionsFor,
 } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
 import { deleteClient, linkOwner } from "@/lib/actions";
@@ -65,11 +65,7 @@ export default async function ClientPage({
   const offers = offersOfClient(user.id, clientId);
   const activities = activitiesOfClient(user.id, clientId);
   const users = activeUserOptions();
-  const propertyOptions = all<{ id: number; title: string }>(
-    `SELECT id, title FROM properties WHERE deleted_at IS NULL AND agent_id = ?
-      ORDER BY updated_at DESC LIMIT 300`,
-    [user.id],
-  ).map((property) => ({ value: String(property.id), label: property.title }));
+  const propertyOptions = propertyOptionsFor(user.id);
 
   const editing = query.modifica_richiesta
     ? requirements.find((r) => r.id === Number(query.modifica_richiesta))

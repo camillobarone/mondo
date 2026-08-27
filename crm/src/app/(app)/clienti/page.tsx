@@ -171,13 +171,31 @@ export default async function ClientsPage({
             </div>
           ) : null}
 
+          <div>
+            <label className="field-label" htmlFor="sort">
+              Ordina
+            </label>
+            <select id="sort" name="sort" defaultValue={filters.sort ?? "recenti"} className="field">
+              <option value="recenti">Più recenti</option>
+              <option value="alfabetico">Alfabetico</option>
+            </select>
+          </div>
+
           <div className="flex items-end gap-2 sm:col-span-2">
             <button type="submit" className="btn-primary">
               Filtra
             </button>
-            <Link href="/clienti" className="btn-ghost">
+            {/*
+              Una <a> vera, non <Link>: dopo aver cambiato una tendina a mano,
+              una navigazione "leggera" di Next lascia il campo com'era sullo
+              schermo anche se l'indirizzo torna senza filtri — il valore
+              scelto resta scritto nel browser, non nella pagina. I risultati
+              sarebbero comunque quelli giusti, ma la tendina mentirebbe su
+              cosa li ha prodotti. Un ricaricamento vero riparte da zero.
+            */}
+            <a href="/clienti" className="btn-ghost">
               Azzera
-            </Link>
+            </a>
           </div>
         </form>
       </Card>

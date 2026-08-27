@@ -71,7 +71,18 @@ export interface ClientFilters {
   silentDays?: string;
   /** Filtri "da sistemare": richiesta | privacy | aml. */
   senza?: string;
+  /** alfabetico | recenti (assente = recenti, gli ultimi inseriti in cima). */
+  sort?: string;
   page?: string;
+}
+
+/** L'ordine dell'elenco clienti: alfabetico, oppure gli ultimi inseriti in
+ * cima. Di default i piu' recenti — e' quello che serve appena si aggiunge un
+ * nominativo, non doverlo cercare in mezzo a mille altri in ordine di cognome. */
+function clientOrderBy(sort: string | undefined): string {
+  return sort === "alfabetico"
+    ? "c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE"
+    : "c.created_at DESC, c.id DESC";
 }
 
 export const PAGE_SIZE = 40;
@@ -192,7 +203,7 @@ export function listClients(
        FROM clients c
        LEFT JOIN users u ON u.id = c.owner_id
       WHERE ${sql}
-      ORDER BY c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE
+      ORDER BY ${clientOrderBy(filters.sort)}
       LIMIT ? OFFSET ?`,
     [...params, PAGE_SIZE, (page - 1) * PAGE_SIZE],
   );
@@ -1225,6 +1236,37 @@ export function activeUserOptions(): { value: string; label: string }[] {
   return all<User>(`SELECT * FROM users WHERE active = 1 ORDER BY name COLLATE NOCASE`).map(
     (user) => ({ value: String(user.id), label: user.name }),
   );
+}
+
+/**
+ * Le opzioni della tendina "immobile", per chi sceglie fra i propri.
+ *
+ * L'etichetta e' codice piu' dove si trova (via e comune, comune in
+ * maiuscolo), non il titolo descrittivo: a colpo d'occhio si riconosce
+ * l'indirizzo, non "appartamento di 90 mq". Dove manca via o comune — capita
+ * nei primi giorni di un'acquisizione, prima di compilare la scheda — resta
+ * il titolo, cosi' l'immobile non appare senza nulla scritto accanto.
+ *
+ * In ordine di comune: chi cerca "Copertino" li trova vicini, invece che
+ * sparsi per data di inserimento.
+ */
+export function propertyOptionsFor(utente: number): { value: string; label: string }[] {
+  const rows = all<{ id: number; ref: string; title: string; address: string | null; city: string | null }>(
+    `SELECT id, ref, title, address, city FROM properties
+      WHERE deleted_at IS NULL AND agent_id = ?
+      ORDER BY (city IS NULL OR city = ''), city COLLATE NOCASE, address COLLATE NOCASE
+      LIMIT 300`,
+    [utente],
+  );
+  return rows.map((property) => {
+    const luogo = [property.address, property.city ? property.city.toUpperCase() : null]
+      .filter(Boolean)
+      .join(" ");
+    return {
+      value: String(property.id),
+      label: [property.ref, luogo || property.title].filter(Boolean).join(" "),
+    };
+  });
 }
 
 /* ============================================================= cruscotto */

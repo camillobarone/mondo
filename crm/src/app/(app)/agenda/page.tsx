@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { all } from "@/lib/db";
-import { agenda, activeUserOptions, upcomingBirthdays } from "@/lib/queries";
+import { agenda, activeUserOptions, upcomingBirthdays, propertyOptionsFor } from "@/lib/queries";
 import { dateTime, relative, fullName, shortDate, phoneHref, whatsappHref } from "@/lib/format";
 import { PageHeader, Card, EmptyState, Chip } from "@/components/ui";
 import { CompleteButton } from "./complete-button";
@@ -122,11 +122,7 @@ export default async function AgendaPage({
       ORDER BY last_name COLLATE NOCASE LIMIT 500`,
     [user.id],
   );
-  const properties = all<{ id: number; title: string }>(
-    `SELECT id, title FROM properties WHERE deleted_at IS NULL AND agent_id = ?
-      ORDER BY updated_at DESC LIMIT 300`,
-    [user.id],
-  );
+  const propertyOptions = propertyOptionsFor(user.id);
 
   return (
     <>
@@ -153,10 +149,7 @@ export default async function AgendaPage({
             value: String(client.id),
             label: client.name || `Cliente #${client.id}`,
           }))}
-          propertyOptions={properties.map((property) => ({
-            value: String(property.id),
-            label: property.title,
-          }))}
+          propertyOptions={propertyOptions}
         />
       </Card>
 
