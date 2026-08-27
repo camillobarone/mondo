@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { saveActivity } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
 import { ACTIVITY_TYPES } from "@/lib/types";
@@ -21,6 +21,9 @@ export function ActivityForm({
   compact = false,
   activity,
   redirectTo,
+  fixedType,
+  propertyRequired = false,
+  defaultDone = false,
 }: {
   clientId?: number;
   propertyId?: number;
@@ -33,10 +36,27 @@ export function ActivityForm({
   activity?: ActivityRow;
   /** Dove tornare dopo il salvataggio (solo in modifica). */
   redirectTo?: string;
+  /**
+   * Quando il modulo serve a un solo scopo (es. "Immobili proposti" nella
+   * scheda cliente), il tipo non si sceglie: e' gia' deciso da dove si trova
+   * il modulo. Niente tendina "Tipo", e il "Cosa" diventa facoltativo — se
+   * resta vuoto, saveActivity ci mette da sola l'etichetta del tipo.
+   */
+  fixedType?: string;
+  /** L'immobile e' il senso stesso del modulo: senza, la voce non finirebbe
+   * nell'elenco per cui e' stato pensato. */
+  propertyRequired?: boolean;
+  /** Le proposte e le visite si registrano quasi sempre a cosa fatta. */
+  defaultDone?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [type, setType] = useState(activity?.type ?? "chiamata");
-  const [done, setDone] = useState(Boolean(activity?.done_at));
+  // Sulla scheda cliente possono convivere piu' moduli come questo (contatto
+  // generico, proposte, visite): senza id distinti, due <select id="..."> con
+  // lo stesso nome si accavallerebbero e la label dell'uno finirebbe per
+  // aprire il campo dell'altro.
+  const uid = useId();
+  const [type, setType] = useState(activity?.type ?? fixedType ?? "chiamata");
+  const [done, setDone] = useState(Boolean(activity?.done_at) || defaultDone);
 
   // Il commento raccolto dopo una visita e' quello che finisce nello storico
   // visite del proprietario: va chiesto quando c'e' qualcosa da raccontare,
@@ -66,45 +86,49 @@ export function ActivityForm({
       ) : null}
 
       <div className={`grid gap-3 ${compact ? "sm:grid-cols-2" : "sm:grid-cols-4"}`}>
-        <div>
-          <label className="field-label" htmlFor="type">
-            Tipo
-          </label>
-          <select
-            id="type"
-            name="type"
-            className="field"
-            value={type}
-            onChange={(event) => setType(event.target.value)}
-          >
-            {ACTIVITY_TYPES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {fixedType ? (
+          <input type="hidden" name="type" value={type} />
+        ) : (
+          <div>
+            <label className="field-label" htmlFor={`${uid}-type`}>
+              Tipo
+            </label>
+            <select
+              id={`${uid}-type`}
+              name="type"
+              className="field"
+              value={type}
+              onChange={(event) => setType(event.target.value)}
+            >
+              {ACTIVITY_TYPES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className={compact ? "" : "sm:col-span-2"}>
-          <label className="field-label" htmlFor="title">
+          <label className="field-label" htmlFor={`${uid}-title`}>
             Cosa
           </label>
           <input
-            id="title"
+            id={`${uid}-title`}
             name="title"
             className="field"
             placeholder="Es. richiamare per la visita"
             defaultValue={activity?.title ?? ""}
-            required
+            required={!fixedType}
           />
         </div>
 
         <div>
-          <label className="field-label" htmlFor="due_at">
+          <label className="field-label" htmlFor={`${uid}-due_at`}>
             Quando
           </label>
           <input
-            id="due_at"
+            id={`${uid}-due_at`}
             name="due_at"
             type="datetime-local"
             className="field"
@@ -117,11 +141,11 @@ export function ActivityForm({
         <div className="grid gap-3 sm:grid-cols-2">
           {clientOptions ? (
             <div>
-              <label className="field-label" htmlFor="client_id">
+              <label className="field-label" htmlFor={`${uid}-client_id`}>
                 Cliente
               </label>
               <select
-                id="client_id"
+                id={`${uid}-client_id`}
                 name="client_id"
                 className="field"
                 defaultValue={String(activity?.client_id ?? clientId ?? "")}
@@ -137,16 +161,17 @@ export function ActivityForm({
           ) : null}
           {propertyOptions ? (
             <div>
-              <label className="field-label" htmlFor="property_id">
+              <label className="field-label" htmlFor={`${uid}-property_id`}>
                 Immobile
               </label>
               <select
-                id="property_id"
+                id={`${uid}-property_id`}
                 name="property_id"
                 className="field"
                 defaultValue={String(activity?.property_id ?? propertyId ?? "")}
+                required={propertyRequired}
               >
-                <option value="">—</option>
+                <option value="">{propertyRequired ? "Scegli l'immobile…" : "—"}</option>
                 {propertyOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -165,11 +190,11 @@ export function ActivityForm({
       ) : null}
 
       <div>
-        <label className="field-label" htmlFor="notes">
+        <label className="field-label" htmlFor={`${uid}-notes`}>
           Note
         </label>
         <textarea
-          id="notes"
+          id={`${uid}-notes`}
           name="notes"
           rows={2}
           className="field resize-y"
@@ -190,11 +215,11 @@ export function ActivityForm({
       {chiediEsito ? (
         <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 sm:grid-cols-3">
           <div className="sm:col-span-2">
-            <label className="field-label" htmlFor="outcome">
+            <label className="field-label" htmlFor={`${uid}-outcome`}>
               {visita ? "Cosa ha detto il cliente" : "Esito"}
             </label>
             <textarea
-              id="outcome"
+              id={`${uid}-outcome`}
               name="outcome"
               rows={2}
               className="field resize-y"
@@ -212,11 +237,11 @@ export function ActivityForm({
             ) : null}
           </div>
           <div>
-            <label className="field-label" htmlFor="interest">
+            <label className="field-label" htmlFor={`${uid}-interest`}>
               Interesse
             </label>
             <select
-              id="interest"
+              id={`${uid}-interest`}
               name="interest"
               className="field"
               defaultValue={activity?.interest ?? ""}

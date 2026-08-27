@@ -1,7 +1,7 @@
 import "server-only";
 import crypto from "node:crypto";
 import { all, one, count, run } from "./db";
-import { fromCsv } from "./format";
+import { fromCsv, euro } from "./format";
 import { ZONES } from "./types";
 import type {
   Activity,
@@ -657,6 +657,9 @@ export function requirementsOfClient(utente: number, clientId: number): Requirem
 export type ActivityRow = Activity & {
   client_name: string | null;
   property_title: string | null;
+  property_address: string | null;
+  property_city: string | null;
+  property_price: number | null;
   user_name: string | null;
 };
 
@@ -677,15 +680,18 @@ const ACTIVITY_SELECT = `
          CASE WHEN c.owner_id = ?
               THEN TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,''))
               END AS client_name,
-         CASE WHEN p.agent_id = ? THEN p.title END AS property_title,
+         CASE WHEN p.agent_id = ? THEN p.title   END AS property_title,
+         CASE WHEN p.agent_id = ? THEN p.address END AS property_address,
+         CASE WHEN p.agent_id = ? THEN p.city    END AS property_city,
+         CASE WHEN p.agent_id = ? THEN p.price   END AS property_price,
          u.name  AS user_name
     FROM activities a
     LEFT JOIN clients    c ON c.id = a.client_id
     LEFT JOIN properties p ON p.id = a.property_id
     LEFT JOIN users      u ON u.id = a.user_id`;
 
-/** I due parametri che ACTIVITY_SELECT si aspetta prima della WHERE. */
-const perNomiAttivita = (utente: number) => [utente, utente];
+/** I cinque parametri che ACTIVITY_SELECT si aspetta prima della WHERE. */
+const perNomiAttivita = (utente: number) => [utente, utente, utente, utente, utente];
 
 export function activitiesOfClient(
   utente: number,
@@ -1254,18 +1260,24 @@ export function activeUserOptions(): { value: string; label: string }[] {
 /**
  * Le opzioni della tendina "immobile", per chi sceglie fra i propri.
  *
- * L'etichetta e' codice piu' dove si trova (via e comune, comune in
- * maiuscolo), non il titolo descrittivo: a colpo d'occhio si riconosce
- * l'indirizzo, non "appartamento di 90 mq". Dove manca via o comune — capita
- * nei primi giorni di un'acquisizione, prima di compilare la scheda — resta
- * il titolo, cosi' l'immobile non appare senza nulla scritto accanto.
+ * L'etichetta e' via, comune e prezzo — non il codice interno ne' il titolo
+ * descrittivo: a colpo d'occhio si riconosce l'indirizzo, non "RIF-042" o
+ * "appartamento di 90 mq". Dove manca via o comune — capita nei primi giorni
+ * di un'acquisizione, prima di compilare la scheda — resta il titolo, cosi'
+ * l'immobile non appare senza nulla scritto accanto.
  *
  * In ordine di comune: chi cerca "Copertino" li trova vicini, invece che
  * sparsi per data di inserimento.
  */
 export function propertyOptionsFor(utente: number): { value: string; label: string }[] {
-  const rows = all<{ id: number; ref: string; title: string; address: string | null; city: string | null }>(
-    `SELECT id, ref, title, address, city FROM properties
+  const rows = all<{
+    id: number;
+    title: string;
+    address: string | null;
+    city: string | null;
+    price: number | null;
+  }>(
+    `SELECT id, title, address, city, price FROM properties
       WHERE deleted_at IS NULL AND agent_id = ?
       ORDER BY (city IS NULL OR city = ''), city COLLATE NOCASE, address COLLATE NOCASE
       LIMIT 300`,
@@ -1274,10 +1286,12 @@ export function propertyOptionsFor(utente: number): { value: string; label: stri
   return rows.map((property) => {
     const luogo = [property.address, property.city ? property.city.toUpperCase() : null]
       .filter(Boolean)
-      .join(" ");
+      .join(", ");
+    const parti = [luogo || property.title];
+    if (property.price !== null) parti.push(euro(property.price));
     return {
       value: String(property.id),
-      label: [property.ref, luogo || property.title].filter(Boolean).join(" "),
+      label: parti.join(" — "),
     };
   });
 }

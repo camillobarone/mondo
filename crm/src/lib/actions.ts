@@ -18,6 +18,7 @@ import {
   numero, dataItaliana, zonaEComune, tipologia,
 } from "./import-map";
 import type { Property } from "./types";
+import { ACTIVITY_TYPES } from "./types";
 
 /* ------------------------------------------------------------- utilita' */
 
@@ -303,6 +304,32 @@ export async function eraseClient(form: FormData) {
   audit(user.id, "elimina", "cliente", id, "cancellazione definitiva su richiesta GDPR");
   revalidatePath("/clienti");
   redirect("/clienti");
+}
+
+/**
+ * Il motivo del primo contatto e l'immobile a cui si riferisce si aggiornano
+ * qui, direttamente dalla scheda cliente: sono cose che si scoprono col
+ * tempo (il cliente lo dice solo alla seconda chiamata, o l'annuncio si
+ * scopre dopo), e costringere a passare da "Modifica cliente" ogni volta
+ * sarebbe solo attrito.
+ */
+export async function saveContactInfo(form: FormData) {
+  const user = await requireUser();
+  const id = Number(form.get("client_id"));
+  esigiCliente(user.id, id);
+
+  const contactReason = nullable(form, "contact_reason");
+  const contactPropertyId = integer(form, "contact_property_id");
+  // L'immobile indicato deve essere uno dei propri, come ogni altro collegamento.
+  esigiCollegamenti(user.id, { propertyId: contactPropertyId });
+
+  run(
+    `UPDATE clients SET contact_reason = ?, contact_property_id = ?, updated_at = datetime('now')
+      WHERE id = ?`,
+    [contactReason, contactPropertyId, id],
+  );
+  audit(user.id, "modifica", "cliente", id, "primo contatto aggiornato");
+  revalidatePath(`/clienti/${id}`);
 }
 
 /* ============================================================= immobili */
@@ -656,10 +683,15 @@ export async function saveActivity(form: FormData) {
   const id = Number(form.get("id") ?? 0);
   const clientId = integer(form, "client_id");
   const propertyId = integer(form, "property_id");
+  const type = text(form, "type") || "nota";
+  // Nei moduli a scopo fisso (proposte, visite registrate dalla scheda
+  // cliente) il "Cosa" e' facoltativo: senza titolo scritto a mano, ci mette
+  // l'etichetta del tipo, cosi' lo storico non mostra una riga vuota.
+  const title = text(form, "title") || ACTIVITY_TYPES.find((t) => t.value === type)?.label || "";
 
   const values = [
-    text(form, "type") || "nota",
-    text(form, "title"),
+    type,
+    title,
     nullable(form, "notes"),
     clientId,
     propertyId,

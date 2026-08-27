@@ -14,7 +14,7 @@ import {
   propertyOptionsFor,
 } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
-import { deleteClient, linkOwner } from "@/lib/actions";
+import { deleteClient, linkOwner, saveContactInfo } from "@/lib/actions";
 import {
   euro,
   budgetRange,
@@ -206,19 +206,6 @@ export default async function ClientPage({
               <DataRow label="Stato">{label(client.status, CLIENT_STATUSES)}</DataRow>
               <DataRow label="Seguito da">{client.owner_name}</DataRow>
               <DataRow label="Provenienza">{client.source}</DataRow>
-              <DataRow label="Per cosa ci ha contattato">{client.contact_reason}</DataRow>
-              <DataRow label="Immobile per cui ci ha contattato">
-                {client.contact_property_id ? (
-                  <Link
-                    href={`/immobili/${client.contact_property_id}`}
-                    className="text-brand-700 hover:underline"
-                  >
-                    {[client.contact_property_ref, client.contact_property_title]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </Link>
-                ) : null}
-              </DataRow>
               <DataRow label="In archivio dal">{shortDate(client.created_at)}</DataRow>
               <DataRow label="Ultimo contatto">
                 {client.last_contact_at ? (
@@ -231,6 +218,57 @@ export default async function ClientPage({
                 )}
               </DataRow>
             </dl>
+          </Card>
+
+          {/* ------------------------------------------------- primo contatto */}
+          <Card title="Primo contatto">
+            <form action={saveContactInfo} className="space-y-3 p-4">
+              <input type="hidden" name="client_id" value={client.id} />
+              <div>
+                <label className="field-label" htmlFor="contact_reason">
+                  Per cosa ci ha contattato
+                </label>
+                <input
+                  id="contact_reason"
+                  name="contact_reason"
+                  className="field"
+                  placeholder="Es. ha visto l'annuncio di un trilocale a Frigole"
+                  defaultValue={client.contact_reason ?? ""}
+                />
+              </div>
+              <div>
+                <label className="field-label" htmlFor="contact_property_id">
+                  Immobile per cui ci ha contattato
+                </label>
+                <select
+                  id="contact_property_id"
+                  name="contact_property_id"
+                  className="field"
+                  defaultValue={String(client.contact_property_id ?? "")}
+                >
+                  <option value="">Nessuno in particolare</option>
+                  {propertyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {client.contact_property_id ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Attualmente:{" "}
+                    <Link
+                      href={`/immobili/${client.contact_property_id}`}
+                      className="text-brand-700 hover:underline"
+                    >
+                      {[client.contact_property_ref, client.contact_property_title]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </Link>
+                  </p>
+                ) : null}
+              </div>
+              <SubmitButton>Salva</SubmitButton>
+            </form>
           </Card>
 
           <Card title="Privacy e antiriciclaggio">
@@ -408,32 +446,54 @@ export default async function ClientPage({
             {proposedProperties.length === 0 ? (
               <EmptyState
                 title="Nessun immobile proposto."
-                hint={
-                  'Quando gli segnali un immobile, registralo qui sotto scegliendo "Proposta immobile" come tipo di contatto.'
-                }
+                hint="Quando gli segnali un immobile, registralo nel modulo qui sotto."
               />
             ) : (
               <ul className="divide-y divide-slate-100">
                 {proposedProperties.map((activity) => (
                   <li key={activity.id} className="px-4 py-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Link
-                        href={`/immobili/${activity.property_id}`}
-                        className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
-                      >
-                        {activity.property_title}
-                      </Link>
-                      <span className="text-xs text-slate-500">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/immobili/${activity.property_id}`}
+                          className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                        >
+                          {activity.property_title}
+                        </Link>
+                        <p className="text-xs text-slate-500">
+                          {[
+                            [activity.property_address, activity.property_city]
+                              .filter(Boolean)
+                              .join(", "),
+                            euro(activity.property_price),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-xs text-slate-500">
                         {shortDate(activity.due_at ?? activity.done_at ?? activity.created_at)}
                       </span>
                     </div>
                     {activity.outcome ? (
-                      <p className="mt-0.5 text-xs text-slate-600">{activity.outcome}</p>
+                      <p className="mt-1 text-xs text-slate-600">{activity.outcome}</p>
                     ) : null}
                   </li>
                 ))}
               </ul>
             )}
+            <div className="border-t border-slate-100 p-4">
+              <ActivityForm
+                clientId={client.id}
+                userOptions={users}
+                defaultUserId={user.id}
+                propertyOptions={propertyOptions}
+                fixedType="proposta"
+                propertyRequired
+                defaultDone
+                compact
+              />
+            </div>
           </Card>
 
           {/* -------------------------------------------- immobili visionati */}
@@ -441,20 +501,32 @@ export default async function ClientPage({
             {visitedProperties.length === 0 ? (
               <EmptyState
                 title="Nessuna visita registrata."
-                hint="Le visite registrate nello storico contatti compaiono qui."
+                hint="Registrala nel modulo qui sotto: compare anche nello storico visite del proprietario."
               />
             ) : (
               <ul className="divide-y divide-slate-100">
                 {visitedProperties.map((activity) => (
                   <li key={activity.id} className="px-4 py-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Link
-                        href={`/immobili/${activity.property_id}`}
-                        className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
-                      >
-                        {activity.property_title}
-                      </Link>
-                      <span className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/immobili/${activity.property_id}`}
+                          className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                        >
+                          {activity.property_title}
+                        </Link>
+                        <p className="text-xs text-slate-500">
+                          {[
+                            [activity.property_address, activity.property_city]
+                              .filter(Boolean)
+                              .join(", "),
+                            euro(activity.property_price),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </div>
+                      <span className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
                         {activity.interest ? (
                           <Chip
                             tone={
@@ -472,12 +544,24 @@ export default async function ClientPage({
                       </span>
                     </div>
                     {activity.outcome ? (
-                      <p className="mt-0.5 text-xs text-slate-600">{activity.outcome}</p>
+                      <p className="mt-1 text-xs text-slate-600">{activity.outcome}</p>
                     ) : null}
                   </li>
                 ))}
               </ul>
             )}
+            <div className="border-t border-slate-100 p-4">
+              <ActivityForm
+                clientId={client.id}
+                userOptions={users}
+                defaultUserId={user.id}
+                propertyOptions={propertyOptions}
+                fixedType="visita"
+                propertyRequired
+                defaultDone
+                compact
+              />
+            </div>
           </Card>
 
           {/* ------------------------------------------------ immobili e proposte */}
