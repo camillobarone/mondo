@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 5 agosto 2026.**
+**Aggiornato al 27 agosto 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -184,6 +184,54 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     Verificato in browser: 29 controlli, compreso il caso della seconda finestra
     aperta prima del cambio che si ritrova fuori.
 
+13. **Primo contatto e immobili proposti/visionati** (27 agosto 2026), su
+    richiesta sua: *«per ogni cliente... devo sapere sempre: per cosa ci ha
+    contattato, quali immobili ho proposto, cosa ha visionato, cosa cerca»*.
+
+    - Due colonne nuove su `clients`: **`contact_reason`** (motivo del primo
+      contatto, testo libero) e **`contact_property_id`** (l'immobile per cui
+      ha scritto, FK verso `properties`). Si impostano **direttamente dalla
+      scheda cliente**, riquadro «Primo contatto» — non serve andare in
+      «Modifica cliente».
+    - Nuovo tipo di attività **`proposta`** in `ACTIVITY_TYPES`
+      (`src/lib/types.ts`), accanto a chiamata/email/whatsapp/visita/ecc.
+    - La scheda cliente mostra due elenchi **separati dallo storico
+      generale**: «Immobili proposti» (`type = 'proposta'`) e «Immobili
+      visionati» (`type = 'visita'`), ciascuno con **il proprio modulo di
+      inserimento diretto** in fondo — niente più passare dal box generico
+      «Registra un contatto» scegliendo il tipo a mano.
+    - `ActivityForm` (`agenda/activity-form.tsx`) ha imparato tre cose:
+      `fixedType` (nasconde la tendina Tipo, il modulo ha già uno scopo),
+      `propertyRequired` (l'immobile è obbligatorio, altrimenti la voce non
+      finirebbe nella lista giusta) e `defaultDone` (proposte e visite si
+      registrano quasi sempre a cosa fatta). Gli id dei campi usano `useId()`
+      con prefisso: prima, con più moduli identici nella stessa pagina, gli
+      `id` duplicati facevano aprire il campo sbagliato cliccando una label.
+    - Se il campo «Cosa» resta vuoto (succede spesso in questi moduli
+      dedicati, dove il tipo è già scelto), `saveActivity` ci mette da sola
+      l'etichetta del tipo — mai più una riga di storico senza titolo.
+    - **L'indirizzo (`address`) è ora obbligatorio** per ogni immobile, sia
+      nel modulo che sul server (`saveProperty`). Motivo: senza via, un
+      immobile compariva nelle liste col solo titolo o codice, impossibile
+      da riconoscere al volo. Gli immobili già in archivio senza indirizzo
+      non lo hanno all'indietro — vanno completati aprendoli una volta.
+    - **Via, comune e prezzo** (non più il codice interno) in ogni tendina e
+      lista dove si sceglie o si vede un immobile da proporre:
+      `propertyOptionsFor` in `queries.ts`, la scheda cliente («Cosa cerca»),
+      **Incroci** e **Richieste**. Il messaggio WhatsApp già scritto per il
+      cliente resta **senza indirizzo esatto**, di proposito: è la prassi
+      dell'agenzia, per non far saltare l'intermediazione prima della visita.
+    - `ACTIVITY_SELECT` porta ora anche `property_address/city/price`
+      (dietro lo stesso muro «solo se l'immobile è tuo» degli altri campi):
+      `perNomiAttivita()` è passato da 2 a 5 parametri, tienilo a mente se
+      tocchi quella query.
+
+    Verificato in browser con Playwright ad ogni passaggio (creazione
+    cliente, primo contatto, proposta e visita dai moduli dedicati, modifica
+    cliente con i campi precompilati, blocco del salvataggio immobile senza
+    indirizzo). L'utente ha poi confermato di persona sul gestionale in
+    produzione: **«ok tutto funzionante»**.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -192,7 +240,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 |---|---|
 | **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Non fatto.** Finché manca, l'avviso *email* 30 minuti prima non parte (il calendario funziona lo stesso). Procedimento nel capitolo **6-bis** di `CONSEGNA.md`. Serve la casella da cui spedire e la sua password: le ha solo lui. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
-| **Provare le ultime novità** | L'ultimo aggiornamento del server era in corso quando la chat si è chiusa. |
+| **Completare l'indirizzo degli immobili vecchi** | L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi. Gli immobili già in archivio senza via continuano a mostrare il titolo al posto della via nelle liste, finché qualcuno non li apre e lo aggiunge. Nessuna fretta, nessun automatismo previsto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
 
@@ -289,6 +337,10 @@ lui.
 > `claude/real-estate-client-management-app-xl7dnx`, PR #2, online su
 > https://gestionale.mondoimmobiliarelecce.it). Ho letto `HANDOFF.md`,
 > `CONSEGNA.md` e `README.md`. So che ogni collaboratore vede solo le proprie
-> schede (capitolo 10-bis di `CONSEGNA.md`) e che il passo successivo sono gli
-> **incroci fra colleghi**. Restano da configurare l'SMTP per gli avvisi email e
-> da inserire i dati dei venditori. Dimmi da dove ripartiamo.
+> schede (capitolo 10-bis di `CONSEGNA.md`), che gli incroci fra colleghi sono
+> fatti, e che l'ultima cosa costruita (27 agosto 2026) è il primo contatto
+> del cliente più gli elenchi dedicati «Immobili proposti»/«Immobili
+> visionati» con inserimento diretto — capitolo 4, punto 13. Restano da
+> configurare l'SMTP per gli avvisi email, da inserire i dati dei venditori e
+> da completare l'indirizzo sugli immobili vecchi che non ce l'hanno. Dimmi da
+> dove ripartiamo.

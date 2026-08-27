@@ -4,7 +4,7 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-**Aggiornato al 5 agosto 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
+**Aggiornato al 27 agosto 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
 in testo semplice, da aprire con il Blocco note senza bisogno di niente.
 
 > **Nessuna password è scritta qui**, di proposito: questo file sta dentro il
