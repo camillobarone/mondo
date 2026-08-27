@@ -11,24 +11,44 @@ set -euo pipefail
 
 CARTELLA="/opt/mondo-crm"
 UTENTE="mondo"
-ARCHIVIO="https://github.com/camillobarone/mondo/archive/refs/heads/claude/real-estate-client-management-app-xl7dnx.tar.gz"
+REPO="git@github.com:camillobarone/mondo-crm.git"
+RAMO="main"
+# Chiave di SOLA LETTURA per questo solo archivio. Si crea una volta sola:
+# istruzioni in deploy/CHIAVE-GITHUB.md. Sta qui e non un token in un file
+# perche' una chiave non scade e non serve a nient'altro che a leggere questo.
+CHIAVE="/root/.ssh/mondo_crm_deploy"
 
 if [[ $EUID -ne 0 ]]; then
   echo "Serve eseguirlo come amministratore: anteponi 'sudo'."
   exit 1
 fi
 
+if [[ ! -f "$CHIAVE" ]]; then
+  echo "Manca la chiave di sola lettura per GitHub: $CHIAVE"
+  echo "Si crea una volta sola, le istruzioni sono in $CARTELLA/deploy/CHIAVE-GITHUB.md"
+  exit 1
+fi
+export GIT_SSH_COMMAND="ssh -i $CHIAVE -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+
+command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq git; }
+
 echo "== 1/4  Copia di sicurezza prima di toccare qualsiasi cosa =================="
 sudo -u "$UTENTE" bash -c "cd '$CARTELLA' && node scripts/backup.mjs" | tail -2
 
 echo "== 2/4  Scarico l'ultima versione =========================================="
 TEMP="$(mktemp -d)"
-curl -fsSL "$ARCHIVIO" | tar xz -C "$TEMP" --strip-components=1
+if ! git clone --quiet --depth 1 --branch "$RAMO" "$REPO" "$TEMP"; then
+  echo "   Non riesco a leggere l'archivio su GitHub."
+  echo "   Di solito e' la chiave non ancora aggiunta fra le Deploy keys del progetto."
+  echo "   Prova: GIT_SSH_COMMAND=\"ssh -i $CHIAVE\" ssh -T git@github.com"
+  rm -rf "$TEMP"
+  exit 1
+fi
 # Le esclusioni sono ancorate alla radice (/data, non data): senza la sbarra
 # varrebbero per qualsiasi cartella con quel nome dentro il programma, comprese
 # eventuali pagine, che verrebbero cancellate dal server a ogni aggiornamento.
 rsync -a --delete --exclude /data --exclude /backup --exclude /node_modules \
-  "$TEMP/crm/" "$CARTELLA/"
+  --exclude /.git "$TEMP/" "$CARTELLA/"
 rm -rf "$TEMP"
 chown -R "$UTENTE:$UTENTE" "$CARTELLA"
 
