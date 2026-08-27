@@ -15,8 +15,7 @@ import {
 } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
 import { deleteClient, linkOwner, saveContactInfo } from "@/lib/actions";
-import {
-  euro,
+import { euro,
   budgetRange,
   budgetIsContradictory,
   shortDate,
@@ -26,8 +25,7 @@ import {
   label,
   phoneHref,
   whatsappHref,
-  daysSince,
-} from "@/lib/format";
+  daysSince, etichettaImmobile } from "@/lib/format";
 import {
   PageHeader,
   Card,
@@ -618,8 +616,7 @@ export default async function ClientPage({
                     <option value="">Scegli fra quelli senza proprietario…</option>
                     {daCollegare.map((property) => (
                       <option key={property.id} value={property.id}>
-                        {property.ref ? `${property.ref} · ` : ""}
-                        {property.title}
+                        {etichettaImmobile(property)}
                       </option>
                     ))}
                   </select>

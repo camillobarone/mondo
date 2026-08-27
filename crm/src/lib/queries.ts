@@ -1,7 +1,7 @@
 import "server-only";
 import crypto from "node:crypto";
 import { all, one, count, run } from "./db";
-import { fromCsv, euro } from "./format";
+import { fromCsv, euro, etichettaImmobile } from "./format";
 import { ZONES } from "./types";
 import type {
   Activity,
@@ -971,7 +971,7 @@ export function propertiesWithoutOwner(utente: number, limit: number): Property[
   return all<Property>(
     `SELECT p.* FROM properties p
       WHERE p.deleted_at IS NULL AND p.owner_client_id IS NULL AND ${IMMOBILE_MIO}
-      ORDER BY p.status, p.title COLLATE NOCASE
+      ORDER BY (p.city IS NULL OR p.city = ''), p.city COLLATE NOCASE, p.address COLLATE NOCASE
       LIMIT ?`,
     [utente, limit],
   );
@@ -1283,17 +1283,10 @@ export function propertyOptionsFor(utente: number): { value: string; label: stri
       LIMIT 300`,
     [utente],
   );
-  return rows.map((property) => {
-    const luogo = [property.address, property.city ? property.city.toUpperCase() : null]
-      .filter(Boolean)
-      .join(", ");
-    const parti = [luogo || property.title];
-    if (property.price !== null) parti.push(euro(property.price));
-    return {
-      value: String(property.id),
-      label: parti.join(" — "),
-    };
-  });
+  return rows.map((property) => ({
+    value: String(property.id),
+    label: etichettaImmobile(property),
+  }));
 }
 
 /* ============================================================= cruscotto */

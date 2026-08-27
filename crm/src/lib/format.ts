@@ -176,3 +176,30 @@ export function whatsappHref(
   const coda = text ? `?text=${encodeURIComponent(text)}` : "";
   return `https://wa.me/${cifre}${coda}`;
 }
+
+/**
+ * L'etichetta di un immobile dentro una tendina: via, comune e prezzo.
+ *
+ * Sta qui e non dentro la query che la usava perche' le tendine sono tre e
+ * pescano da fonti diverse. La stessa legge scritta in due posti si scolla al
+ * primo ritocco, ed era gia' successo: "Collega un immobile" mostrava ancora
+ * codice interno e titolo descrittivo quando le altre due erano gia' passate
+ * all'indirizzo. Un solo posto, e non puo' succedere di nuovo.
+ *
+ * Dove manca la via o il comune — capita nei primi giorni di un'acquisizione,
+ * prima che la scheda sia compilata — resta il titolo, cosi' l'immobile non
+ * compare senza niente scritto accanto.
+ */
+export function etichettaImmobile(immobile: {
+  title: string;
+  address?: string | null;
+  city?: string | null;
+  price?: number | null;
+}): string {
+  const luogo = [immobile.address, immobile.city ? immobile.city.toUpperCase() : null]
+    .filter(Boolean)
+    .join(", ");
+  const parti = [luogo || immobile.title];
+  if (immobile.price !== null && immobile.price !== undefined) parti.push(euro(immobile.price));
+  return parti.join(" — ");
+}
