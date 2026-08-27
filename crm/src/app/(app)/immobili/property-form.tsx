@@ -71,7 +71,10 @@ export function PropertyForm({
             label="Indirizzo"
             name="address"
             defaultValue={property?.address}
+            required
+            placeholder="Via Roma 10"
             className="sm:col-span-2"
+            hint="Serve a riconoscere l'immobile a colpo d'occhio nelle liste e nelle tendine"
           />
           <TextField label="Comune" name="city" defaultValue={property?.city} placeholder="Lecce" />
           <ComboField

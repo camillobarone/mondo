@@ -368,6 +368,9 @@ export async function saveProperty(form: FormData) {
   };
 
   if (!values.title) throw new Error("Serve un titolo per l'immobile.");
+  // Senza indirizzo, l'immobile compare nelle liste e nelle tendine col solo
+  // titolo: impossibile riconoscerlo a colpo d'occhio fra tanti.
+  if (!values.address) throw new Error("Serve l'indirizzo dell'immobile.");
 
   if (id) {
     esigiImmobile(user.id, id);
