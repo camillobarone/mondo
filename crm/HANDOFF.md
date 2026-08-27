@@ -11,6 +11,31 @@ l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
 ---
 
+## 0 · Regola fissa — una finestra, un progetto
+
+**In una conversazione aperta su questo progetto si lavora esclusivamente su
+questo progetto: il gestionale in `crm/`. Divieto di lavorare su altri
+progetti.**
+
+Cosa vuol dire in pratica:
+
+- si tocca **solo la cartella `crm/`**. `web-auditor/` e qualsiasi altra
+  cartella di questo repository sono fuori: nemmeno per una correzione veloce;
+- niente lavori sui siti `mondoimmobiliarelecce.it` o `salentoproperties.com`,
+  niente SEO, niente articoli, niente WordPress, niente social. Sono attività
+  di altri progetti e vanno chieste in una finestra loro;
+- se arriva una richiesta che non riguarda il gestionale, **non si esegue**: si
+  dice che è fuori perimetro per questa finestra e si chiede di aprirne una
+  dedicata. Vale anche quando è una cosa da due minuti — è così che una finestra
+  perde il filo;
+- l'unica eccezione è la manutenzione della finestra stessa (`HANDOFF.md`,
+  `CONSEGNA.md`, `README.md`, la pull request #2, il controllo giornaliero del
+  capitolo 7): sono parte di questo progetto, non un progetto a parte.
+
+Regola posta da Camillo il 27 agosto 2026. Resta valida finché non la revoca lui.
+
+---
+
 ## 1 · Chi è l'utente
 
 **Camillo Barone**, titolare di **Studio RCS Srls** —
@@ -342,5 +367,6 @@ lui.
 > del cliente più gli elenchi dedicati «Immobili proposti»/«Immobili
 > visionati» con inserimento diretto — capitolo 4, punto 13. Restano da
 > configurare l'SMTP per gli avvisi email, da inserire i dati dei venditori e
-> da completare l'indirizzo sugli immobili vecchi che non ce l'hanno. Dimmi da
-> dove ripartiamo.
+> da completare l'indirizzo sugli immobili vecchi che non ce l'hanno. Vale la
+> regola fissa del capitolo 0: in questa finestra si lavora solo su `crm/`.
+> Dimmi da dove ripartiamo.
