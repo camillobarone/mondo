@@ -602,6 +602,59 @@ Ricerca, WhatsApp, cruscotto, copia dal browser
       controllo su /).
 
 
+9-BIS · COSA CERCA IL CLIENTE, IN DETTAGLIO
+-------------------------------------------
+
+Rifatto il 28 agosto 2026, su richiesta sua. Il riquadro «Cosa cerca» è
+quello che alimenta gli incroci, ed era il punto più povero del programma.
+
+Tipologia: più d'una. «Appartamento o villetta» è la richiesta normale.
+Nessuna spuntata vuol dire indifferente.
+
+Dove cerca: un comune per volta, con le sue zone. Si sceglie il comune —
+l'elenco ha tutti i 96 comuni della provincia di Lecce, con Lecce e Porto
+Cesareo in cima — compaiono i suoi quartieri e le sue frazioni, si spunta e si
+conferma con Aggiungi. L'area resta in elenco e si ricomincia con un altro
+comune.
+
+Prima c'era un comune solo e un elenco di zone che non sapeva a quale comune
+appartenesse: chi cercava «a Lecce in centro oppure a Porto Cesareo al mare»
+spuntava quattro caselle in un mucchio unico, e bastava questo per proporgli il
+centro di Porto Cesareo.
+
+Nessuna zona spuntata per un comune vuol dire tutto il comune, ed è il caso
+più frequente. Le liste delle zone sono fitte dove l'agenzia lavora e più
+scarne altrove: aggiungerne una è una riga in ZONE_PER_COMUNE
+(src/lib/types.ts).
+
+Stato dell'immobile: da 4 a 7 voci. Nuovo/in costruzione, ottimo,
+ristrutturato, buono, discreto, da rivedere, da ristrutturare. È la stessa
+lista per la richiesta e per la scheda immobile — se fossero due liste diverse
+non si potrebbero confrontare, e il filtro nella richiesta sarebbe scritto per
+niente. Gli immobili che avevano «Buono stato» sono passati a «Buono» da soli
+al primo avvio.
+
+
+Cosa esclude e cosa no
+
+Il motore non nasconde un immobile perché ha la zona o lo stato sbagliato:
+lo propone più in basso e scrive cosa non torna. Escludono soltanto il tipo di
+contratto, il comune (se non è nessuno di quelli chiesti), la famiglia di
+tipologia, il budget massimo e la metratura minima.
+
+Sulla tipologia, con più voci scelte si esclude solo se nessuna è della
+famiglia dell'immobile, e solo quando si riconoscono tutte: se anche una sola
+non si riconosce — succede con le tipologie degli archivi importati — non si sa
+abbastanza per escludere, e decide l'agente.
+
+
+Le richieste vecchie
+
+Non sono state convertite e non ne hanno bisogno: quelle scritte prima hanno il
+vecchio comune e le vecchie zone, e vengono lette come un'unica area. Continuano
+a incrociare esattamente come prima.
+
+
 10 · COSA NON C'È
 -----------------
 

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { all } from "./db";
 import { fromCsv, euro } from "./format";
+import { leggiAree } from "./aree";
 import type { Property, Requirement } from "./types";
 
 /**
@@ -110,12 +111,20 @@ function famiglia(kind: string): string | null {
 
 /* ------------------------------------------------------------ preparazione */
 
+interface AreaPronta {
+  comune: string;
+  zone: string[];
+}
+
 interface ReadyRequirement {
   source: Requirement;
   contract: string;
-  kind: string;
-  city: string;
-  zones: string[];
+  /** Le tipologie accettate. Vuoto = indifferente. */
+  kinds: string[];
+  /** Un comune per area, con le sue zone. Zone vuote = tutto il comune. */
+  aree: AreaPronta[];
+  /** Gli stati accettati. Vuoto = indifferente. */
+  conditions: string[];
   needsElevator: boolean;
   needsGarage: boolean;
   needsOutdoor: boolean;
@@ -131,6 +140,7 @@ interface ReadyProperty {
   kind: string;
   city: string;
   zone: string;
+  condition: string;
   price: number;
   sqm: number;
   rooms: number;
@@ -144,9 +154,12 @@ function prepareRequirement(requirement: Requirement): ReadyRequirement {
   return {
     source: requirement,
     contract: normalise(requirement.contract),
-    kind: normalise(requirement.kind),
-    city: normalise(requirement.city),
-    zones: fromCsv(requirement.zones).map(normalise),
+    kinds: fromCsv(requirement.kind).map(normalise).filter(Boolean),
+    aree: leggiAree(requirement).map((area) => ({
+      comune: normalise(area.comune),
+      zone: area.zone.map(normalise).filter(Boolean),
+    })),
+    conditions: fromCsv(requirement.conditions).map(normalise).filter(Boolean),
     needsElevator: needs.includes("ascensore"),
     needsGarage: needs.includes("box"),
     needsOutdoor: needs.includes("esterno"),
@@ -164,6 +177,7 @@ function prepareProperty(property: Property): ReadyProperty {
     kind: normalise(property.kind),
     city: normalise(property.city),
     zone: normalise(property.zone),
+    condition: normalise(property.condition),
     price: property.price ?? 0,
     sqm: property.sqm ?? 0,
     rooms: property.rooms ?? 0,
@@ -171,6 +185,33 @@ function prepareProperty(property: Property): ReadyProperty {
     garage: property.garage === 1,
     outdoor: !!property.outdoor && normalise(property.outdoor) !== "nessuno",
   };
+}
+
+/**
+ * Le zone che contano per un immobile: quelle chieste nel comune dove
+ * l'immobile si trova davvero, piu' quelle delle aree senza comune.
+ *
+ * Restituisce `null` quando la zona non e' un criterio da valutare, e i casi
+ * sono due, diversi fra loro ma con la stessa conseguenza:
+ *
+ *   - per quel comune non e' stata scelta nessuna zona, cioe' va bene tutto il
+ *     comune. Contarlo come criterio sempre soddisfatto gonfierebbe il
+ *     punteggio di ogni immobile di quel comune allo stesso modo, che e' come
+ *     non contarlo — ma con un numero piu' alto e meno leggibile;
+ *   - le zone chieste riguardano altri comuni, e su questo immobile non
+ *     dicono niente.
+ */
+function zoneApplicabili(
+  requirement: ReadyRequirement,
+  property: ReadyProperty,
+): string[] | null {
+  const applicabili = requirement.aree.filter(
+    (area) => !area.comune || samePlace(area.comune, property.city),
+  );
+  if (!applicabili.length) return null;
+  if (applicabili.some((area) => !area.zone.length)) return null;
+  const zone = applicabili.flatMap((area) => area.zone);
+  return zone.length ? zone : null;
 }
 
 /* -------------------------------------------------------------- confronto */
@@ -195,16 +236,36 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
   // Il comune esclude: chi cerca a Lecce non si sposta a Gallipoli perche'
   // l'immobile e' bello. Sulla zona invece si transige — dentro lo stesso
   // comune una via vicina resta una proposta sensata.
-  if (requirement.city && property.city && !samePlace(requirement.city, property.city)) {
+  //
+  // I comuni ora possono essere piu' d'uno: basta che l'immobile stia in uno
+  // qualsiasi di quelli chiesti. Le aree senza comune (arrivano dalle
+  // richieste importate, dove la zona c'era e il comune no) non escludono
+  // niente: non saprebbero cosa escludere.
+  const comuniChiesti = requirement.aree.map((area) => area.comune).filter(Boolean);
+  if (
+    comuniChiesti.length &&
+    property.city &&
+    !comuniChiesti.some((comune) => samePlace(comune, property.city))
+  ) {
     return { ok: false, reason: "comune", gap: 0 };
   }
-  // La tipologia esclude solo quando le due famiglie sono davvero diverse:
-  // un locale commerciale a chi cerca casa non e' una proposta, e' rumore.
-  // Fra tipologie della stessa famiglia (attico invece di appartamento) si
-  // segnala e basta.
-  const cercata = famiglia(requirement.kind);
+  // La tipologia esclude solo quando le famiglie sono davvero diverse: un
+  // locale commerciale a chi cerca casa non e' una proposta, e' rumore. Fra
+  // tipologie della stessa famiglia (attico invece di appartamento) si segnala
+  // e basta.
+  //
+  // Con piu' tipologie chieste si esclude soltanto se **nessuna** e' della
+  // famiglia dell'immobile, e solo quando si riconoscono tutte: se anche una
+  // sola non si riconosce — succede con le tipologie degli archivi importati —
+  // non si sa abbastanza per escludere, e decide l'agente.
   const offerta = famiglia(property.kind);
-  if (cercata && offerta && cercata !== offerta) {
+  const famiglieChieste = requirement.kinds.map(famiglia);
+  if (
+    offerta &&
+    famiglieChieste.length &&
+    famiglieChieste.every((nome) => nome !== null) &&
+    !famiglieChieste.includes(offerta)
+  ) {
     return { ok: false, reason: "tipologia", gap: 0 };
   }
   if (requirement.budgetMax && property.price > requirement.budgetMax * BUDGET_TOLERANCE) {
@@ -228,10 +289,22 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
 
   if (requirement.budgetMax) check(property.price > 0 && property.price <= requirement.budgetMax);
   if (requirement.budgetMin) check(property.price >= requirement.budgetMin);
-  if (requirement.kind) check(property.kind === requirement.kind);
-  if (requirement.city) check(samePlace(requirement.city, property.city));
-  if (requirement.zones.length) {
-    check(requirement.zones.some((zone) => samePlace(zone, property.zone)));
+  if (requirement.kinds.length) check(requirement.kinds.includes(property.kind));
+  if (comuniChiesti.length) {
+    check(comuniChiesti.some((comune) => samePlace(comune, property.city)));
+  }
+  // Contano solo le zone del comune in cui l'immobile si trova davvero: le
+  // zone chieste a Porto Cesareo non dicono niente su un immobile di Lecce.
+  // Se per quel comune non e' stata scelta nessuna zona, vuol dire tutto il
+  // comune, e la zona non e' un criterio: non si conta, altrimenti sarebbe un
+  // punto regalato a ogni immobile.
+  const zoneChieste = zoneApplicabili(requirement, property);
+  if (zoneChieste) check(zoneChieste.some((zone) => samePlace(zone, property.zone)));
+  // Lo stato pesa ma non esclude, come i vani e l'ascensore: "da rivedere"
+  // quando si cercava "ottimo" e' una telefonata in meno da fare, non un
+  // immobile da nascondere.
+  if (requirement.conditions.length && property.condition) {
+    check(requirement.conditions.includes(property.condition));
   }
   if (requirement.sqmMin) check(property.sqm >= requirement.sqmMin);
   if (requirement.roomsMin) check(property.rooms >= requirement.roomsMin);
@@ -268,19 +341,34 @@ function explain(scored: Scored): Match {
   if (requirement.budgetMin && property.price > 0 && property.price < requirement.budgetMin) {
     warnings.push(`Sotto il minimo che cercava (${euro(requirement.budgetMin)})`);
   }
-  if (requirement.kind) {
-    if (property.kind === requirement.kind) reasons.push(`Tipologia: ${scored.property.kind}`);
-    else warnings.push(`Tipologia diversa (${scored.property.kind || "non indicata"})`);
+  if (requirement.kinds.length) {
+    if (requirement.kinds.includes(property.kind)) {
+      reasons.push(`Tipologia: ${scored.property.kind}`);
+    } else {
+      warnings.push(`Tipologia diversa (${scored.property.kind || "non indicata"})`);
+    }
   }
-  if (requirement.city) {
-    if (samePlace(requirement.city, property.city)) reasons.push(`Comune: ${scored.property.city}`);
-    else warnings.push(`Comune non indicato sull'immobile`);
+  const comuniChiesti = requirement.aree.map((area) => area.comune).filter(Boolean);
+  if (comuniChiesti.length) {
+    if (comuniChiesti.some((comune) => samePlace(comune, property.city))) {
+      reasons.push(`Comune: ${scored.property.city}`);
+    } else {
+      warnings.push(`Comune non indicato sull'immobile`);
+    }
   }
-  if (requirement.zones.length) {
-    if (requirement.zones.some((zone) => samePlace(zone, property.zone))) {
+  const zoneChieste = zoneApplicabili(requirement, property);
+  if (zoneChieste) {
+    if (zoneChieste.some((zone) => samePlace(zone, property.zone))) {
       reasons.push(`Zona richiesta: ${scored.property.zone}`);
     } else {
       warnings.push(`Fuori dalle zone richieste (${scored.property.zone || "zona non indicata"})`);
+    }
+  }
+  if (requirement.conditions.length && property.condition) {
+    if (requirement.conditions.includes(property.condition)) {
+      reasons.push(`Stato: ${scored.property.condition}`);
+    } else {
+      warnings.push(`Stato diverso da quello cercato (${scored.property.condition})`);
     }
   }
   if (requirement.sqmMin) {
@@ -660,12 +748,15 @@ const immobiliDeiColleghi = cache(
   (utente: number): (ReadyProperty & { collega: Collega })[] =>
     all<{
       id: number; title: string; kind: string; contract: string;
-      city: string | null; zone: string | null;
+      city: string | null; zone: string | null; condition: string | null;
       sqm: number | null; rooms: number | null; price: number | null;
       elevator: number; garage: number; outdoor: string | null;
       agente_id: number; agente_nome: string; agente_email: string;
     }>(
-      `SELECT p.id, p.title, p.kind, p.contract, p.city, p.zone,
+      // `p.condition` e' una caratteristica dell'immobile, come i metri o la
+      // zona: sta fra le cose che del collega si vedono. Serve perche' la
+      // richiesta ora dice anche in che stato l'acquirente lo accetta.
+      `SELECT p.id, p.title, p.kind, p.contract, p.city, p.zone, p.condition,
               p.sqm, p.rooms, p.price, p.elevator, p.garage, p.outdoor,
               u.id AS agente_id, u.name AS agente_nome, u.email AS agente_email
          FROM properties p
@@ -679,7 +770,8 @@ const immobiliDeiColleghi = cache(
     ).map((riga) => ({
       ...prepareProperty({
         id: riga.id, title: riga.title, kind: riga.kind, contract: riga.contract,
-        city: riga.city, zone: riga.zone, sqm: riga.sqm, rooms: riga.rooms,
+        city: riga.city, zone: riga.zone, condition: riga.condition,
+        sqm: riga.sqm, rooms: riga.rooms,
         price: riga.price, elevator: riga.elevator, garage: riga.garage,
         outdoor: riga.outdoor,
       } as Property),
@@ -698,12 +790,16 @@ const richiesteDeiColleghi = cache(
   (utente: number): (ReadyRequirement & { collega: Collega })[] =>
     all<{
       id: number; contract: string; kind: string | null; city: string | null;
-      zones: string; needs: string;
+      zones: string; areas: string; conditions: string; needs: string;
       budget_min: number | null; budget_max: number | null;
       sqm_min: number | null; rooms_min: number | null;
       referente_id: number; referente_nome: string; referente_email: string;
     }>(
-      `SELECT r.id, r.contract, r.kind, r.city, r.zones, r.needs,
+      // `areas` e `conditions` sono luoghi e stati di un immobile, non dicono
+      // niente su chi cerca: restano dalla parte delle caratteristiche, che si
+      // vedono. Senza, gli incroci con i colleghi userebbero solo il comune
+      // vecchio e ignorerebbero le altre aree — meno proposte, in silenzio.
+      `SELECT r.id, r.contract, r.kind, r.city, r.zones, r.areas, r.conditions, r.needs,
               r.budget_min, r.budget_max, r.sqm_min, r.rooms_min,
               u.id AS referente_id, u.name AS referente_nome, u.email AS referente_email
          FROM requirements r
@@ -718,7 +814,8 @@ const richiesteDeiColleghi = cache(
     ).map((riga) => ({
       ...prepareRequirement({
         id: riga.id, contract: riga.contract, kind: riga.kind, city: riga.city,
-        zones: riga.zones, needs: riga.needs,
+        zones: riga.zones, areas: riga.areas, conditions: riga.conditions,
+        needs: riga.needs,
         budget_min: riga.budget_min, budget_max: riga.budget_max,
         sqm_min: riga.sqm_min, rooms_min: riga.rooms_min,
         // Non e' il vero cliente: e' un turacciolo, perche' il tipo lo vuole e

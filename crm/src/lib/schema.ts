@@ -131,9 +131,11 @@ CREATE TABLE IF NOT EXISTS requirements (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   client_id   INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   contract    TEXT    NOT NULL DEFAULT 'vendita',
-  kind        TEXT,
-  city        TEXT,
-  zones       TEXT    NOT NULL DEFAULT '',   -- csv di zone accettate
+  kind        TEXT,                          -- csv di tipologie accettate
+  city        TEXT,                          -- proiezione: il comune della prima area
+  zones       TEXT    NOT NULL DEFAULT '',   -- proiezione: tutte le zone, in csv
+  areas       TEXT    NOT NULL DEFAULT '',   -- json [{comune, zone[]}] — la verita'
+  conditions  TEXT    NOT NULL DEFAULT '',   -- csv di stati accettati
   budget_min  INTEGER,
   budget_max  INTEGER,
   sqm_min     INTEGER,

@@ -14,7 +14,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | Area | In pratica |
 |---|---|
 | **Clienti** | Anagrafica completa, tipo di cliente (venditore, acquirente, locatore…), provenienza del contatto, etichette, storico di ogni telefonata ed email |
-| **Richieste** | Cosa cerca ogni acquirente: zona, budget, metratura, requisiti irrinunciabili |
+| **Richieste** | Cosa cerca ogni acquirente: tipologie, comuni con le loro zone, stato dell'immobile, budget, metratura, requisiti irrinunciabili |
 | **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback e **foto** |
 | **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
 | **Storico visite** | Una pagina da stampare per il proprietario: chi è venuto a vedere la casa, quando, con che numero, e cosa ha detto |
@@ -346,6 +346,48 @@ npm run posta -- --manda   # manda un'email di prova a se stessi
 
 Quando qualcosa non va dice **quale delle cinque righe è sbagliata** invece del
 codice d'errore del server di posta.
+
+---
+
+## Cosa cerca il cliente
+
+Il riquadro **«Cosa cerca»** sulla scheda del cliente è quello che alimenta gli
+incroci: più è preciso, meno telefonate a vuoto.
+
+**Tipologia — se ne spunta più d'una.** «Appartamento o villetta» è la
+richiesta normale, non l'eccezione. Non spuntarne nessuna vuol dire
+indifferente.
+
+**Dove cerca — un comune per volta, con le sue zone.** Si sceglie il comune da
+un elenco con tutti quelli della provincia di Lecce, compaiono i suoi quartieri
+e le sue frazioni, si spuntano quelli che interessano e si preme *Aggiungi*.
+Da quel momento l'area resta in elenco e si può ricominciare con **un altro
+comune**: chi cerca a Lecce in centro *oppure* a Porto Cesareo al mare ora può
+dirlo, e il programma sa quale zona appartiene a quale comune.
+
+Se per un comune non spunti nessuna zona, vuol dire **tutto il comune** — ed è
+il caso più frequente. Le zone che non trovi si scrivono nel campo *Altre zone*.
+Per un comune fuori provincia c'è *Altro comune…* in fondo alla tendina.
+
+> Le liste delle zone sono fitte dove lavorate — Lecce e Porto Cesareo prima di
+> tutto — e più scarne altrove. Se ne manca una che usi spesso, dilla: aggiungerla
+> è una riga, e da quel momento compare nella tendina.
+
+**Stato dell'immobile.** Nuovo/in costruzione, ottimo, ristrutturato, buono,
+discreto, da rivedere, da ristrutturare. Se ne spunta più d'uno, ed è la stessa
+lista che si usa sulla scheda dell'immobile: se fossero due liste diverse non si
+potrebbero confrontare.
+
+### Cosa esclude e cosa no
+
+Il motore **non nasconde** un immobile perché ha la zona o lo stato sbagliato:
+lo propone lo stesso, più in basso, scrivendo cosa non torna — *«Fuori dalle
+zone richieste (Frigole)»*, *«Stato diverso da quello cercato (Buono)»*. La
+telefonata la decidi tu.
+
+Escludono davvero soltanto: il tipo di contratto, il **comune** (se l'immobile
+non è in nessuno di quelli chiesti), la **famiglia di tipologia** (un negozio a
+chi cerca casa), il budget massimo e la metratura minima.
 
 ---
 

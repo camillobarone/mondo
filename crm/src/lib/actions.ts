@@ -11,6 +11,7 @@ import {
 } from "./auth";
 import { invia, postaConfigurata, indirizzoBase } from "./posta";
 import { parseCsv, decodeText } from "./csv";
+import { leggiAree, scriviAree, proiezione } from "./aree";
 import { readXlsx, looksLikeXlsx } from "./xlsx";
 import { salvaFoto, cancellaFile, MAX_FOTO_PER_IMMOBILE } from "./photos";
 import {
@@ -617,16 +618,21 @@ export async function saveRequirement(form: FormData) {
   const id = Number(form.get("id") ?? 0);
   const clientId = Number(form.get("client_id"));
 
-  // Le zone spuntate piu' quelle scritte a mano, senza doppioni.
-  const zones = [...new Set([...form.getAll("zones").map(String), ...text(form, "zones_extra").split(",")]
-    .map((zone) => zone.trim())
-    .filter(Boolean))].join(",");
+  // Le aree arrivano dal modulo gia' montate, in json: il selettore le
+  // costruisce mentre l'agente le sceglie, una citta' per volta.
+  const aree = leggiAree({ areas: text(form, "areas") });
+  const { city, zones } = proiezione(aree);
 
   const values = [
     text(form, "contract") || "vendita",
-    nullable(form, "kind"),
-    nullable(form, "city"),
+    // Le tipologie sono piu' d'una: "appartamento o villetta" e' la richiesta
+    // normale, non l'eccezione. Restano nella stessa colonna perche' un valore
+    // solo e' gia' un csv valido, e le richieste vecchie non vanno convertite.
+    csvField(form, "kind") || null,
+    city,
     zones,
+    scriviAree(aree),
+    csvField(form, "conditions"),
     integer(form, "budget_min"),
     integer(form, "budget_max"),
     integer(form, "sqm_min"),
@@ -644,7 +650,8 @@ export async function saveRequirement(form: FormData) {
     esigiRichiesta(user.id, id);
     run(
       `UPDATE requirements SET
-         contract = ?, kind = ?, city = ?, zones = ?, budget_min = ?, budget_max = ?,
+         contract = ?, kind = ?, city = ?, zones = ?, areas = ?, conditions = ?,
+         budget_min = ?, budget_max = ?,
          sqm_min = ?, rooms_min = ?, needs = ?, urgency = ?, financing = ?, status = ?,
          notes = ?, updated_at = datetime('now')
        WHERE id = ?`,
@@ -654,9 +661,10 @@ export async function saveRequirement(form: FormData) {
   } else {
     const result = run(
       `INSERT INTO requirements (
-         client_id, contract, kind, city, zones, budget_min, budget_max, sqm_min,
+         client_id, contract, kind, city, zones, areas, conditions,
+         budget_min, budget_max, sqm_min,
          rooms_min, needs, urgency, financing, status, notes
-       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [clientId, ...values],
     );
     audit(user.id, "crea", "richiesta", Number(result.lastInsertRowid));

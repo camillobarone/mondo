@@ -8,11 +8,11 @@ import {
   propertiesOfClient,
   offersOfClient,
   activeUserOptions,
-  knownZones,
   giorniAlCompleanno,
   propertiesWithoutOwner,
   propertyOptionsFor,
 } from "@/lib/queries";
+import { leggiAree, descriviArea } from "@/lib/aree";
 import { requirementSummary } from "@/lib/matching";
 import { deleteClient, linkOwner, saveContactInfo } from "@/lib/actions";
 import {
@@ -332,7 +332,6 @@ export default async function ClientPage({
               <RequirementForm
                 clientId={client.id}
                 requirement={editing}
-                zoneOptions={knownZones(user.id)}
                 cancelHref={`/clienti/${client.id}`}
               />
             ) : requirements.length === 0 ? (
@@ -354,15 +353,16 @@ export default async function ClientPage({
                         <div>
                           <p className="text-sm font-medium text-slate-800">
                             {requirement.contract === "affitto" ? "Affitto" : "Acquisto"}
-                            {requirement.kind ? ` · ${requirement.kind}` : ""}
-                            {requirement.city ? ` a ${requirement.city}` : ""}
+                            {fromCsv(requirement.kind).length
+                              ? ` · ${fromCsv(requirement.kind).join(", ")}`
+                              : ""}
                           </p>
                           <p className="mt-0.5 text-xs text-slate-500">
                             {budgetRange(requirement.budget_min, requirement.budget_max)}
                             {requirement.sqm_min ? ` · da ${requirement.sqm_min} mq` : ""}
                             {requirement.rooms_min ? ` · da ${requirement.rooms_min} vani` : ""}
-                            {fromCsv(requirement.zones).length
-                              ? ` · ${fromCsv(requirement.zones).join(", ")}`
+                            {leggiAree(requirement).length
+                              ? ` · ${leggiAree(requirement).map(descriviArea).join(" · ")}`
                               : ""}
                           </p>
                           {budgetIsContradictory(requirement.budget_min, requirement.budget_max) ? (

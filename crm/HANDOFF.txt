@@ -305,6 +305,50 @@ Le cose costruite in questa sessione, in ordine
     vengono completati. Messo in esercizio e confermato da lui sul gestionale
     vero: «ora vedo la voce nel cruscotto».
 
+16. «Cosa cerca» rifatto (28 agosto 2026), su richiesta sua: tipologie
+    multiple, comuni con le loro zone e ripetibili, stato dell'immobile.
+
+    - Tipologia: la colonna kind di requirements e' diventata un csv.
+      Non serviva una colonna nuova ne' una conversione: un valore solo e' gia'
+      un csv valido, e le richieste vecchie continuano a leggersi.
+    - Aree: colonna nuova areas, json [{comune, zone[]}], ed e' la
+      verita'. city e zones restano scritte come proiezione — solo
+      perche' la ricerca e il filtro per comune lavorano in SQL, dove il json
+      non si interroga — e si scrivono in un punto solo, saveRequirement,
+      per non ritrovarsi con due verita' che si allontanano. Si legge tutto da
+      leggiAree() in src/lib/aree.ts, che quando areas e' vuoto ricade
+      sui due campi vecchi: per questo l'archivio non e' stato convertito.
+    - Stato: colonna nuova conditions (csv), e PROPERTY_CONDITIONS
+      passata da 4 a 7 voci. La lista e' la stessa per richiesta e immobile,
+      altrimenti non si confrontano. «Buono stato» → «Buono» sugli immobili
+      esistenti, con allineaStatiImmobili in db.ts, idempotente come
+      assegnaTitolareMancante.
+    - Nel motore: il comune esclude se l'immobile non e' in nessuno di
+      quelli chiesti; la tipologia esclude solo se nessuna delle famiglie
+      chieste e' quella dell'immobile e si riconoscono tutte; zona e stato
+      pesano e non escludono. Zone vuote per un comune = tutto il comune, e
+      in quel caso la zona non viene nemmeno contata come criterio: contarla
+      sempre soddisfatta gonfierebbe il punteggio di ogni immobile allo stesso
+      modo. Sta in zoneApplicabili().
+    - Le due query degli incroci fra colleghi hanno le colonne scritte a
+      mano: p.condition, r.areas e r.conditions sono state aggiunte li'
+      dentro. TypeScript non se ne sarebbe accorto — quegli oggetti si
+      costruiscono con un cast — e gli incroci coi colleghi avrebbero ignorato
+      in silenzio tutte le aree oltre alla prima.
+
+    Verificato in browser con due utenti, su uno scenario costruito perche'
+    ogni regola avesse il suo caso: 25 controlli, compresi l'immobile in un
+    comune non chiesto (escluso), il negozio a chi cerca casa (escluso), la
+    zona sbagliata e lo stato sbagliato (proposti lo stesso, con l'avvertenza),
+    «tutto il comune» che non conta la zona come criterio, una richiesta vecchia
+    senza areas che incrocia ancora, e il muro fra collaboratori intatto.
+
+    Trappola da non ripetere nelle prove: la scheda cliente ha sette
+    pulsanti di invio, e negli Incroci gli immobili si riconoscono dalla
+    via, non dal titolo. La prima versione della prova cliccava il pulsante
+    sbagliato e cercava i titoli: dodici controlli rossi, tutti colpa della
+    prova e non del codice.
+
 
 5 · COSA RESTA APERTO
 ---------------------
@@ -315,6 +359,19 @@ Le cose costruite in questa sessione, in ordine
 
   Inserire i dati dei venditori
       Rimandato da lui: «dopo inserisco i dati dei venditori».
+
+  Comune e zona anche sulla scheda immobile
+      Deciso di rimandare: oggi «Cosa cerca» sceglie il comune da un elenco, ma
+      sulla scheda dell'immobile comune e zona restano campi liberi. Gli
+      incroci funzionano lo stesso — il confronto e' tollerante, «S. Cataldo»
+      trova «San Cataldo» — ma su un immobile si puo' ancora scrivere una zona
+      che in quel comune non esiste. Portare li' lo stesso selettore e' il
+      passo naturale successivo.
+
+  Zone da correggere
+      ZONE_PER_COMUNE in types.ts e' una lista di partenza: fitta per Lecce e
+      Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato.
+      Va fatta correggere a lui — aggiungere una voce e' una riga.
 
   Completare l'indirizzo degli immobili vecchi
       Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da

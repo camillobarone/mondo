@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { listRequirements } from "@/lib/queries";
 import { requirementSummary } from "@/lib/matching";
 import { euro, budgetRange, budgetIsContradictory, fromCsv, shortDate } from "@/lib/format";
+import { leggiAree, descriviArea } from "@/lib/aree";
 import { PageHeader, Card, EmptyState, StatusChip, Chip, Pagination } from "@/components/ui";
 import { REQUIREMENT_STATUSES } from "@/lib/types";
 
@@ -114,17 +115,24 @@ export default async function RequirementsPage({
 
                       <p className="mt-0.5 text-sm text-slate-600">
                         {requirement.contract === "affitto" ? "Affitto" : "Acquisto"}
-                        {requirement.kind ? ` · ${requirement.kind}` : ""}
-                        {requirement.city ? ` a ${requirement.city}` : ""}
+                        {fromCsv(requirement.kind).length
+                          ? ` · ${fromCsv(requirement.kind).join(", ")}`
+                          : ""}
                         {requirement.budget_min || requirement.budget_max
                           ? ` · ${budgetRange(requirement.budget_min, requirement.budget_max).toLowerCase()}`
                           : ""}
                         {requirement.sqm_min ? ` · da ${requirement.sqm_min} mq` : ""}
                       </p>
 
-                      {fromCsv(requirement.zones).length ? (
+                      {leggiAree(requirement).length ? (
                         <p className="mt-0.5 text-xs text-slate-500">
-                          Zone: {fromCsv(requirement.zones).join(", ")}
+                          Dove: {leggiAree(requirement).map(descriviArea).join(" · ")}
+                        </p>
+                      ) : null}
+
+                      {fromCsv(requirement.conditions).length ? (
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Stato: {fromCsv(requirement.conditions).join(", ")}
                         </p>
                       ) : null}
 

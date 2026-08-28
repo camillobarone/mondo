@@ -4,25 +4,27 @@ import { SubmitButton } from "@/components/client";
 import { TextField, TextArea, SelectField, CheckboxGroup } from "@/components/ui";
 import { fromCsv } from "@/lib/format";
 import {
+  COMUNI,
   FINANCING,
+  PROPERTY_CONDITIONS,
   PROPERTY_KINDS,
   REQUIREMENT_STATUSES,
   URGENCIES,
+  ZONE_PER_COMUNE,
 } from "@/lib/types";
 import type { Requirement } from "@/lib/types";
+import { leggiAree } from "@/lib/aree";
+import { AreaPicker } from "./area-picker";
 
 /** Cosa cerca il cliente. Serve al motore degli incroci. */
 export function RequirementForm({
   clientId,
   requirement,
   cancelHref,
-  zoneOptions,
 }: {
   clientId: number;
   requirement?: Requirement;
   cancelHref: string;
-  /** Zone gia' note. Se ne manca una si scrive nel campo libero. */
-  zoneOptions: readonly string[];
 }) {
   return (
     <form action={saveRequirement} className="space-y-4">
@@ -41,14 +43,6 @@ export function RequirementForm({
           placeholder={null}
         />
         <SelectField
-          label="Tipologia"
-          name="kind"
-          options={PROPERTY_KINDS}
-          defaultValue={requirement?.kind}
-          placeholder="Indifferente"
-        />
-        <TextField label="Comune" name="city" defaultValue={requirement?.city} placeholder="Lecce" />
-        <SelectField
           label="Urgenza"
           name="urgency"
           options={URGENCIES.map((value) => ({ value, label: value }))}
@@ -57,21 +51,29 @@ export function RequirementForm({
         />
       </div>
 
-      <div className="space-y-2">
-        <CheckboxGroup
-          label="Zone di interesse"
-          name="zones"
-          options={zoneOptions}
-          selected={fromCsv(requirement?.zones)}
-          columns={4}
-        />
-        <TextField
-          label="Altre zone"
-          name="zones_extra"
-          placeholder="Casalabate, contrada Santa Barbara"
-          hint="Quelle che non trovi sopra: separale con una virgola. Da qui in poi resteranno tra i suggerimenti."
-        />
-      </div>
+      <CheckboxGroup
+        label="Tipologia"
+        name="kind"
+        options={PROPERTY_KINDS}
+        selected={fromCsv(requirement?.kind)}
+        columns={4}
+        capitalizza={false}
+      />
+
+      <AreaPicker
+        iniziali={requirement ? leggiAree(requirement) : []}
+        comuni={COMUNI}
+        zonePerComune={ZONE_PER_COMUNE}
+      />
+
+      <CheckboxGroup
+        label="Stato dell'immobile"
+        name="conditions"
+        options={PROPERTY_CONDITIONS}
+        selected={fromCsv(requirement?.conditions)}
+        columns={4}
+        capitalizza={false}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <TextField

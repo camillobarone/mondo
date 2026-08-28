@@ -305,12 +305,19 @@ export function CheckboxGroup({
   options,
   selected = [],
   columns = 3,
+  capitalizza = true,
 }: {
   label: string;
   name: string;
   options: readonly string[];
   selected?: string[];
   columns?: 2 | 3 | 4;
+  /**
+   * Iniziale maiuscola su ogni parola. Va bene per i vocabolari scritti in
+   * minuscolo ("ascensore", "box"), ma rovina i nomi gia' scritti come vanno:
+   * "Villetta a schiera" diventerebbe "Villetta A Schiera".
+   */
+  capitalizza?: boolean;
 }) {
   // Le classi Tailwind devono essere letterali: niente interpolazione.
   const grid = { 2: "sm:grid-cols-2", 3: "sm:grid-cols-3", 4: "sm:grid-cols-4" }[columns];
@@ -328,7 +335,9 @@ export function CheckboxGroup({
               defaultChecked={selected.includes(option)}
               className="size-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
-            <span className="text-sm text-slate-700 capitalize">{option}</span>
+            <span className={`text-sm text-slate-700 ${capitalizza ? "capitalize" : ""}`}>
+              {option}
+            </span>
           </label>
         ))}
       </div>

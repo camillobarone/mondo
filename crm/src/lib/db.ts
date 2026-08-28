@@ -27,6 +27,7 @@ function connect(): Database.Database {
   database.exec(SCHEMA);
   aggiungiColonneMancanti(database);
   assegnaTitolareMancante(database);
+  allineaStatiImmobili(database);
   return database;
 }
 
@@ -62,6 +63,20 @@ const COLONNE_AGGIUNTE: { tabella: string; colonna: string; definizione: string 
   // la provenienza generica ("Sito web", "Passaparola"...), non il motivo.
   { tabella: "clients", colonna: "contact_reason", definizione: "TEXT" },
   { tabella: "clients", colonna: "contact_property_id", definizione: "INTEGER REFERENCES properties(id) ON DELETE SET NULL" },
+  // Le aree di ricerca di una richiesta: piu' comuni, ognuno con le sue zone.
+  //
+  // Prima erano un comune solo (`city`) e un elenco piatto di zone (`zones`)
+  // che non sapevano a quale comune appartenessero: chi cercava "a Lecce zona
+  // Centro storico oppure a Porto Cesareo zona Torre Lapillo" non aveva modo
+  // di dirlo, e le due zone finivano in un unico mucchio.
+  //
+  // `areas` e' json e ha la verita'; `city` e `zones` restano scritte come sua
+  // proiezione, in un punto solo (saveRequirement), perche' ricerca e filtri
+  // dell'elenco lavorano in SQL e su json non ci arriverebbero.
+  { tabella: "requirements", colonna: "areas", definizione: "TEXT NOT NULL DEFAULT ''" },
+  // Lo stato in cui il cliente accetta l'immobile, in csv: quasi sempre piu'
+  // d'uno ("ottimo o ristrutturato"), quindi non un valore solo.
+  { tabella: "requirements", colonna: "conditions", definizione: "TEXT NOT NULL DEFAULT ''" },
 ];
 
 function aggiungiColonneMancanti(database: Database.Database) {
@@ -94,6 +109,27 @@ function aggiungiColonneMancanti(database: Database.Database) {
  * Gira a ogni avvio, ma tocca solo le righe scoperte: quando non ce ne sono
  * piu', non fa niente.
  */
+/**
+ * Porta gli immobili vecchi sul vocabolario nuovo degli stati.
+ *
+ * Il 28 agosto 2026 gli stati sono passati da quattro a sette, perche' la
+ * richiesta di un cliente ora dice anche in che stato lo accetta e le due
+ * liste devono essere la stessa: se l'immobile puo' essere solo "Buono stato"
+ * e il cliente cerca "Buono", non si incontrano mai.
+ *
+ * L'unica voce che cambia nome e' quella: le altre tre erano gia' scritte
+ * uguali. Le tre voci nuove (Ottimo, Discreto, Da rivedere) non tolgono niente
+ * a nessuno, si aggiungono e basta.
+ *
+ * Gira a ogni avvio ma tocca solo le righe rimaste indietro: quando non ce ne
+ * sono piu', il comando non trova niente da fare e non fa niente.
+ */
+function allineaStatiImmobili(database: Database.Database) {
+  database
+    .prepare("UPDATE properties SET condition = 'Buono' WHERE condition = 'Buono stato'")
+    .run();
+}
+
 function assegnaTitolareMancante(database: Database.Database) {
   const riferimento = database
     .prepare(
