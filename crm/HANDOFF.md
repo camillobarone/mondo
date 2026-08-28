@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 27 agosto 2026.**
+**Aggiornato al 28 agosto 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -280,6 +280,31 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     di sbagliare più il controllo che passa e l'invio vero, riletto sul filo per
     verificare `Content-Transfer-Encoding: base64` e gli accenti intatti.
 
+15. **Gli immobili senza via si vedono** (28 agosto 2026). Il riquadro
+    *«Da sistemare»* del cruscotto ne conta una quinta: gli immobili a cui manca
+    l'indirizzo. Il numero apre `/immobili?noAddress=1`, e lo stesso avviso sta
+    in cima all'elenco **Immobili**, dove sparisce da sé quando l'ultimo è
+    completato. Serviva perché l'indirizzo è obbligatorio solo dai salvataggi
+    del 27 agosto in poi: i vecchi restavano da completare, ma non c'era modo di
+    sapere **quali** senza aprirli tutti.
+
+    Costruito sullo stampo del filtro gemello (`noOwner`), con una accortezza:
+    la condizione «senza via» sta in **`IMMOBILE_SENZA_VIA`**, una costante sola
+    in `queries.ts`, usata sia da `countPropertiesWithoutAddress` sia dal filtro
+    dell'elenco. Se le due condizioni si scollegassero, il cruscotto direbbe un
+    numero e l'elenco ne aprirebbe un altro — è la trappola dei conteggi che
+    questo codice ha già pagato una volta. Vale sia per `NULL` (le schede
+    vecchie) sia per una stringa di soli spazi.
+
+    Il filtro passa anche all'**esportazione CSV**, perché `listAllProperties`
+    usa lo stesso `propertyWhere`.
+
+    Verificato in browser con **due utenti** sullo stesso archivio (7 immobili a
+    testa, 3 senza via l'uno e 5 l'altro): 19 controlli, compreso che nessuno dei
+    due veda mai il totale dell'archivio (8), che l'esportazione non porti fuori
+    niente del collega, e che avviso e voce spariscano quando gli indirizzi
+    vengono completati.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -288,7 +313,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 |---|---|
 | **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password.** Vedi il punto della situazione qui sotto. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
-| **Completare l'indirizzo degli immobili vecchi** | L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi. Gli immobili già in archivio senza via continuano a mostrare il titolo al posto della via nelle liste, finché qualcuno non li apre e lo aggiunge. Nessuna fretta, nessun automatismo previsto. |
+| **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
 

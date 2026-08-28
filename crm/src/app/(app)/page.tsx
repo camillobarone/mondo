@@ -62,8 +62,9 @@ export default async function DashboardPage() {
   const stats = dashboard(user.id);
   const { overdue, today } = agenda(user.id, true);
 
-  // Le quattro mancanze silenziose. Ognuna, lasciata li', costa qualcosa di
-  // concreto: un incrocio mai proposto, una sanzione, una telefonata a vuoto.
+  // Le mancanze silenziose. Ognuna, lasciata li', costa qualcosa di concreto:
+  // un incrocio mai proposto, una sanzione, una telefonata a vuoto, un
+  // immobile che nelle liste non si riconosce.
   const cure = daSistemare(user.id);
   const daFare = [
     {
@@ -75,6 +76,11 @@ export default async function DashboardPage() {
       quanti: cure.senzaProprietario,
       testo: "immobili senza proprietario collegato",
       href: "/immobili?noOwner=1",
+    },
+    {
+      quanti: cure.senzaVia,
+      testo: "immobili senza via: nelle liste si vede il titolo al posto dell'indirizzo",
+      href: "/immobili?noAddress=1",
     },
     {
       quanti: cure.amlScaduti,

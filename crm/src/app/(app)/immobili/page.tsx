@@ -6,6 +6,7 @@ import {
   distinctCities,
   coverPhotos,
   countPropertiesWithoutOwner,
+  countPropertiesWithoutAddress,
   type PropertyFilters,
 } from "@/lib/queries";
 import { euro, shortDate, relative } from "@/lib/format";
@@ -29,6 +30,7 @@ export default async function PropertiesPage({
     rows.map((property) => property.id),
   );
   const senzaProprietario = countPropertiesWithoutOwner(user.id);
+  const senzaVia = countPropertiesWithoutAddress(user.id);
 
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, value]) => Boolean(value)) as [string, string][],
@@ -64,6 +66,24 @@ export default async function PropertiesPage({
               : "immobili non sono collegati a una scheda venditore"}
             : senza quel collegamento non sai chi chiamare per una trattativa.{" "}
             <Link href="/immobili?noOwner=1" className="font-medium underline">
+              Vedili
+            </Link>
+            .
+          </Banner>
+        </div>
+      ) : null}
+
+      {senzaVia > 0 && filters.noAddress !== "1" ? (
+        <div className="mb-4">
+          <Banner tone="amber">
+            {senzaVia}{" "}
+            {senzaVia === 1
+              ? "immobile non ha la via"
+              : "immobili non hanno la via"}
+            : nelle liste e nelle tendine compare il titolo al posto
+            dell&apos;indirizzo, e non si riconoscono al volo. Si completano
+            aprendoli una volta.{" "}
+            <Link href="/immobili?noAddress=1" className="font-medium underline">
               Vedili
             </Link>
             .

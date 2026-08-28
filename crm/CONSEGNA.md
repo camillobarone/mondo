@@ -4,7 +4,7 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-**Aggiornato al 27 agosto 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
+**Aggiornato al 28 agosto 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
 in testo semplice, da aprire con il Blocco note senza bisogno di niente.
 
 > **Nessuna password è scritta qui**, di proposito: questo file sta dentro il
@@ -535,9 +535,9 @@ normale l'autorizzazione andrebbe rinnovata ogni sette giorni.
     sono quasi tutti così), e wa.me apriva una chat vuota o sbagliata. Ora il
     prefisso lo mette `whatsappHref()` in `format.ts`, ovunque.
 13. **«Da sistemare» sul cruscotto** — acquirenti senza richiesta aperta,
-    immobili senza proprietario, documenti antiriciclaggio scaduti, clienti
-    senza consenso privacy. Ogni voce apre l'elenco già filtrato
-    (`/clienti?senza=…`).
+    immobili senza proprietario, **immobili senza la via**, documenti
+    antiriciclaggio scaduti, clienti senza consenso privacy. Ogni voce apre
+    l'elenco già filtrato (`/clienti?senza=…`, `/immobili?noAddress=1`).
 14. **Copia di sicurezza dal browser** — Utenti → *Scarica l'archivio* (solo
     titolare, annotato nel registro). Usa l'API di backup di SQLite: coerente
     anche a programma in uso.

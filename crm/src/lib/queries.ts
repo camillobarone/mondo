@@ -321,8 +321,24 @@ export interface PropertyFilters {
   priceMax?: string;
   /** Solo quelli senza proprietario collegato. */
   noOwner?: string;
+  /** Solo quelli senza via, da completare a mano. */
+  noAddress?: string;
   page?: string;
 }
+
+/**
+ * Un immobile "senza via".
+ *
+ * Sta scritto qui una volta sola perche' lo usano in due: il filtro
+ * dell'elenco e il numero che lo annuncia. Se le due condizioni si
+ * scollegassero, il cruscotto direbbe "12 da completare" e l'elenco ne
+ * aprirebbe undici, senza che si capisca perche'.
+ *
+ * L'indirizzo e' obbligatorio dal 27 agosto 2026, ma solo per i salvataggi da
+ * allora in poi: le schede piu' vecchie hanno NULL, e una salvata con un campo
+ * di soli spazi ha la stringa vuota. Valgono tutte e due.
+ */
+const IMMOBILE_SENZA_VIA = `(p.address IS NULL OR TRIM(p.address) = '')`;
 
 export type PropertyRow = Property & {
   owner_name: string | null;
@@ -372,6 +388,9 @@ function propertyWhere(
   }
   if (filters.noOwner === "1") {
     clauses.push("p.owner_client_id IS NULL");
+  }
+  if (filters.noAddress === "1") {
+    clauses.push(IMMOBILE_SENZA_VIA);
   }
   if (filters.priceMin) {
     clauses.push("p.price >= ?");
@@ -985,6 +1004,15 @@ export function countPropertiesWithoutOwner(utente: number): number {
   );
 }
 
+/** Quanti immobili non hanno la via. Stessa condizione del filtro dell'elenco. */
+export function countPropertiesWithoutAddress(utente: number): number {
+  return count(
+    `SELECT COUNT(*) AS n FROM properties p
+      WHERE p.deleted_at IS NULL AND ${IMMOBILE_SENZA_VIA} AND ${IMMOBILE_MIO}`,
+    [utente],
+  );
+}
+
 /**
  * Le mancanze che non si vedono finche' non fanno danno: l'acquirente che non
  * entra negli incroci perche' nessuno ha scritto cosa cerca, il consenso
@@ -993,12 +1021,14 @@ export function countPropertiesWithoutOwner(utente: number): number {
  */
 export function daSistemare(utente: number): {
   senzaProprietario: number;
+  senzaVia: number;
   senzaRichiesta: number;
   senzaPrivacy: number;
   amlScaduti: number;
 } {
   return {
     senzaProprietario: countPropertiesWithoutOwner(utente),
+    senzaVia: countPropertiesWithoutAddress(utente),
     senzaRichiesta: count(
       `SELECT COUNT(*) AS n FROM clients c
         WHERE c.deleted_at IS NULL

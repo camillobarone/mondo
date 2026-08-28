@@ -76,9 +76,16 @@ anche con nome, email, riferimento (`MI-2041`) e zona.
 **Da sistemare** — sul cruscotto c'è un riquadro con le mancanze che non si
 vedono finché non fanno danno: acquirenti senza una richiesta aperta (che
 quindi gli incroci non vedono), immobili senza proprietario collegato,
-documenti antiriciclaggio scaduti, clienti senza consenso privacy. Ogni numero
-si clicca e apre l'elenco già filtrato. Quando è tutto a posto, il riquadro
-sparisce.
+**immobili senza la via**, documenti antiriciclaggio scaduti, clienti senza
+consenso privacy. Ogni numero si clicca e apre l'elenco già filtrato. Quando è
+tutto a posto, il riquadro sparisce.
+
+Gli **immobili senza la via** sono quelli entrati in archivio prima che
+l'indirizzo diventasse obbligatorio: nelle liste e nelle tendine compare il
+titolo al posto della via, e non si riconoscono al volo. Il numero apre
+l'elenco dei soli immobili da completare, così non li apri tutti per scoprire
+quali sono. Lo stesso avviso compare in cima a **Immobili**, e sparisce da sé
+quando l'ultimo è stato completato.
 
 **Proponi su WhatsApp** — negli **Incroci**, e nella scheda immobile sotto *A
 chi proporlo*, accanto a ogni abbinamento c'è un pulsante che apre WhatsApp con
