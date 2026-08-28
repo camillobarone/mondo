@@ -96,6 +96,19 @@ aggiornati gli URL dentro `crm/deploy/installa.sh` e `crm/deploy/aggiorna.sh`.
 | `crm/CONSEGNA.md` | questo documento |
 | `crm/HANDOFF.md` | per far ripartire una conversazione nuova con Claude senza perdere il filo |
 
+`CONSEGNA.txt` e `HANDOFF.txt` sono gli stessi due documenti in **testo
+semplice**, da aprire con il Blocco note senza bisogno di niente — sono quelli
+da stampare e tenere in cartella. **Non si scrivono a mano**: si rifanno dai
+`.md` con un comando, e finché lo si usa non possono più restare indietro.
+
+```bash
+cd crm && npm run testo              # li riscrive
+cd crm && npm run testo -- --controlla   # dice solo se sono indietro
+```
+
+Erano stati scritti a mano una volta e poi dimenticati: il 28 agosto 2026 erano
+fermi al 5, e raccontavano un programma di tre settimane prima.
+
 ---
 
 ## 4 · Come è fatto dentro

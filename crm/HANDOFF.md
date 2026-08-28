@@ -303,7 +303,8 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     testa, 3 senza via l'uno e 5 l'altro): 19 controlli, compreso che nessuno dei
     due veda mai il totale dell'archivio (8), che l'esportazione non porti fuori
     niente del collega, e che avviso e voce spariscano quando gli indirizzi
-    vengono completati.
+    vengono completati. Messo in esercizio e **confermato da lui sul gestionale
+    vero**: *«ora vedo la voce nel cruscotto»*.
 
 ---
 
@@ -404,7 +405,13 @@ email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
   usa-e-getta nello scratchpad, dati di prova via `better-sqlite3`, Playwright
   con `executablePath: "/opt/pw-browsers/chromium"` (i pacchetti si prendono
   con un symlink da `/opt/node22/lib/node_modules/`, **da rimuovere dopo**);
-- prima di dichiarare finito: `npx tsc --noEmit` e `npm run build`.
+- **i `.txt` non si scrivono a mano.** `CONSEGNA.txt` e `HANDOFF.txt` sono i
+  gemelli in testo semplice dei rispettivi `.md`, e si rifanno con
+  `npm run testo` (`npm run testo -- --controlla` dice solo se sono indietro).
+  Toccato un `.md`, si rilancia — erano stati scritti a mano e sono rimasti
+  indietro di tre settimane senza che se ne accorgesse nessuno;
+- prima di dichiarare finito: `npx tsc --noEmit`, `npm run build` e
+  `npm run testo`.
 
 ### Trappole già pagate (non ripeterle)
 

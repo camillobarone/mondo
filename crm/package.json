@@ -10,6 +10,7 @@
     "backup": "node scripts/backup.mjs",
     "promemoria": "node scripts/promemoria.mjs",
     "posta": "node scripts/posta.mjs",
+    "testo": "node scripts/testo.mjs",
     "password": "node scripts/password.mjs"
   },
   "dependencies": {

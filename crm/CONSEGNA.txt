@@ -6,8 +6,9 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-Aggiornato al 5 agosto 2026. Esiste anche come CONSEGNA.txt, stessa cosa
-in testo semplice, da aprire con il Blocco note senza bisogno di niente.
+Aggiornato al 28 agosto 2026. Questa è la versione in testo semplice,
+da aprire con il Blocco note senza bisogno di niente. L'originale è
+CONSEGNA.md.
 
   | Nessuna password è scritta qui, di proposito: questo file sta dentro il
   | repository. Dove sono conservate è indicato di volta in volta.
@@ -104,8 +105,20 @@ Documentazione già nel repository
       questo documento
 
   crm/HANDOFF.md
-      per far ripartire una conversazione nuova con Claude senza perdere
-      il filo
+      per far ripartire una conversazione nuova con Claude senza perdere il
+      filo
+
+
+CONSEGNA.txt e HANDOFF.txt sono gli stessi due documenti in testo
+semplice, da aprire con il Blocco note senza bisogno di niente — sono quelli
+da stampare e tenere in cartella. Non si scrivono a mano: si rifanno dai
+.md con un comando, e finché lo si usa non possono più restare indietro.
+
+    cd crm && npm run testo              # li riscrive
+    cd crm && npm run testo -- --controlla   # dice solo se sono indietro
+
+Erano stati scritti a mano una volta e poi dimenticati: il 28 agosto 2026 erano
+fermi al 5, e raccontavano un programma di tre settimane prima.
 
 
 4 · COME È FATTO DENTRO
@@ -117,6 +130,7 @@ Documentazione già nel repository
   Archivio     SQLite con better-sqlite3 v13, modalità WAL
   Immagini     sharp (ridimensiona a 1920 px + miniatura 480 px)
   Accesso      password con scrypt, cookie di sessione firmato in HMAC
+
 
 Nessun database esterno, nessun servizio a pagamento, nessuna dipendenza da
 terzi oltre l'hosting. Non ci sono chiamate verso l'esterno: l'archivio
@@ -167,51 +181,25 @@ Due dettagli che sembrano scelte estetiche e invece non lo sono
 5 · SUL SERVER, DOVE STA COSA
 -----------------------------
 
-  Cartella del programma
-      /opt/mondo-crm
-
-  Archivio
-      /opt/mondo-crm/data/mondo.db
-
-  Foto
-      /opt/mondo-crm/data/foto/<id immobile>/
-
-  Chiave delle sessioni
-      /opt/mondo-crm/data/secret.key (generata da sola, 0600)
-
-  Copie di sicurezza
-      /opt/mondo-crm/backup/
-
-  Utente di sistema
-      mondo (non amministratore)
-
-  Servizio
-      mondo-crm (systemd)
-
-  Porta interna
-      3000, solo su 127.0.0.1
-
-  Reverse proxy
-      nginx, /etc/nginx/sites-available/mondo-crm
-
-  Certificato
-      Let's Encrypt via certbot, si rinnova da sé
-
-  Firewall
-      ufw: aperte solo 22, 80, 443
-
-  Copia notturna
-      cron, /etc/cron.d/mondo-crm, ogni notte alle 02:00
-
-  Avvisi email
-      stesso cron, ogni 5 minuti, scripts/promemoria.mjs
-
-  Configurazione posta
-      /etc/mondo-crm.env (fuori dal programma, sopravvive agli
-      aggiornamenti)
-
-  Fuso orario
-      TZ=Europe/Rome nel servizio e nel cron
+  Cartella del programma   /opt/mondo-crm
+  Archivio                 /opt/mondo-crm/data/mondo.db
+  Foto                     /opt/mondo-crm/data/foto/<id immobile>/
+  Chiave delle sessioni    /opt/mondo-crm/data/secret.key (generata da sola,
+                           0600)
+  Copie di sicurezza       /opt/mondo-crm/backup/
+  Utente di sistema        mondo (non amministratore)
+  Servizio                 mondo-crm (systemd)
+  Porta interna            3000, solo su 127.0.0.1
+  Reverse proxy            nginx, /etc/nginx/sites-available/mondo-crm
+  Certificato              Let's Encrypt via certbot, si rinnova da sé
+  Firewall                 ufw: aperte solo 22, 80, 443
+  Copia notturna           cron, /etc/cron.d/mondo-crm, ogni notte alle 02:00
+  Copia fuori dal server   stesso cron, il primo di ogni mese alle 03:00, su
+                           Google Drive via rclone (capitolo 7-bis)
+  Avvisi email             stesso cron, ogni 5 minuti, scripts/promemoria.mjs
+  Configurazione posta     /etc/mondo-crm.env (fuori dal programma, sopravvive
+                           agli aggiornamenti)
+  Fuso orario              TZ=Europe/Rome nel servizio e nel cron
 
 
 Il programma può scrivere soltanto in data/, backup/ e .next/
@@ -285,30 +273,107 @@ Va scritto così:
 6-BIS · FAR PARTIRE GLI AVVISI PER EMAIL
 ----------------------------------------
 
-Trenta minuti prima di ogni appuntamento parte un'email a chi ce l'ha in agenda.
-Il meccanismo è già installato e gira ogni 5 minuti; manca solo dirgli da quale
-casella spedire. Si fa una volta sola.
+Da questa configurazione dipendono due cose: l'avviso 30 minuti prima di
+ogni appuntamento, e il collegamento di Password dimenticata?. Il meccanismo è
+già installato e gira; manca solo dirgli da quale casella spedire.
+Si fa una volta sola.
 
-    ssh root@77.81.234.151 "nano /etc/mondo-crm.env"
 
-Compila le cinque righe (esempio con una casella Aruba):
+La casella è su SiteGround, non su Aruba
 
-    SMTP_HOST=smtps.aruba.it
+Sono due macchine diverse e si confondono facilmente: il gestionale sta su
+Aruba, la posta del dominio sta su SiteGround insieme al sito. Lo dicono i
+DNS del dominio:
+
+  MX → mx10.antispam.mailspamprotection.com
+      il filtro antispam di SiteGround: la posta in arrivo va lì
+
+  mail.mondoimmobiliarelecce.it → 35.214.190.219
+      un indirizzo SiteGround
+
+  SPF → include:…spf.auto.dnssmarthost.net
+      sempre SiteGround
+
+
+Quindi l'host da mettere è mail.mondoimmobiliarelecce.it. Un esempio con
+smtps.aruba.it — che stava scritto qui fino al 27 agosto 2026 — porta a una
+configurazione che non funziona e non dice perché.
+
+Lo conferma il pannello stesso: in Site Tools → Email → Accounts, il riquadro
+Configurazione email riporta server in uscita mail.mondoimmobiliarelecce.it,
+porta SMTP 465 (e IMAP 993 per la posta in arrivo). Se un domani cambiassero,
+è lì che si guarda.
+
+Perché non far spedire direttamente il server del gestionale. L'SPF del
+dominio elenca chi è autorizzato a spedire per @mondoimmobiliarelecce.it, e
+l'IP del server Aruba (77.81.234.151) non c'è. Spedendo da lì le email
+risulterebbero non autorizzate e finirebbero nello spam. Appoggiandosi alla
+casella SiteGround spedisce SiteGround, che l'SPF autorizza già: nessun record
+DNS da toccare.
+
+
+I tre comandi
+
+1. Apri il file:
+
+    ssh root@77.81.234.151 -t "nano /etc/mondo-crm.env"
+
+Il -t non è un dettaglio: senza, ssh non apre un terminale vero e nano
+non parte («unable to open the terminal»). Serve per qualunque programma a
+schermate — nano, rclone config, top.
+
+Compila le cinque righe. La casella dev'essere una che esiste davvero in
+Site Tools → Email → Accounts su SiteGround:
+
+    SMTP_HOST=mail.mondoimmobiliarelecce.it
     SMTP_PORT=465
     SMTP_USER=info@mondoimmobiliarelecce.it
     SMTP_PASS=la-password-della-casella
     SMTP_FROM=info@mondoimmobiliarelecce.it
 
-Salva con Ctrl+O, Invio, poi esci con Ctrl+X. Quindi:
+SMTP_USER è l'indirizzo completo, non solo info, e la password è quella
+della casella, non quella del pannello SiteGround. Se la password contiene
+spazi, apici o $, mettila fra apici singoli. Salva con Ctrl+O, Invio, ed
+esci con Ctrl+X.
 
+2. Prova che sia giusta, prima di riavviare:
+
+    ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo npm run posta"
+
+Non spedisce niente: apre la connessione, fa l'accesso e dice se ha funzionato.
+Se qualcosa non va dice quale delle cinque righe è sbagliata — nome
+inesistente, porta chiusa, cifratura sbagliata per quella porta, utenza o
+password rifiutate, mittente rifiutato. Si corregge il file e si ridà lo stesso
+comando.
+
+Se la 465 non risponde, prova SMTP_PORT=587: SiteGround accetta tutte e due,
+e alcune reti bloccano una delle due in uscita.
+
+3. Mandane una vera a te stesso, poi riavvia:
+
+    ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo npm run posta -- --manda"
     ssh root@77.81.234.151 "systemctl restart mondo-crm"
 
-Per provare senza spedire niente:
+Il riavvio serve perché il programma legge quel file solo all'avvio: finché non
+lo fai, gli avvisi partono dal cron ma Password dimenticata? continua a dire
+che la posta non è configurata.
+
+
+Se l'email non arriva
+
+Il comando ha detto «spedita» ma in casella non c'è niente: allora non è più un
+problema di configurazione. Guarda nella posta indesiderata; se è lì, è la
+reputazione del mittente. Il registro degli invii automatici sta in
+/opt/mondo-crm/backup/promemoria.log.
+
+Per vedere quali avvisi manderebbe il cron in questo momento, senza spedirli:
 
     ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo node scripts/promemoria.mjs --prova"
 
-Stampa cosa manderebbe. Senza configurazione dice «Posta non configurata» ed
-esce: il calendario funziona lo stesso, è solo l'email che non parte.
+Attenzione: questo comando non prova la configurazione. Non apre nessuna
+connessione, quindi passa anche con la password sbagliata, e se non ci sono
+appuntamenti nella mezz'ora dice solo «nessun appuntamento». Per sapere se la
+posta funziona serve npm run posta.
 
 Il file contiene una password, quindi lo leggono solo root e il programma
 (chmod 640). Sta fuori dalla cartella del gestionale apposta: un
@@ -325,16 +390,82 @@ aggiornamento non lo tocca.
 - vengono copiate anche le foto
 
   | Una copia sullo stesso server non è una copia. Se quel disco muore, muore
-  | con lui. Va portata fuori — su F:\Gestionale backup, una volta a settimana,
-  | con il comando scp sopra.
+  | con lui. Va portata fuori: in automatico ogni mese su Google Drive (capitolo
+  | 7-bis), oppure a mano su F:\Gestionale backup, con il comando scp sopra.
 
 Il pulsante Scarica l'archivio che c'era nella pagina Utenti è stato
 tolto. Da quando ogni collaboratore vede solo le proprie schede, un file con
 dentro tutto l'archivio sarebbe la separazione aggirata con un clic. La copia si
-prende dal server, con lo scp del capitolo 6: è l'unica strada, ed è anche
-l'unica che porta via anche le foto.
+prende dal server, con lo scp del capitolo 6: è l'unica strada a mano, ed è
+anche l'unica che porta via anche le foto.
 
 Chi vuole solo le proprie schede le esporta in CSV da Clienti e da Immobili.
+
+
+7-BIS · MANDARE LE COPIE FUORI DAL SERVER, IN AUTOMATICO
+--------------------------------------------------------
+
+Si fa una volta sola. Da quel momento, il primo giorno di ogni mese alle
+3 di notte, il server manda da solo l'ultima copia dell'archivio e le foto
+nuove su Google Drive — senza bisogno di ricordarsene, senza disco esterno.
+
+    ssh root@77.81.234.151 "curl https://rclone.org/install.sh | sudo bash"
+    ssh root@77.81.234.151 -t "rclone config"
+
+Il secondo comando fa una serie di domande, una alla volta:
+
+  tipo di operazione
+      n — nuovo collegamento (new remote)
+
+  nome
+      gdrive — esattamente così, minuscolo
+
+  tipo di spazio
+      cerca nell'elenco Google Drive e scrivi il suo numero
+
+  client_id
+      vuoto, solo Invio
+
+  client_secret
+      vuoto, solo Invio
+
+  scope
+      1 — accesso completo
+
+  root_folder_id
+      vuoto, solo Invio
+
+  service_account_file
+      vuoto, solo Invio
+
+  Edit advanced config?
+      n
+
+  Use auto config?
+      n — il server non ha un browser proprio
+
+
+A quel punto compare un indirizzo lungo. Aprilo su un browser qualsiasi —
+anche dal telefono — accedi con l'account Google dove vuoi salvare le
+copie (può essere camillo.barone@gmail.com o uno dedicato solo a questo), e
+incolla nel terminale il codice che ti restituisce alla fine. Poi:
+
+  Configure as Shared Drive?
+      n
+
+  conferma finale
+      y, poi q per uscire
+
+
+Da quel momento è collegato per sempre: non va rifatto, nemmeno dopo un
+aggiornamento del programma. Le copie finiscono in una cartella
+mondo-crm-backup dentro quel Google Drive, divise in database/ e foto/.
+
+Per controllare che sia partito bene, il mese dopo:
+    ssh root@77.81.234.151 "cat /opt/mondo-crm/backup/esterno.log"
+
+Finché rclone non è installato o non è ancora collegato, questo passaggio non
+fa nulla — né di buono né di dannoso: aspetta in silenzio che tu lo colleghi.
 
 
 8 · L'ARCHIVIO DENTRO ADESSO
@@ -345,7 +476,7 @@ Migrato dai file esportati dal gestionale precedente:
   clienti_export.xlsx (1.111 righe)
       1.108 clienti importati, 3 doppioni saltati
 
-  nelle note degli stessi clienti
+  — nelle note degli stessi clienti
       206 richieste d'acquisto riconosciute e ricostruite
 
   lista_immobili03_08_2026.xls (53 righe)
@@ -446,9 +577,9 @@ Ricerca, WhatsApp, cruscotto, copia dal browser
     sono quasi tutti così), e wa.me apriva una chat vuota o sbagliata. Ora il
     prefisso lo mette whatsappHref() in format.ts, ovunque.
 13. «Da sistemare» sul cruscotto — acquirenti senza richiesta aperta,
-    immobili senza proprietario, documenti antiriciclaggio scaduti, clienti
-    senza consenso privacy. Ogni voce apre l'elenco già filtrato
-    (/clienti?senza=…).
+    immobili senza proprietario, immobili senza la via, documenti
+    antiriciclaggio scaduti, clienti senza consenso privacy. Ogni voce apre
+    l'elenco già filtrato (/clienti?senza=…, /immobili?noAddress=1).
 14. Copia di sicurezza dal browser — Utenti → Scarica l'archivio (solo
     titolare, annotato nel registro). Usa l'API di backup di SQLite: coerente
     anche a programma in uso.
@@ -538,10 +669,10 @@ le caratteristiche sì, l'identità no:
   cosa cerca un suo acquirente, e con che budget
       nome e telefono di quell'acquirente
 
-  Del collega si vede
+  
       il prezzo minimo accettato dal venditore
 
-  Del collega si vede
+  
       note interne e provvigioni
 
 
@@ -618,8 +749,7 @@ dello Studio, resta tutto in capo al titolare ed è molto più semplice.
       proxy_set_header X-Forwarded-Proto in nginx
 
   L'importazione di un file grosso fallisce
-      client_max_body_size in nginx (il valore normale, 1 MB, è troppo
-      poco)
+      client_max_body_size in nginx (il valore normale, 1 MB, è troppo poco)
 
   La compilazione si ferma a metà
       RAM insufficiente — serve la memoria di scambio
@@ -628,9 +758,9 @@ dello Studio, resta tutto in capo al titolare ed è molto più semplice.
       mancano build-essential e python3
 
   Un cliente non compare negli incroci
-      il programma incrocia le richieste, non i clienti: senza una
-      richiesta registrata non appare. La scheda immobile ha il riquadro
-      Richieste scartate che dice il motivo di ogni esclusione
+      il programma incrocia le richieste, non i clienti: senza una richiesta
+      registrata non appare. La scheda immobile ha il riquadro Richieste
+      scartate che dice il motivo di ogni esclusione
 
   Il certificato è scaduto
       certbot renew — normalmente si rinnova da solo
@@ -642,8 +772,7 @@ dello Studio, resta tutto in capo al titolare ed è molto più semplice.
 Nessuna è in questo file né nel repository.
 
   Accesso al gestionale
-      creato all'installazione, stampato a schermo; poi si gestisce da
-      Utenti
+      creato all'installazione, stampato a schermo; poi si gestisce da Utenti
 
   SSH al server
       chiave SSH sul PC
