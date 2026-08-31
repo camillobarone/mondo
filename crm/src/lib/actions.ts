@@ -12,6 +12,7 @@ import {
 import { invia, postaConfigurata, indirizzoBase } from "./posta";
 import { parseCsv, decodeText } from "./csv";
 import { leggiAree, scriviAree, proiezione } from "./aree";
+import { collegamentoVideo } from "./video";
 import { readXlsx, looksLikeXlsx } from "./xlsx";
 import { salvaFoto, cancellaFile, MAX_FOTO_PER_IMMOBILE } from "./photos";
 import {
@@ -365,8 +366,16 @@ export async function saveProperty(form: FormData) {
     mandate_end: nullable(form, "mandate_end"),
     exclusive: bool(form, "exclusive"),
     commission_pct: decimal(form, "commission_pct"),
+    video_url: null as string | null,
     notes: nullable(form, "notes"),
   };
+
+  // Il collegamento al video si accetta se e' un indirizzo vero, e si rifiuta
+  // se non lo e': un campo che prende qualunque testo diventa in fretta un
+  // secondo blocco note, e l'applicazione del canale ci si romperebbe sopra.
+  const video = collegamentoVideo(text(form, "video_url"));
+  if (video.errore) throw new Error(video.errore);
+  values.video_url = video.url;
 
   if (!values.title) throw new Error("Serve un titolo per l'immobile.");
   // Senza indirizzo, l'immobile compare nelle liste e nelle tendine col solo
@@ -387,7 +396,8 @@ export async function saveProperty(form: FormData) {
          sqm = ?, rooms = ?, bathrooms = ?, floor = ?, elevator = ?, outdoor = ?, garage = ?,
          condition = ?, energy_class = ?, price = ?, min_price = ?, status = ?,
          owner_client_id = ?, agent_id = ?, mandate_start = ?, mandate_end = ?,
-         exclusive = ?, commission_pct = ?, notes = ?, updated_at = datetime('now')
+         exclusive = ?, commission_pct = ?, video_url = ?, notes = ?,
+         updated_at = datetime('now')
        WHERE id = ?`,
       [
         values.ref, values.title, values.kind, values.contract, values.address, values.city,
@@ -395,7 +405,7 @@ export async function saveProperty(form: FormData) {
         values.outdoor, values.garage, values.condition, values.energy_class, values.price,
         values.min_price, values.status, values.owner_client_id, values.agent_id ?? user.id,
         values.mandate_start, values.mandate_end, values.exclusive, values.commission_pct,
-        values.notes, id,
+        values.video_url, values.notes, id,
       ],
     );
 
@@ -419,15 +429,16 @@ export async function saveProperty(form: FormData) {
     `INSERT INTO properties (
        ref, title, kind, contract, address, city, zone, sqm, rooms, bathrooms, floor,
        elevator, outdoor, garage, condition, energy_class, price, min_price, status,
-       owner_client_id, agent_id, mandate_start, mandate_end, exclusive, commission_pct, notes
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       owner_client_id, agent_id, mandate_start, mandate_end, exclusive, commission_pct,
+       video_url, notes
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       values.ref, values.title, values.kind, values.contract, values.address, values.city,
       values.zone, values.sqm, values.rooms, values.bathrooms, values.floor, values.elevator,
       values.outdoor, values.garage, values.condition, values.energy_class, values.price,
       values.min_price, values.status, values.owner_client_id, values.agent_id ?? user.id,
       values.mandate_start, values.mandate_end, values.exclusive, values.commission_pct,
-      values.notes,
+      values.video_url, values.notes,
     ],
   );
 

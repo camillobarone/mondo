@@ -2,6 +2,7 @@ import { currentUser } from "@/lib/auth";
 import { audit } from "@/lib/db";
 import { listAllProperties, type PropertyFilters } from "@/lib/queries";
 import { buildCsv } from "@/lib/csv";
+import { idVideoYouTube } from "@/lib/video";
 
 /** Scarica il portafoglio filtrato come CSV apribile con Excel. */
 export async function GET(request: Request) {
@@ -32,6 +33,15 @@ export async function GET(request: Request) {
     "Inizio incarico",
     "Scadenza incarico",
     "Esclusiva",
+    // Il collegamento com'e' stato scritto, e accanto l'identificativo del
+    // video ricavato da li'. Due colonne e non una: il collegamento serve a
+    // una persona che lo clicca, l'identificativo a un programma che deve
+    // accoppiare il video al suo immobile senza indovinare dal titolo. Vuoto
+    // quando il collegamento non e' di YouTube o non contiene un
+    // identificativo riconoscibile — un identificativo inventato sarebbe
+    // peggio di nessun identificativo.
+    "Video YouTube",
+    "ID video",
   ];
 
   // Le provvigioni le vede solo il titolare.
@@ -57,6 +67,8 @@ export async function GET(request: Request) {
         property.mandate_start,
         property.mandate_end,
         property.exclusive ? "Sì" : "No",
+        property.video_url,
+        idVideoYouTube(property.video_url),
       ];
       if (isOwner) {
         row.push(property.sold_price, property.commission_seller, property.commission_buyer);

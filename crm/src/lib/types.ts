@@ -79,6 +79,8 @@ export interface Property {
   commission_seller: number | null;
   commission_buyer: number | null;
   commission_paid: number;
+  /** Il video dell'immobile su YouTube. Il gestionale lo conserva e basta: non ci parla. */
+  video_url: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

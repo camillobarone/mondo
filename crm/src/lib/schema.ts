@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS properties (
   commission_seller INTEGER,
   commission_buyer  INTEGER,
   commission_paid   INTEGER NOT NULL DEFAULT 0,
+  video_url         TEXT,                              -- il video dell'immobile su YouTube
   notes             TEXT,
   created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at        TEXT    NOT NULL DEFAULT (datetime('now')),

@@ -149,6 +149,18 @@ export default async function PropertyPage({
               <DataRow label="Box">{property.garage ? "Sì" : "No"}</DataRow>
               <DataRow label="Stato immobile">{property.condition}</DataRow>
               <DataRow label="Classe energetica">{property.energy_class}</DataRow>
+              <DataRow label="Video">
+                {property.video_url ? (
+                  <a
+                    href={property.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-700 hover:underline"
+                  >
+                    Guarda il video ↗
+                  </a>
+                ) : null}
+              </DataRow>
             </dl>
           </Card>
 

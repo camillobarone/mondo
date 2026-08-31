@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 28 agosto 2026.**
+**Aggiornato al 31 agosto 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -350,6 +350,53 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     sbagliato e cercava i titoli: dodici controlli rossi, tutti colpa della
     prova e non del codice.
 
+17. **Il video dell'immobile** (31 agosto 2026). Nato da una richiesta arrivata
+    da un'altra chat, per un'altra applicazione — quella che gestisce il canale
+    YouTube — che aveva bisogno di sapere quali immobili hanno un video e di
+    agganciare ogni video al suo immobile.
+
+    La richiesta cosi' com'era arrivata **non riguardava questo programma**:
+    parlava del repository `camillobarone/mondo-sito`, di cartelle `app/` e
+    `views/` e di rotte `/gestionale/immobili/{id}`, che qui non esistono. E'
+    stata rifiutata per la regola del capitolo 0, e ricostruita da capo dopo
+    aver chiesto a lui cosa serviva davvero. Il pezzo mancante non era
+    l'esportazione — c'era gia' — ma il **legame fra immobile e video**.
+
+    - Colonna nuova `properties.video_url`, campo **Video su YouTube** sulla
+      scheda, collegamento cliccabile sulla scheda dell'immobile.
+    - Due colonne nel CSV: **Video YouTube** (il collegamento come e' stato
+      scritto) e **ID video** (il codice ricavato da li'). Due e non una: il
+      collegamento serve a chi lo clicca, il codice a un programma che deve
+      accoppiare video e immobile senza indovinare dal titolo.
+      `idVideoYouTube()` in **`src/lib/video.ts`** regge `watch?v=`, `youtu.be`,
+      `shorts`, `embed`, `live`, con o senza i parametri del pulsante
+      *Condividi*, e restituisce `null` invece di inventare.
+    - Voce **«immobili in vendita senza un video»** nel riquadro *Da sistemare*,
+      con `IMMOBILE_SENZA_VIDEO` scritta una volta sola come per la via. Conta
+      solo i proponibili: un numero che comprende i venduti non scende mai, e
+      un numero che non scende si smette di guardare.
+    - **I dati escono a mano.** Scelta sua fra il CSV scaricato e un indirizzo
+      che l'altra applicazione interroga da sola: ha scelto il CSV, e il
+      gestionale continua a non esporre niente verso l'esterno.
+
+    Verificato: 25 casi sull'estrazione del codice (tutte le forme di link, piu'
+    quello che va rifiutato) e 22 controlli in browser con due utenti, compresi
+    il conteggio che esclude i venduti, il muro fra collaboratori, e il CSV
+    riletto colonna per colonna — c'e' il video, non c'e' il prezzo minimo.
+
+    **Due trappole pagate qui:**
+    - **`pattern` in JSX non e' una stringa JavaScript.** Scritto
+      `pattern="\\S+\\.\\S+"` diventa una barra rovesciata letterale, nessun
+      valore risulta mai valido e **il modulo non si invia piu'**, in silenzio.
+      Va scritto `pattern="\S+\.\S+"`. Se ne accorge solo una prova in browser:
+      TypeScript e `next build` passano tutti e due.
+    - **Un controllo del server che fallisce da' una pagina 500 senza
+      spiegazioni**, e vale per tutto il programma — «Serve un titolo», «Serve
+      l'indirizzo», non solo il video. Non c'e' nessun `error.tsx`, e in
+      produzione React nasconde comunque il messaggio. Per questo il campo del
+      video si difende **prima**, nel browser, col `pattern`: e' l'unico modo di
+      dire cosa non va senza riscrivere tutti i moduli. Vedi capitolo 5.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -358,6 +405,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 |---|---|
 | **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password.** Vedi il punto della situazione qui sotto. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
+| **Messaggi di errore che si leggono** | Quando un controllo del server rifiuta un salvataggio, il programma lancia un errore e l'utente si ritrova una **pagina 500 senza spiegazioni**: in produzione React nasconde il messaggio, e non c'e' nessun `error.tsx`. Vale per tutti i moduli, da sempre. La strada vera e' far tornare alle azioni un esito invece di lanciare, con `useActionState`, e mostrarlo accanto al campo — un lavoro che tocca tutti i moduli, da fare tutto insieme e non a pezzi. Per ora ci si difende nel browser (campi obbligatori, `pattern`). |
 | **Comune e zona anche sulla scheda immobile** | Deciso di rimandare: oggi «Cosa cerca» sceglie il comune da un elenco, ma sulla scheda dell'immobile comune e zona restano campi liberi. Gli incroci funzionano lo stesso — il confronto e' tollerante, «S. Cataldo» trova «San Cataldo» — ma su un immobile si puo' ancora scrivere una zona che in quel comune non esiste. Portare li' lo stesso selettore e' il passo naturale successivo. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |

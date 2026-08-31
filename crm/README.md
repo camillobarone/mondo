@@ -76,9 +76,9 @@ anche con nome, email, riferimento (`MI-2041`) e zona.
 **Da sistemare** — sul cruscotto c'è un riquadro con le mancanze che non si
 vedono finché non fanno danno: acquirenti senza una richiesta aperta (che
 quindi gli incroci non vedono), immobili senza proprietario collegato,
-**immobili senza la via**, documenti antiriciclaggio scaduti, clienti senza
-consenso privacy. Ogni numero si clicca e apre l'elenco già filtrato. Quando è
-tutto a posto, il riquadro sparisce.
+**immobili senza la via**, **immobili in vendita senza un video**, documenti
+antiriciclaggio scaduti, clienti senza consenso privacy. Ogni numero si clicca
+e apre l'elenco già filtrato. Quando è tutto a posto, il riquadro sparisce.
 
 Gli **immobili senza la via** sono quelli entrati in archivio prima che
 l'indirizzo diventasse obbligatorio: nelle liste e nelle tendine compare il
@@ -138,6 +138,43 @@ Vengono capiti anche i tracciati degli altri gestionali immobiliari:
 
 I doppioni vengono riconosciuti dal cellulare o dall'email e saltati, a meno che
 non chiedi esplicitamente di importarli.
+
+---
+
+## Il video dell'immobile
+
+Sulla scheda di ogni immobile, in fondo, c'è **Video su YouTube**: si incolla lì
+l'indirizzo del video e il gestionale se lo tiene. Da quel momento sai a colpo
+d'occhio quali immobili un video ce l'hanno e quali no — il cruscotto conta
+quelli **in vendita che non ce l'hanno**, e il numero apre l'elenco.
+
+Il gestionale **non parla con YouTube** e non va a guardare il video: conserva
+il collegamento e basta. A usarlo è l'applicazione che gestisce il canale, che
+legge l'esportazione degli immobili.
+
+Va bene qualsiasi forma di indirizzo — quello della barra del browser, quello
+del pulsante *Condividi*, uno short, anche senza `https://` davanti. Se incolli
+per sbaglio del testo che indirizzo non è, il campo te lo dice subito invece di
+salvarlo.
+
+### Cosa trova l'altra applicazione nel CSV
+
+Nell'esportazione da **Immobili → Esporta in Excel** ci sono due colonne nuove:
+
+| Colonna | Cosa contiene |
+|---|---|
+| **Video YouTube** | il collegamento come l'hai incollato, da cliccare |
+| **ID video** | il codice del video ricavato da quel collegamento |
+
+Sono due e non una perché servono a due lettori diversi: il collegamento a una
+persona che lo apre, il codice a un programma che deve accoppiare ogni video al
+suo immobile. Senza il codice, l'altra applicazione dovrebbe indovinare dai
+titoli — funziona finché i titoli sono scritti in modo regolare, e sbaglia in
+silenzio quando non lo sono.
+
+La colonna *ID video* resta vuota se il collegamento non è di YouTube o non
+contiene un codice riconoscibile. È voluto: un codice inventato sarebbe peggio
+di nessun codice.
 
 ---
 

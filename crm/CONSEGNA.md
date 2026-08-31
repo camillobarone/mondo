@@ -4,7 +4,7 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-**Aggiornato al 28 agosto 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
+**Aggiornato al 31 agosto 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
 in testo semplice, da aprire con il Blocco note senza bisogno di niente.
 
 > **Nessuna password è scritta qui**, di proposito: questo file sta dentro il
@@ -622,6 +622,36 @@ abbastanza per escludere, e decide l'agente.
 Non sono state convertite e non ne hanno bisogno: quelle scritte prima hanno il
 vecchio comune e le vecchie zone, e vengono lette come un'unica area. Continuano
 a incrociare esattamente come prima.
+
+---
+
+## 9-ter · Il video dell'immobile
+
+Aggiunto il 31 agosto 2026, perché l'applicazione che gestisce il canale YouTube
+aveva bisogno di sapere quali immobili hanno un video, e di agganciare ogni
+video al suo immobile.
+
+Sulla scheda dell'immobile c'è il campo **Video su YouTube**: ci si incolla
+l'indirizzo. Il gestionale **non chiama YouTube** — resta vero che il programma
+non fa nessuna chiamata verso l'esterno: conserva il collegamento e lo fa uscire
+nell'esportazione.
+
+Nel CSV degli immobili ci sono due colonne: **Video YouTube** (il collegamento
+come è stato scritto) e **ID video** (il codice ricavato da quel collegamento).
+Il codice si estrae da tutte le forme che YouTube usa — `watch?v=`, `youtu.be`,
+`shorts`, `embed`, `live`, con o senza i parametri che il pulsante *Condividi*
+attacca in coda. Resta vuoto quando non se ne riconosce uno.
+
+Sul cruscotto, nel riquadro *Da sistemare*, compaiono gli **immobili in vendita
+senza un video**. Conta solo quelli ancora proponibili: per un immobile venduto
+il video non serve più, e tenerlo nel conteggio darebbe un numero che non scende
+mai e che quindi si smette di guardare.
+
+**I dati escono a mano, non c'è nessuna porta aperta.** L'altra applicazione non
+interroga il gestionale: si scarica il CSV da *Immobili → Esporta in Excel* e lo
+si passa. È stata una scelta sua: aprire un indirizzo che un altro programma
+interroga da solo sarebbe la prima volta che il gestionale espone qualcosa verso
+l'esterno, e non è una cosa da fare di sfuggita.
 
 ---
 

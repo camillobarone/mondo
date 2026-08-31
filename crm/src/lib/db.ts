@@ -77,6 +77,13 @@ const COLONNE_AGGIUNTE: { tabella: string; colonna: string; definizione: string 
   // Lo stato in cui il cliente accetta l'immobile, in csv: quasi sempre piu'
   // d'uno ("ottimo o ristrutturato"), quindi non un valore solo.
   { tabella: "requirements", colonna: "conditions", definizione: "TEXT NOT NULL DEFAULT ''" },
+  // Il video dell'immobile su YouTube.
+  //
+  // Il gestionale non ci parla e non ci va a guardare: tiene il collegamento
+  // per sapere quali immobili un video ce l'hanno, e per farlo uscire
+  // nell'esportazione. A usarlo e' l'applicazione che gestisce il canale, che
+  // altrimenti dovrebbe accoppiare video e immobili confrontando i titoli.
+  { tabella: "properties", colonna: "video_url", definizione: "TEXT" },
 ];
 
 function aggiungiColonneMancanti(database: Database.Database) {

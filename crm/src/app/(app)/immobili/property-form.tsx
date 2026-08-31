@@ -190,6 +190,22 @@ export function PropertyForm({
         </div>
       </Card>
 
+      <Card title="Video">
+        <TextField
+          label="Video su YouTube"
+          name="video_url"
+          defaultValue={property?.video_url}
+          placeholder="https://www.youtube.com/watch?v=..."
+          // Il browser ferma qui quello che indirizzo non e' (uno spazio, o
+          // nessun punto), e lo dice accanto al campo. Se arrivasse al server
+          // verrebbe rifiutato lo stesso, ma con una pagina di errore che non
+          // spiega niente.
+          pattern="\S+\.\S+"
+          title="Incolla l'indirizzo del video, per esempio https://youtu.be/xxxxxxxxxxx"
+          hint="Incolla l'indirizzo del video. Serve a sapere quali immobili un video ce l'hanno, e finisce nell'esportazione per l'applicazione che gestisce il canale. Il gestionale non va a guardarlo."
+        />
+      </Card>
+
       <Card title="Note">
         <TextArea
           label="Note interne"

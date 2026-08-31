@@ -107,6 +107,8 @@ export function TextField({
   step,
   min,
   autoComplete,
+  pattern,
+  title,
 }: {
   label: string;
   name: string;
@@ -124,6 +126,18 @@ export function TextField({
    * ribalta dentro le credenziali che ha in memoria.
    */
   autoComplete?: string;
+  /**
+   * Forma che il valore deve avere, controllata dal browser prima di inviare.
+   *
+   * Non e' un vezzo: quando un controllo del server fallisce, questo programma
+   * lancia un errore e l'utente si ritrova una pagina di errore senza
+   * spiegazioni — in produzione React nasconde il messaggio. Fermare lo
+   * sbaglio qui, con l'avviso del browser accanto al campo, e' l'unico modo
+   * per dire davvero cosa non va senza riscrivere tutti i moduli.
+   */
+  pattern?: string;
+  /** Il messaggio che il browser mostra quando il valore non rispetta pattern. */
+  title?: string;
 }) {
   return (
     <Field label={label} name={name} hint={hint} className={className}>
@@ -134,6 +148,8 @@ export function TextField({
         step={step}
         min={min}
         required={required}
+        pattern={pattern}
+        title={title}
         placeholder={placeholder}
         autoComplete={autoComplete}
         defaultValue={defaultValue ?? ""}

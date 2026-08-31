@@ -323,6 +323,8 @@ export interface PropertyFilters {
   noOwner?: string;
   /** Solo quelli senza via, da completare a mano. */
   noAddress?: string;
+  /** Solo quelli ancora proponibili a cui manca il video. */
+  noVideo?: string;
   page?: string;
 }
 
@@ -339,6 +341,17 @@ export interface PropertyFilters {
  * di soli spazi ha la stringa vuota. Valgono tutte e due.
  */
 const IMMOBILE_SENZA_VIA = `(p.address IS NULL OR TRIM(p.address) = '')`;
+
+/**
+ * Un immobile «senza video», e come sopra la condizione sta scritta una volta
+ * sola perche' la usano il filtro e il numero che lo annuncia.
+ *
+ * Conta solo quelli ancora proponibili: per uno venduto o ritirato il video
+ * non serve piu', e tenerlo nel conteggio vorrebbe dire un numero che non
+ * scende mai e che quindi si smette di guardare.
+ */
+const IMMOBILE_SENZA_VIDEO = `((p.video_url IS NULL OR TRIM(p.video_url) = '')
+  AND p.status IN ('acquisizione','in_vendita'))`;
 
 export type PropertyRow = Property & {
   owner_name: string | null;
@@ -391,6 +404,9 @@ function propertyWhere(
   }
   if (filters.noAddress === "1") {
     clauses.push(IMMOBILE_SENZA_VIA);
+  }
+  if (filters.noVideo === "1") {
+    clauses.push(IMMOBILE_SENZA_VIDEO);
   }
   if (filters.priceMin) {
     clauses.push("p.price >= ?");
@@ -1013,6 +1029,15 @@ export function countPropertiesWithoutAddress(utente: number): number {
   );
 }
 
+/** Quanti immobili proponibili non hanno il video. Stessa condizione del filtro. */
+export function countPropertiesWithoutVideo(utente: number): number {
+  return count(
+    `SELECT COUNT(*) AS n FROM properties p
+      WHERE p.deleted_at IS NULL AND ${IMMOBILE_SENZA_VIDEO} AND ${IMMOBILE_MIO}`,
+    [utente],
+  );
+}
+
 /**
  * Le mancanze che non si vedono finche' non fanno danno: l'acquirente che non
  * entra negli incroci perche' nessuno ha scritto cosa cerca, il consenso
@@ -1022,6 +1047,7 @@ export function countPropertiesWithoutAddress(utente: number): number {
 export function daSistemare(utente: number): {
   senzaProprietario: number;
   senzaVia: number;
+  senzaVideo: number;
   senzaRichiesta: number;
   senzaPrivacy: number;
   amlScaduti: number;
@@ -1029,6 +1055,7 @@ export function daSistemare(utente: number): {
   return {
     senzaProprietario: countPropertiesWithoutOwner(utente),
     senzaVia: countPropertiesWithoutAddress(utente),
+    senzaVideo: countPropertiesWithoutVideo(utente),
     senzaRichiesta: count(
       `SELECT COUNT(*) AS n FROM clients c
         WHERE c.deleted_at IS NULL

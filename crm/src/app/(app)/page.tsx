@@ -83,6 +83,11 @@ export default async function DashboardPage() {
       href: "/immobili?noAddress=1",
     },
     {
+      quanti: cure.senzaVideo,
+      testo: "immobili in vendita senza un video su YouTube",
+      href: "/immobili?noVideo=1",
+    },
+    {
       quanti: cure.amlScaduti,
       testo: "documenti antiriciclaggio scaduti",
       href: "/clienti?senza=aml",
