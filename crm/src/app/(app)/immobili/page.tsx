@@ -7,6 +7,7 @@ import {
   coverPhotos,
   countPropertiesWithoutOwner,
   countPropertiesWithoutAddress,
+  countPropertiesPerGruppo,
   type PropertyFilters,
 } from "@/lib/queries";
 import { euro, shortDate, relative } from "@/lib/format";
@@ -31,6 +32,21 @@ export default async function PropertiesPage({
   );
   const senzaProprietario = countPropertiesWithoutOwner(user.id);
   const senzaVia = countPropertiesWithoutAddress(user.id);
+  const gruppi = countPropertiesPerGruppo(user.id, filters);
+
+  // Il gruppo scelto. Predefinito: gli attivi — aprendo l'elenco si vuole
+  // vedere cosa c'e' da vendere, non tutto quello che c'e' mai stato.
+  const gruppo = filters.gruppo ?? "attivi";
+
+  /** L'indirizzo di una scheda, conservando gli altri filtri e ripartendo da pagina 1. */
+  const schedaHref = (quale: string) => {
+    const q = new URLSearchParams(
+      Object.entries({ ...filters, gruppo: quale, page: undefined }).filter(
+        ([, v]) => Boolean(v),
+      ) as [string, string][],
+    );
+    return `/immobili?${q.toString()}`;
+  };
 
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, value]) => Boolean(value)) as [string, string][],
@@ -65,7 +81,7 @@ export default async function PropertiesPage({
               ? "immobile non è collegato a una scheda venditore"
               : "immobili non sono collegati a una scheda venditore"}
             : senza quel collegamento non sai chi chiamare per una trattativa.{" "}
-            <Link href="/immobili?noOwner=1" className="font-medium underline">
+            <Link href="/immobili?noOwner=1&gruppo=tutti" className="font-medium underline">
               Vedili
             </Link>
             .
@@ -83,7 +99,7 @@ export default async function PropertiesPage({
             : nelle liste e nelle tendine compare il titolo al posto
             dell&apos;indirizzo, e non si riconoscono al volo. Si completano
             aprendoli una volta.{" "}
-            <Link href="/immobili?noAddress=1" className="font-medium underline">
+            <Link href="/immobili?noAddress=1&gruppo=tutti" className="font-medium underline">
               Vedili
             </Link>
             .
@@ -91,8 +107,44 @@ export default async function PropertiesPage({
         </div>
       ) : null}
 
+      {/*
+        Le due meta' del portafoglio. Non compaiono quando si e' scelto uno
+        stato preciso dalla tendina: sarebbero due comandi che dicono la stessa
+        cosa in modo diverso, e uno dei due starebbe mentendo.
+      */}
+      {!filters.status ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            { valore: "attivi", etichetta: "Attivi", quanti: gruppi.attivi },
+            { valore: "altri", etichetta: "Venduti e altri stati", quanti: gruppi.altri },
+            { valore: "tutti", etichetta: "Tutti", quanti: gruppi.attivi + gruppi.altri },
+          ].map((scheda) => (
+            <Link
+              key={scheda.valore}
+              href={schedaHref(scheda.valore)}
+              className={
+                gruppo === scheda.valore
+                  ? "rounded-full bg-brand-700 px-4 py-1.5 text-sm font-medium text-white"
+                  : "rounded-full bg-slate-100 px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-200"
+              }
+            >
+              {scheda.etichetta}
+              <span className={gruppo === scheda.valore ? "ml-2 text-white/70" : "ml-2 text-slate-400"}>
+                {scheda.quanti}
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : null}
+
       <Card className="mb-5">
         <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          {/*
+            Il gruppo va portato dentro il modulo: senza, premere «Filtra»
+            riporterebbe di soppiatto agli attivi anche chi stava guardando i
+            venduti, e la ricerca sembrerebbe non trovare piu' niente.
+          */}
+          <input type="hidden" name="gruppo" value={gruppo} />
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="q">
               Cerca
@@ -231,7 +283,7 @@ export default async function PropertiesPage({
             <table className="tbl">
               <thead>
                 <tr>
-                  <th className="w-14"></th>
+                  <th className="w-44"></th>
                   <th>Immobile</th>
                   <th>Zona</th>
                   <th>Caratteristiche</th>
@@ -258,10 +310,10 @@ export default async function PropertiesPage({
                               src={`/foto/${property.id}/${cover.replace(/\.jpg$/, "-min.jpg")}`}
                               alt=""
                               loading="lazy"
-                              className="h-10 w-14 rounded border border-slate-200 object-cover"
+                              className="h-32 w-44 rounded-md border border-slate-200 object-cover"
                             />
                           ) : (
-                            <span className="flex h-10 w-14 items-center justify-center rounded border border-dashed border-slate-200 text-[10px] text-slate-300">
+                            <span className="flex h-32 w-44 items-center justify-center rounded-md border border-dashed border-slate-200 text-xs text-slate-300">
                               foto
                             </span>
                           )}

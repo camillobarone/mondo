@@ -4,7 +4,7 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-**Aggiornato al 31 agosto 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
+**Aggiornato al 1° settembre 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
 in testo semplice, da aprire con il Blocco note senza bisogno di niente.
 
 > **Nessuna password è scritta qui**, di proposito: questo file sta dentro il
@@ -652,6 +652,28 @@ interroga il gestionale: si scarica il CSV da *Immobili → Esporta in Excel* e 
 si passa. È stata una scelta sua: aprire un indirizzo che un altro programma
 interroga da solo sarebbe la prima volta che il gestionale espone qualcosa verso
 l'esterno, e non è una cosa da fare di sfuggita.
+
+---
+
+## 9-quater · L'elenco immobili si apre sugli attivi
+
+Chiesto il 1° settembre 2026. L'elenco mostrava tutto il portafoglio mai
+esistito, venduti compresi: per arrivare a quello su cui si lavora bisognava
+filtrare ogni volta.
+
+Ora apre sugli **attivi** — acquisizione e in vendita, gli stessi che il
+programma già considera proponibili — e in cima ci sono tre schede con i
+rispettivi numeri. La scheda scelta sopravvive alla ricerca e ai filtri; quando
+si sceglie uno stato preciso dalla tendina le schede spariscono, perché
+sarebbero due comandi che dicono la stessa cosa.
+
+**I collegamenti del cruscotto aprono sempre l'elenco completo.** I loro
+conteggi guardano tutti gli stati: se l'elenco si fosse aperto sui soli attivi,
+il cruscotto avrebbe promesso nove righe e ne avrebbe aperte cinque. È la stessa
+trappola dei conteggi già pagata due volte in questo programma.
+
+La foto di copertina nell'elenco è passata da 56×40 a **176×128 pixel**: serve a
+riconoscere l'immobile senza aprirlo.
 
 ---
 

@@ -75,17 +75,17 @@ export default async function DashboardPage() {
     {
       quanti: cure.senzaProprietario,
       testo: "immobili senza proprietario collegato",
-      href: "/immobili?noOwner=1",
+      href: "/immobili?noOwner=1&gruppo=tutti",
     },
     {
       quanti: cure.senzaVia,
       testo: "immobili senza via: nelle liste si vede il titolo al posto dell'indirizzo",
-      href: "/immobili?noAddress=1",
+      href: "/immobili?noAddress=1&gruppo=tutti",
     },
     {
       quanti: cure.senzaVideo,
       testo: "immobili in vendita senza un video su YouTube",
-      href: "/immobili?noVideo=1",
+      href: "/immobili?noVideo=1&gruppo=tutti",
     },
     {
       quanti: cure.amlScaduti,

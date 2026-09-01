@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 31 agosto 2026.**
+**Aggiornato al 1° settembre 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -396,6 +396,40 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
       produzione React nasconde comunque il messaggio. Per questo il campo del
       video si difende **prima**, nel browser, col `pattern`: e' l'unico modo di
       dire cosa non va senza riscrivere tutti i moduli. Vedi capitolo 5.
+
+18. **L'elenco immobili si apre sugli attivi** (1° settembre 2026), e la foto
+    di copertina e' passata da 56x40 a **176x128 pixel**.
+
+    - Filtro `gruppo` in `PropertyFilters`: `attivi` (predefinito), `altri`,
+      `tutti`. La condizione sta in `IMMOBILE_ATTIVO`, scritta una volta sola,
+      e sono gli stessi stati di `AVAILABLE_STATUSES`.
+    - Tre schede in cima con i conteggi, che passano dallo **stesso**
+      `propertyWhere` dell'elenco (`countPropertiesPerGruppo`): un numero che
+      nascesse da un'altra condizione direbbe dodici mentre l'elenco ne apre
+      undici.
+    - Il gruppo viaggia in un campo nascosto dentro il modulo dei filtri: senza,
+      premere «Filtra» riporterebbe di soppiatto agli attivi anche chi stava
+      guardando i venduti, e la ricerca sembrerebbe non trovare piu' niente.
+    - Le schede **spariscono** quando si sceglie uno stato preciso dalla
+      tendina: sarebbero due comandi che dicono la stessa cosa, e uno dei due
+      starebbe mentendo.
+    - **I collegamenti del cruscotto hanno ora `gruppo=tutti` esplicito.** I
+      loro conteggi (`senza proprietario`, `senza via`, `senza video`) guardano
+      tutti gli stati: senza quel parametro il cruscotto avrebbe promesso nove
+      righe e l'elenco ne avrebbe aperte cinque. E' la trappola dei conteggi,
+      la terza volta che si presenta in questo programma.
+
+    Verificato in browser con due utenti: 24 controlli, compresi i tre conteggi
+    delle schede contro le righe che aprono davvero, il gruppo che sopravvive a
+    «Filtra», l'esportazione che segue il gruppo, e il muro fra collaboratori.
+
+    **Trappola nelle prove:** dopo un clic su un collegamento interno, Next
+    cambia l'indirizzo **prima** di sostituire il contenuto. Leggere
+    `textContent("body")` subito dopo restituisce un misto di pagina vecchia e
+    nuova, e un controllo passa o fallisce a caso. Va letta la tabella
+    (`allTextContents()` sulle righe) dopo `waitForLoadState("networkidle")`.
+    Da tenere presente: l'elenco immobili mostra **titolo e codice**, non la
+    via — cercare l'indirizzo li' dentro non trova niente.
 
 ---
 

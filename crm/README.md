@@ -141,6 +141,31 @@ non chiedi esplicitamente di importarli.
 
 ---
 
+## L'elenco immobili
+
+Aprendo **Immobili** compaiono gli **attivi**: quelli in acquisizione e in
+vendita, cioè quelli che stai lavorando. Venduti, ritirati, sotto proposta o
+compromesso restano in archivio ma non ti riempiono la pagina.
+
+In cima ci sono tre schede — **Attivi**, **Venduti e altri stati**, **Tutti** —
+ognuna col suo numero. Si passa dall'una all'altra con un clic, e la scheda
+scelta resta anche quando cerchi o filtri: se stai guardando i venduti e premi
+*Filtra*, continui a guardare i venduti.
+
+Se invece scegli uno stato preciso dalla tendina (*Venduto*, *Compromesso*…),
+le schede si tolgono di mezzo: comanda la tendina, e due controlli che dicono
+la stessa cosa in modo diverso confonderebbero e basta.
+
+> **L'esportazione segue quello che vedi.** Dagli attivi escono solo gli
+> attivi; per averli tutti, passa prima alla scheda *Tutti*. I numeri del
+> cruscotto invece aprono sempre l'elenco completo, così il numero promesso e
+> le righe che si aprono coincidono sempre.
+
+La **foto di copertina** nell'elenco è grande abbastanza da riconoscere
+l'immobile senza aprirlo — è passata da 56×40 a 176×128 pixel.
+
+---
+
 ## Il video dell'immobile
 
 Sulla scheda di ogni immobile, in fondo, c'è **Video su YouTube**: si incolla lì

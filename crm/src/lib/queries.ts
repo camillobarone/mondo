@@ -325,8 +325,20 @@ export interface PropertyFilters {
   noAddress?: string;
   /** Solo quelli ancora proponibili a cui manca il video. */
   noVideo?: string;
+  /** Quale meta' del portafoglio: `attivi` (predefinito), `altri`, `tutti`. */
+  gruppo?: string;
   page?: string;
 }
+
+/**
+ * Un immobile «attivo»: in acquisizione o in vendita.
+ *
+ * Sono gli stessi di AVAILABLE_STATUSES — quelli ancora proponibili a un
+ * acquirente. Venduti, ritirati, sotto proposta o compromesso restano in
+ * archivio ma non sono il lavoro di oggi: aprendo l'elenco si vuole vedere
+ * cosa c'e' da vendere, non tutto quello che c'e' mai stato.
+ */
+const IMMOBILE_ATTIVO = `p.status IN ('acquisizione','in_vendita')`;
 
 /**
  * Un immobile "senza via".
@@ -407,6 +419,13 @@ function propertyWhere(
   }
   if (filters.noVideo === "1") {
     clauses.push(IMMOBILE_SENZA_VIDEO);
+  }
+  // Il gruppo vale solo finche' non si chiede uno stato preciso: se qualcuno
+  // ha scelto «Venduto» dalla tendina, mostrargli i soli attivi vorrebbe dire
+  // rispondere a una domanda diversa da quella fatta — e con zero righe.
+  if (!filters.status) {
+    if (filters.gruppo === "altri") clauses.push(`NOT (${IMMOBILE_ATTIVO})`);
+    else if (filters.gruppo !== "tutti") clauses.push(IMMOBILE_ATTIVO);
   }
   if (filters.priceMin) {
     clauses.push("p.price >= ?");
@@ -1027,6 +1046,25 @@ export function countPropertiesWithoutAddress(utente: number): number {
       WHERE p.deleted_at IS NULL AND ${IMMOBILE_SENZA_VIA} AND ${IMMOBILE_MIO}`,
     [utente],
   );
+}
+
+/**
+ * Quanti immobili in ciascun gruppo, **con gli altri filtri gia' applicati**.
+ *
+ * I numeri sulle due schede devono essere quelli che si troveranno cliccandole:
+ * se nascessero da una condizione diversa da quella dell'elenco, la scheda
+ * direbbe dodici e l'elenco ne aprirebbe undici. Per questo passano dallo
+ * stesso `propertyWhere`, cambiando solo il gruppo.
+ */
+export function countPropertiesPerGruppo(
+  utente: number,
+  filters: PropertyFilters,
+): { attivi: number; altri: number } {
+  const conta = (gruppo: string) => {
+    const { sql, params } = propertyWhere(utente, { ...filters, gruppo });
+    return count(`SELECT COUNT(*) AS n FROM properties p WHERE ${sql}`, params);
+  };
+  return { attivi: conta("attivi"), altri: conta("altri") };
 }
 
 /** Quanti immobili proponibili non hanno il video. Stessa condizione del filtro. */
