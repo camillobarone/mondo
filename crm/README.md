@@ -15,7 +15,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 |---|---|
 | **Clienti** | Anagrafica completa, tipo di cliente (venditore, acquirente, locatore…), provenienza del contatto, etichette, storico di ogni telefonata ed email |
 | **Richieste** | Cosa cerca ogni acquirente: tipologie, comuni con le loro zone, stato dell'immobile, budget, metratura, requisiti irrinunciabili |
-| **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback e **foto** |
+| **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback, **foto** e **video**. L'elenco si apre sugli attivi |
 | **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
 | **Storico visite** | Una pagina da stampare per il proprietario: chi è venuto a vedere la casa, quando, con che numero, e cosa ha detto |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
@@ -163,6 +163,33 @@ la stessa cosa in modo diverso confonderebbero e basta.
 
 La **foto di copertina** nell'elenco è grande abbastanza da riconoscere
 l'immobile senza aprirlo — è passata da 56×40 a 176×128 pixel.
+
+---
+
+## Dove sta l'immobile, e cosa ha fuori
+
+Sulla scheda dell'immobile il **comune** si sceglie dallo stesso elenco che usi
+nella richiesta del cliente — i 96 comuni della provincia — e la **zona** fra i
+quartieri e le frazioni di quel comune. Prima erano due campi liberi, e potevi
+scrivere una zona che in quel comune non esiste senza che nessuno lo notasse.
+
+Due cose pensate per non darti fastidio:
+
+- **Quello che c'è già non si perde.** Gli immobili vecchi hanno comune e zona
+  scritti a mano, a volte in forme come *LECCE (LE)*: quel valore resta in cima
+  alla tendina, già selezionato. Salvando non cambia niente finché non lo cambi
+  tu.
+- **Se manca, si scrive.** In fondo a ogni tendina c'è *Altro comune…* e *Altra
+  zona…*. Per un comune di cui non conosciamo le zone, ti vengono proposte
+  quelle che hai già usato altrove.
+
+Cambiando comune la zona si azzera: apparteneva al comune di prima, e lasciarla
+lì vorrebbe dire attaccarla a un posto dove magari non esiste.
+
+**Esterno: se ne spunta più d'uno.** Balcone, terrazzo e giardino insieme — un
+appartamento con balcone e giardino è la normalità, non un caso strano. La voce
+*Nessuno* non c'è più: nessuna casella spuntata vuol dire già nessun esterno.
+Gli immobili che avevano *Nessuno* sono stati ripuliti da soli al primo avvio.
 
 ---
 

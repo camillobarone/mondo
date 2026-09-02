@@ -28,6 +28,7 @@ function connect(): Database.Database {
   aggiungiColonneMancanti(database);
   assegnaTitolareMancante(database);
   allineaStatiImmobili(database);
+  ripulisciEsterniVuoti(database);
   return database;
 }
 
@@ -134,6 +135,22 @@ function aggiungiColonneMancanti(database: Database.Database) {
 function allineaStatiImmobili(database: Database.Database) {
   database
     .prepare("UPDATE properties SET condition = 'Buono' WHERE condition = 'Buono stato'")
+    .run();
+}
+
+/**
+ * Toglie il vecchio «Nessuno» dal campo esterno.
+ *
+ * Finche' l'esterno era una scelta sola, «Nessuno» era un valore come gli
+ * altri. Da quando se ne spuntano piu' d'uno, l'assenza di esterno si dice non
+ * spuntando niente: lasciare la parola scritta vorrebbe dire mostrarla in
+ * scheda accanto a caselle tutte vuote.
+ *
+ * Gira a ogni avvio e tocca solo le righe rimaste indietro.
+ */
+function ripulisciEsterniVuoti(database: Database.Database) {
+  database
+    .prepare("UPDATE properties SET outdoor = NULL WHERE lower(trim(outdoor)) = 'nessuno'")
     .run();
 }
 

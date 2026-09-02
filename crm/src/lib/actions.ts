@@ -353,7 +353,7 @@ export async function saveProperty(form: FormData) {
     bathrooms: integer(form, "bathrooms"),
     floor: nullable(form, "floor"),
     elevator: bool(form, "elevator"),
-    outdoor: nullable(form, "outdoor"),
+    outdoor: csvField(form, "outdoor") || null,
     garage: bool(form, "garage"),
     condition: nullable(form, "condition"),
     energy_class: nullable(form, "energy_class"),

@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { saveProperty } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
-import { Card, TextField, TextArea, SelectField, CheckboxRow, ComboField } from "@/components/ui";
+import { Card, TextField, TextArea, SelectField, CheckboxRow, CheckboxGroup } from "@/components/ui";
+import { fromCsv } from "@/lib/format";
 import {
+  COMUNI,
   ENERGY_CLASSES,
+  OUTDOOR_KINDS,
   PROPERTY_CONDITIONS,
   PROPERTY_KINDS,
   PROPERTY_STATUSES,
+  ZONE_PER_COMUNE,
 } from "@/lib/types";
 import type { Property } from "@/lib/types";
+import { LuogoImmobile } from "./luogo-immobile";
 
 export function PropertyForm({
   property,
@@ -76,14 +81,12 @@ export function PropertyForm({
             className="sm:col-span-2"
             hint="Serve a riconoscere l'immobile a colpo d'occhio nelle liste e nelle tendine"
           />
-          <TextField label="Comune" name="city" defaultValue={property?.city} placeholder="Lecce" />
-          <ComboField
-            label="Zona o localita'"
-            name="zone"
-            options={zoneOptions}
-            defaultValue={property?.zone}
-            placeholder="Centro storico, Torre Lapillo, contrada…"
-            hint="Scegli dai suggerimenti o scrivine una nuova: serve agli incroci"
+          <LuogoImmobile
+            comuneIniziale={property?.city ?? null}
+            zonaIniziale={property?.zone ?? null}
+            comuni={COMUNI}
+            zonePerComune={ZONE_PER_COMUNE}
+            zoneGiaUsate={zoneOptions}
           />
         </div>
       </Card>
@@ -106,12 +109,16 @@ export function PropertyForm({
             options={ENERGY_CLASSES}
             defaultValue={property?.energy_class}
           />
-          <SelectField
-            label="Esterno"
-            name="outdoor"
-            options={["Balcone", "Terrazzo", "Giardino", "Nessuno"]}
-            defaultValue={property?.outdoor}
-          />
+          <div className="sm:col-span-2">
+            <CheckboxGroup
+              label="Esterno"
+              name="outdoor"
+              options={OUTDOOR_KINDS}
+              selected={fromCsv(property?.outdoor)}
+              columns={3}
+              capitalizza={false}
+            />
+          </div>
           <div className="flex flex-col justify-end">
             <CheckboxRow
               label="Ascensore"

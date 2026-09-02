@@ -183,7 +183,9 @@ function prepareProperty(property: Property): ReadyProperty {
     rooms: property.rooms ?? 0,
     elevator: property.elevator === 1,
     garage: property.garage === 1,
-    outdoor: !!property.outdoor && normalise(property.outdoor) !== "nessuno",
+    // L'esterno e' un csv: basta che ci sia una voce vera. «Nessuno» resta
+    // scritto su qualche scheda vecchia e non conta come esterno.
+    outdoor: fromCsv(property.outdoor).some((voce) => normalise(voce) !== "nessuno"),
   };
 }
 

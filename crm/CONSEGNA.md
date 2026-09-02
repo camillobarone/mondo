@@ -4,7 +4,7 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-**Aggiornato al 1° settembre 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
+**Aggiornato al 2 settembre 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
 in testo semplice, da aprire con il Blocco note senza bisogno di niente.
 
 > **Nessuna password è scritta qui**, di proposito: questo file sta dentro il
@@ -674,6 +674,32 @@ trappola dei conteggi già pagata due volte in questo programma.
 
 La foto di copertina nell'elenco è passata da 56×40 a **176×128 pixel**: serve a
 riconoscere l'immobile senza aprirlo.
+
+---
+
+## 9-quinquies · Comune, zona ed esterno sulla scheda immobile
+
+Chiesto il 2 settembre 2026, ed è il seguito naturale di «cosa cerca»: da una
+parte si sceglieva da un elenco, dall'altra si scriveva a mano.
+
+**Comune e zona** ora vengono dalle stesse liste della richiesta —
+`COMUNI` e `ZONE_PER_COMUNE` in `src/lib/types.ts`. Il confronto degli incroci
+era già tollerante («S. Cataldo» trova «San Cataldo»), ma su un immobile si
+poteva scrivere una zona che in quel comune non esiste, e non se ne accorgeva
+nessuno.
+
+**Il valore che l'immobile ha già resta sempre fra le opzioni**, anche quando
+non è in elenco. I 53 immobili in archivio hanno comune e zona scritti a mano:
+una tendina che non li contenesse li scollegherebbe al primo salvataggio, in
+silenzio. È la trappola delle tendine troncate, già pagata una volta.
+
+**L'esterno è diventato multiplo**: balcone, terrazzo e giardino insieme, in
+csv. La voce *Nessuno* è sparita — nessuna casella spuntata dice già la stessa
+cosa, e tenerla avrebbe permesso di spuntare insieme «Nessuno» e «Giardino».
+Gli immobili che l'avevano vengono ripuliti da `ripulisciEsterniVuoti` in
+`db.ts`, idempotente come le altre conversioni. Il motore degli incroci
+continua a riconoscere «ha un esterno»: legge il csv e ignora l'eventuale
+«Nessuno» rimasto scritto.
 
 ---
 

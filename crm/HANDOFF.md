@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 1° settembre 2026.**
+**Aggiornato al 2 settembre 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -431,6 +431,35 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     Da tenere presente: l'elenco immobili mostra **titolo e codice**, non la
     via — cercare l'indirizzo li' dentro non trova niente.
 
+19. **Comune, zona ed esterno sulla scheda immobile** (2 settembre 2026).
+
+    - `LuogoImmobile` (`immobili/luogo-immobile.tsx`): comune dalle stesse liste
+      della richiesta, poi la zona di quel comune. **Il valore gia' presente
+      resta sempre fra le opzioni** anche quando non e' in elenco — i 53
+      immobili hanno comune e zona scritti a mano, spesso come «LECCE (LE)», e
+      una tendina che non li contenesse li scollegherebbe al primo salvataggio.
+      Dove non conosciamo le zone di un comune si propongono quelle gia' usate
+      in archivio (`knownZones`), che e' meglio di una tendina vuota.
+    - **Esterno in csv**: `OUTDOOR_KINDS` in `types.ts`, caselle al posto della
+      tendina. «Nessuno» tolto dal vocabolario — nessuna casella spuntata lo
+      dice gia', e tenerlo avrebbe permesso «Nessuno» + «Giardino» insieme.
+      `ripulisciEsterniVuoti` in `db.ts` converte le righe vecchie.
+      In `matching.ts` l'esterno si legge ora con `fromCsv`, ignorando un
+      eventuale «Nessuno» rimasto scritto.
+    - `ComboField` in `components/ui.tsx` non e' piu' usata da nessuna pagina.
+      Lasciata dov'e': e' un campo generico, non codice di questa funzione.
+
+    Verificato in browser con due utenti: 23 controlli, compresi il valore fuori
+    elenco che sopravvive a un salvataggio, la zona che si azzera cambiando
+    comune, i due esterni salvati e riletti, e gli incroci che riconoscono
+    ancora «Ha esterno».
+
+    **Trappola nelle prove:** uno scenario puo' passare per il motivo sbagliato.
+    Il primo tentativo metteva l'immobile con due esterni a Porto Cesareo mentre
+    la richiesta cercava a Lecce: il comune lo escludeva prima ancora di
+    guardare l'esterno, e il criterio da provare non veniva mai messo alla
+    prova. La richiesta e' stata rifatta senza comune apposta.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -440,7 +469,6 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password.** Vedi il punto della situazione qui sotto. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Messaggi di errore che si leggono** | Quando un controllo del server rifiuta un salvataggio, il programma lancia un errore e l'utente si ritrova una **pagina 500 senza spiegazioni**: in produzione React nasconde il messaggio, e non c'e' nessun `error.tsx`. Vale per tutti i moduli, da sempre. La strada vera e' far tornare alle azioni un esito invece di lanciare, con `useActionState`, e mostrarlo accanto al campo — un lavoro che tocca tutti i moduli, da fare tutto insieme e non a pezzi. Per ora ci si difende nel browser (campi obbligatori, `pattern`). |
-| **Comune e zona anche sulla scheda immobile** | Deciso di rimandare: oggi «Cosa cerca» sceglie il comune da un elenco, ma sulla scheda dell'immobile comune e zona restano campi liberi. Gli incroci funzionano lo stesso — il confronto e' tollerante, «S. Cataldo» trova «San Cataldo» — ma su un immobile si puo' ancora scrivere una zona che in quel comune non esiste. Portare li' lo stesso selettore e' il passo naturale successivo. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |

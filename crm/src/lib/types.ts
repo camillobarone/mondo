@@ -241,6 +241,17 @@ export const PROPERTY_CONDITIONS = [
   "Da ristrutturare",
 ] as const;
 
+/**
+ * Gli spazi esterni di un immobile. Se ne spunta piu' d'uno: un appartamento
+ * con balcone e giardino e' la normalita', non un caso strano.
+ *
+ * «Nessuno» non c'e' di proposito: nessuna casella spuntata vuol dire gia'
+ * nessun esterno, e una casella «Nessuno» accanto alle altre permetterebbe di
+ * spuntare insieme «Nessuno» e «Giardino» — due cose che non possono essere
+ * vere tutte e due.
+ */
+export const OUTDOOR_KINDS = ["Balcone", "Terrazzo", "Giardino"] as const;
+
 export const ENERGY_CLASSES = ["A4", "A3", "A2", "A1", "B", "C", "D", "E", "F", "G"] as const;
 
 export const ACTIVITY_TYPES = [

@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS properties (
   bathrooms         INTEGER,
   floor             TEXT,
   elevator          INTEGER NOT NULL DEFAULT 0,
-  outdoor           TEXT,                              -- balcone|terrazzo|giardino|nessuno
+  outdoor           TEXT,                              -- csv: balcone,terrazzo,giardino
   garage            INTEGER NOT NULL DEFAULT 0,
   condition         TEXT,
   energy_class      TEXT,

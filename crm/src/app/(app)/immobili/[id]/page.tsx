@@ -16,7 +16,7 @@ import { linkOwner } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
 import { deleteProperty } from "@/lib/actions";
-import { euro, shortDate, dateTime, relative, label, fullName, whatsappHref } from "@/lib/format";
+import { fromCsv, euro, shortDate, dateTime, relative, label, fullName, whatsappHref } from "@/lib/format";
 import {
   PageHeader,
   Card,
@@ -145,7 +145,7 @@ export default async function PropertyPage({
                 {property.floor}
                 {property.elevator ? " · con ascensore" : ""}
               </DataRow>
-              <DataRow label="Esterno">{property.outdoor}</DataRow>
+              <DataRow label="Esterno">{fromCsv(property.outdoor).join(" · ")}</DataRow>
               <DataRow label="Box">{property.garage ? "Sì" : "No"}</DataRow>
               <DataRow label="Stato immobile">{property.condition}</DataRow>
               <DataRow label="Classe energetica">{property.energy_class}</DataRow>
