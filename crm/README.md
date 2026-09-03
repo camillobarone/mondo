@@ -495,6 +495,25 @@ nome per nome chi è stato escluso e di quanto.
 
 ---
 
+## Quando il programma dice di no
+
+Certe cose non si possono salvare: un cliente senza nome, un immobile senza
+titolo o senza via, un collegamento a un video che non è un indirizzo. Quando
+succede, il programma **te lo scrive sopra il pulsante Salva**, con la ragione
+per esteso, e **quello che avevi scritto resta dov'è**: correggi quella cosa
+lì e salvi di nuovo. Non si perde niente e non si ricomincia da capo.
+
+Finché la ragione è a schermo, in archivio non è stato scritto nulla: il
+controllo viene prima, non a metà.
+
+Se invece compare la schermata **«Qualcosa non ha funzionato»**, quello non è
+un rifiuto ma un guasto: nemmeno lì è stato salvato niente. C'è il pulsante
+*Riprova*, e in fondo alla pagina un **codice del guasto**. Se capita di nuovo
+sempre nello stesso punto, quel codice è la cosa da riferire: permette di
+ritrovare nel registro del server cos'è successo davvero.
+
+---
+
 ## Metterlo online
 
 Per usarlo dalle due sedi, o da casa, serve un server raggiungibile da internet.

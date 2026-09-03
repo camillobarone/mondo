@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 2 settembre 2026.**
+**Aggiornato al 3 settembre 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -460,6 +460,64 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     guardare l'esterno, e il criterio da provare non veniva mai messo alla
     prova. La richiesta e' stata rifatta senza comune apposta.
 
+20. **I messaggi di errore si leggono** (3 settembre 2026). Era l'ultima delle
+    cose aperte che dipendessero solo da chi scrive il codice.
+
+    Il problema, che valeva per tutto il programma da sempre: un controllo del
+    server che rifiuta un salvataggio scriveva `throw`, e a programma
+    pubblicato il testo di un errore **non esce dal server** — React lo
+    nasconde per non lasciarsi sfuggire dettagli interni. A schermo restava
+    una pagina bianca in inglese, senza dire cosa correggere, e tornando
+    indietro il modulo era vuoto.
+
+    - **Le azioni che rifiutano restituiscono il motivo invece di lanciarlo.**
+      `saveClient` e `saveProperty` hanno ora la forma
+      `(precedente, dati) => Promise<string | null>`. La convenzione sta
+      scritta in cima a `actions.ts`, sopra le utilita'.
+    - **`<ModuloConEsito>` e `<AvvisoModulo/>`** (`components/client.tsx`)
+      sono l'altra meta': il primo e' un `<form>` con dentro `useActionState`,
+      il secondo stampa il messaggio dove il modulo decide — **sopra i
+      pulsanti**, dove sta l'occhio di chi ha appena cliccato Salva. In cima a
+      un modulo lungo comparirebbe fuori schermo.
+    - I campi passano come `children` e **restano componenti di server**:
+      diventa di client il solo involucro. Il messaggio arriva a
+      `AvvisoModulo` per contesto, che e' l'unica strada che attraversa dei
+      figli renderizzati dal server senza toccarli uno per uno.
+    - **Quattro schermate nuove**: `error.tsx` e `not-found.tsx`, una coppia
+      dentro `(app)` (che tiene la navigazione al suo posto) e una fuori (per
+      accesso, recupero e gli indirizzi che non esistono). Si appoggiano tutte
+      a `PaginaMessaggio` in `ui.tsx`. La schermata di guasto mostra il
+      **`digest`**, il codice con cui si ritrova l'errore vero nel registro
+      del server — l'unica cosa utile che React lascia uscire.
+    - I `throw` di `NEGATO` (il muro fra collaboratori) sono rimasti `throw`
+      apposta: non sono rifiuti previsti ma tentativi di scavalcare il muro,
+      non c'e' niente da spiegare a chi ci prova, e adesso sotto c'e' la rete.
+    - `tornaConMotivo` della pagina **Utenti** e' rimasto com'era: quel modulo
+      ha quattro campi e il rimando all'indirizzo ci sta. Con venticinque no.
+
+    **La trappola vera, e non si vede nel codice:** React, quando l'azione di
+    un modulo finisce, **svuota da solo i campi** — chiama `form.reset()`
+    sull'elemento. Il messaggio compariva e insieme spariva tutto quello che
+    c'era da correggere: la meta' peggiore del problema di partenza. Si ferma
+    con `onReset={(e) => e.preventDefault()}` sul `<form>`, che e' una riga e
+    va spiegata, altrimenti la prima persona che passa la toglie. Non se ne
+    accorgono ne' `tsc` ne' `next build`: l'ha trovata la prova in browser.
+
+    Verificato in browser **con la build di produzione**, non in sviluppo — e'
+    li' che i messaggi sparivano, in sviluppo si vedeva tutto e sembrava a
+    posto. Due utenti, 30 controlli: i quattro rifiuti letti a schermo, i campi
+    (testo, note, etichette, caselle) intatti dopo ogni rifiuto sia in
+    creazione sia in modifica, l'archivio non toccato, le quattro schermate
+    nuove, e il muro intatto compreso l'attacco col numero di scheda cambiato
+    nel campo nascosto.
+
+    **Trappola nelle prove:** cercare `[role="alert"]` nella pagina trova
+    `#__next-route-announcer__`, il riquadro invisibile con cui Next annuncia i
+    cambi di pagina ai lettori di schermo, che ha `role="alert"` pure lui ed e'
+    sempre vuoto. Va cercato **dentro il modulo**. E come al solito, dopo un
+    invio non si legge subito: si aspetta la comparsa del messaggio o il cambio
+    di indirizzo, mai `networkidle` da solo.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -468,7 +526,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 |---|---|
 | **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password.** Vedi il punto della situazione qui sotto. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
-| **Messaggi di errore che si leggono** | Quando un controllo del server rifiuta un salvataggio, il programma lancia un errore e l'utente si ritrova una **pagina 500 senza spiegazioni**: in produzione React nasconde il messaggio, e non c'e' nessun `error.tsx`. Vale per tutti i moduli, da sempre. La strada vera e' far tornare alle azioni un esito invece di lanciare, con `useActionState`, e mostrarlo accanto al campo — un lavoro che tocca tutti i moduli, da fare tutto insieme e non a pezzi. Per ora ci si difende nel browser (campi obbligatori, `pattern`). |
+| **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
@@ -570,6 +628,16 @@ email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
   altrimenti il salvataggio li cancella.
 - **Le tendine troncate** (`LIMIT 500`) scollegano in silenzio ciò che sta
   oltre il taglio: il valore attuale va sempre inserito fra le opzioni.
+- **React svuota da solo i campi** quando l'azione di un modulo finisce
+  (`form.reset()`). Su un modulo lungo rifiutato per un campo mancante porta
+  via anche i ventiquattro giusti. `<ModuloConEsito>` lo ferma con
+  `onReset={(e) => e.preventDefault()}`: quella riga non va tolta.
+- **Un rifiuto si restituisce, non si lancia.** Il testo di un `throw` non esce
+  dal server a programma pubblicato: si vede in sviluppo e sparisce una volta
+  online, che è il modo peggiore di sbagliare. Vedi il punto 20.
+- **Le prove sui messaggi vanno fatte sulla build di produzione**
+  (`npm run build` + `npx next start`), mai in sviluppo: lì i messaggi si
+  vedono comunque e ogni prova passa.
 - **I numeri di telefono dell'archivio sono senza +39**: per WhatsApp si passa
   da `whatsappHref()` in `src/lib/format.ts`, mai da `wa.me` a mano.
 - **La posta del dominio non sta dove sta il gestionale.** Il server è su Aruba,
@@ -633,14 +701,15 @@ lui.
 > `CONSEGNA.md`) e che le ultime cose costruite sono, in ordine: «cosa cerca»
 > rifatto con tipologie multiple e comuni-con-zone (punto 16), il campo video
 > YouTube con le due colonne nel CSV (17), l'elenco immobili che si apre sugli
-> attivi con la foto più grande (18), e comune, zona ed esterno multiplo sulla
-> scheda immobile (19).
+> attivi con la foto più grande (18), comune, zona ed esterno multiplo sulla
+> scheda immobile (19), e i **messaggi di errore che si leggono** (20) —
+> `<ModuloConEsito>` al posto dei `throw`, più le quattro schermate
+> `error.tsx` e `not-found.tsx`.
 >
-> Resta aperto: **l'SMTP** — fermo su una sola cosa, la password per le app di
-> Gmail che deve generare lui, leggi «SMTP, dove siamo rimasti» nel capitolo 5;
-> i **dati dei venditori**; gli **indirizzi degli immobili vecchi**; le **zone
-> in `ZONE_PER_COMUNE`** da far correggere a lui, che il mercato lo conosce; e
-> i **messaggi di errore**, che oggi danno una pagina 500 senza spiegazioni in
-> tutto il programma.
+> Resta aperto, e **sono tutte cose che aspettano lui, non chi scrive il
+> codice**: l'**SMTP**, fermo sulla sola password per le app di Gmail che deve
+> generare (leggi «SMTP, dove siamo rimasti» nel capitolo 5); i **dati dei
+> venditori**; gli **indirizzi degli immobili vecchi**; le **zone in
+> `ZONE_PER_COMUNE`** da far correggere a lui, che il mercato lo conosce.
 >
 > Dimmi da dove ripartiamo.

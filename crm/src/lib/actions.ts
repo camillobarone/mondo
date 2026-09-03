@@ -22,6 +22,34 @@ import {
 import type { Property } from "./types";
 import { ACTIVITY_TYPES } from "./types";
 
+/* ------------------------------------------- come si dice di no a un modulo */
+
+/**
+ * Quando un'azione rifiuta un salvataggio, il motivo **si restituisce**, non
+ * si lancia.
+ *
+ * `throw new Error("Serve l'indirizzo")` funziona solo in sviluppo. A
+ * programma pubblicato Next non fa uscire dal server il testo di un errore —
+ * per non lasciarsi sfuggire dettagli interni — e a chi sta davanti allo
+ * schermo arriva la pagina di guasto: la parte utile, il motivo, si perde per
+ * strada.
+ *
+ * Le azioni che possono rifiutare hanno percio' la forma
+ * `(precedente: string | null, dati: FormData) => Promise<string | null>`:
+ * niente da dire vuol dire riuscito, e in fondo c'e' comunque il `redirect`.
+ * Dall'altra parte il modulo e' un `<ModuloConEsito>` (`components/client.tsx`)
+ * che stampa il messaggio con `<AvvisoModulo/>` **senza cambiare pagina**, e
+ * cosi' quello che si era scritto resta nei campi.
+ *
+ * Restano `throw` le sole cose che non sono rifiuti previsti ma tentativi di
+ * scavalcare il muro fra collaboratori (`NEGATO`, qui sotto): non c'e' niente
+ * da spiegare a chi ci prova, e li' raccoglie la rete di `error.tsx`.
+ *
+ * Fa storia a se' la pagina Utenti, che porta il motivo nell'indirizzo con
+ * `tornaConMotivo`: quel modulo ha quattro campi e ci sta, mentre riscriverne
+ * venticinque per un titolo dimenticato no.
+ */
+
 /* ------------------------------------------------------------- utilita' */
 
 function text(form: FormData, key: string): string {
@@ -164,7 +192,7 @@ export async function logoutAction() {
 
 /* ============================================================== clienti */
 
-export async function saveClient(form: FormData) {
+export async function saveClient(_prev: string | null, form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id") ?? 0);
 
@@ -195,7 +223,7 @@ export async function saveClient(form: FormData) {
   };
 
   if (!values.first_name && !values.last_name && !values.company) {
-    throw new Error("Serve almeno il cognome o la ragione sociale.");
+    return "Serve almeno il cognome o la ragione sociale.";
   }
 
   // L'immobile di primo contatto deve essere uno dei propri: altrimenti si
@@ -336,7 +364,7 @@ export async function saveContactInfo(form: FormData) {
 
 /* ============================================================= immobili */
 
-export async function saveProperty(form: FormData) {
+export async function saveProperty(_prev: string | null, form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id") ?? 0);
 
@@ -374,13 +402,13 @@ export async function saveProperty(form: FormData) {
   // se non lo e': un campo che prende qualunque testo diventa in fretta un
   // secondo blocco note, e l'applicazione del canale ci si romperebbe sopra.
   const video = collegamentoVideo(text(form, "video_url"));
-  if (video.errore) throw new Error(video.errore);
+  if (video.errore) return video.errore;
   values.video_url = video.url;
 
-  if (!values.title) throw new Error("Serve un titolo per l'immobile.");
+  if (!values.title) return "Serve un titolo per l'immobile.";
   // Senza indirizzo, l'immobile compare nelle liste e nelle tendine col solo
   // titolo: impossibile riconoscerlo a colpo d'occhio fra tanti.
-  if (!values.address) throw new Error("Serve l'indirizzo dell'immobile.");
+  if (!values.address) return "Serve l'indirizzo dell'immobile.";
 
   if (id) {
     esigiImmobile(user.id, id);

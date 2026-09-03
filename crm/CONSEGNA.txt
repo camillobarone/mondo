@@ -714,6 +714,53 @@ continua a riconoscere «ha un esterno»: legge il csv e ignora l'eventuale
 «Nessuno» rimasto scritto.
 
 
+9-SEXIES · QUANDO IL PROGRAMMA DICE DI NO
+-----------------------------------------
+
+Fino al 3 settembre 2026, un salvataggio rifiutato dal server dava una
+pagina di errore senza spiegazioni. Il motivo del rifiuto c'era — «Serve
+l'indirizzo dell'immobile» — ma non usciva dal server: a programma pubblicato
+React nasconde il testo degli errori, per non lasciarsi sfuggire dettagli
+interni, e a schermo restava una pagina bianca in inglese. Chi ci finiva
+dentro non sapeva cosa correggere, e tornando indietro trovava il modulo
+vuoto.
+
+Adesso i rifiuti si comportano da rifiuti:
+
+- Il motivo compare sopra il pulsante Salva, in rosso, scritto per esteso.
+  Sopra il pulsante e non in cima alla pagina: su un modulo lungo, in cima
+  sarebbe fuori schermo, e il salvataggio sembrerebbe non aver fatto niente.
+- Quello che si era scritto resta nei campi. Si corregge la riga
+  segnalata e si salva di nuovo. Sulla scheda di un immobile sono venticinque
+  campi: perderli per un titolo dimenticato era peggio del rifiuto.
+- In archivio non viene scritto niente. Il controllo viene prima
+  dell'inserimento, non a metà.
+
+Le cose che possono venire rifiutate sono quattro: un cliente senza né cognome
+né ragione sociale, un immobile senza titolo, un immobile senza via, un
+collegamento al video che non è un indirizzo.
+
+
+E se è un guasto vero
+
+Per tutto il resto — un guasto imprevisto, o il tentativo di toccare la scheda
+di un collega — c'è ora una schermata di cortesia, «Qualcosa non ha
+funzionato»: in italiano, con la navigazione al suo posto, il pulsante
+Riprova e il ritorno al cruscotto. Prima era la pagina bianca di Next.
+
+In fondo alla schermata c'è un codice del guasto. Serve: è lo stesso che
+il programma scrive nel proprio registro, quindi permette di ritrovare
+l'errore vero fra tutti quelli della giornata (capitolo 12).
+
+Allo stesso modo, un indirizzo che non porta da nessuna parte e una scheda
+che non c'è più non mostrano più il 404 This page could not be found di
+serie, ma due schermate italiane con la via d'uscita.
+
+  | Nota sulle schede dei colleghi. Una scheda che esiste ma è di un altro
+  | mostra la stessa schermata di una che non esiste. È voluto: distinguere i
+  | due casi sarebbe un modo per contare l'archivio altrui una prova alla volta.
+
+
 10 · COSA NON C'È
 -----------------
 
@@ -876,6 +923,17 @@ dello Studio, resta tutto in capo al titolare ed è molto più semplice.
 
   Il certificato è scaduto
       certbot renew — normalmente si rinnova da solo
+
+  A schermo compare «Qualcosa non ha funzionato»
+      Non è stato salvato niente. Prendi il codice del guasto in fondo a quella
+      schermata e cercalo nel registro: `ssh root@77.81.234.151 "journalctl -u
+      mondo-crm \ · grep <codice>"`. Lì c'è l'errore per esteso, che a schermo
+      non esce apposta
+
+  Un salvataggio viene rifiutato con un riquadro rosso
+      Non è un guasto: è un controllo. Il riquadro sta sopra il pulsante Salva
+      e dice cosa manca; quello che avevi scritto è ancora nei campi (capitolo
+      9-sexies)
 
 
 13 · DOVE STANNO LE PASSWORD

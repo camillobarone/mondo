@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { saveClient } from "@/lib/actions";
-import { SubmitButton } from "@/components/client";
+import { AvvisoModulo, ModuloConEsito, SubmitButton } from "@/components/client";
 import { Card, TextField, TextArea, SelectField, CheckboxGroup, CheckboxRow } from "@/components/ui";
 import { fromCsv } from "@/lib/format";
 import { CLIENT_ROLES, CLIENT_SOURCES, CLIENT_STATUSES } from "@/lib/types";
@@ -18,7 +18,7 @@ export function ClientForm({
   defaultOwnerId: number;
 }) {
   return (
-    <form action={saveClient} className="space-y-5">
+    <ModuloConEsito azione={saveClient} className="space-y-5">
       {client ? <input type="hidden" name="id" value={client.id} /> : null}
 
       <Card title="Anagrafica">
@@ -168,12 +168,14 @@ export function ClientForm({
         </div>
       </Card>
 
+      <AvvisoModulo />
+
       <div className="flex items-center gap-3">
         <SubmitButton>{client ? "Salva modifiche" : "Crea cliente"}</SubmitButton>
         <Link href={client ? `/clienti/${client.id}` : "/clienti"} className="btn-secondary">
           Annulla
         </Link>
       </div>
-    </form>
+    </ModuloConEsito>
   );
 }

@@ -129,11 +129,12 @@ export function TextField({
   /**
    * Forma che il valore deve avere, controllata dal browser prima di inviare.
    *
-   * Non e' un vezzo: quando un controllo del server fallisce, questo programma
-   * lancia un errore e l'utente si ritrova una pagina di errore senza
-   * spiegazioni — in produzione React nasconde il messaggio. Fermare lo
-   * sbaglio qui, con l'avviso del browser accanto al campo, e' l'unico modo
-   * per dire davvero cosa non va senza riscrivere tutti i moduli.
+   * E' la prima delle due difese: ferma lo sbaglio accanto al campo, senza far
+   * partire niente. La seconda e' il server, che ormai il motivo del rifiuto
+   * lo sa restituire (`<ModuloConEsito>` in `components/client.tsx`) invece di
+   * lanciare un errore che a programma pubblicato diventava una pagina di
+   * guasto muta. Tenerle tutte e due e' giusto: il browser si puo' aggirare,
+   * il server no.
    */
   pattern?: string;
   /** Il messaggio che il browser mostra quando il valore non rispetta pattern. */
@@ -546,6 +547,44 @@ export function Banner({
   return (
     <div className={`rounded-md border px-3 py-2 text-sm ${styles}`} role="status">
       {children}
+    </div>
+  );
+}
+
+/* ------------------------------------------------- schermate di messaggio */
+
+/**
+ * La schermata che resta quando non c'e' niente da mostrare: una pagina che
+ * non esiste, un guasto del programma.
+ *
+ * Sta qui e non dentro le pagine che la usano perche' quelle sono quattro
+ * (`error.tsx` e `not-found.tsx`, una coppia dentro il programma e una
+ * fuori) e devono somigliarsi: sono la stessa brutta notizia data in punti
+ * diversi. Non ha ganci al database ne' stato, cosi' la puo' chiamare anche
+ * un componente di client come `error.tsx`, che di server non puo' essere.
+ */
+export function PaginaMessaggio({
+  titolo,
+  children,
+  azioni,
+  codice,
+}: {
+  titolo: string;
+  children: ReactNode;
+  azioni?: ReactNode;
+  /** Il codice interno del guasto: serve a ritrovarlo nel registro del server. */
+  codice?: string;
+}) {
+  return (
+    <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <h1 className="text-lg font-semibold text-slate-900">{titolo}</h1>
+      <div className="mt-2 text-sm text-slate-600">{children}</div>
+      {azioni ? <div className="mt-6 flex justify-center gap-3">{azioni}</div> : null}
+      {codice ? (
+        <p className="mt-8 text-xs text-slate-400">
+          Codice del guasto: <code className="font-mono">{codice}</code>
+        </p>
+      ) : null}
     </div>
   );
 }

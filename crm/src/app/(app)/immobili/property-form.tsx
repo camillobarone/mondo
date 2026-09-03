@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { saveProperty } from "@/lib/actions";
-import { SubmitButton } from "@/components/client";
+import { AvvisoModulo, ModuloConEsito, SubmitButton } from "@/components/client";
 import { Card, TextField, TextArea, SelectField, CheckboxRow, CheckboxGroup } from "@/components/ui";
 import { fromCsv } from "@/lib/format";
 import {
@@ -28,7 +28,7 @@ export function PropertyForm({
   zoneOptions: string[];
 }) {
   return (
-    <form action={saveProperty} className="space-y-5">
+    <ModuloConEsito azione={saveProperty} className="space-y-5">
       {property ? <input type="hidden" name="id" value={property.id} /> : null}
 
       <Card title="L'immobile">
@@ -204,9 +204,9 @@ export function PropertyForm({
           defaultValue={property?.video_url}
           placeholder="https://www.youtube.com/watch?v=..."
           // Il browser ferma qui quello che indirizzo non e' (uno spazio, o
-          // nessun punto), e lo dice accanto al campo. Se arrivasse al server
-          // verrebbe rifiutato lo stesso, ma con una pagina di errore che non
-          // spiega niente.
+          // nessun punto), e lo dice accanto al campo prima ancora di partire.
+          // Adesso il server sa dire di no per conto suo, ma questo controllo
+          // resta: e' piu' vicino a chi scrive, e non fa fare il viaggio.
           pattern="\S+\.\S+"
           title="Incolla l'indirizzo del video, per esempio https://youtu.be/xxxxxxxxxxx"
           hint="Incolla l'indirizzo del video. Serve a sapere quali immobili un video ce l'hanno, e finisce nell'esportazione per l'applicazione che gestisce il canale. Il gestionale non va a guardarlo."
@@ -223,12 +223,14 @@ export function PropertyForm({
         />
       </Card>
 
+      <AvvisoModulo />
+
       <div className="flex items-center gap-3">
         <SubmitButton>{property ? "Salva modifiche" : "Crea immobile"}</SubmitButton>
         <Link href={property ? `/immobili/${property.id}` : "/immobili"} className="btn-secondary">
           Annulla
         </Link>
       </div>
-    </form>
+    </ModuloConEsito>
   );
 }
