@@ -507,68 +507,51 @@ Le cose costruite in questa sessione, in ordine
       che vanno girate a voce al collega.
 
 
-SMTP — dove siamo rimasti (sera del 27 agosto 2026)
+SMTP — dove siamo rimasti (aggiornato al 2 settembre 2026)
 
 Si riprende da qui. Manca una cosa sola: una password di posta che
-funzioni. Tutto il resto è fatto e verificato.
+funzioni. Tutto il resto è fatto, sul server e nel codice.
 
-Fatto e confermato:
+La strada è cambiata: si va con Gmail, non più con SiteGround. La casella
+info@mondoimmobiliarelecce.it è su SiteGround (MX mailspamprotection.com,
+mail.mondoimmobiliarelecce.it → 35.214.x.x), host e porta erano giusti e
+confermati dal pannello — ma la password di quella casella non è più valida,
+provate tutte e due le forme dell'utenza, e il tentativo di creare una casella
+nuova gestionale@ è fallito con un errore generico di SiteGround.
 
-- Il server ha già scripts/posta.mjs (aggiorna.sh lanciato, file da 7.992
-  byte, identico a quello del repository).
-- /etc/mondo-crm.env è scritto: 5 righe, SMTP_HOST=mail.mondoimmobiliarelecce.it,
-  SMTP_PORT=465, SMTP_USER e SMTP_FROM su info@mondoimmobiliarelecce.it,
-  SMTP_PASS con dentro una password di 15 caratteri. Permessi 640 root:mondo.
-  La copia del file com'era prima sta in /etc/mondo-crm.env.prima.
-- Host e porta sono giusti per certo. Non è più una deduzione dai DNS: il
-  pannello SiteGround li scrive uguali — server in uscita
-  mail.mondoimmobiliarelecce.it, porta SMTP 465 (e IMAP 993). Il comando
-  di prova arriva fino alla richiesta di accesso, quindi nome risolto,
-  connessione aperta e SSL stabilito.
+A quel punto lui ha detto una cosa che ha cambiato tutto: in agenzia non usano
+Outlook, leggono la posta su Gmail dove info@ viene inoltrata. Quindi si
+spedisce da immobiliarelecce@gmail.com, che è suo e che controlla.
 
-Dov'è il muro: la password di info@mondoimmobiliarelecce.it che lui aveva
-trovato non è più valida. Provate tutte e due le forme dell'utenza —
-info@mondoimmobiliarelecce.it e info — e il server le rifiuta entrambe con
-la stessa password. Da qui non c'è altro da provare.
+Cosa deve fare lui, ed è l'unica cosa che manca:
 
-Escluse per strada, così non si rifanno:
+1. Attivare la verifica in due passaggi sull'account Google, se non c'è.
+2. Generare una password per le app su myaccount.google.com/apppasswords.
+   Sono 16 lettere minuscole. Google le mostra a gruppi di quattro: gli spazi
+   non fanno parte della password, vanno tolti. La password normale di Gmail
+   non funziona — Google ha chiuso quella strada nel 2022.
 
-- la @ nella password non c'entra. Provato: @, ! e # arrivano
-  interi al server di posta. L'unico carattere che si perde è il $, che
-  il sistema si mangia insieme a tutto quello che segue.
-- il file non è mangiato. 5 righe (nessuna riga spezzata da un ritorno a
-  capo incollato) e la password lunga come dev'essere.
+Poi bastano tre comandi. Le prime quattro righe si scrivono in un colpo solo
+(non contengono segreti), e in nano gli resta da toccare la sola riga della
+password:
 
-Le due strade, da decidere con lui:
-
-1. Casella nuova dedicata (gestionale@ o crm@), password scelta da lui
-   sul momento. È la strada che aveva scelto, perché non tocca info@.
-   Primo tentativo fallito con un errore generico di SiteGround — *«An
-   error occurred. Please try again later»* — che di solito è passeggero. Se
-   fallisce ancora: controllare quante caselle esistono (tetto del piano) e lo
-   spazio su disco (se è pieno, SiteGround rifiuta con errori vaghi così).
-2. Rifare la password di info@ da Site Tools → Email → Accounts, tre
-   puntini → Change Password. Funziona di sicuro. Costo: dove quella casella
-   è configurata (Outlook, telefoni) va rimessa anche lì.
-
-La domanda da fargli per prima: info@ è configurata su Outlook o sui
-telefoni dell'ufficio? Se no, strada 2 e si chiude in cinque minuti. Se
-sì, si insiste sulla 1.
-
-Quando avrà una password certa, mancano due passaggi:
-
-    ssh root@77.81.234.151 -t "nano /etc/mondo-crm.env"     # freccia giù ×3, Fine, riscrive la password
+    ssh root@77.81.234.151 "cp -n /etc/mondo-crm.env /etc/mondo-crm.env.prima; printf '%s\n' 'SMTP_HOST=smtp.gmail.com' 'SMTP_PORT=465' 'SMTP_USER=immobiliarelecce@gmail.com' 'SMTP_PASS=' 'SMTP_FROM=immobiliarelecce@gmail.com' > /etc/mondo-crm.env; chmod 640 /etc/mondo-crm.env; chown root:mondo /etc/mondo-crm.env; cat /etc/mondo-crm.env"
+    ssh root@77.81.234.151 -t "nano /etc/mondo-crm.env"
     ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo node scripts/posta.mjs"
 
-Se ha creato una casella nuova, prima vanno cambiate anche SMTP_USER e
-SMTP_FROM — con un printf come quello che ha già dato le quattro righe, così
-in nano tocca sempre e solo la riga della password. Poi --manda per l'email
-vera e systemctl restart mondo-crm.
+npm run posta dice quale delle cinque righe è sbagliata invece di dare un
+codice d'errore. Quando passa: -- --manda per un'email vera, poi
+systemctl restart mondo-crm — il programma legge quel file solo all'avvio, e
+finché non riparte Password dimenticata? continua a dire che la posta non è
+configurata.
 
-  | Nota per chi guida i comandi: ssh gli chiede la password di root a ogni
-  | comando (si vede negli screenshot), non usa la chiave come dice il capitolo
-  | 2 di CONSEGNA.md. Non è un problema, ma vuol dire che ogni comando in più
-  | gli costa una digitazione: meglio pochi comandi lunghi che molti corti.
+Sul server è già tutto pronto: scripts/posta.mjs c'è, /etc/mondo-crm.env
+esiste (con dentro i vecchi valori SiteGround, che il comando qui sopra
+sovrascrive) e la copia di com'era prima sta in /etc/mondo-crm.env.prima.
+
+Escluse per strada, così non si rifanno: la @ nella password non c'entra
+(provato: @, ! e # arrivano interi; l'unico carattere che si perde è il
+$), e il file non era mangiato.
 
 
 Fuori perimetro, in attesa di una sua decisione
@@ -676,13 +659,21 @@ lui.
   | Riprendo il gestionale di Mondo Immobiliare (crm/, ramo
   | claude/real-estate-client-management-app-xl7dnx, PR #2, online su
   | https://gestionale.mondoimmobiliarelecce.it). Ho letto HANDOFF.md,
-  | CONSEGNA.md e README.md. So che ogni collaboratore vede solo le proprie
-  | schede (capitolo 10-bis di CONSEGNA.md), che gli incroci fra colleghi sono
-  | fatti, e che l'ultima cosa costruita (27 agosto 2026) è il primo contatto
-  | del cliente più gli elenchi dedicati «Immobili proposti»/«Immobili
-  | visionati» con inserimento diretto — capitolo 4, punto 13. Restano da
-  | configurare l'SMTP per gli avvisi email — cominciato, fermo su una password
-  | di posta da rifare su SiteGround: leggi «SMTP, dove siamo rimasti» nel
-  | capitolo 5 — da inserire i dati dei venditori e da completare l'indirizzo
-  | sugli immobili vecchi che non ce l'hanno. Vale la regola fissa del capitolo 0:
-  | in questa finestra si lavora solo su crm/. Dimmi da dove ripartiamo.
+  | CONSEGNA.md e README.md, e vale la regola fissa del capitolo 0: in
+  | questa finestra si lavora solo su crm/, niente altri progetti.
+  | 
+  | So che ogni collaboratore vede solo le proprie schede (capitolo 10-bis di
+  | CONSEGNA.md) e che le ultime cose costruite sono, in ordine: «cosa cerca»
+  | rifatto con tipologie multiple e comuni-con-zone (punto 16), il campo video
+  | YouTube con le due colonne nel CSV (17), l'elenco immobili che si apre sugli
+  | attivi con la foto più grande (18), e comune, zona ed esterno multiplo sulla
+  | scheda immobile (19).
+  | 
+  | Resta aperto: l'SMTP — fermo su una sola cosa, la password per le app di
+  | Gmail che deve generare lui, leggi «SMTP, dove siamo rimasti» nel capitolo 5;
+  | i dati dei venditori; gli indirizzi degli immobili vecchi; le zone
+  | in ZONE_PER_COMUNE da far correggere a lui, che il mercato lo conosce; e
+  | i messaggi di errore, che oggi danno una pagina 500 senza spiegazioni in
+  | tutto il programma.
+  | 
+  | Dimmi da dove ripartiamo.
