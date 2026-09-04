@@ -529,7 +529,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
-| **Applicazione per i venditori** («Mondo Tracking») | **Cominciata il 4 settembre: c'e' il primo strato.** Colonna `properties.tracking_token`, indice univoco, chiave generata a richiesta e revocabile, e la lettura che apre un immobile solo. Manca tutto il resto, e due cose lo bloccano: **la decisione sua su cosa vede il proprietario** e **i file preparati da Gemini**, che stanno sul suo computer. Vedi «I due progetti nuovi», qui sotto. |
+| **Applicazione per i venditori** («Mondo Tracking») | **Cominciata il 4 settembre: c'e' lo strato dei dati.** Chiave per immobile, lettura che apre un immobile solo, e le visite senza nomi. Mancano le pagine, e le blocca una cosa sola: **i file preparati da Gemini**, che stanno sul computer di Camillo e da qui non si leggono. Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
@@ -630,7 +630,7 @@ riga per riga contro il codice ed e' giusta** — `schema.ts`, `data/mondo.db`,
 calendario e' esattamente quello proposto. Diversamente dall'episodio del punto
 17, qui non c'era niente da rifiutare.
 
-Il **Passo 1 e' fatto** ed e' committato:
+I **Passi 1 e 2 sono fatti** e committati:
 
 - `properties.tracking_token` in `COLONNE_AGGIUNTE`, con **indice univoco**.
   L'indice **non puo' stare in `SCHEMA`**: `SCHEMA` gira prima che le colonne
@@ -646,26 +646,42 @@ Il **Passo 1 e' fatto** ed e' committato:
   l'agente decide di mandare il link: 53 link vivi che nessuno ha chiesto
   sarebbero 53 porte aperte senza sorveglianza.
 
-Provato su un database usa-e-getta, 18 controlli, con le istruzioni SQL
+- `trackingVisits(propertyId)` — **il Passo 2**. Visite e appuntamenti di
+  quell'immobile, e **soltanto la data**. Non chiede chi guarda: la chiave ha
+  gia' deciso quale casa, e `ATTIVITA_MIA` qui sarebbe pure sbagliato nel
+  merito — nasconderebbe al proprietario la visita che un collega ha fatto a
+  casa sua in condivisione.
+
+**La decisione di Camillo, presa il 4 settembre** — e' la prima delle tre
+domande del capitolo 5A, e adesso ha una risposta: il proprietario vede **le
+visite senza nomi, e nient'altro**. Fuori i giudizi sulla visita, fuori le
+proposte d'acquisto, fuori lo storico dei prezzi. Quindi tre pezzi
+dell'architettura di Gemini — feedback, offerte, storico prezzi — **non si
+costruiscono**, e i componenti che li disegnano vanno tolti, non lasciati vuoti.
+
+Il campo del CRM piu' pericoloso in tutto questo non e' un recapito: e'
+**`activities.title`**, il campo «Cosa». E' testo libero, e chi segna una
+visita di fretta ci scrive «Visita sig. Rossi». Il nome sarebbe uscito da li',
+non dalle colonne che uno si ricorda di controllare. Sta fuori apposta, e la
+prova lo verifica cercando proprio quel cognome nel risultato.
+
+Provato su un database usa-e-getta, **29 controlli**, con le istruzioni SQL
 **estratte dai file veri** e non ricopiate: fra gli altri, l'indice che
 fallisce se creato prima della colonna (e' la prova del perche' sta dove sta),
 i NULL che convivono sotto un indice univoco, il collega che non riesce a farsi
-generare la chiave di un immobile non suo, e le colonne vietate che non escono.
+generare la chiave di un immobile non suo, le colonne vietate che non escono, e
+le visite che escono con tre campi soli — `id`, `due_at`, `done_at`.
 
-**I tre buchi della proposta**, da risolvere ai passi successivi:
+**I due buchi che restano**, da tappare ai passi successivi:
 
 1. **Le foto.** `/foto/[id]/[file]` vuole l'accesso **e** che l'immobile sia
    tuo. Su una pagina pubblica le foto verrebbero tutte rotte: serve una rotta
-   sua, agganciata al token e non all'utente.
+   sua, agganciata al token e non all'utente. E' il prossimo ostacolo vero.
 2. **Il muro.** Ogni lettura di `queries.ts` vuole per primo l'id di chi
    guarda, e qui non c'e' nessuno che ha fatto l'accesso. Il muro non sparisce,
    **cambia forma**: la chiave apre *un immobile solo* e ogni lettura va
    agganciata a quell'`id`. Una funzione scritta senza pensarci non filtrerebbe
    niente.
-3. **Il commento della visita** e' una nota interna dell'agente, spesso
-   schietta. Sul foglio stampato si toglie con un clic; su una pagina sempre
-   accesa la scelta va fatta una volta — o si mostra com'e', o serve un campo
-   separato «feedback per il proprietario».
 
 #### B · Pubblicazione sui portali
 

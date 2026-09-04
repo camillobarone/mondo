@@ -997,6 +997,56 @@ export function propertyByTrackingToken(
 }
 
 /**
+ * Una visita cosi' come la vede il proprietario: una data, e basta.
+ *
+ * Quello che **non** c'e' dentro conta piu' di quello che c'e'.
+ *
+ * - Niente nome, telefono, email o numero di scheda di chi e' venuto: sono
+ *   clienti dell'agenzia, e consegnarli a un terzo — fosse pure il padrone di
+ *   casa — e' esattamente la cosa che il foglio stampato evita scegliendo caso
+ *   per caso. Qui la pagina resta accesa, e la scelta si fa una volta sola.
+ * - Niente `title`. Sembra innocuo ed e' la falla piu' probabile: e' il campo
+ *   «Cosa», testo libero, e chi segna una visita di fretta ci scrive
+ *   «Visita sig. Rossi». Il nome uscirebbe da li', non dalle colonne che
+ *   qualcuno si ricorda di controllare.
+ * - Niente `outcome`, `notes` e `interest`. Sono il giudizio dell'agente sulla
+ *   visita, e Camillo il 4 settembre ha deciso che il proprietario vede le
+ *   visite e le date, non i giudizi. Il giorno che cambiasse idea non si
+ *   aggiunge `outcome`: servirebbe un campo nuovo, scritto per lui.
+ */
+export type TrackingVisit = {
+  id: number;
+  /** Quando era in agenda: c'e' anche sugli appuntamenti ancora da fare. */
+  due_at: string | null;
+  /** Se c'e', la visita e' avvenuta davvero. */
+  done_at: string | null;
+};
+
+/**
+ * Le visite alla casa del proprietario, dalla piu' vecchia alla piu' recente.
+ *
+ * Non chiede chi sta guardando, e non e' una dimenticanza: la chiave ha gia'
+ * deciso **quale immobile**, e da li' in poi il filtro e' `property_id`. E'
+ * l'unico filtro giusto anche nel merito — `ATTIVITA_MIA`, che serve dentro il
+ * gestionale, qui nasconderebbe al proprietario la visita che un collega ha
+ * fatto alla sua casa in condivisione. Al padrone di casa interessa chi e'
+ * passato, non di chi era il cliente.
+ *
+ * Ci sono anche gli appuntamenti ancora da fare: sapere che qualcuno viene la
+ * settimana prossima e' meta' del motivo per cui questa pagina esiste.
+ */
+export function trackingVisits(propertyId: number): TrackingVisit[] {
+  return all<TrackingVisit>(
+    `SELECT a.id, a.due_at, a.done_at
+       FROM activities a
+      WHERE a.property_id = ?
+        AND a.type IN ('visita', 'appuntamento')
+      ORDER BY COALESCE(a.due_at, a.done_at, a.created_at)`,
+    [propertyId],
+  );
+}
+
+/**
  * La chiave del link da mandare al proprietario, generata se non c'e' ancora.
  *
  * Vuole l'utente perche' generarla e' un gesto dell'agente sulla propria
