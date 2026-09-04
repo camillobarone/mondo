@@ -189,6 +189,18 @@ export default async function PropertyPage({
                   </DataRow>
                 );
               })}
+              <DataRow label="Pagina idealista">
+                {property.idealista_owner_url ? (
+                  <a
+                    href={property.idealista_owner_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-700 hover:underline"
+                  >
+                    Apri i numeri di idealista ↗
+                  </a>
+                ) : null}
+              </DataRow>
             </dl>
           </Card>
 

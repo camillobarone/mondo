@@ -5,7 +5,7 @@ import {
   trackingPhotos,
   trackingVisits,
 } from "@/lib/queries";
-import { euro, shortDate, phoneHref, whatsappHref } from "@/lib/format";
+import { euro, dateTime, phoneHref, whatsappHref } from "@/lib/format";
 import { AGENZIA } from "@/lib/types";
 import { PORTALI } from "@/lib/portali";
 
@@ -97,6 +97,21 @@ export default async function TrackingPage({
         : casa.listing_immobiliare;
     if (url) pubblicata.push({ nome: portale.nome, url });
   }
+
+  /**
+   * Chi e' venuto a vedere.
+   *
+   * Tre casi, e il secondo e' la richiesta di Camillo: quando il visitatore e'
+   * cliente di un collega il nome non esce — verrebbe dall'archivio di un altro
+   * collaboratore — ma la visita si vede lo stesso, perche' al proprietario
+   * interessa che qualcuno sia entrato in casa sua.
+   */
+  const chiVenne = (visita: (typeof visite)[number]) => {
+    const nome = visita.client_name?.trim();
+    if (nome) return nome;
+    if (visita.collaborazione) return "Collaborazione con altra agenzia";
+    return "Visita accompagnata dall'agenzia";
+  };
 
   const ritirato = casa.status === "ritirato";
   const gradino = PERCORSO.findIndex((passo) => passo.stato === casa.status);
@@ -195,8 +210,20 @@ export default async function TrackingPage({
               </p>
               <ul className="mt-3 divide-y divide-slate-100 border-t border-slate-100">
                 {svolte.map((visita) => (
-                  <li key={visita.id} className="py-2 text-sm text-slate-700">
-                    {shortDate(visita.done_at)}
+                  <li key={visita.id} className="py-3">
+                    {/* La data e' quella dell'appuntamento, non quella in cui e'
+                        stata messa la spunta: e' la stessa che stampa il foglio
+                        per il proprietario, e due pagine che raccontano la
+                        stessa visita non possono dire due date diverse. */}
+                    <p className="text-sm font-medium text-slate-900">
+                      {dateTime(visita.due_at ?? visita.done_at)}
+                    </p>
+                    <p className="text-sm text-slate-700">{chiVenne(visita)}</p>
+                    {visita.outcome?.trim() ? (
+                      <p className="mt-1 text-sm whitespace-pre-line text-slate-600">
+                        {visita.outcome.trim()}
+                      </p>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -216,7 +243,7 @@ export default async function TrackingPage({
               <ul className="mt-1 space-y-0.5">
                 {inProgramma.map((visita) => (
                   <li key={visita.id} className="text-sm text-brand-900">
-                    {shortDate(visita.due_at)}
+                    {dateTime(visita.due_at)}
                   </li>
                 ))}
               </ul>
@@ -225,19 +252,20 @@ export default async function TrackingPage({
 
           <p className="mt-4 text-xs text-slate-400">
             Per rispetto della riservatezza di chi viene a vedere, qui non
-            compaiono i nomi né i recapiti dei visitatori.
+            compaiono i loro recapiti. Per le visite portate da un&apos;altra
+            agenzia il nome resta al collega che segue quel cliente.
           </p>
         </div>
       </section>
 
       {/* ----------------------------------------------------------- portali */}
-      {pubblicata.length > 0 ? (
+      {pubblicata.length > 0 || casa.idealista_owner_url ? (
         <section className="card mb-6">
           <div className="card-head">
             <h2 className="card-title">Dove è pubblicata</h2>
           </div>
           <div className="px-4 py-4">
-            <ul className="space-y-2">
+            <ul className="space-y-2 empty:hidden">
               {pubblicata.map((riga) => (
                 <li key={riga.nome}>
                   <a
@@ -251,10 +279,33 @@ export default async function TrackingPage({
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-xs text-slate-400">
-              Sono gli annunci veri: aprili quando vuoi per controllare che
-              foto, prezzo e descrizione siano quelli giusti.
-            </p>
+            {pubblicata.length > 0 ? (
+              <p className="mt-3 text-xs text-slate-400">
+                Sono gli annunci veri: aprili quando vuoi per controllare che
+                foto, prezzo e descrizione siano quelli giusti.
+              </p>
+            ) : null}
+
+            {/* I numeri sono di idealista, non nostri, e sono una cosa diversa
+                dall'annuncio: sta sotto una riga di separazione perche' chi
+                guarda non li confonda con i nostri. */}
+            {casa.idealista_owner_url ? (
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <a
+                  href={casa.idealista_owner_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-brand-700 hover:underline"
+                >
+                  I numeri dell&apos;annuncio su idealista ↗
+                </a>
+                <p className="mt-1 text-xs text-slate-400">
+                  Quante persone hanno visto l&apos;annuncio e quante hanno
+                  chiesto informazioni. È una pagina di idealista, con i loro
+                  conteggi: le visite alla casa sono quelle qui sopra.
+                </p>
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}

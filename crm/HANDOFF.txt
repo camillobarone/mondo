@@ -857,71 +857,68 @@ Due cose trovate dal browser, che il codice non mostrava:
   Piu' le prove di prima rifatte: 38 + 17, tutte verdi.
 
 
-Da fare per primo: i nomi e le osservazioni sulla pagina
+I nomi e le osservazioni sulla pagina — fatto
 
 Camillo ha cambiato idea la sera del 4 settembre, e questa decisione
-sostituisce quella della mattina. Nella pagina del proprietario vuole:
+sostituisce quella della mattina. Nella pagina del proprietario ora ci sono il
+nome di chi ha visitato, le sue osservazioni, e data e ora.
 
-- il nominativo del cliente acquirente che ha visitato;
-- le osservazioni che ha fatto;
-- data e ora della visita;
-- nessun riferimento telefonico.
+Non e' un allargamento rispetto a come lavora l'agenzia: il foglio stampato di
+/immobili/[id]/visite porta gia' nome, cognome, telefono e commento, e si
+consegna a mano da sempre. La pagina da' meno di quel foglio.
 
-Non e' un capriccio e non e' nemmeno un allargamento rispetto a come lavora
-l'agenzia: il foglio stampato di /immobili/[id]/visite contiene gia' nome,
-cognome, telefono e commento, e lo consegna a mano da sempre. La pagina
-chiede meno di quel foglio, non di piu'.
+Cosa resta fuori, e perche':
 
-Come farlo, in concreto:
+- telefono ed email, per sua richiesta esplicita: il nome dice al
+  proprietario chi e' entrato in casa sua, il numero gli darebbe il modo di
+  scavalcare l'agenzia;
+- notes, che sono i promemoria dell'agente e non le parole del cliente.
+  Le osservazioni stanno in outcome, il campo «Cosa ha detto il cliente»;
+- title, e questa non cambia: e' il campo «Cosa», dove si scrive «Visita
+  sig. Rossi». Adesso il nome ha la sua colonna, e prenderlo anche da li'
+  vorrebbe dire prenderlo due volte per una strada che nessuno controlla;
+- interest, che e' il giudizio dell'agente sul cliente.
 
-1. TrackingVisit in queries.ts guadagna client_name e outcome.
-   trackingVisits deve fare il join con clients — oggi legge la sola
-   tabella activities.
-2. outcome si', notes no. Sono due campi diversi e la differenza e'
-   tutta qui: outcome e' il campo «Cosa ha detto il cliente», cioe' proprio
-   le osservazioni che Camillo ha chiesto; notes sono i promemoria
-   dell'agente («portare la planimetria», «chiedere se scende»), che sul foglio
-   stampato si tolgono con un clic apposta perche' su un foglio consegnato
-   sembrano frasi dette dal visitatore. Su una pagina sempre accesa non c'e'
-   nessun clic: notes resta fuori e basta.
-3. title resta fuori comunque, e questa non si tocca: e' il campo «Cosa»,
-   testo libero, dove si scrive «Visita sig. Rossi». Adesso il nome c'e' gia'
-   nella sua colonna, e prenderlo anche da li' vorrebbe dire prenderlo due
-   volte e in un modo che nessuno controlla.
-4. Niente telefono e niente email, come ha detto lui. La prova che li cerca
-   nella pagina consegnata va tenuta com'e'.
-5. La data deve essere due_at, con l'ora. Oggi la pagina mostra
-   shortDate(done_at), che e' quando si e' messa la spunta — il foglio
-   stampato usa invece la data dell'appuntamento, e README.md lo dice
-   esplicitamente. Sono due pagine che raccontano la stessa visita: se dicono
-   due date diverse, una delle due sta mentendo. Si usa dateTime() di
-   format.ts, che da' data e ora insieme.
+Il visitatore portato da un collega: «Collaborazione con altra agenzia».
+Deciso da lui. La visita e le osservazioni si vedono, il nome no — verrebbe
+dall'archivio di un altro collaboratore. La regola sta nella query: il nome esce
+solo se clients.owner_id coincide con properties.agent_id, e un cliente
+senza titolare cade dalla parte prudente.
 
-Una decisione da fargli prendere prima di scrivere il codice: se a portare
-il visitatore e' stato un collega, quel visitatore e' un cliente suo. Il
-muro fra collaboratori non lo riguarda — il proprietario ha diritto di sapere
-chi e' entrato in casa sua, e non e' un agente che sbircia il portafoglio di un
-altro — ma il nome esce lo stesso dall'archivio del collega, ed e' la prima
-volta che succede fuori dagli incroci. visitHistory oggi nasconde il nome
-quando il cliente non e' tuo (CASE WHEN c.owner_id = ?). Consiglio: farlo
-uscire, perche' il destinatario e' il proprietario di casa e non un concorrente
-— ma chiederglielo, non deciderlo da soli.
+La data e' due_at, con l'ora (dateTime()), non done_at: e' la stessa
+che stampa il foglio, e due pagine che raccontano la stessa visita non possono
+dire due date diverse.
 
-Poi vanno rifatti i documenti: README.md («La pagina del proprietario»,
-la parte «Cosa vede, e cosa non vede») e CONSEGNA.md 9-septies dicono
-entrambi che i nomi non escono. Dopo questo lavoro non sara' piu' vero, e un
-manuale che dice il falso su una cosa di privacy e' peggio di un manuale che
-tace.
+Verificato: 20 controlli sul contenuto della pagina, compresi il nome del
+cliente del collega che non esce, i due telefoni che non escono, e le note
+interne di entrambi gli agenti.
 
 
-Idealista: cosa serve prima di poterlo mettere dentro
+Idealista: la casella c'e', i numeri no
 
-Quello che ancora non c'e', e aspetta lui: la pagina del proprietario di
-idealista (quella coi numeri di visite e contatti). Il collegamento e' per
-immobile e stabile, quindi si salverebbe in un campo come questi — ma prima
-vanno verificati i suoi numeri, che al capitolo 5 non tornavano: 1.221 visite
-su un annuncio con 0 giorni di pubblicazione. Mandare al proprietario un
-numero che significa un'altra cosa e' una figura sua.
+properties.idealista_owner_url, campo Pagina idealista per il proprietario
+sulla scheda. Non sta nell'elenco PORTALI ed e' separata anche a schermo:
+gli annunci dimostrano che la casa e' pubblicata, quei conteggi sono di
+idealista e non nostri. Sulla pagina del proprietario compare sotto una riga,
+con scritto che le visite alla casa sono quelle sopra.
+
+Si incolla a mano e solo se lui vuole. Al 4 settembre i numeri di idealista
+non erano ancora stati verificati, e resta da fare a lui:
+
+1. generare dal pannello idealista il link del proprietario di un immobile e
+   aprirlo in incognito — che e' anche l'unico modo di vedere quello che
+   vede il venditore;
+2. controllare che nel link non compaia la parola PLUS scritta a lettere:
+   e' base64, e il copia-incolla a volte trasforma un + in quella parola;
+3. rifarlo su uno dei due immobili di Trepuzzi, online da 455 giorni, e
+   confrontare. Serve perche' sull'immobile di Via dei Palumbo idealista dava
+   1.221 visite con 0 giorni di pubblicazione, e quel numero non torna;
+4. dire cosa scrive la ⓘ accanto a «Rendimento dell'annuncio»: non e'
+   chiaro se quei numeri siano dell'annuncio o della media della zona.
+
+Finche' non lo fa, la casella resta vuota e la sezione non compare: il codice
+non aspetta niente, aspetta lui. Da qui non si verifica: la rete verso
+l'esterno e' chiusa e idealista non si raggiunge.
 
 Il muro, per chi scrive il prossimo pezzo. Ogni lettura di queries.ts
 vuole per primo l'id di chi guarda, e qui non c'e' nessuno che ha fatto

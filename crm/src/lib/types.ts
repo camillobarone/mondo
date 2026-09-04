@@ -100,6 +100,8 @@ export interface Property {
   listing_idealista: string | null;
   /** L'annuncio su Immobiliare.it, come e' stato incollato. */
   listing_immobiliare: string | null;
+  /** La pagina che idealista fa per il proprietario, coi loro numeri. */
+  idealista_owner_url: string | null;
   /**
    * La chiave del link riservato al proprietario. `null` finche' l'agente non
    * lo crea, e di nuovo `null` quando lo revoca: e' la revoca stessa.

@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS properties (
   tracking_token    TEXT,                              -- chiave del link riservato al proprietario
   listing_idealista TEXT,                              -- l'annuncio su idealista
   listing_immobiliare TEXT,                            -- l'annuncio su Immobiliare.it
+  idealista_owner_url TEXT,                            -- la pagina che idealista fa per il proprietario
   notes             TEXT,
   created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at        TEXT    NOT NULL DEFAULT (datetime('now')),

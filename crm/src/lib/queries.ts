@@ -987,6 +987,8 @@ export type TrackingProperty = {
    */
   listing_idealista: string | null;
   listing_immobiliare: string | null;
+  /** La pagina che idealista fa per il proprietario, se Camillo l'ha incollata. */
+  idealista_owner_url: string | null;
   mandate_start: string | null;
   mandate_end: string | null;
   created_at: string;
@@ -1020,7 +1022,7 @@ export function propertyByTrackingToken(
             p.address, p.city, p.zone,
             p.sqm, p.rooms, p.bathrooms, p.floor,
             p.price, p.status, p.video_url,
-            p.listing_idealista, p.listing_immobiliare,
+            p.listing_idealista, p.listing_immobiliare, p.idealista_owner_url,
             p.mandate_start, p.mandate_end, p.created_at,
             u.name AS agent_name
        FROM properties p
@@ -1099,20 +1101,33 @@ export function trackingPhotoBelongs(propertyId: number, file: string): boolean 
 /**
  * Una visita cosi' come la vede il proprietario: una data, e basta.
  *
- * Quello che **non** c'e' dentro conta piu' di quello che c'e'.
+ * Camillo ha deciso la sera del 4 settembre di farci stare **il nome di chi ha
+ * visitato e le sue osservazioni**, cambiando idea rispetto alla mattina. Non
+ * e' un allargamento rispetto a come lavora l'agenzia: il foglio stampato di
+ * `/immobili/[id]/visite` porta gia' nome, cognome, **telefono** e commento, e
+ * si consegna a mano da sempre. Questa pagina chiede meno di quel foglio.
  *
- * - Niente nome, telefono, email o numero di scheda di chi e' venuto: sono
- *   clienti dell'agenzia, e consegnarli a un terzo — fosse pure il padrone di
- *   casa — e' esattamente la cosa che il foglio stampato evita scegliendo caso
- *   per caso. Qui la pagina resta accesa, e la scelta si fa una volta sola.
- * - Niente `title`. Sembra innocuo ed e' la falla piu' probabile: e' il campo
- *   «Cosa», testo libero, e chi segna una visita di fretta ci scrive
- *   «Visita sig. Rossi». Il nome uscirebbe da li', non dalle colonne che
- *   qualcuno si ricorda di controllare.
- * - Niente `outcome`, `notes` e `interest`. Sono il giudizio dell'agente sulla
- *   visita, e Camillo il 4 settembre ha deciso che il proprietario vede le
- *   visite e le date, non i giudizi. Il giorno che cambiasse idea non si
- *   aggiunge `outcome`: servirebbe un campo nuovo, scritto per lui.
+ * Quello che resta fuori, e perche':
+ *
+ * - **Il telefono e l'email**, per sua richiesta esplicita. Il nome dice al
+ *   proprietario chi e' venuto; il numero gli darebbe il modo di scavalcare
+ *   l'agenzia, e non e' quello che questa pagina serve a fare.
+ * - **`notes`**, che non sono le osservazioni del cliente ma i promemoria
+ *   dell'agente («portare la planimetria», «chiedere se scende»). Sul foglio
+ *   stampato si tolgono con un clic apposta, perche' consegnate cosi' sembrano
+ *   frasi dette dal visitatore. Su una pagina sempre accesa quel clic non c'e'.
+ *   Le osservazioni stanno in **`outcome`**, il campo «Cosa ha detto il
+ *   cliente», e sono quelle che escono.
+ * - **`title`**, e questa non cambia: e' il campo «Cosa», testo libero, dove
+ *   chi segna una visita di fretta scrive «Visita sig. Rossi». Adesso il nome
+ *   ha la sua colonna, e prenderlo anche da li' vorrebbe dire prenderlo due
+ *   volte e per una strada che nessuno controlla.
+ * - **`interest`**, che e' il giudizio dell'agente sul cliente, non
+ *   un'osservazione del cliente.
+ * - **Il nome, quando il visitatore e' cliente di un collega.** Li' esce
+ *   «Collaborazione con altra agenzia», deciso da Camillo: il proprietario ha
+ *   diritto di sapere che qualcuno e' venuto, ma il nome verrebbe
+ *   dall'archivio di un altro collaboratore, e quello il muro lo protegge.
  */
 export type TrackingVisit = {
   id: number;
@@ -1120,6 +1135,12 @@ export type TrackingVisit = {
   due_at: string | null;
   /** Se c'e', la visita e' avvenuta davvero. */
   done_at: string | null;
+  /** Chi ha visitato, quando e' un cliente di chi segue la casa. */
+  client_name: string | null;
+  /** 1 se la visita e' arrivata da un collega: al posto del nome ci va quello. */
+  collaborazione: number;
+  /** Le osservazioni del visitatore. Mai le note interne dell'agente. */
+  outcome: string | null;
 };
 
 /**
@@ -1137,8 +1158,16 @@ export type TrackingVisit = {
  */
 export function trackingVisits(propertyId: number): TrackingVisit[] {
   return all<TrackingVisit>(
-    `SELECT a.id, a.due_at, a.done_at
+    `SELECT a.id, a.due_at, a.done_at, a.outcome,
+            CASE WHEN c.owner_id IS NOT NULL AND c.owner_id = p.agent_id
+                 THEN TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,''))
+                 END AS client_name,
+            CASE WHEN a.client_id IS NOT NULL
+                  AND (c.owner_id IS NULL OR c.owner_id <> p.agent_id)
+                 THEN 1 ELSE 0 END AS collaborazione
        FROM activities a
+       JOIN properties p ON p.id = a.property_id
+       LEFT JOIN clients c ON c.id = a.client_id
       WHERE a.property_id = ?
         AND a.type IN ('visita', 'appuntamento')
       ORDER BY COALESCE(a.due_at, a.done_at, a.created_at)`,

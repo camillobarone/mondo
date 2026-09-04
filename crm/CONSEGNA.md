@@ -758,14 +758,29 @@ rimette la chiave a zero, e da quel momento l'indirizzo è morto.
 
 ### Cosa esce, e cosa no
 
-Escono: foto, prezzo, metratura, **le date delle visite**, gli appuntamenti
-fissati, a che punto è la vendita, i collegamenti agli annunci, e i recapiti
-dell'agenzia.
+Escono: foto, prezzo, metratura, **le visite con data, ora, nome del visitatore
+e le sue osservazioni**, gli appuntamenti fissati, a che punto è la vendita, i
+collegamenti agli annunci, e i recapiti dell'agenzia.
 
-**Non escono, per scelta presa una volta sola:** nome, cognome, telefono ed
-email di chi è venuto a visitare — sono dati di altri clienti; il commento e il
-giudizio scritti dall'agente; il prezzo minimo; le provvigioni; le note interne;
-le proposte d'acquisto; lo storico dei ribassi.
+**Non escono:** il **telefono e l'email** di chi è venuto a visitare — il nome
+dice al proprietario chi è entrato in casa sua, il numero gli darebbe il modo di
+scavalcare l'agenzia; le **Note** dell'agente, che sono i suoi promemoria e non
+le parole del cliente; il prezzo minimo; le provvigioni; le note interne
+sull'immobile; le proposte d'acquisto; lo storico dei ribassi.
+
+Il confronto giusto non è con niente, è con il **foglio stampato** di
+`/immobili/[id]/visite`, che l'agenzia consegna a mano da sempre: quello porta
+nome, cognome, **telefono** e commento. La pagina dà meno di quel foglio.
+
+**Quando la visita l'ha portata un collega**, al posto del nome compare
+*«Collaborazione con altra agenzia»*, e le osservazioni si vedono lo stesso. Il
+proprietario ha diritto di sapere che qualcuno è entrato in casa sua; il nome
+verrebbe però dall'archivio di un altro collaboratore, e lì il muro fra
+collaboratori vale anche verso l'esterno. Deciso da Camillo il 4 settembre.
+
+La data mostrata è quella dell'**appuntamento**, non quella in cui è stata messa
+la spunta: è la stessa che stampa il foglio, e due pagine che raccontano la
+stessa visita non possono dire due date diverse.
 
 Il punto tecnico che conta, per chi un domani ci mette le mani: **la lettura che
 serve quella pagina elenca le colonne una per una**, come le due query degli
@@ -789,17 +804,26 @@ online — per questo la sezione si chiama *registro di garanzia* e non
 *statistiche*. I numeri dei portali non ci sono e non ci saranno: non esiste un
 modo di prenderli, e inventarne di finti sarebbe peggio che non averne.
 
+C'è anche un campo facoltativo per la **pagina che idealista genera per il
+proprietario** (`idealista_owner_url`), quella con i loro conteggi. Non sta
+nell'elenco `PORTALI` ed è tenuta separata anche a schermo, sotto una riga di
+separazione: gli annunci dimostrano che la casa è pubblicata, quei numeri sono
+di idealista e non nostri. Si incolla a mano, un immobile alla volta, e solo su
+decisione sua — al 4 settembre quei conteggi non erano ancora stati verificati
+(1.221 visite su un annuncio con 0 giorni di pubblicazione).
+
 Nel riquadro *Da sistemare* del cruscotto compaiono gli **annunci ancora online
 su case già vendute o ritirate**. È il richiamo che vale di più: un annuncio
 rimasto pubblicato dopo il rogito porta telefonate per una casa che non c'è più.
 
 ### Come è stata verificata
 
-76 controlli in tutto, di cui 49 con un browser vero. L'archivio di prova è
-costruito apposta con **dentro tutto quello che non deve uscire** — il cognome
-del visitatore scritto nel campo «Cosa», il suo cellulare, il prezzo minimo, le
-provvigioni, le note interne, il giudizio sulla visita — e le prove vanno a
-cercarli uno per uno nella pagina consegnata. Nessuno esce.
+Quasi cento controlli, la metà con un browser vero. L'archivio di prova è
+costruito apposta con **dentro tutto quello che non deve uscire** — i telefoni e
+le email dei visitatori, le note interne dell'agente, il prezzo minimo, le
+provvigioni — e le prove vanno a cercarli uno per uno nella pagina consegnata.
+Nessuno esce. C'è anche un visitatore che è cliente di un collega, per
+verificare che al suo posto compaia l'etichetta e non il nome.
 
 Messa in esercizio il 4 settembre e **provata da lui sul gestionale vero**:
 link creato su un immobile suo, pagina aperta dal telefono, foto, portali,

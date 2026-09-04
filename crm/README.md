@@ -18,7 +18,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback, **foto** e **video**. L'elenco si apre sugli attivi |
 | **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
 | **Storico visite** | Una pagina da stampare per il proprietario: chi è venuto a vedere la casa, quando, con che numero, e cosa ha detto |
-| **Pagina del proprietario** | Un indirizzo riservato che il venditore apre dal telefono, senza password: foto, quante visite ha avuto la casa e quando, a che punto è la vendita, e i collegamenti agli annunci sui portali. Senza nomi né recapiti di chi è venuto a vedere |
+| **Pagina del proprietario** | Un indirizzo riservato che il venditore apre dal telefono, senza password: foto, le visite con data, ora, nome del visitatore e cosa ha detto, a che punto è la vendita, e i collegamenti agli annunci sui portali. Senza nessun recapito telefonico |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
 | **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza. Si modificano e si eliminano, entrano nel tuo calendario e avvisano 30 minuti prima |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
@@ -412,23 +412,35 @@ C'è anche **Copia**, se preferisci mandarlo per email o incollarlo altrove.
 
 ### Cosa vede, e cosa non vede
 
-Vede: **le foto**, il prezzo, i metri quadri; **quante visite** ha avuto la casa
-e in che date, con le **visite già fissate** in evidenza; **a che punto è la
-vendita**, dall'incarico al rogito; **dove è pubblicata**, con i collegamenti
-veri agli annunci; il tuo nome e il numero dell'agenzia, con i pulsanti per
-chiamare o scrivere su WhatsApp.
+Vede: **le foto**, il prezzo, i metri quadri; **le visite** una per una — data,
+ora, **chi è venuto** e **cosa ha detto** — con le visite già fissate in
+evidenza; **a che punto è la vendita**, dall'incarico al rogito; **dove è
+pubblicata**, con i collegamenti veri agli annunci; il tuo nome e il numero
+dell'agenzia, con i pulsanti per chiamare o scrivere su WhatsApp.
+
+Le osservazioni sono quelle che scrivi in **«Cosa ha detto il cliente»** quando
+metti la spunta *Fatto*. La data è quella dell'**appuntamento**, la stessa che
+stampa il foglio: se le due pagine dicessero due date diverse per la stessa
+visita, una delle due mentirebbe.
 
 **Non vede, e non è una dimenticanza:**
 
-- **nome, cognome, telefono ed email di chi è venuto a visitare.** Sono clienti
-  dell'agenzia, e non si consegnano a un terzo. È la differenza con il foglio
-  da stampare, dove ci sono e dove decidi tu caso per caso;
-- **il commento della visita** e il giudizio che hai scritto tu;
-- il **prezzo minimo**, le **provvigioni**, le **note interne**;
+- **telefono ed email di chi è venuto a visitare.** Il nome dice al proprietario
+  chi è entrato in casa sua; il numero gli darebbe il modo di scavalcare
+  l'agenzia. È l'unica cosa che questa pagina toglie rispetto al foglio
+  stampato, dove il telefono invece c'è;
+- **le tue Note.** Sono i promemoria («portare la planimetria», «chiedere se
+  scende»), non le parole del cliente. Sul foglio le togli con un clic; qui non
+  compaiono mai, perché una pagina sempre accesa quel clic non ce l'ha;
+- il **prezzo minimo**, le **provvigioni**, le **note interne** sull'immobile;
 - le **proposte d'acquisto** ricevute e lo **storico dei ribassi**.
 
-La scelta è stata fatta una volta sola, di proposito: su un foglio decidi ogni
-volta, su una pagina sempre accesa no.
+### Quando la visita l'ha portata un collega
+
+Se chi è venuto a vedere è cliente di un altro collaboratore, al posto del nome
+compare **«Collaborazione con altra agenzia»**, e le sue osservazioni si vedono
+lo stesso. Il proprietario ha diritto di sapere che qualcuno è entrato in casa
+sua; il nome però verrebbe dall'archivio di un collega, e quello resta suo.
 
 ### Togliere il link
 
@@ -459,6 +471,15 @@ Se incolli un annuncio nella casella sbagliata, il programma se ne accorge e te
 lo dice, senza cancellare quello che avevi scritto. E se la casa non è
 pubblicata da nessuna parte, la sezione **non compare affatto** nella pagina del
 proprietario: una riga «non pubblicata» non racconterebbe come va la vendita.
+
+C'è anche una terza casella, facoltativa: **Pagina idealista per il
+proprietario**. È l'indirizzo che generi dal pannello di idealista, con i
+**loro** numeri — quante persone hanno visto l'annuncio, quante hanno chiesto
+informazioni. Se la incolli, il proprietario la trova nella sua pagina, sotto
+una riga di separazione e con scritto che quei conteggi sono di idealista e non
+i nostri. Incollala solo dopo esserti convinto che quei numeri dicano davvero
+quello che sembrano dire: se mandi al proprietario un numero che significa
+un'altra cosa, la figura è tua.
 
 Nel cruscotto, fra le cose da sistemare, compaiono gli **annunci ancora online
 su case già vendute o ritirate**. È il richiamo che vale di più: un annuncio

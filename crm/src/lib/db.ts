@@ -120,6 +120,16 @@ const COLONNE_AGGIUNTE: {
   // giorno del rogito.
   { tabella: "properties", colonna: "listing_idealista", definizione: "TEXT" },
   { tabella: "properties", colonna: "listing_immobiliare", definizione: "TEXT" },
+  // La pagina che idealista genera per il proprietario, con i loro numeri
+  // (visite all'annuncio, preferiti, contatti). Il collegamento e' per immobile
+  // e stabile, quindi si conserva come gli altri.
+  //
+  // Non e' un annuncio e non sta nell'elenco `PORTALI`: quelli servono a
+  // dimostrare che la casa e' pubblicata, questo porta a dei numeri. E i numeri
+  // sono di idealista, non nostri — se un giorno non tornassero, la figura la
+  // fa l'agenzia. Per questo si incolla a mano, un immobile alla volta, e solo
+  // quando Camillo ha deciso di fidarsene.
+  { tabella: "properties", colonna: "idealista_owner_url", definizione: "TEXT" },
   {
     tabella: "properties",
     colonna: "tracking_token",

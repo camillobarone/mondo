@@ -403,6 +403,7 @@ export async function saveProperty(_prev: string | null, form: FormData) {
     video_url: null as string | null,
     listing_idealista: null as string | null,
     listing_immobiliare: null as string | null,
+    idealista_owner_url: null as string | null,
     notes: nullable(form, "notes"),
   };
 
@@ -425,6 +426,18 @@ export async function saveProperty(_prev: string | null, form: FormData) {
     else values.listing_immobiliare = esito.url;
   }
 
+  // La pagina che idealista fa per il proprietario. Stesso controllo degli
+  // annunci — dev'essere un indirizzo, e dev'essere di idealista — perche' un
+  // collegamento sbagliato qui finisce dritto sotto gli occhi del venditore.
+  const pagina = collegamentoAnnuncio(PORTALI[0], text(form, "idealista_owner_url"));
+  if (pagina.errore) {
+    return pagina.errore.replace(
+      "Questo non sembra un annuncio di idealista",
+      "Questa non sembra una pagina di idealista",
+    );
+  }
+  values.idealista_owner_url = pagina.url;
+
   if (!values.title) return "Serve un titolo per l'immobile.";
   // Senza indirizzo, l'immobile compare nelle liste e nelle tendine col solo
   // titolo: impossibile riconoscerlo a colpo d'occhio fra tanti.
@@ -445,7 +458,8 @@ export async function saveProperty(_prev: string | null, form: FormData) {
          condition = ?, energy_class = ?, price = ?, min_price = ?, status = ?,
          owner_client_id = ?, agent_id = ?, mandate_start = ?, mandate_end = ?,
          exclusive = ?, commission_pct = ?, video_url = ?,
-         listing_idealista = ?, listing_immobiliare = ?, notes = ?,
+         listing_idealista = ?, listing_immobiliare = ?,
+         idealista_owner_url = ?, notes = ?,
          updated_at = datetime('now')
        WHERE id = ?`,
       [
@@ -455,7 +469,7 @@ export async function saveProperty(_prev: string | null, form: FormData) {
         values.min_price, values.status, values.owner_client_id, values.agent_id ?? user.id,
         values.mandate_start, values.mandate_end, values.exclusive, values.commission_pct,
         values.video_url, values.listing_idealista, values.listing_immobiliare,
-        values.notes, id,
+        values.idealista_owner_url, values.notes, id,
       ],
     );
 
@@ -480,8 +494,8 @@ export async function saveProperty(_prev: string | null, form: FormData) {
        ref, title, kind, contract, address, city, zone, sqm, rooms, bathrooms, floor,
        elevator, outdoor, garage, condition, energy_class, price, min_price, status,
        owner_client_id, agent_id, mandate_start, mandate_end, exclusive, commission_pct,
-       video_url, listing_idealista, listing_immobiliare, notes
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       video_url, listing_idealista, listing_immobiliare, idealista_owner_url, notes
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       values.ref, values.title, values.kind, values.contract, values.address, values.city,
       values.zone, values.sqm, values.rooms, values.bathrooms, values.floor, values.elevator,
@@ -489,7 +503,7 @@ export async function saveProperty(_prev: string | null, form: FormData) {
       values.min_price, values.status, values.owner_client_id, values.agent_id ?? user.id,
       values.mandate_start, values.mandate_end, values.exclusive, values.commission_pct,
       values.video_url, values.listing_idealista, values.listing_immobiliare,
-      values.notes,
+      values.idealista_owner_url, values.notes,
     ],
   );
 

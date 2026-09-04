@@ -242,6 +242,18 @@ export function PropertyForm({
             />
           ))}
         </div>
+
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <TextField
+            label="Pagina idealista per il proprietario"
+            name="idealista_owner_url"
+            defaultValue={property?.idealista_owner_url}
+            placeholder="https://www.idealista.it/..."
+            pattern="\S+\.\S+"
+            title="Incolla l'indirizzo che idealista genera per il proprietario"
+            hint="Facoltativo. È la pagina che generi dal pannello idealista, con i loro numeri (visite all'annuncio, preferiti, contatti). Se la incolli, il proprietario la trova nella sua pagina. I numeri sono di idealista, non nostri: incollala solo dopo esserti convinto che dicano quello che sembrano dire."
+          />
+        </div>
       </Card>
 
       <Card title="Note">
