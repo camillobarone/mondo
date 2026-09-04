@@ -510,6 +510,11 @@ richiesta il 4 agosto 2026. Il codice resta nella storia del repository.
   o Outlook. È un feed iCalendar con una chiave nell'indirizzo, non un account
   collegato: niente da autorizzare, ma quell'indirizzo vale come una password ed
   è rigenerabile dalla stessa pagina.
+- **Su Google l'abbonamento fa vedere, non suonare.** La sveglia a 30 minuti sta
+  dentro il file e Apple e Outlook la usano; Google non fa suonare gli avvisi
+  dei calendari a cui ci si abbona, e mostra soltanto l'appuntamento. Per essere
+  avvisati restano il pulsante *Calendario* sulla riga (che mette l'evento nel
+  proprio calendario, dove la sveglia funziona) e l'avviso per email.
 - **L'avviso per email** parte da `scripts/promemoria.mjs`, cron ogni 5 minuti.
   Vedi il capitolo 6-bis per la configurazione.
 

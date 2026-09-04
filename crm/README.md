@@ -411,10 +411,17 @@ autorizzare, ma anche che **quell'indirizzo vale come una password** — chi ce
 l'ha vede i tuoi appuntamenti. Se finisce dove non doveva, dalla stessa pagina
 se ne genera uno nuovo e il vecchio smette di rispondere.
 
-> **Google ricontrolla quando decide lui**, anche dopo diverse ore: un
-> appuntamento appena inserito può non comparire subito. Apple e Outlook sono
-> più svelti. Per l'appuntamento di oggi usa **Calendario** sulla riga
-> dell'agenda, che è immediato.
+> **Su Google due cose da sapere.** La prima: ricontrolla quando decide lui,
+> anche dopo diverse ore, quindi un appuntamento appena inserito può non
+> comparire subito — Apple e Outlook sono più svelti. La seconda, che pesa di
+> più: **Google non fa suonare gli avvisi dei calendari a cui ti abboni.** La
+> sveglia a 30 minuti è dentro il file e Apple e Outlook la usano, Google la
+> ignora e mostra soltanto l'appuntamento.
+>
+> Quindi per **vedere** l'agenda in Google l'abbonamento va benissimo; per
+> **essere avvisato** servono le altre due strade: il pulsante *Calendario*
+> sulla riga dell'agenda, che mette l'appuntamento nel tuo calendario dove la
+> sveglia suona davvero, oppure l'avviso per email qui sotto.
 
 ### L'avviso per email
 

@@ -5,7 +5,7 @@ HANDOFF — PER RIPRENDERE IN UNA CHAT NUOVA
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-Aggiornato al 3 settembre 2026.
+Aggiornato al 4 settembre 2026.
 
   | Il documento gemello è CONSEGNA.md (anche in .txt): quello è per
   | l'agenzia, questo è per chi riprende il lavoro. README.md è il manuale
@@ -549,6 +549,14 @@ Le cose costruite in questa sessione, in ordine
       l'elenco dei soli immobili da completare (punto 15). Nessun automatismo
       previsto: la via non si inventa.
 
+  Applicazione per i venditori
+      Progetto nuovo, chiesto il 4 settembre. Specifiche non ancora arrivate.
+      Vedi «I due progetti nuovi», qui sotto.
+
+  Pubblicazione sui portali
+      Progetto nuovo, e il piu' urgente dei due. Ha dismesso Casagest24 e
+      pubblica a mano. Vedi «I due progetti nuovi», qui sotto.
+
   Controllo giornaliero della PR #2
       Vedi capitolo 7.
 
@@ -608,6 +616,159 @@ sovrascrive) e la copia di com'era prima sta in /etc/mondo-crm.env.prima.
 Escluse per strada, così non si rifanno: la @ nella password non c'entra
 (provato: @, ! e # arrivano interi; l'unico carattere che si perde è il
 $), e il file non era mangiato.
+
+
+I due progetti nuovi (4 settembre 2026)
+
+Sono nati in una mattinata di domande sue, non c'e' ancora una riga di codice
+scritta per nessuno dei due, e le specifiche devono ancora arrivare. Qui sta
+tutto quello che si e' scoperto, che e' parecchio: senza, si ricomincerebbe da
+zero a fare le stesse domande.
+
+Ordine consigliato, detto a lui: prima la pubblicazione, poi i venditori.
+La pubblicazione e' il lavoro che fa tutti i giorni e che si e' appena caricato
+a mano; l'applicazione per i venditori e' una bella cosa che nessun cliente sta
+chiedendo. I due progetti condividono comunque i campi nuovi sulla scheda
+immobile.
+
+
+A · Applicazione per i venditori
+
+Sua richiesta: *«una applicazione per i clienti che vendono con noi per vedere
+l'andamento della promozione in vendita»*. Sta in una finestra sua — e'
+un programma a se' — mentre qui si fa la parte del gestionale e si concorda
+cosa passa in mezzo.
+
+Da sapere prima di ricominciare:
+
+- Meta' esiste gia', su carta. E' lo Storico visite per il proprietario
+  (capitolo 9 di README.md): visite fatte con data, nome, telefono e commento,
+  appuntamenti fissati, note interne che si tolgono con un clic. La richiesta e'
+  quella pagina che smette di essere un foglio. Le specifiche partano da li',
+  dicendo cosa aggiungere e cosa togliere.
+- Le tre domande che decidono tutto, e che gli sono state fatte:
+  1. cosa vede il venditore e cosa non deve vedere mai — prezzo minimo,
+     provvigioni, note interne, e i nomi e telefoni di chi e' venuto a
+     vedere, che sono dati di altri clienti. Sul foglio stampato decide caso
+     per caso; su una pagina sempre accesa la scelta si fa una volta;
+  2. come ci entra: un collegamento privato per immobile (stesso stampo del
+     token del calendario, gia' collaudato qui) oppure utenze vere. Con una
+     ventina di venditori, il collegamento basta;
+  3. cosa vuol dire andamento: le visite le abbiamo, i numeri dei portali no.
+- Il muro verso l'esterno. Oggi il gestionale non espone niente: questa
+  sarebbe la prima porta aperta verso fuori. Va fatta stretta di proposito.
+
+
+B · Pubblicazione sui portali
+
+Fatto nuovo, e grosso: ha dismesso Casagest24 — il gestionale che pubblicava
+i suoi annunci su immobiliare.it e idealista — e ha cominciato a pubblicare a
+mano, per usare questo CRM come fonte della verita'.
+
+Il rischio da verificare prima che disdica, gli e' stato detto e la risposta
+non e' ancora arrivata: i 36 annunci vivi su idealista li ha caricati
+Casagest24. Allo stacco restano o vengono ritirati? E si possono modificare
+a mano, o il feed sovrascrive? Se cadono, vanno ricaricati prima di staccare.
+Gli e' stato anche detto di conservare il file scaricato oggi, che e' la
+fotografia dei 36 annunci come Casagest24 li ha lasciati.
+
+Le tre strade, come gliele ho messe:
+
+1. Aiuti alla pubblicazione a mano — testo dell'annuncio gia' scritto dai
+   dati, foto pronte, il segno di dove e' pubblicato con i codici, e il
+   richiamo quando cambia il prezzo o l'immobile si vende («va aggiornato anche
+   su…»). Sta tutto in crm/, non dipende da nessuno, si fa subito. Il pezzo
+   che vale di piu' e' il richiamo: un annuncio rimasto online dopo il rogito
+   porta telefonate per una casa che non c'e' piu'. Stesso stampo del riquadro
+   Da sistemare.
+2. Il flusso XML verso i portali — la strada vera, quella che faceva
+   Casagest24. Il file lo so scrivere (stesso lavoro del generatore iCalendar),
+   ma il formato e' loro e non si indovina: serve la specifica tecnica di
+   ogni portale. E alcuni accettano flussi solo da gestionali accreditati —
+   se rispondono cosi', la strada e' chiusa. Vuole anche le foto raggiungibili
+   da fuori, che oggi stanno dietro l'accesso di proposito: e' una scelta da
+   fare apposta, non un dettaglio.
+3. Entrare nel pannello al posto suo — esclusa e da non riproporre:
+   condizioni d'uso, rischio sull'account che gli porta i clienti, e si rompe in
+   silenzio.
+
+
+Cosa si e' scoperto sui portali
+
+idealista ha gia' la pagina per il proprietario. Si genera dal pannello e si
+manda per email o WhatsApp. Il link e' per immobile ed e' stabile —
+verificato su due immobili diversi, due link diversi. Quindi si salva nel
+gestionale in un campo sulla scheda, come video_url.
+
+Cosa mostra (visto in uno screenshot suo, l'immobile M105 di Via dei Palumbo):
+
+- il logo e i recapiti della sua agenzia, non quelli di idealista — il
+  timore che fosse una loro vetrina non si e' avverato;
+- riquadro Rendimento dell'annuncio: visite all'annuncio, preferiti,
+  contatti, visite all'immobile;
+- Pubblicato su 3 Portali: idealista, casa.it, PACKMAX — e
+  immobiliare.it non c'e';
+- «0 visite all'immobile»: idealista ha il posto per quel numero e non lo sa
+  riempire. E' esattamente il buco che l'applicazione per i venditori deve
+  riempire, ed e' il motivo per cui le due pagine si completano invece di
+  sovrapporsi.
+
+Due cose restano da verificare prima di fidarsi di quei numeri, e gli sono
+state chieste: 1.221 visite su un annuncio con 0 giorni di pubblicazione
+non torna (va confrontato con un immobile di storia nota, per esempio i due di
+Trepuzzi online da 455 giorni); e la scritta «Confrontato con la media della
+zona per immobili simili» non chiarisce se quei numeri siano dell'annuncio o
+della media. Se mandiamo al proprietario un numero che significa un'altra cosa,
+la figura e' sua.
+
+Attenzione al link: e' base64, e un + puo' arrivare come la parola
+letterale PLUS passando dal copia-incolla. Si prova aprendolo in una finestra
+in incognito — che e' anche il modo di vedere quello che vede il proprietario.
+
+Il file di esportazione di idealista (sezione Immobili) e' stato letto col
+lettore xlsx del gestionale, che lo apre senza problemi. Non contiene
+statistiche: nessuna delle 74 colonne ha visualizzazioni o contatti. Contiene
+pero' tre cose utili — la colonna Riferimento (il codice suo) accanto a
+Codice (quello di idealista), che e' il legame e c'e' su 31 annunci su
+36; via e numero civico di tutti e 36, utili a completare gli indirizzi
+mancanti in archivio; e due misure di andamento gia' pronte, giorni online
+(mediana 168, i due piu' vecchi 455) e qualita' annuncio (mediana 85,
+quattro annunci a 70 — voto che influenza quanto idealista li mostra, alzarlo e'
+visibilita' gratis). Cinque annunci non hanno il riferimento e resterebbero
+scollegati.
+
+
+Le domande in sospeso, tutte sue
+
+1. Ai portali, prima di disdire Casagest24: se il collegamento col gestionale
+   esterno si interrompe, gli annunci restano o vengono ritirati? Si modificano
+   a mano?
+2. A idealista e immobiliare.it: *«Ho un gestionale mio. Posso mandarvi gli
+   annunci con un flusso XML? Mi mandate la specifica tecnica e come si attiva?
+   Accettate flussi da software non accreditati?»*
+3. Su quali portali vuole essere, oltre a idealista e immobiliare.it.
+4. Se il numero delle visite su un immobile di storia nota e' credibile, e cosa
+   dice la ⓘ accanto a «Rendimento dell'annuncio».
+
+  | Da qui non si verifica niente di tutto questo: la rete verso l'esterno e'
+  | chiusa in queste sessioni. idealista.it risponde bloccato dal proxy, e
+  | anche gestionale.mondoimmobiliarelecce.it non si raggiunge. Le verifiche sui
+  | siti le fa lui, o si fanno con Claude nel suo browser da una sessione sua.
+
+
+Il calendario in Google: era gia' fatto
+
+Glielo aveva chiesto ed e' bastato indicarglielo: *Agenda → Calendario e
+avvisi*, si copia l'indirizzo e si incolla in Google Calendar (*Altri calendari
+→ + → Da URL*). Nessuna password, nessun account collegato. Provato da qui
+chiedendo il file senza cookie, come farebbe Google: risponde, con l'ora
+italiana giusta e la sveglia a −30 minuti.
+
+La cosa da non dimenticare: quella sveglia Google la ignora — non fa
+suonare gli avvisi dei calendari a cui ci si abbona, li mostra e basta. Apple e
+Outlook la usano. Percio' l'abbonamento serve a vedere l'agenda, non a essere
+avvisati: per l'avviso restano il pulsante Calendario sulla riga e l'email.
+Scritto anche in README.md e CONSEGNA.md, che prima non lo dicevano.
 
 
 Fuori perimetro, in attesa di una sua decisione
@@ -729,18 +890,22 @@ lui.
   | questa finestra si lavora solo su crm/, niente altri progetti.
   | 
   | So che ogni collaboratore vede solo le proprie schede (capitolo 10-bis di
-  | CONSEGNA.md) e che le ultime cose costruite sono, in ordine: «cosa cerca»
-  | rifatto con tipologie multiple e comuni-con-zone (punto 16), il campo video
-  | YouTube con le due colonne nel CSV (17), l'elenco immobili che si apre sugli
-  | attivi con la foto più grande (18), comune, zona ed esterno multiplo sulla
-  | scheda immobile (19), e i messaggi di errore che si leggono (20) —
-  | <ModuloConEsito> al posto dei throw, più le quattro schermate
-  | error.tsx e not-found.tsx.
+  | CONSEGNA.md) e che l'ultima cosa costruita sono i messaggi di errore che
+  | si leggono (punto 20): i rifiuti tornano dalle azioni come testo e compaiono
+  | sopra il pulsante Salva senza far perdere quello che si era scritto, e sotto
+  | c'e' la rete di error.tsx e not-found.tsx. E' committato e pushato,
+  | ma non e' ancora sul server.
   | 
-  | Resta aperto, e sono tutte cose che aspettano lui, non chi scrive il
-  | codice: l'SMTP, fermo sulla sola password per le app di Gmail che deve
-  | generare (leggi «SMTP, dove siamo rimasti» nel capitolo 5); i dati dei
-  | venditori; gli indirizzi degli immobili vecchi; le zone in
-  | ZONE_PER_COMUNE da far correggere a lui, che il mercato lo conosce.
+  | So che sono aperti due progetti nuovi, nati il 4 settembre e senza una
+  | riga di codice ancora scritta — «I due progetti nuovi» nel capitolo 5:
+  | l'applicazione per i venditori (che sta in una finestra sua: qui si fa la
+  | parte del gestionale) e soprattutto la pubblicazione sui portali, il piu'
+  | urgente, dopo che ha dismesso Casagest24 e ha cominciato a pubblicare a mano.
+  | 
+  | Resta aperto, e aspetta lui: le risposte dei portali sullo stacco di
+  | Casagest24 e sul flusso XML; l'SMTP, fermo sulla sola password per le app
+  | di Gmail; i dati dei venditori; gli indirizzi degli immobili vecchi;
+  | le zone in ZONE_PER_COMUNE da far correggere a lui, che il mercato lo
+  | conosce.
   | 
   | Dimmi da dove ripartiamo.
