@@ -883,6 +883,33 @@ lui.
 9 · PRIMA FRASE UTILE PER LA CHAT NUOVA
 ---------------------------------------
 
+Ce ne sono due, una corta e una lunga. Non sono magiche: tutto quello che
+dicono sta gia' scritto qui dentro, e servono solo a far leggere questo file
+alla chat nuova, che parte senza memoria di niente.
+
+
+La versione corta — per una domanda qualsiasi
+
+Due righe, da incollare prima della domanda. Bastano per chiedere dov'e' una
+cosa, come si fa qualcosa, o per farsi spiegare un pezzo del programma.
+
+  | Lavoriamo sul gestionale in crm/ (ramo
+  | claude/real-estate-client-management-app-xl7dnx). Leggi crm/HANDOFF.md
+  | prima di rispondermi, e vale la regola fissa del capitolo 0: in questa
+  | finestra solo crm/.
+
+Il motivo per cui vale la pena anche solo di queste due righe non e' la
+cortesia: e' la regola del capitolo 0. Una chat che non la conosce, se lui
+nomina di sfuggita il sito o i social, si mette a lavorarci — ed e' esattamente
+la cosa che quella regola esiste per impedire.
+
+
+La versione lunga — per cominciare un lavoro
+
+Quando c'e' da costruire qualcosa. Aggiunge la cosa che il file da solo non da':
+a che punto siamo adesso, cioe' cos'e' l'ultima cosa fatta e cosa e' in
+ballo. Risparmia un giro di domande.
+
   | Riprendo il gestionale di Mondo Immobiliare (crm/, ramo
   | claude/real-estate-client-management-app-xl7dnx, PR #2, online su
   | https://gestionale.mondoimmobiliarelecce.it). Ho letto HANDOFF.md,
