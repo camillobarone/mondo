@@ -518,6 +518,20 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     invio non si legge subito: si aspetta la comparsa del messaggio o il cambio
     di indirizzo, mai `networkidle` da solo.
 
+21. **Mondo Tracking** (4 settembre 2026), sei passi in una giornata: la pagina
+    `/tracking/[token]` che il proprietario apre dal telefono senza password, la
+    rotta delle foto agganciata alla chiave, il riquadro sulla scheda
+    dell'immobile per creare e mandare il link, il registro di garanzia coi
+    collegamenti agli annunci e il richiamo per quelli rimasti online dopo il
+    rogito.
+
+    E' la **prima pagina di questo programma raggiungibile senza accesso**, ed
+    e' il motivo per cui e' scritta come e' scritta. Il racconto per esteso —
+    cosa e' stato deciso, cosa e' stato rifiutato della proposta arrivata da
+    un'altra chat, e le trappole pagate per strada — sta nel capitolo 5, sotto
+    «I due progetti nuovi». Messa in esercizio e **confermata da lui sul
+    gestionale vero**: *«fatto tutto ok»*.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -529,7 +543,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
-| **Applicazione per i venditori** («Mondo Tracking») | **Scritta tutta e provata in browser, ma NON ancora provata sul gestionale vero** (4 settembre). La pagina `/tracking/[token]`, il riquadro sulla scheda immobile, il *registro di garanzia*. I passi 1-5 sono stati messi sul server; **il passo 6 (i portali) no**. Camillo non ha ancora aperto il gestionale: **nessun link e' mai stato creato su un immobile vero, e nessun proprietario l'ha ricevuto.** Vedi «I due progetti nuovi», qui sotto. |
+| **Applicazione per i venditori** («Mondo Tracking») | **Fatta, in esercizio e confermata da lui** (4 settembre): *«fatto tutto ok»* dopo aver seguito i sette punti della prova — link creato su un immobile vero, pagina aperta dal telefono, foto, portali, rifiuto della casella sbagliata e revoca. Resta da scrivere il capitolo per `README.md` e `CONSEGNA.md`: la funzione e' viva e **i documenti per l'agenzia non la raccontano ancora**. Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
@@ -1111,16 +1125,17 @@ ballo. Risparmia un giro di domande.
 > WhatsApp e revocarlo; nel cruscotto il richiamo per **gli annunci rimasti
 > online su case gia' vendute**.
 >
-> So che i **passi 1-5 sono stati messi sul server** e il **passo 6 (i portali)
-> no**: va lanciato `aggiorna.sh`. Ma so anche che **nessuno l'ha ancora provato
-> sul gestionale vero** — nessun link e' mai stato creato su un immobile vero,
-> nessun proprietario ne ha ricevuto uno, e le 76 prove sono tutte su un
-> archivio finto. Se la prima cosa che facciamo e' costruirci sopra, si
-> costruisce su una cosa che nessuno ha visto funzionare.
+> So che e' **tutto in esercizio e provato sul gestionale vero**: ho seguito i
+> sette punti della prova — link creato su un immobile mio, pagina aperta dal
+> telefono, foto, portali, la casella sbagliata rifiutata, la revoca — e
+> funziona.
 >
 > E' la prima pagina di questo programma raggiungibile senza accesso, quindi
 > ogni lettura nuova che la riguarda va agganciata all'immobile della chiave,
 > mai a un utente.
+>
+> So che **`README.md` e `CONSEGNA.md` non raccontano ancora Mondo Tracking**:
+> il manuale dell'agenzia e' indietro di una funzione intera.
 >
 > So che **Camillo ha deciso il 4 settembre cosa vede il proprietario**: le
 > visite senza nomi, e nient'altro. Fuori i giudizi sulle visite, fuori le
