@@ -1152,22 +1152,28 @@ ballo. Risparmia un giro di domande.
   | questa finestra si lavora solo su crm/, niente altri progetti.
   | 
   | So che ogni collaboratore vede solo le proprie schede (capitolo 10-bis di
-  | CONSEGNA.md) e che l'ultima cosa costruita sono i messaggi di errore che
-  | si leggono (punto 20): i rifiuti tornano dalle azioni come testo e compaiono
-  | sopra il pulsante Salva senza far perdere quello che si era scritto, e sotto
-  | c'e' la rete di error.tsx e not-found.tsx. E' committato e pushato,
-  | ma non e' ancora sul server.
+  | CONSEGNA.md), e che l'ultima cosa costruita e' Mondo Tracking: la pagina
+  | /tracking/[token] che il proprietario apre dal telefono senza password, con
+  | le foto, le visite senza nomi, a che punto e' la vendita, il registro di
+  | garanzia con i collegamenti agli annunci, e i recapiti dell'agenzia. Sulla
+  | scheda dell'immobile c'e' il riquadro per creare il link, mandarlo su
+  | WhatsApp e revocarlo; nel cruscotto il richiamo per gli annunci rimasti
+  | online su case gia' vendute.
   | 
-  | So che sono aperti due progetti nuovi, nati il 4 settembre e senza una
-  | riga di codice ancora scritta — «I due progetti nuovi» nel capitolo 5:
-  | l'applicazione per i venditori (che sta in una finestra sua: qui si fa la
-  | parte del gestionale) e soprattutto la pubblicazione sui portali, il piu'
-  | urgente, dopo che ha dismesso Casagest24 e ha cominciato a pubblicare a mano.
+  | So che i passi 1-5 sono gia' sul server e il passo 6 (i portali) no:
+  | va lanciato aggiorna.sh. E' la prima pagina di questo programma
+  | raggiungibile senza accesso, quindi ogni lettura nuova che la riguarda va
+  | agganciata all'immobile della chiave, mai a un utente.
   | 
-  | Resta aperto, e aspetta lui: le risposte dei portali sullo stacco di
-  | Casagest24 e sul flusso XML; l'SMTP, fermo sulla sola password per le app
-  | di Gmail; i dati dei venditori; gli indirizzi degli immobili vecchi;
-  | le zone in ZONE_PER_COMUNE da far correggere a lui, che il mercato lo
-  | conosce.
+  | So che Camillo ha deciso il 4 settembre cosa vede il proprietario: le
+  | visite senza nomi, e nient'altro. Fuori i giudizi sulle visite, fuori le
+  | proposte d'acquisto, fuori lo storico dei prezzi.
+  | 
+  | Resta aperto, e aspetta lui: la pagina del proprietario di idealista
+  | (quella coi numeri, da verificare prima di fidarsene); le risposte dei portali
+  | sullo stacco di Casagest24 e sul flusso XML; l'SMTP, fermo sulla sola
+  | password per le app di Gmail; i dati dei venditori; gli indirizzi degli
+  | immobili vecchi; le zone in ZONE_PER_COMUNE da far correggere a lui,
+  | che il mercato lo conosce.
   | 
   | Dimmi da dove ripartiamo.
