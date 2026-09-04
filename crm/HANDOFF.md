@@ -815,6 +815,64 @@ le visite che escono con tre campi soli — `id`, `due_at`, `done_at`.
   salvataggio buono, e la sezione che sparisce quando la casa non e' pubblicata.
   Piu' le prove di prima rifatte: 38 + 17, tutte verdi.
 
+#### Da fare per primo: i nomi e le osservazioni sulla pagina
+
+**Camillo ha cambiato idea la sera del 4 settembre**, e questa decisione
+sostituisce quella della mattina. Nella pagina del proprietario vuole:
+
+- il **nominativo del cliente acquirente** che ha visitato;
+- **le osservazioni che ha fatto**;
+- **data e ora** della visita;
+- **nessun riferimento telefonico**.
+
+Non e' un capriccio e non e' nemmeno un allargamento rispetto a come lavora
+l'agenzia: **il foglio stampato di `/immobili/[id]/visite` contiene gia' nome,
+cognome, telefono e commento**, e lo consegna a mano da sempre. La pagina
+chiede *meno* di quel foglio, non di piu'.
+
+**Come farlo, in concreto:**
+
+1. `TrackingVisit` in `queries.ts` guadagna `client_name` e `outcome`.
+   `trackingVisits` deve fare il join con `clients` — oggi legge la sola
+   tabella `activities`.
+2. **`outcome` si', `notes` no.** Sono due campi diversi e la differenza e'
+   tutta qui: `outcome` e' il campo «Cosa ha detto il cliente», cioe' proprio
+   le osservazioni che Camillo ha chiesto; `notes` sono i promemoria
+   dell'agente («portare la planimetria», «chiedere se scende»), che sul foglio
+   stampato si tolgono con un clic apposta perche' su un foglio consegnato
+   sembrano frasi dette dal visitatore. Su una pagina sempre accesa non c'e'
+   nessun clic: `notes` resta fuori e basta.
+3. **`title` resta fuori** comunque, e questa non si tocca: e' il campo «Cosa»,
+   testo libero, dove si scrive «Visita sig. Rossi». Adesso il nome c'e' gia'
+   nella sua colonna, e prenderlo anche da li' vorrebbe dire prenderlo due
+   volte e in un modo che nessuno controlla.
+4. **Niente telefono e niente email**, come ha detto lui. La prova che li cerca
+   nella pagina consegnata va tenuta com'e'.
+5. **La data deve essere `due_at`, con l'ora.** Oggi la pagina mostra
+   `shortDate(done_at)`, che e' quando si e' messa la spunta — il foglio
+   stampato usa invece la data dell'appuntamento, e `README.md` lo dice
+   esplicitamente. Sono due pagine che raccontano la stessa visita: se dicono
+   due date diverse, una delle due sta mentendo. Si usa `dateTime()` di
+   `format.ts`, che da' data e ora insieme.
+
+**Una decisione da fargli prendere prima di scrivere il codice:** se a portare
+il visitatore e' stato **un collega**, quel visitatore e' un cliente suo. Il
+muro fra collaboratori non lo riguarda — il proprietario ha diritto di sapere
+chi e' entrato in casa sua, e non e' un agente che sbircia il portafoglio di un
+altro — ma **il nome esce lo stesso dall'archivio del collega**, ed e' la prima
+volta che succede fuori dagli incroci. `visitHistory` oggi nasconde il nome
+quando il cliente non e' tuo (`CASE WHEN c.owner_id = ?`). Consiglio: farlo
+uscire, perche' il destinatario e' il proprietario di casa e non un concorrente
+— ma chiederglielo, non deciderlo da soli.
+
+**Poi vanno rifatti i documenti:** `README.md` («La pagina del proprietario»,
+la parte «Cosa vede, e cosa non vede») e `CONSEGNA.md` 9-septies dicono
+entrambi che i nomi non escono. Dopo questo lavoro non sara' piu' vero, e un
+manuale che dice il falso su una cosa di privacy e' peggio di un manuale che
+tace.
+
+#### Idealista: cosa serve prima di poterlo mettere dentro
+
 **Quello che ancora non c'e', e aspetta lui:** la pagina del proprietario di
 idealista (quella coi numeri di visite e contatti). Il collegamento e' per
 immobile e stabile, quindi si salverebbe in un campo come questi — ma prima
@@ -1135,9 +1193,11 @@ ballo. Risparmia un giro di domande.
 > mai a un utente.
 
 >
-> So che **Camillo ha deciso il 4 settembre cosa vede il proprietario**: le
-> visite senza nomi, e nient'altro. Fuori i giudizi sulle visite, fuori le
-> proposte d'acquisto, fuori lo storico dei prezzi.
+> So che **il 4 settembre, a sera, Camillo ha cambiato idea su cosa vede il
+> proprietario**: adesso vuole nella pagina anche il **nome dell'acquirente che
+> ha visitato**, le sue **osservazioni**, e **data e ora** della visita — senza
+> nessun riferimento telefonico. **Non e' ancora stato fatto**, ed e' la prima
+> cosa da fare. Il come sta nel capitolo 5, «I due progetti nuovi».
 >
 > Resta aperto, e aspetta lui: la **pagina del proprietario di idealista**
 > (quella coi numeri, da verificare prima di fidarsene); le risposte dei portali
