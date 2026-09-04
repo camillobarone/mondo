@@ -476,7 +476,9 @@ richieste estratte dal testo libero delle note.
    compleanni in Agenda, con gli auguri WhatsApp già scritti.
 9. **Legame venditore–immobile** da entrambe le parti, con **ricerca** invece di
    una tendina con dentro tutto l'archivio.
-10. **Storico visite per il proprietario** — l'ultima cosa fatta, vedi sotto.
+10. **Storico visite per il proprietario** — il foglio da stampare, vedi sotto.
+11. **La pagina del proprietario** — lo stesso racconto, ma sempre aggiornato e
+    su un indirizzo suo. È l'ultima cosa fatta: capitolo 9-septies.
 
 ### Lo storico visite per il proprietario
 
@@ -734,11 +736,83 @@ serie, ma due schermate italiane con la via d'uscita.
 
 ---
 
+## 9-septies · La pagina del proprietario
+
+Fatta il 4 settembre 2026, su sua richiesta: *«una applicazione per i clienti
+che vendono con noi per vedere l'andamento della promozione in vendita»*.
+
+È **la prima pagina di questo programma che si apre senza fare l'accesso**, e
+tutto il modo in cui è costruita viene da lì.
+
+### Come funziona
+
+Sulla scheda dell'immobile, il riquadro *Link per il proprietario* crea un
+indirizzo lungo e casuale — `/tracking/<chiave>` — che vale come una password:
+chi ce l'ha entra, chi non ce l'ha vede solo una pagina «non trovata». Stesso
+stampo del calendario a cui ci si abbona, che funziona da agosto.
+
+**Le chiavi non esistono finché non le si crea, una per volta.** Non ne è stata
+generata nessuna in blocco: cinquantatré indirizzi vivi che nessuno ha chiesto
+sarebbero cinquantatré porte aperte che nessuno sorveglia. *Togli il link*
+rimette la chiave a zero, e da quel momento l'indirizzo è morto.
+
+### Cosa esce, e cosa no
+
+Escono: foto, prezzo, metratura, **le date delle visite**, gli appuntamenti
+fissati, a che punto è la vendita, i collegamenti agli annunci, e i recapiti
+dell'agenzia.
+
+**Non escono, per scelta presa una volta sola:** nome, cognome, telefono ed
+email di chi è venuto a visitare — sono dati di altri clienti; il commento e il
+giudizio scritti dall'agente; il prezzo minimo; le provvigioni; le note interne;
+le proposte d'acquisto; lo storico dei ribassi.
+
+Il punto tecnico che conta, per chi un domani ci mette le mani: **la lettura che
+serve quella pagina elenca le colonne una per una**, come le due query degli
+incroci fra colleghi e per lo stesso motivo moltiplicato. Un `SELECT *` lì
+dentro farebbe uscire prezzo minimo, provvigioni e note fuori dall'agenzia, e
+una volta uscite non rientrano. Il campo più insidioso non è un recapito: è
+**«Cosa»** dell'agenda, testo libero, dove chi segna una visita di fretta scrive
+«Visita sig. Rossi». Sta fuori apposta.
+
+Le foto passano da una porta loro, agganciata alla chiave e non all'utente, che
+controlla anche che **quella foto sia di quell'immobile**: senza, con un link
+buono in mano basterebbe cambiare il nome del file nell'indirizzo per sfogliare
+gli interni di casa d'altri.
+
+### Dove è pubblicato l'annuncio
+
+Due caselle sulla scheda dell'immobile, per **idealista** e **Immobiliare.it**.
+Il gestionale **non parla con i portali e non lo farà**: conserva l'indirizzo
+perché il proprietario possa aprirlo e verificare da sé che la sua casa è
+online — per questo la sezione si chiama *registro di garanzia* e non
+*statistiche*. I numeri dei portali non ci sono e non ci saranno: non esiste un
+modo di prenderli, e inventarne di finti sarebbe peggio che non averne.
+
+Nel riquadro *Da sistemare* del cruscotto compaiono gli **annunci ancora online
+su case già vendute o ritirate**. È il richiamo che vale di più: un annuncio
+rimasto pubblicato dopo il rogito porta telefonate per una casa che non c'è più.
+
+### Come è stata verificata
+
+76 controlli in tutto, di cui 49 con un browser vero. L'archivio di prova è
+costruito apposta con **dentro tutto quello che non deve uscire** — il cognome
+del visitatore scritto nel campo «Cosa», il suo cellulare, il prezzo minimo, le
+provvigioni, le note interne, il giudizio sulla visita — e le prove vanno a
+cercarli uno per uno nella pagina consegnata. Nessuno esce.
+
+Messa in esercizio il 4 settembre e **provata da lui sul gestionale vero**:
+link creato su un immobile suo, pagina aperta dal telefono, foto, portali,
+rifiuto della casella sbagliata e revoca. *«Fatto tutto ok.»*
+
+---
+
 ## 10 · Cosa **non** c'è
 
 Escluso d'accordo, non dimenticato:
 
-- invio annunci ai portali
+- invio annunci ai portali — il gestionale **conserva** il collegamento
+  all'annuncio (capitolo 9-septies), ma non lo manda e non parla con i portali
 - firma digitale
 - invii massivi di email/WhatsApp
 - generazione automatica dei contratti

@@ -18,6 +18,7 @@ degli annunci sui portali resta dove sta oggi: non passa da qui.
 | **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback, **foto** e **video**. L'elenco si apre sugli attivi |
 | **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
 | **Storico visite** | Una pagina da stampare per il proprietario: chi è venuto a vedere la casa, quando, con che numero, e cosa ha detto |
+| **Pagina del proprietario** | Un indirizzo riservato che il venditore apre dal telefono, senza password: foto, quante visite ha avuto la casa e quando, a che punto è la vendita, e i collegamenti agli annunci sui portali. Senza nomi né recapiti di chi è venuto a vedere |
 | **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
 | **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza. Si modificano e si eliminano, entrano nel tuo calendario e avvisano 30 minuti prima |
 | **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
@@ -382,6 +383,87 @@ dei clienti. Il comando non si stampa, serve solo a te prima di stampare.
 
 Tieni presente che il foglio contiene **nome e telefono di chi ha visitato**:
 sono dati di altri clienti, e sta a te decidere caso per caso se consegnarli.
+
+---
+
+## La pagina del proprietario
+
+Lo storico visite qui sopra è un foglio: lo stampi, lo mandi, e il giorno dopo
+è già vecchio. **La pagina del proprietario è lo stesso racconto, ma sempre
+aggiornato**, a un indirizzo che il venditore apre dal telefono quando vuole,
+senza password e senza installare niente.
+
+### Crearla e mandarla
+
+Sulla scheda dell'immobile, nella colonna di sinistra, c'è **Link per il
+proprietario**. All'inizio ha un solo pulsante:
+
+1. **Crea il link.** Da quel momento l'indirizzo esiste. Prima non esisteva: è
+   voluto, perché un indirizzo vivo è una porta aperta e le porte si aprono
+   quando c'è da entrarci.
+2. **Guarda com'è** apre la pagina come la vedrà lui. Guardala sempre prima di
+   mandarla.
+3. **Invia su WhatsApp** apre la chat del proprietario col messaggio già
+   scritto — il suo nome, la via della casa, l'indirizzo e la raccomandazione
+   di non passarlo ad altri. Il pulsante compare solo se il proprietario è
+   collegato all'immobile e ha un numero in scheda.
+
+C'è anche **Copia**, se preferisci mandarlo per email o incollarlo altrove.
+
+### Cosa vede, e cosa non vede
+
+Vede: **le foto**, il prezzo, i metri quadri; **quante visite** ha avuto la casa
+e in che date, con le **visite già fissate** in evidenza; **a che punto è la
+vendita**, dall'incarico al rogito; **dove è pubblicata**, con i collegamenti
+veri agli annunci; il tuo nome e il numero dell'agenzia, con i pulsanti per
+chiamare o scrivere su WhatsApp.
+
+**Non vede, e non è una dimenticanza:**
+
+- **nome, cognome, telefono ed email di chi è venuto a visitare.** Sono clienti
+  dell'agenzia, e non si consegnano a un terzo. È la differenza con il foglio
+  da stampare, dove ci sono e dove decidi tu caso per caso;
+- **il commento della visita** e il giudizio che hai scritto tu;
+- il **prezzo minimo**, le **provvigioni**, le **note interne**;
+- le **proposte d'acquisto** ricevute e lo **storico dei ribassi**.
+
+La scelta è stata fatta una volta sola, di proposito: su un foglio decidi ogni
+volta, su una pagina sempre accesa no.
+
+### Togliere il link
+
+Sotto ci sono due comandi:
+
+- **Genera un link nuovo** — quello mandato prima smette di funzionare. Serve
+  se l'indirizzo è finito dove non doveva: inoltrato per sbaglio, o in una chat
+  di gruppo.
+- **Togli il link** — la pagina non si apre più per nessuno, finché non ne crei
+  un altro.
+
+Le foto già scaricate sul telefono di chi aveva il link possono restare visibili
+ancora per qualche minuto: la pagina invece muore subito.
+
+### Dove è pubblicato l'annuncio
+
+Sempre sulla scheda dell'immobile c'è **Dove è pubblicato**, con due caselle:
+l'indirizzo dell'annuncio su **idealista** e su **Immobiliare.it**. Servono a
+due cose:
+
+- il proprietario li vede nella sua pagina e **può aprirli per controllare da
+  sé** che foto, prezzo e descrizione siano quelli giusti — è il motivo per cui
+  quella sezione esiste;
+- tu hai un posto solo dove ritrovarli **il giorno del rogito**, per andare a
+  toglierli.
+
+Se incolli un annuncio nella casella sbagliata, il programma se ne accorge e te
+lo dice, senza cancellare quello che avevi scritto. E se la casa non è
+pubblicata da nessuna parte, la sezione **non compare affatto** nella pagina del
+proprietario: una riga «non pubblicata» non racconterebbe come va la vendita.
+
+Nel cruscotto, fra le cose da sistemare, compaiono gli **annunci ancora online
+su case già vendute o ritirate**. È il richiamo che vale di più: un annuncio
+rimasto su dopo il rogito porta telefonate per una casa che non c'è più, e non
+te ne accorgi finché non squilla il telefono.
 
 ---
 

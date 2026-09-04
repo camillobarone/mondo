@@ -567,9 +567,9 @@ Le cose costruite in questa sessione, in ordine
       Fatta, in esercizio e confermata da lui (4 settembre): «fatto tutto ok»
       dopo aver seguito i sette punti della prova — link creato su un immobile
       vero, pagina aperta dal telefono, foto, portali, rifiuto della casella
-      sbagliata e revoca. Resta da scrivere il capitolo per README.md e
-      CONSEGNA.md: la funzione e' viva e i documenti per l'agenzia non la
-      raccontano ancora. Vedi «I due progetti nuovi», qui sotto.
+      sbagliata e revoca. Documentata anche per l'agenzia: «La pagina del
+      proprietario» in README.md e 9-septies in CONSEGNA.md. Vedi «I due
+      progetti nuovi», qui sotto.
 
   Pubblicazione sui portali
       Progetto nuovo, e il piu' urgente dei due. Ha dismesso Casagest24 e
@@ -1183,9 +1183,7 @@ ballo. Risparmia un giro di domande.
   | E' la prima pagina di questo programma raggiungibile senza accesso, quindi
   | ogni lettura nuova che la riguarda va agganciata all'immobile della chiave,
   | mai a un utente.
-  | 
-  | So che README.md e CONSEGNA.md non raccontano ancora Mondo Tracking:
-  | il manuale dell'agenzia e' indietro di una funzione intera.
+
   | 
   | So che Camillo ha deciso il 4 settembre cosa vede il proprietario: le
   | visite senza nomi, e nient'altro. Fuori i giudizi sulle visite, fuori le
