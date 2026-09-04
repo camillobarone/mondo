@@ -924,6 +924,142 @@ export function userByCalendarToken(
   );
 }
 
+/* ====================================== il link riservato al proprietario */
+
+/**
+ * Quello che il proprietario vede della sua casa.
+ *
+ * Le colonne sono scritte a mano una per una, come nelle due letture degli
+ * incroci fra colleghi, e per lo stesso motivo moltiplicato: qui si esce
+ * dall'agenzia. Un `SELECT *` porterebbe fuori prezzo minimo, provvigioni e
+ * note interne — roba che il proprietario non deve leggere e che, una volta
+ * uscita, non rientra.
+ *
+ * Aggiungere un campo qui vuol dire deciderlo apposta, ed e' il punto: la
+ * lista corta e' il muro.
+ */
+export type TrackingProperty = {
+  id: number;
+  ref: string;
+  title: string;
+  kind: string;
+  contract: string;
+  address: string | null;
+  city: string | null;
+  zone: string | null;
+  sqm: number | null;
+  rooms: number | null;
+  bathrooms: number | null;
+  floor: string | null;
+  price: number | null;
+  status: string;
+  video_url: string | null;
+  mandate_start: string | null;
+  mandate_end: string | null;
+  created_at: string;
+  /** Chi segue l'immobile: al proprietario serve sapere a chi telefonare. */
+  agent_name: string | null;
+};
+
+/**
+ * L'immobile dietro una chiave di tracking.
+ *
+ * E' la seconda lettura del programma, dopo quella del calendario, che non
+ * chiede chi sta guardando: da fuori nessuno ha fatto l'accesso. Il muro non
+ * sparisce, cambia forma — la chiave apre **un immobile solo**, e da qui in
+ * avanti ogni lettura della pagina va agganciata a questo `id`, mai a un
+ * utente. Una funzione che leggesse le visite per utente, qui, non avrebbe
+ * nessun utente a cui agganciarsi e finirebbe per non filtrare niente.
+ *
+ * Una chiave azzerata non apre piu' niente: e' cosi' che si revoca un
+ * indirizzo gia' mandato.
+ */
+export function propertyByTrackingToken(
+  token: string,
+): TrackingProperty | undefined {
+  // La lunghezza minima ferma i tentativi alla cieca prima del database, e
+  // soprattutto impedisce che una chiave vuota faccia da passe-partout verso
+  // la prima riga rimasta con `tracking_token` a NULL.
+  if (!token || token.length < 20) return undefined;
+
+  return one<TrackingProperty>(
+    `SELECT p.id, p.ref, p.title, p.kind, p.contract,
+            p.address, p.city, p.zone,
+            p.sqm, p.rooms, p.bathrooms, p.floor,
+            p.price, p.status, p.video_url,
+            p.mandate_start, p.mandate_end, p.created_at,
+            u.name AS agent_name
+       FROM properties p
+       LEFT JOIN users u ON u.id = p.agent_id
+      WHERE p.tracking_token = ? AND p.deleted_at IS NULL`,
+    [token],
+  );
+}
+
+/**
+ * La chiave del link da mandare al proprietario, generata se non c'e' ancora.
+ *
+ * Vuole l'utente perche' generarla e' un gesto dell'agente sulla propria
+ * scheda: senza, chiunque potrebbe farsi dare il link dell'immobile di un
+ * collega e leggerne le visite scavalcando il muro dal di fuori — dalla porta
+ * che questa funzione apre. Restituisce `undefined` se l'immobile non e' suo,
+ * senza distinguerlo da uno che non esiste.
+ */
+export function trackingToken(
+  utente: number,
+  propertyId: number,
+): string | undefined {
+  const riga = one<{ tracking_token: string | null }>(
+    `SELECT p.tracking_token FROM properties p
+      WHERE p.id = ? AND p.deleted_at IS NULL AND ${IMMOBILE_MIO}`,
+    [propertyId, utente],
+  );
+  if (!riga) return undefined;
+  if (riga.tracking_token) return riga.tracking_token;
+
+  const token = crypto.randomBytes(24).toString("base64url");
+  run(`UPDATE properties SET tracking_token = ? WHERE id = ?`, [
+    token,
+    propertyId,
+  ]);
+  return token;
+}
+
+/**
+ * Genera una chiave nuova: il link mandato prima smette di funzionare.
+ *
+ * Serve quando un indirizzo e' finito dove non doveva — inoltrato per sbaglio,
+ * o in una chat di gruppo.
+ */
+export function resetTrackingToken(
+  utente: number,
+  propertyId: number,
+): string | undefined {
+  const token = crypto.randomBytes(24).toString("base64url");
+  // Il muro sta nella condizione dell'UPDATE, non in una lettura fatta prima:
+  // fra il controllo e la scrittura ci starebbe in mezzo una finestra, e qui
+  // si tratta di consegnare le chiavi di casa d'altri.
+  const esito = run(
+    `UPDATE properties SET tracking_token = ?
+      WHERE id = ? AND deleted_at IS NULL AND agent_id = ?`,
+    [token, propertyId, utente],
+  );
+  return esito.changes > 0 ? token : undefined;
+}
+
+/** Toglie il link: l'indirizzo gia' mandato non apre piu' niente. */
+export function revokeTrackingToken(
+  utente: number,
+  propertyId: number,
+): boolean {
+  const esito = run(
+    `UPDATE properties SET tracking_token = NULL
+      WHERE id = ? AND deleted_at IS NULL AND agent_id = ?`,
+    [propertyId, utente],
+  );
+  return esito.changes > 0;
+}
+
 /* ============================================================= venditori */
 
 export type SellerRow = Client & {

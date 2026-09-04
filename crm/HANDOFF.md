@@ -529,7 +529,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
-| **Applicazione per i venditori** | **Progetto nuovo**, chiesto il 4 settembre. Specifiche non ancora arrivate. Vedi «I due progetti nuovi», qui sotto. |
+| **Applicazione per i venditori** («Mondo Tracking») | **Cominciata il 4 settembre: c'e' il primo strato.** Colonna `properties.tracking_token`, indice univoco, chiave generata a richiesta e revocabile, e la lettura che apre un immobile solo. Manca tutto il resto, e due cose lo bloccano: **la decisione sua su cosa vede il proprietario** e **i file preparati da Gemini**, che stanno sul suo computer. Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
@@ -620,6 +620,52 @@ Da sapere prima di ricominciare:
   3. cosa vuol dire *andamento*: le visite le abbiamo, i numeri dei portali no.
 - **Il muro verso l'esterno.** Oggi il gestionale non espone niente: questa
   sarebbe la prima porta aperta verso fuori. Va fatta stretta di proposito.
+
+**Cosa c'e' gia' in casa (4 settembre 2026).** E' arrivata una proposta di
+architettura passata da un'altra chat (Gemini), col nome **Mondo Tracking**:
+pagina pubblica per immobile, visite, semaforo della vendita, link di verifica
+degli annunci. La mappa del database che portava con se' e' stata **verificata
+riga per riga contro il codice ed e' giusta** — `schema.ts`, `data/mondo.db`,
+`offers`, `price_history`, `photos` esistono tutte, e lo stampo del token del
+calendario e' esattamente quello proposto. Diversamente dall'episodio del punto
+17, qui non c'era niente da rifiutare.
+
+Il **Passo 1 e' fatto** ed e' committato:
+
+- `properties.tracking_token` in `COLONNE_AGGIUNTE`, con **indice univoco**.
+  L'indice **non puo' stare in `SCHEMA`**: `SCHEMA` gira prima che le colonne
+  nuove vengano aggiunte, e su un archivio vero morirebbe a ogni avvio con
+  *no such column*. Per questo `COLONNE_AGGIUNTE` ha ora un campo `indice`, e
+  il ciclo lo crea **fuori** dal salto — una colonna aggiunta da una versione
+  precedente resterebbe altrimenti senza indice per sempre.
+- `propertyByTrackingToken`, `trackingToken`, `resetTrackingToken`,
+  `revokeTrackingToken` in `queries.ts`. **Le colonne sono scritte a mano una
+  per una** come nelle letture fra colleghi: qui si esce dall'agenzia, e un
+  `SELECT *` porterebbe fuori prezzo minimo, provvigioni e note interne.
+- **Nessuna chiave e' stata generata.** Si crea un immobile alla volta, quando
+  l'agente decide di mandare il link: 53 link vivi che nessuno ha chiesto
+  sarebbero 53 porte aperte senza sorveglianza.
+
+Provato su un database usa-e-getta, 18 controlli, con le istruzioni SQL
+**estratte dai file veri** e non ricopiate: fra gli altri, l'indice che
+fallisce se creato prima della colonna (e' la prova del perche' sta dove sta),
+i NULL che convivono sotto un indice univoco, il collega che non riesce a farsi
+generare la chiave di un immobile non suo, e le colonne vietate che non escono.
+
+**I tre buchi della proposta**, da risolvere ai passi successivi:
+
+1. **Le foto.** `/foto/[id]/[file]` vuole l'accesso **e** che l'immobile sia
+   tuo. Su una pagina pubblica le foto verrebbero tutte rotte: serve una rotta
+   sua, agganciata al token e non all'utente.
+2. **Il muro.** Ogni lettura di `queries.ts` vuole per primo l'id di chi
+   guarda, e qui non c'e' nessuno che ha fatto l'accesso. Il muro non sparisce,
+   **cambia forma**: la chiave apre *un immobile solo* e ogni lettura va
+   agganciata a quell'`id`. Una funzione scritta senza pensarci non filtrerebbe
+   niente.
+3. **Il commento della visita** e' una nota interna dell'agente, spesso
+   schietta. Sul foglio stampato si toglie con un clic; su una pagina sempre
+   accesa la scelta va fatta una volta — o si mostra com'e', o serve un campo
+   separato «feedback per il proprietario».
 
 #### B · Pubblicazione sui portali
 

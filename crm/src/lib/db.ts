@@ -40,7 +40,19 @@ function connect(): Database.Database {
  * aggiunte una per una. `ALTER TABLE ADD COLUMN` non e' ripetibile, quindi
  * prima si guarda cosa c'e'.
  */
-const COLONNE_AGGIUNTE: { tabella: string; colonna: string; definizione: string }[] = [
+const COLONNE_AGGIUNTE: {
+  tabella: string;
+  colonna: string;
+  definizione: string;
+  /**
+   * L'indice da creare insieme alla colonna, se ne serve uno.
+   *
+   * Non puo' stare in `SCHEMA`: quello gira prima di qui, e su un archivio
+   * gia' esistente la colonna in quel momento non c'e' ancora — l'indice
+   * fallirebbe a ogni avvio con "no such column".
+   */
+  indice?: string;
+}[] = [
   // Chiave dell'abbonamento al calendario: sta nell'indirizzo del feed, quindi
   // vale come password e si genera solo quando serve.
   { tabella: "users", colonna: "calendar_token", definizione: "TEXT" },
@@ -85,22 +97,47 @@ const COLONNE_AGGIUNTE: { tabella: string; colonna: string; definizione: string 
   // nell'esportazione. A usarlo e' l'applicazione che gestisce il canale, che
   // altrimenti dovrebbe accoppiare video e immobili confrontando i titoli.
   { tabella: "properties", colonna: "video_url", definizione: "TEXT" },
+  // La chiave del link riservato al proprietario che vende con noi.
+  //
+  // Stesso stampo di `calendar_token`: sta dentro l'indirizzo, quindi vale
+  // quanto una password, ed e' l'unico modo di entrare in una pagina che sta
+  // fuori dall'accesso. Si genera un immobile alla volta, quando l'agente
+  // decide di mandare il link, e non per tutti in blocco: un link che nessuno
+  // ha chiesto sarebbe una porta aperta che nessuno sorveglia. Rimetterla a
+  // NULL e' il modo di revocare un indirizzo gia' mandato.
+  //
+  // L'indice e' univoco perche' due immobili con la stessa chiave vorrebbero
+  // dire far vedere a un proprietario la casa di un altro. In SQLite un indice
+  // univoco lascia passare quanti NULL si vuole, quindi gli immobili che una
+  // chiave non ce l'hanno — oggi tutti — non danno nessun fastidio.
+  {
+    tabella: "properties",
+    colonna: "tracking_token",
+    definizione: "TEXT",
+    indice:
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_properties_tracking ON properties(tracking_token)",
+  },
 ];
 
 function aggiungiColonneMancanti(database: Database.Database) {
-  for (const { tabella, colonna, definizione } of COLONNE_AGGIUNTE) {
+  for (const { tabella, colonna, definizione, indice } of COLONNE_AGGIUNTE) {
     const presenti = database
       .prepare(`PRAGMA table_info(${tabella})`)
       .all() as { name: string }[];
-    if (presenti.some((campo) => campo.name === colonna)) continue;
-    try {
-      database.exec(`ALTER TABLE ${tabella} ADD COLUMN ${colonna} ${definizione}`);
-    } catch (errore) {
-      // In compilazione Next apre il database da piu' processi insieme: due
-      // possono vedere la colonna mancante e provare ad aggiungerla entrambi.
-      // Il secondo trova che c'e' gia', ed e' esattamente quello che voleva.
-      if (!String(errore).includes("duplicate column name")) throw errore;
+    if (!presenti.some((campo) => campo.name === colonna)) {
+      try {
+        database.exec(`ALTER TABLE ${tabella} ADD COLUMN ${colonna} ${definizione}`);
+      } catch (errore) {
+        // In compilazione Next apre il database da piu' processi insieme: due
+        // possono vedere la colonna mancante e provare ad aggiungerla entrambi.
+        // Il secondo trova che c'e' gia', ed e' esattamente quello che voleva.
+        if (!String(errore).includes("duplicate column name")) throw errore;
+      }
     }
+    // Fuori dal controllo qui sopra di proposito: una colonna aggiunta da una
+    // versione precedente, quando l'indice ancora non era previsto, resterebbe
+    // altrimenti senza per sempre. `IF NOT EXISTS` rende innocuo rifarlo.
+    if (indice) database.exec(indice);
   }
 }
 
