@@ -1,0 +1,34 @@
+{
+  "name": "mondo-crm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "seed": "node scripts/seed.mjs",
+    "backup": "node scripts/backup.mjs",
+    "promemoria": "node scripts/promemoria.mjs",
+    "posta": "node scripts/posta.mjs",
+    "testo": "node scripts/testo.mjs",
+    "password": "node scripts/password.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.2",
+    "next": "^16.2.4",
+    "nodemailer": "^9.0.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.1.2",
+    "@types/nodemailer": "^8.0.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  }
+}

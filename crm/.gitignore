@@ -1,0 +1,24 @@
+node_modules
+.next
+out
+build
+next-env.d.ts
+*.tsbuildinfo
+
+# Database e backup: mai nel repository.
+#
+# La sbarra davanti conta. Scritte senza — `data/` e `backup/` — queste due
+# righe valgono per QUALSIASI cartella con quel nome, a qualsiasi profondita':
+# una pagina del programma finita in src/app/(app)/backup/ e' rimasta fuori dal
+# repository per settimane senza che nessun errore lo dicesse, e quindi non e'
+# mai arrivata sul server. Ancorate alla radice colpiscono solo le due cartelle
+# vere.
+/data/
+/backup/
+*.db
+*.db-shm
+*.db-wal
+
+.env
+.env.local
+.DS_Store

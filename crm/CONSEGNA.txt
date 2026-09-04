@@ -1,0 +1,1065 @@
+=======================================
+CONSEGNA — GESTIONALE MONDO IMMOBILIARE
+=======================================
+
+Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
+un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
+fatto e cosa è rimasto fuori.
+
+Aggiornato al 2 settembre 2026. Questa è la versione in testo semplice,
+da aprire con il Blocco note senza bisogno di niente. L'originale è
+CONSEGNA.md.
+
+  | Nessuna password è scritta qui, di proposito: questo file sta dentro il
+  | repository. Dove sono conservate è indicato di volta in volta.
+
+
+1 · IN UNA RIGA
+---------------
+
+CRM per Studio RCS Srls (Mondo Immobiliare Lecce, FIMAA dal 1994, uffici Lecce e
+Porto Cesareo). Gestisce clienti, richieste d'acquisto, portafoglio immobili,
+incroci automatici, venditori, trattative e adempimenti. Si usa dal browser, in
+italiano, anche da telefono. Online su server proprio, con HTTPS e copia
+notturna automatica.
+
+Indirizzo: https://gestionale.mondoimmobiliarelecce.it
+
+
+2 · GLI INDIRIZZI E CHI LI GESTISCE
+-----------------------------------
+
+  mondoimmobiliarelecce.it (il sito)
+      SiteGround · invariato, non è stato toccato
+
+  gestionale.mondoimmobiliarelecce.it (il CRM)
+      Aruba Cloud VPS · aggiunto in questa sessione
+
+
+Il DNS del dominio è su SiteGround — i name server sono ns1.siteground.net e
+ns2.siteground.net. Il sottodominio è stato creato lì, come record A nella
+zona DNS (Site Tools → Domain → DNS Zone Editor), non con lo strumento
+"Subdomains" (che avrebbe creato una cartella sull'hosting del sito, cosa
+diversa).
+
+    Tipo: A    Nome: gestionale    Valore: 77.81.234.151
+
+Sono due macchine diverse: il sito resta su SiteGround, il gestionale sta su
+Aruba. Se un giorno si cambia server, si cambia solo quel valore.
+
+
+SiteGround
+
+- pannello: siteground.com → Websites → mondoimmobiliarelecce.it → Site Tools
+- credenziali: quelle del sito, in possesso di chi lo segue
+- serve solo se si cambia l'IP del server o si aggiungono altri sottodomini
+
+
+Aruba Cloud
+
+- pannello: Cloud Management Platform di Aruba (cloud.aruba.it)
+- account cloud: ARU-352439
+- prodotto: Bare Metal e VPS → Cloud VPS, taglia O2A4
+  — 2 vCPU, 4 GB RAM, 40 GB disco, 6,29 €/mese + IVA
+- sistema: Ubuntu 24.04
+- IP pubblico: 77.81.234.151 (IPv4, indispensabile)
+- accesso: SSH come root, con la chiave caricata alla creazione
+
+  | Attenzione a non confonderlo con "Public Cloud → Cloud Server PRO", che è un
+  | prodotto diverso e costa più del doppio (13,70 €/mese) per le stesse esigenze.
+  | Il piano giusto sta sotto Bare Metal e VPS.
+
+Perché almeno 2 GB di RAM: la compilazione del programma tocca i 900 MB e su
+un piano da 1 GB viene interrotta a metà. Lo script di installazione, sotto i
+3 GB, aggiunge da sé 2 GB di memoria di scambio.
+
+Perché IPv4: i piani solo-IPv6 costano meno ma non sono raggiungibili dalla
+maggior parte delle connessioni italiane.
+
+GDPR: Aruba è nell'Unione Europea e fornisce l'accordo sul trattamento dei
+dati (art. 28 GDPR) da tenere agli atti — loro responsabili del trattamento, tu
+titolare.
+
+
+3 · IL CODICE
+-------------
+
+- repository GitHub: camillobarone/mondo
+- ramo di lavoro: claude/real-estate-client-management-app-xl7dnx
+- pull request aperta: #2
+- il programma sta nella cartella crm/
+
+Il server scarica direttamente da questo ramo: se si cambia ramo, vanno
+aggiornati gli URL dentro crm/deploy/installa.sh e crm/deploy/aggiorna.sh.
+
+
+Documentazione già nel repository
+
+  crm/README.md
+      come si usa, funzione per funzione — è il manuale
+
+  crm/deploy/README.md
+      come si mette online da zero, aggiornamenti, ripristini
+
+  crm/CONSEGNA.md
+      questo documento
+
+  crm/HANDOFF.md
+      per far ripartire una conversazione nuova con Claude senza perdere il
+      filo
+
+
+CONSEGNA.txt e HANDOFF.txt sono gli stessi due documenti in testo
+semplice, da aprire con il Blocco note senza bisogno di niente — sono quelli
+da stampare e tenere in cartella. Non si scrivono a mano: si rifanno dai
+.md con un comando, e finché lo si usa non possono più restare indietro.
+
+    cd crm && npm run testo              # li riscrive
+    cd crm && npm run testo -- --controlla   # dice solo se sono indietro
+
+Erano stati scritti a mano una volta e poi dimenticati: il 28 agosto 2026 erano
+fermi al 5, e raccontavano un programma di tre settimane prima.
+
+
+4 · COME È FATTO DENTRO
+-----------------------
+
+  Framework    Next.js 16.2.4 (App Router, Server Components, Server Actions)
+  Linguaggio   TypeScript, React 19.2.4
+  Grafica      Tailwind CSS v4
+  Archivio     SQLite con better-sqlite3 v13, modalità WAL
+  Immagini     sharp (ridimensiona a 1920 px + miniatura 480 px)
+  Accesso      password con scrypt, cookie di sessione firmato in HMAC
+
+
+Nessun database esterno, nessun servizio a pagamento, nessuna dipendenza da
+terzi oltre l'hosting. Non ci sono chiamate verso l'esterno: l'archivio
+resta sulla macchina.
+
+
+File chiave
+
+  src/lib/schema.ts
+      lo schema del database, unica fonte di verità, applicato all'avvio
+
+  src/lib/queries.ts
+      tutte le letture
+
+  src/lib/actions.ts
+      tutte le scritture (Server Actions)
+
+  src/lib/matching.ts
+      il motore degli incroci
+
+  src/lib/auth.ts
+      accesso, password, sessioni
+
+  src/lib/xlsx.ts
+      lettore di file Excel scritto a mano, senza librerie
+
+  src/lib/import-map.ts
+      riconoscimento dei tracciati del gestionale precedente
+
+  src/lib/photos.ts
+      salvataggio e ridimensionamento delle foto
+
+  src/lib/calendar.ts
+      generazione dei file di calendario (iCalendar)
+
+
+Due dettagli che sembrano scelte estetiche e invece non lo sono
+
+1. serverExternalPackages in next.config.ts. better-sqlite3 è un
+   modulo nativo e senza quella riga la compilazione fallisce; nodemailer fa
+   richieste che il compilatore non sa seguire e impacchettarlo rompe l'invio
+   delle email.
+2. Il cookie di sessione mette secure in base a x-forwarded-proto, non a
+   NODE_ENV. Con NODE_ENV l'accesso funzionava sul computer dove girava il
+   programma e falliva silenziosamente su tutti gli altri dell'ufficio.
+
+
+5 · SUL SERVER, DOVE STA COSA
+-----------------------------
+
+  Cartella del programma   /opt/mondo-crm
+  Archivio                 /opt/mondo-crm/data/mondo.db
+  Foto                     /opt/mondo-crm/data/foto/<id immobile>/
+  Chiave delle sessioni    /opt/mondo-crm/data/secret.key (generata da sola,
+                           0600)
+  Copie di sicurezza       /opt/mondo-crm/backup/
+  Utente di sistema        mondo (non amministratore)
+  Servizio                 mondo-crm (systemd)
+  Porta interna            3000, solo su 127.0.0.1
+  Reverse proxy            nginx, /etc/nginx/sites-available/mondo-crm
+  Certificato              Let's Encrypt via certbot, si rinnova da sé
+  Firewall                 ufw: aperte solo 22, 80, 443
+  Copia notturna           cron, /etc/cron.d/mondo-crm, ogni notte alle 02:00
+  Copia fuori dal server   stesso cron, il primo di ogni mese alle 03:00, su
+                           Google Drive via rclone (capitolo 7-bis)
+  Avvisi email             stesso cron, ogni 5 minuti, scripts/promemoria.mjs
+  Configurazione posta     /etc/mondo-crm.env (fuori dal programma, sopravvive
+                           agli aggiornamenti)
+  Fuso orario              TZ=Europe/Rome nel servizio e nel cron
+
+
+Il programma può scrivere soltanto in data/, backup/ e .next/
+(ProtectSystem=strict nel servizio systemd).
+
+
+Due impostazioni nginx da non perdere
+
+    client_max_body_size 32M;                        # senza, l'importazione fallisce
+    proxy_set_header X-Forwarded-Proto $scheme;      # senza, non si entra
+
+Il valore predefinito di nginx è 1 MB: un file Excel dell'archivio lo supera
+e l'importazione muore con un errore che non spiega niente.
+
+
+6 · I COMANDI CHE SERVONO DAVVERO
+---------------------------------
+
+Tutti da PowerShell sul PC, o da qualunque terminale.
+
+Aggiornare dopo una modifica al codice:
+    ssh root@77.81.234.151 "bash /opt/mondo-crm/deploy/aggiorna.sh"
+Fa una copia prima di toccare qualsiasi cosa, e se il programma non riparte lo
+dice invece di lasciare al buio.
+
+Vedere se sta bene:
+    ssh root@77.81.234.151 "systemctl status mondo-crm"
+    ssh root@77.81.234.151 "journalctl -u mondo-crm -n 50"
+
+Fare subito una copia (senza aspettare la notte):
+    ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
+
+Portare le copie sul PC — da fare una volta a settimana, su disco esterno.
+Da PowerShell, due comandi: il primo porta l'archivio (tutte le copie
+storiche), il secondo le foto.
+    scp root@77.81.234.151:/opt/mondo-crm/backup/*.db "F:\Gestionale backup"
+    scp -r root@77.81.234.151:/opt/mondo-crm/backup/foto "F:\Gestionale backup"
+Non c'è più un pulsante nel programma che scarichi l'intero archivio: da quando
+ognuno vede solo le proprie schede, sarebbe la separazione aggirata con un clic
+(capitolo 10-bis). Questa è la strada, ed è anche l'unica che porta via le foto.
+
+Se il secondo comando risponde No such file or directory, vuol dire che la
+copia notturna non è ancora passata dopo questo aggiornamento. Basta forzarla
+una volta e la cartella c'è:
+    ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
+
+Ripristinare una copia (l'ordine conta: prima si ferma il programma):
+    systemctl stop mondo-crm
+    cp /opt/mondo-crm/backup/<copia>.db /opt/mondo-crm/data/mondo.db
+    chown mondo:mondo /opt/mondo-crm/data/mondo.db
+    systemctl start mondo-crm
+
+Creare un nuovo utente dalla riga di comando (di solito si fa da Utenti
+nel programma):
+    cd /opt/mondo-crm && sudo -u mondo npm run seed -- --email nome@dominio.it --password "una password lunga"
+
+Installazione da zero su un server nuovo:
+    curl -fsSL https://raw.githubusercontent.com/camillobarone/mondo/claude/real-estate-client-management-app-xl7dnx/crm/deploy/installa.sh \
+      | bash -s -- gestionale.mondoimmobiliarelecce.it tua@email.it
+
+
+Nota per PowerShell
+
+Le virgolette annidate non funzionano come su Linux. Questo perde il cd e
+dà Cannot find module:
+    ssh root@IP 'sudo -u mondo bash -c "cd /opt/mondo-crm && node scripts/backup.mjs"'
+Va scritto così:
+    ssh root@IP "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
+
+
+6-BIS · FAR PARTIRE GLI AVVISI PER EMAIL
+----------------------------------------
+
+Da questa configurazione dipendono due cose: l'avviso 30 minuti prima di
+ogni appuntamento, e il collegamento di Password dimenticata?. Il meccanismo è
+già installato e gira; manca solo dirgli da quale casella spedire.
+Si fa una volta sola.
+
+
+Si spedisce da Gmail
+
+L'indirizzo scelto è immobiliarelecce@gmail.com, la casella che in agenzia
+si legge davvero: info@mondoimmobiliarelecce.it viene inoltrata lì, e nessuno
+usa Outlook.
+
+  | Perché non dal dominio. La posta di @mondoimmobiliarelecce.it sta su
+  | SiteGround insieme al sito — lo dicono l'MX (mailspamprotection.com) e
+  | mail.mondoimmobiliarelecce.it (35.214.x.x). Quella strada è stata provata e
+  | si è fermata: la password della casella info@ non è più valida, e la
+  | creazione di una casella nuova è fallita con un errore generico di SiteGround.
+  | Resta comunque scritto qui perché l'IP del server Aruba non è nell'SPF del
+  | dominio: far spedire il gestionale per conto suo manderebbe tutto nello
+  | spam. Appoggiarsi a una casella vera — SiteGround o Gmail — è l'unica strada
+  | che non richiede di toccare i DNS.
+
+
+Cosa serve prima
+
+Sull'account Google di immobiliarelecce@gmail.com:
+
+1. verifica in due passaggi attiva;
+2. una password per le app, da myaccount.google.com/apppasswords.
+
+Sono 16 lettere minuscole. Google le mostra a gruppi di quattro
+(abcd efgh ijkl mnop): gli spazi non fanno parte della password, vanno
+tolti e va scritta tutta attaccata. La password normale di Gmail non
+funziona: Google ha chiuso quella strada nel 2022.
+
+La password per le app vale solo per il gestionale e si revoca quando si vuole,
+senza toccare l'accesso a Gmail.
+
+
+I tre comandi
+
+1. Scrivi le quattro righe che non sono segrete, lasciando vuota la quinta:
+
+    ssh root@77.81.234.151 "cp -n /etc/mondo-crm.env /etc/mondo-crm.env.prima; printf '%s\n' 'SMTP_HOST=smtp.gmail.com' 'SMTP_PORT=465' 'SMTP_USER=immobiliarelecce@gmail.com' 'SMTP_PASS=' 'SMTP_FROM=immobiliarelecce@gmail.com' > /etc/mondo-crm.env; chmod 640 /etc/mondo-crm.env; chown root:mondo /etc/mondo-crm.env; cat /etc/mondo-crm.env"
+
+2. Apri il file e scrivi la password sulla riga SMTP_PASS=, attaccata
+all'uguale:
+
+    ssh root@77.81.234.151 -t "nano /etc/mondo-crm.env"
+
+Freccia giù fino a SMTP_PASS=, tasto Fine, scrivi le 16 lettere senza spazi.
+Salva con Ctrl+O e Invio, esci con Ctrl+X.
+
+Il -t non è un dettaglio: senza, ssh non apre un terminale vero e nano
+non parte. Serve per qualunque programma a schermate — nano, rclone config.
+
+3. Prova, e solo dopo riavvia:
+
+    ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo npm run posta"
+    ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm && sudo -E -u mondo npm run posta -- --manda"
+    ssh root@77.81.234.151 "systemctl restart mondo-crm"
+
+Il primo comando non spedisce niente: apre la connessione, fa l'accesso e, se
+qualcosa non va, dice quale delle cinque righe è sbagliata — nome
+inesistente, porta chiusa, cifratura sbagliata per quella porta, utenza o
+password rifiutate, mittente rifiutato. Il secondo manda un'email vera.
+
+Il riavvio serve perché il programma legge quel file solo all'avvio: finché non
+lo fai, gli avvisi partono dal cron ma Password dimenticata? continua a dire
+che la posta non è configurata.
+
+
+Se l'email non arriva
+
+Il comando ha detto «spedita» ma in casella non c'è niente: allora non è più un
+problema di configurazione. Guarda nella posta indesiderata. Il registro
+degli invii automatici sta in /opt/mondo-crm/backup/promemoria.log.
+
+Attenzione a non confondersi: node scripts/promemoria.mjs --prova non prova
+la configurazione. Non apre nessuna connessione, quindi passa anche con la
+password sbagliata, e se non ci sono appuntamenti nella mezz'ora dice solo
+«nessun appuntamento». Per sapere se la posta funziona serve npm run posta.
+
+Il file contiene una password, quindi lo leggono solo root e il programma
+(chmod 640). Sta fuori dalla cartella del gestionale apposta: un
+aggiornamento non lo tocca.
+
+
+7 · LE COPIE DI SICUREZZA
+-------------------------
+
+- una a notte alle 02:00, in /opt/mondo-crm/backup/
+- si usa l'API di backup di SQLite: la copia è coerente anche se qualcuno
+  sta scrivendo in quel momento
+- quelle oltre i 60 giorni si cancellano da sole
+- vengono copiate anche le foto
+
+  | Una copia sullo stesso server non è una copia. Se quel disco muore, muore
+  | con lui. Va portata fuori: in automatico ogni mese su Google Drive (capitolo
+  | 7-bis), oppure a mano su F:\Gestionale backup, con il comando scp sopra.
+
+Il pulsante Scarica l'archivio che c'era nella pagina Utenti è stato
+tolto. Da quando ogni collaboratore vede solo le proprie schede, un file con
+dentro tutto l'archivio sarebbe la separazione aggirata con un clic. La copia si
+prende dal server, con lo scp del capitolo 6: è l'unica strada a mano, ed è
+anche l'unica che porta via anche le foto.
+
+Chi vuole solo le proprie schede le esporta in CSV da Clienti e da Immobili.
+
+
+7-BIS · MANDARE LE COPIE FUORI DAL SERVER, IN AUTOMATICO
+--------------------------------------------------------
+
+Si fa una volta sola. Da quel momento, il primo giorno di ogni mese alle
+3 di notte, il server manda da solo l'ultima copia dell'archivio e le foto
+nuove su Google Drive — senza bisogno di ricordarsene, senza disco esterno.
+
+    ssh root@77.81.234.151 "curl https://rclone.org/install.sh | sudo bash"
+    ssh root@77.81.234.151 -t "rclone config"
+
+Il secondo comando fa una serie di domande, una alla volta:
+
+  tipo di operazione
+      n — nuovo collegamento (new remote)
+
+  nome
+      gdrive — esattamente così, minuscolo
+
+  tipo di spazio
+      cerca nell'elenco Google Drive e scrivi il suo numero
+
+  client_id
+      vuoto, solo Invio
+
+  client_secret
+      vuoto, solo Invio
+
+  scope
+      1 — accesso completo
+
+  root_folder_id
+      vuoto, solo Invio
+
+  service_account_file
+      vuoto, solo Invio
+
+  Edit advanced config?
+      n
+
+  Use auto config?
+      n — il server non ha un browser proprio
+
+
+A quel punto compare un indirizzo lungo. Aprilo su un browser qualsiasi —
+anche dal telefono — accedi con l'account Google dove vuoi salvare le
+copie (può essere camillo.barone@gmail.com o uno dedicato solo a questo), e
+incolla nel terminale il codice che ti restituisce alla fine. Poi:
+
+  Configure as Shared Drive?
+      n
+
+  conferma finale
+      y, poi q per uscire
+
+
+Da quel momento è collegato per sempre: non va rifatto, nemmeno dopo un
+aggiornamento del programma. Le copie finiscono in una cartella
+mondo-crm-backup dentro quel Google Drive, divise in database/ e foto/.
+
+Per controllare che sia partito bene, il mese dopo:
+    ssh root@77.81.234.151 "cat /opt/mondo-crm/backup/esterno.log"
+
+Finché rclone non è installato o non è ancora collegato, questo passaggio non
+fa nulla — né di buono né di dannoso: aspetta in silenzio che tu lo colleghi.
+
+
+8 · L'ARCHIVIO DENTRO ADESSO
+----------------------------
+
+Migrato dai file esportati dal gestionale precedente:
+
+  clienti_export.xlsx (1.111 righe)
+      1.108 clienti importati, 3 doppioni saltati
+
+  — nelle note degli stessi clienti
+      206 richieste d'acquisto riconosciute e ricostruite
+
+  lista_immobili03_08_2026.xls (53 righe)
+      53 immobili
+
+
+I clienti vanno dal 22/03/2023 al 31/07/2026.
+
+L'importazione legge il file Excel direttamente, senza conversione in CSV.
+La prima versione passava per il CSV e perdeva dati; è stato scritto un lettore
+.xlsx senza librerie (ZIP + inflateRawSync di Node), verificato cella per
+cella contro openpyxl: 8.896 celle, zero differenze.
+
+Il tracciato del gestionale precedente è riconosciuto da solo: nomi e cognomi
+divisi correttamente (comprese le particelle tipo De, Di, Lo), telefoni
+separati fra fisso e cellulare (in Italia i cellulari iniziano per 3), e le
+richieste estratte dal testo libero delle note.
+
+I venditori sono ancora da inserire — era rimasto in sospeso.
+
+
+9 · COSA È STATO FATTO, IN ORDINE
+---------------------------------
+
+23 commit. In sintesi:
+
+1. Il programma — clienti, richieste, immobili, incroci, agenda, trattative,
+   report, adempimenti, accesso e permessi.
+2. Prestazioni — regge l'archivio reale; provato con 3.000 clienti, gli
+   incroci restano sotto i 2,5 secondi.
+3. Tre incroci mancati, tre cause diverse trovate e risolte: la soglia di
+   punteggio troppo alta, il confronto delle zone letterale (ora accento- e
+   punteggiatura-insensibile, e "Torre Lapillo" incrocia "Porto Cesareo · Torre
+   Lapillo"), e il budget minimo che escludeva. Una quarta era un budget minimo
+   invisibile nell'interfaccia: ora l'elenco mostra la fascia intera e
+   segnala le combinazioni contraddittorie.
+4. Importazione — dal file Excel diretto, con riconoscimento del tracciato.
+5. Accesso dagli altri computer dell'ufficio (il bug del cookie).
+6. Messa online con un comando solo: installa.sh fa tutto, e si può
+   rilanciare senza danni.
+7. Foto sugli immobili.
+8. Venditori — sezione separata, con gli immobili di ciascuno e l'avviso
+   compleanni in Agenda, con gli auguri WhatsApp già scritti.
+9. Legame venditore–immobile da entrambe le parti, con ricerca invece di
+   una tendina con dentro tutto l'archivio.
+10. Storico visite per il proprietario — il foglio da stampare, vedi sotto.
+11. La pagina del proprietario — lo stesso racconto, ma sempre aggiornato e
+    su un indirizzo suo. È l'ultima cosa fatta: capitolo 9-septies.
+
+
+Lo storico visite per il proprietario
+
+Su ogni scheda immobile, in alto: una pagina sola, da stampare o salvare in PDF
+(dalla finestra di stampa, scegliendo "Salva come PDF") e mandare su WhatsApp.
+
+Risponde alla domanda che il proprietario fa prima o poi — «ma la state facendo
+vedere?» — prima ancora che la faccia. Riporta il saluto, l'elenco delle visite
+effettuate con data, nome, cognome, telefono e commento di chi è venuto, e in un
+riquadro a parte gli appuntamenti già fissati.
+
+Non c'è un elenco da tenere aggiornato a parte: legge dall'agenda. Ogni
+visita o appuntamento collegato all'immobile compare da solo, con la data
+dell'appuntamento e non quella in cui è stata messa la spunta Fatto.
+
+Le Note della riga compaiono dopo il commento, ma si tolgono con un clic
+(Togli le note interne): sono i promemoria dell'agente e in un foglio
+consegnato al proprietario sembrerebbero frasi del visitatore.
+
+Un resoconto sul prezzo — con chi si era fermato sulla cifra e a quanto
+l'immobile tornerebbe interessante — era stato costruito e poi tolto su
+richiesta il 4 agosto 2026. Il codice resta nella storia del repository.
+
+
+Agenda: modifica, calendario, avvisi
+
+- Ogni riga dell'agenda ha Modifica (anche per le attività già svolte:
+  spostare, correggere, aggiungere il commento, togliere la spunta Fatto,
+  eliminare) e Calendario, che scarica quell'appuntamento con la sveglia a
+  30 minuti già impostata.
+- Agenda → Calendario e avvisi dà l'indirizzo a cui abbonare Google, iPhone
+  o Outlook. È un feed iCalendar con una chiave nell'indirizzo, non un account
+  collegato: niente da autorizzare, ma quell'indirizzo vale come una password ed
+  è rigenerabile dalla stessa pagina.
+- Su Google l'abbonamento fa vedere, non suonare. La sveglia a 30 minuti sta
+  dentro il file e Apple e Outlook la usano; Google non fa suonare gli avvisi
+  dei calendari a cui ci si abbona, e mostra soltanto l'appuntamento. Per essere
+  avvisati restano il pulsante Calendario sulla riga (che mette l'evento nel
+  proprio calendario, dove la sveglia funziona) e l'avviso per email.
+- L'avviso per email parte da scripts/promemoria.mjs, cron ogni 5 minuti.
+  Vedi il capitolo 6-bis per la configurazione.
+
+Si è scelto il formato iCalendar invece delle API di Google perché funziona con
+qualsiasi calendario, non richiede credenziali sul server, e non si rompe quando
+Google cambia le regole delle applicazioni non verificate — con un account Gmail
+normale l'autorizzazione andrebbe rinnovata ogni sette giorni.
+
+
+Ricerca, WhatsApp, cruscotto, copia dal browser
+
+11. Ricerca globale — campo unico nella colonna di sinistra: clienti e
+    immobili insieme, numeri di telefono confrontati ignorando spazi e punti.
+12. Proponi su WhatsApp — negli Incroci e nella scheda immobile, il
+    messaggio di proposta arriva già scritto. Corretto anche un difetto reale:
+    i pulsanti WhatsApp passavano i numeri senza +39 (i numeri importati
+    sono quasi tutti così), e wa.me apriva una chat vuota o sbagliata. Ora il
+    prefisso lo mette whatsappHref() in format.ts, ovunque.
+13. «Da sistemare» sul cruscotto — acquirenti senza richiesta aperta,
+    immobili senza proprietario, immobili senza la via, documenti
+    antiriciclaggio scaduti, clienti senza consenso privacy. Ogni voce apre
+    l'elenco già filtrato (/clienti?senza=…, /immobili?noAddress=1).
+14. Copia di sicurezza dal browser — Utenti → Scarica l'archivio (solo
+    titolare, annotato nel registro). Usa l'API di backup di SQLite: coerente
+    anche a programma in uso.
+15. Correzioni di revisione (revisione incrociata a più passaggi):
+    - i confronti fra due_at (ora locale) e date('now') (UTC in SQLite)
+      usano date('now','localtime'): intorno alla mezzanotte agenda, badge e
+      cruscotto sbagliavano giorno;
+    - «oggi/domani» calcolati sui giorni di calendario, non su blocchi di 24
+      ore (alle 22 l'appuntamento di domattina risultava «oggi»);
+    - l'età nei compleanni era di un anno in più per quasi tutti;
+    - togliendo la spunta Fatto a una visita si perdeva il commento del
+      visitatore; ora sopravvive;
+    - le tendine troncate della pagina di modifica potevano scollegare
+      cliente/immobile in silenzio; il collegato è sempre fra le opzioni;
+    - un valore fuori vocabolario (es. tipologia importata) non si azzera più
+      al primo salvataggio della scheda;
+    - done_at in un formato solo (ordinamenti dello stesso giorno sballati);
+    - minimo di 8 caratteri per le password anche in modifica utente;
+    - chiuso un redirect aperto su redirect_to (//dominio passava il
+      controllo su /).
+
+
+9-BIS · COSA CERCA IL CLIENTE, IN DETTAGLIO
+-------------------------------------------
+
+Rifatto il 28 agosto 2026, su richiesta sua. Il riquadro «Cosa cerca» è
+quello che alimenta gli incroci, ed era il punto più povero del programma.
+
+Tipologia: più d'una. «Appartamento o villetta» è la richiesta normale.
+Nessuna spuntata vuol dire indifferente.
+
+Dove cerca: un comune per volta, con le sue zone. Si sceglie il comune —
+l'elenco ha tutti i 96 comuni della provincia di Lecce, con Lecce e Porto
+Cesareo in cima — compaiono i suoi quartieri e le sue frazioni, si spunta e si
+conferma con Aggiungi. L'area resta in elenco e si ricomincia con un altro
+comune.
+
+Prima c'era un comune solo e un elenco di zone che non sapeva a quale comune
+appartenesse: chi cercava «a Lecce in centro oppure a Porto Cesareo al mare»
+spuntava quattro caselle in un mucchio unico, e bastava questo per proporgli il
+centro di Porto Cesareo.
+
+Nessuna zona spuntata per un comune vuol dire tutto il comune, ed è il caso
+più frequente. Le liste delle zone sono fitte dove l'agenzia lavora e più
+scarne altrove: aggiungerne una è una riga in ZONE_PER_COMUNE
+(src/lib/types.ts).
+
+Stato dell'immobile: da 4 a 7 voci. Nuovo/in costruzione, ottimo,
+ristrutturato, buono, discreto, da rivedere, da ristrutturare. È la stessa
+lista per la richiesta e per la scheda immobile — se fossero due liste diverse
+non si potrebbero confrontare, e il filtro nella richiesta sarebbe scritto per
+niente. Gli immobili che avevano «Buono stato» sono passati a «Buono» da soli
+al primo avvio.
+
+
+Cosa esclude e cosa no
+
+Il motore non nasconde un immobile perché ha la zona o lo stato sbagliato:
+lo propone più in basso e scrive cosa non torna. Escludono soltanto il tipo di
+contratto, il comune (se non è nessuno di quelli chiesti), la famiglia di
+tipologia, il budget massimo e la metratura minima.
+
+Sulla tipologia, con più voci scelte si esclude solo se nessuna è della
+famiglia dell'immobile, e solo quando si riconoscono tutte: se anche una sola
+non si riconosce — succede con le tipologie degli archivi importati — non si sa
+abbastanza per escludere, e decide l'agente.
+
+
+Le richieste vecchie
+
+Non sono state convertite e non ne hanno bisogno: quelle scritte prima hanno il
+vecchio comune e le vecchie zone, e vengono lette come un'unica area. Continuano
+a incrociare esattamente come prima.
+
+
+9-TER · IL VIDEO DELL'IMMOBILE
+------------------------------
+
+Aggiunto il 31 agosto 2026, perché l'applicazione che gestisce il canale YouTube
+aveva bisogno di sapere quali immobili hanno un video, e di agganciare ogni
+video al suo immobile.
+
+Sulla scheda dell'immobile c'è il campo Video su YouTube: ci si incolla
+l'indirizzo. Il gestionale non chiama YouTube — resta vero che il programma
+non fa nessuna chiamata verso l'esterno: conserva il collegamento e lo fa uscire
+nell'esportazione.
+
+Nel CSV degli immobili ci sono due colonne: Video YouTube (il collegamento
+come è stato scritto) e ID video (il codice ricavato da quel collegamento).
+Il codice si estrae da tutte le forme che YouTube usa — watch?v=, youtu.be,
+shorts, embed, live, con o senza i parametri che il pulsante Condividi
+attacca in coda. Resta vuoto quando non se ne riconosce uno.
+
+Sul cruscotto, nel riquadro Da sistemare, compaiono gli immobili in vendita
+senza un video. Conta solo quelli ancora proponibili: per un immobile venduto
+il video non serve più, e tenerlo nel conteggio darebbe un numero che non scende
+mai e che quindi si smette di guardare.
+
+I dati escono a mano, non c'è nessuna porta aperta. L'altra applicazione non
+interroga il gestionale: si scarica il CSV da Immobili → Esporta in Excel e lo
+si passa. È stata una scelta sua: aprire un indirizzo che un altro programma
+interroga da solo sarebbe la prima volta che il gestionale espone qualcosa verso
+l'esterno, e non è una cosa da fare di sfuggita.
+
+
+9-QUATER · L'ELENCO IMMOBILI SI APRE SUGLI ATTIVI
+-------------------------------------------------
+
+Chiesto il 1° settembre 2026. L'elenco mostrava tutto il portafoglio mai
+esistito, venduti compresi: per arrivare a quello su cui si lavora bisognava
+filtrare ogni volta.
+
+Ora apre sugli attivi — acquisizione e in vendita, gli stessi che il
+programma già considera proponibili — e in cima ci sono tre schede con i
+rispettivi numeri. La scheda scelta sopravvive alla ricerca e ai filtri; quando
+si sceglie uno stato preciso dalla tendina le schede spariscono, perché
+sarebbero due comandi che dicono la stessa cosa.
+
+I collegamenti del cruscotto aprono sempre l'elenco completo. I loro
+conteggi guardano tutti gli stati: se l'elenco si fosse aperto sui soli attivi,
+il cruscotto avrebbe promesso nove righe e ne avrebbe aperte cinque. È la stessa
+trappola dei conteggi già pagata due volte in questo programma.
+
+La foto di copertina nell'elenco è passata da 56×40 a 176×128 pixel: serve a
+riconoscere l'immobile senza aprirlo.
+
+
+9-QUINQUIES · COMUNE, ZONA ED ESTERNO SULLA SCHEDA IMMOBILE
+-----------------------------------------------------------
+
+Chiesto il 2 settembre 2026, ed è il seguito naturale di «cosa cerca»: da una
+parte si sceglieva da un elenco, dall'altra si scriveva a mano.
+
+Comune e zona ora vengono dalle stesse liste della richiesta —
+COMUNI e ZONE_PER_COMUNE in src/lib/types.ts. Il confronto degli incroci
+era già tollerante («S. Cataldo» trova «San Cataldo»), ma su un immobile si
+poteva scrivere una zona che in quel comune non esiste, e non se ne accorgeva
+nessuno.
+
+Il valore che l'immobile ha già resta sempre fra le opzioni, anche quando
+non è in elenco. I 53 immobili in archivio hanno comune e zona scritti a mano:
+una tendina che non li contenesse li scollegherebbe al primo salvataggio, in
+silenzio. È la trappola delle tendine troncate, già pagata una volta.
+
+L'esterno è diventato multiplo: balcone, terrazzo e giardino insieme, in
+csv. La voce Nessuno è sparita — nessuna casella spuntata dice già la stessa
+cosa, e tenerla avrebbe permesso di spuntare insieme «Nessuno» e «Giardino».
+Gli immobili che l'avevano vengono ripuliti da ripulisciEsterniVuoti in
+db.ts, idempotente come le altre conversioni. Il motore degli incroci
+continua a riconoscere «ha un esterno»: legge il csv e ignora l'eventuale
+«Nessuno» rimasto scritto.
+
+
+9-SEXIES · QUANDO IL PROGRAMMA DICE DI NO
+-----------------------------------------
+
+Fino al 3 settembre 2026, un salvataggio rifiutato dal server dava una
+pagina di errore senza spiegazioni. Il motivo del rifiuto c'era — «Serve
+l'indirizzo dell'immobile» — ma non usciva dal server: a programma pubblicato
+React nasconde il testo degli errori, per non lasciarsi sfuggire dettagli
+interni, e a schermo restava una pagina bianca in inglese. Chi ci finiva
+dentro non sapeva cosa correggere, e tornando indietro trovava il modulo
+vuoto.
+
+Adesso i rifiuti si comportano da rifiuti:
+
+- Il motivo compare sopra il pulsante Salva, in rosso, scritto per esteso.
+  Sopra il pulsante e non in cima alla pagina: su un modulo lungo, in cima
+  sarebbe fuori schermo, e il salvataggio sembrerebbe non aver fatto niente.
+- Quello che si era scritto resta nei campi. Si corregge la riga
+  segnalata e si salva di nuovo. Sulla scheda di un immobile sono venticinque
+  campi: perderli per un titolo dimenticato era peggio del rifiuto.
+- In archivio non viene scritto niente. Il controllo viene prima
+  dell'inserimento, non a metà.
+
+Le cose che possono venire rifiutate sono quattro: un cliente senza né cognome
+né ragione sociale, un immobile senza titolo, un immobile senza via, un
+collegamento al video che non è un indirizzo.
+
+
+E se è un guasto vero
+
+Per tutto il resto — un guasto imprevisto, o il tentativo di toccare la scheda
+di un collega — c'è ora una schermata di cortesia, «Qualcosa non ha
+funzionato»: in italiano, con la navigazione al suo posto, il pulsante
+Riprova e il ritorno al cruscotto. Prima era la pagina bianca di Next.
+
+In fondo alla schermata c'è un codice del guasto. Serve: è lo stesso che
+il programma scrive nel proprio registro, quindi permette di ritrovare
+l'errore vero fra tutti quelli della giornata (capitolo 12).
+
+Allo stesso modo, un indirizzo che non porta da nessuna parte e una scheda
+che non c'è più non mostrano più il 404 This page could not be found di
+serie, ma due schermate italiane con la via d'uscita.
+
+  | Nota sulle schede dei colleghi. Una scheda che esiste ma è di un altro
+  | mostra la stessa schermata di una che non esiste. È voluto: distinguere i
+  | due casi sarebbe un modo per contare l'archivio altrui una prova alla volta.
+
+
+9-SEPTIES · LA PAGINA DEL PROPRIETARIO
+--------------------------------------
+
+Fatta il 4 settembre 2026, su sua richiesta: *«una applicazione per i clienti
+che vendono con noi per vedere l'andamento della promozione in vendita»*.
+
+È la prima pagina di questo programma che si apre senza fare l'accesso, e
+tutto il modo in cui è costruita viene da lì.
+
+
+Come funziona
+
+Sulla scheda dell'immobile, il riquadro Link per il proprietario crea un
+indirizzo lungo e casuale — /tracking/<chiave> — che vale come una password:
+chi ce l'ha entra, chi non ce l'ha vede solo una pagina «non trovata». Stesso
+stampo del calendario a cui ci si abbona, che funziona da agosto.
+
+Le chiavi non esistono finché non le si crea, una per volta. Non ne è stata
+generata nessuna in blocco: cinquantatré indirizzi vivi che nessuno ha chiesto
+sarebbero cinquantatré porte aperte che nessuno sorveglia. Togli il link
+rimette la chiave a zero, e da quel momento l'indirizzo è morto.
+
+
+Cosa esce, e cosa no
+
+Escono: foto, prezzo, metratura, le visite con data, ora, nome del visitatore
+e le sue osservazioni, gli appuntamenti fissati, a che punto è la vendita, i
+collegamenti agli annunci, e i recapiti dell'agenzia.
+
+Non escono: il telefono e l'email di chi è venuto a visitare — il nome
+dice al proprietario chi è entrato in casa sua, il numero gli darebbe il modo di
+scavalcare l'agenzia; le Note dell'agente, che sono i suoi promemoria e non
+le parole del cliente; il prezzo minimo; le provvigioni; le note interne
+sull'immobile; le proposte d'acquisto; lo storico dei ribassi.
+
+Il confronto giusto non è con niente, è con il foglio stampato di
+/immobili/[id]/visite, che l'agenzia consegna a mano da sempre: quello porta
+nome, cognome, telefono e commento. La pagina dà meno di quel foglio.
+
+Quando la visita l'ha portata un collega, al posto del nome compare
+«Collaborazione con altra agenzia», e le osservazioni si vedono lo stesso. Il
+proprietario ha diritto di sapere che qualcuno è entrato in casa sua; il nome
+verrebbe però dall'archivio di un altro collaboratore, e lì il muro fra
+collaboratori vale anche verso l'esterno. Deciso da Camillo il 4 settembre.
+
+La data mostrata è quella dell'appuntamento, non quella in cui è stata messa
+la spunta: è la stessa che stampa il foglio, e due pagine che raccontano la
+stessa visita non possono dire due date diverse.
+
+Il punto tecnico che conta, per chi un domani ci mette le mani: la lettura che
+serve quella pagina elenca le colonne una per una, come le due query degli
+incroci fra colleghi e per lo stesso motivo moltiplicato. Un SELECT * lì
+dentro farebbe uscire prezzo minimo, provvigioni e note fuori dall'agenzia, e
+una volta uscite non rientrano. Il campo più insidioso non è un recapito: è
+«Cosa» dell'agenda, testo libero, dove chi segna una visita di fretta scrive
+«Visita sig. Rossi». Sta fuori apposta.
+
+Le foto passano da una porta loro, agganciata alla chiave e non all'utente, che
+controlla anche che quella foto sia di quell'immobile: senza, con un link
+buono in mano basterebbe cambiare il nome del file nell'indirizzo per sfogliare
+gli interni di casa d'altri.
+
+
+Dove è pubblicato l'annuncio
+
+Due caselle sulla scheda dell'immobile, per idealista e Immobiliare.it.
+Il gestionale non parla con i portali e non lo farà: conserva l'indirizzo
+perché il proprietario possa aprirlo e verificare da sé che la sua casa è
+online — per questo la sezione si chiama registro di garanzia e non
+statistiche. I numeri dei portali non ci sono e non ci saranno: non esiste un
+modo di prenderli, e inventarne di finti sarebbe peggio che non averne.
+
+C'è anche un campo facoltativo per la pagina che idealista genera per il
+proprietario (idealista_owner_url), quella con i loro conteggi. Non sta
+nell'elenco PORTALI ed è tenuta separata anche a schermo, sotto una riga di
+separazione: gli annunci dimostrano che la casa è pubblicata, quei numeri sono
+di idealista e non nostri. Si incolla a mano, un immobile alla volta, e solo su
+decisione sua — al 4 settembre quei conteggi non erano ancora stati verificati
+(1.221 visite su un annuncio con 0 giorni di pubblicazione).
+
+Nel riquadro Da sistemare del cruscotto compaiono gli annunci ancora online
+su case già vendute o ritirate. È il richiamo che vale di più: un annuncio
+rimasto pubblicato dopo il rogito porta telefonate per una casa che non c'è più.
+
+
+Come è stata verificata
+
+Quasi cento controlli, la metà con un browser vero. L'archivio di prova è
+costruito apposta con dentro tutto quello che non deve uscire — i telefoni e
+le email dei visitatori, le note interne dell'agente, il prezzo minimo, le
+provvigioni — e le prove vanno a cercarli uno per uno nella pagina consegnata.
+Nessuno esce. C'è anche un visitatore che è cliente di un collega, per
+verificare che al suo posto compaia l'etichetta e non il nome.
+
+Messa in esercizio il 4 settembre e provata da lui sul gestionale vero:
+link creato su un immobile suo, pagina aperta dal telefono, foto, portali,
+rifiuto della casella sbagliata e revoca. «Fatto tutto ok.»
+
+
+10 · COSA NON C'È
+-----------------
+
+Escluso d'accordo, non dimenticato:
+
+- invio annunci ai portali — il gestionale conserva il collegamento
+  all'annuncio (capitolo 9-septies), ma non lo manda e non parla con i portali
+- firma digitale
+- invii massivi di email/WhatsApp
+- generazione automatica dei contratti
+- app da scaricare (si usa dal browser, anche dal telefono)
+- fatturazione
+
+
+10-BIS · LAVORARE IN DUE SENZA VEDERSI LE SCHEDE
+------------------------------------------------
+
+Ogni collaboratore vede soltanto la propria roba, e questo
+vale per tutti, titolare compreso. L'archivio è condiviso come edificio,
+non come contenuto.
+
+A decidere sono due campi soli: il referente del cliente (Seguito da) e
+l'agente di riferimento dell'immobile. Richieste, attività, proposte,
+valutazioni, foto e storico prezzi non hanno un padrone loro: seguono la scheda
+a cui sono attaccati.
+
+Il confine è lo stesso ovunque — elenchi, ricerca, incroci, agenda, cruscotto,
+report, esportazioni, foto, promemoria via email. Anche i conteggi: il
+numero in cima a un elenco è il numero di quell'elenco, mai quello
+dell'agenzia. Se fosse quello dell'agenzia, basterebbe cambiare i filtri per
+contare l'archivio del collega senza vederne una riga.
+
+Scrivere a mano l'indirizzo di una scheda altrui dà «non trovata», la stessa
+risposta di un numero inventato: un «non autorizzato» confermerebbe che quella
+scheda esiste.
+
+Quattro cose da sapere, perché si notano nell'uso:
+
+1. Un appuntamento può essere di uno e riguardare la scheda dell'altro — una
+   visita fatta insieme. Si vede, ma al posto del nome compare *«scheda di un
+   collega»*.
+2. Il rilevamento doppioni guarda solo il proprio archivio: se la stessa
+   persona è seguita da entrambi, nessuno viene avvisato. È voluto — un avviso
+   sarebbe già un modo per interrogare l'archivio altrui — ma va saputo.
+3. Per la stessa ragione, una richiesta di cancellazione GDPR va girata a
+   voce anche all'altro: ognuno cancella solo la propria copia.
+4. Il ruolo titolare non dà più accesso ai dati altrui: serve solo a creare
+   e disattivare gli utenti. Il registro accessi ce l'hanno tutti, ma
+   ciascuno vede soltanto le proprie mosse.
+
+
+Gli incroci con i colleghi
+
+La separazione avrebbe poco senso se poi le occasioni si perdessero. In
+Incroci → Con i colleghi il programma segnala nei due versi: un tuo
+acquirente per l'immobile di un collega, e un tuo immobile per un acquirente
+suo.
+
+Valgono le stesse regole degli incroci propri (niente altro comune, niente
+altra famiglia di tipologie), ma cambia cosa si vede —
+le caratteristiche sì, l'identità no:
+
+  tipologia, comune, zona, metri, vani, prezzo richiesto
+      chi è il proprietario
+
+  cosa cerca un suo acquirente, e con che budget
+      nome e telefono di quell'acquirente
+
+  
+      il prezzo minimo accettato dal venditore
+
+  
+      note interne e provvigioni
+
+
+Il prezzo minimo non esce per nessun motivo: è la soglia sotto cui il venditore
+non scende, e conoscerla vuol dire sedersi al tavolo sapendo la mano dell'altro.
+
+Non c'è nessun pulsante per chiamare il cliente del collega: si scrive al
+collega. Da lì in poi è un accordo fra due persone, provvigione compresa —
+come si è sempre fatto fra agenzie.
+
+
+La password è di chi la usa
+
+Ognuno si cambia la propria da Il mio accesso (in fondo alla colonna a
+sinistra). Prima le impostava solo il titolare dalla pagina Utenti: voleva dire
+che qualcun altro conosceva la tua, e fra colleghi che non si vedono le schede a
+vicenda era una stonatura.
+
+Appena cambiata, tutti gli accessi già aperti si chiudono, compresi quelli
+di chi conosceva la password vecchia. È il momento in cui il cambio serve
+davvero a qualcosa.
+
+Password dimenticata: dalla pagina di accesso, Password dimenticata?.
+Arriva un'email con un collegamento che vale un'ora e una volta sola. Del
+collegamento in archivio resta solo l'impronta, mai il collegamento stesso: chi
+leggesse il file dell'archivio non potrebbe usarlo per entrare.
+
+  | Funziona solo con l'SMTP configurato (capitolo 6-bis). Finché manca, la
+  | pagina lo dice invece di far aspettare un'email che non arriverà, e la
+  | password la reimposta il titolare da Utenti.
+
+Se non entra più nessuno — password persa e posta non configurata — si
+reimposta dal server:
+    ssh root@77.81.234.151 "cd /opt/mondo-crm && sudo -u mondo npm run password -- --email nome@mondoimmobiliarelecce.it"
+Ne genera una a caso e la stampa a schermo. Annotarla subito.
+
+⚠️ Il limite, detto chiaro. Questo separa gli sguardi dentro il programma,
+non l'accesso alla macchina. Chi ha le chiavi del server ha il file
+dell'archivio, e lì dentro c'è tutto; chi amministra gli utenti può ancora
+imporre una password nuova a un altro — non può leggere quella in uso, ma può
+sostituirla, e a quel punto entrare. La differenza è che adesso
+se ne accorge: l'interessato si ritrova fuori e la sua password non
+funziona più. Se serve una separazione che regga fra due
+persone che non si fidano l'una dell'altra, la strada sono
+due installazioni distinte che si parlano solo per gli incroci.
+
+Se invece siete due soggetti giuridici diversi che condividono lo stesso
+archivio, dal punto di vista privacy siete contitolari del trattamento e
+serve un accordo scritto (art. 26 GDPR). Se il collaboratore è un incaricato
+dello Studio, resta tutto in capo al titolare ed è molto più semplice.
+
+
+11 · PRIVACY E ADEMPIMENTI
+--------------------------
+
+- consenso privacy con data e ambito, su ogni scheda cliente
+- adeguata verifica antiriciclaggio (D.lgs 231/2007): tipo e numero
+  documento, scadenza, data del controllo
+- registro accessi: cosa è stato fatto e quando — ognuno vede il proprio
+- separazione fra collaboratori: ognuno accede soltanto alle schede di cui è
+  referente (capitolo 10-bis)
+- cancellazione logica: i clienti eliminati restano nell'archivio con la
+  data di cancellazione, non spariscono
+- l'accordo art. 28 GDPR con Aruba va tenuto agli atti
+
+
+12 · SE QUALCOSA NON VA
+-----------------------
+
+  Il sito non si apre
+      systemctl status mondo-crm, poi journalctl -u mondo-crm -n 50
+
+  Non si entra da un altro computer
+      proxy_set_header X-Forwarded-Proto in nginx
+
+  L'importazione di un file grosso fallisce
+      client_max_body_size in nginx (il valore normale, 1 MB, è troppo poco)
+
+  La compilazione si ferma a metà
+      RAM insufficiente — serve la memoria di scambio
+
+  not found: make durante l'installazione
+      mancano build-essential e python3
+
+  Un cliente non compare negli incroci
+      il programma incrocia le richieste, non i clienti: senza una richiesta
+      registrata non appare. La scheda immobile ha il riquadro Richieste
+      scartate che dice il motivo di ogni esclusione
+
+  Il certificato è scaduto
+      certbot renew — normalmente si rinnova da solo
+
+  A schermo compare «Qualcosa non ha funzionato»
+      Non è stato salvato niente. Prendi il codice del guasto in fondo a quella
+      schermata e cercalo nel registro: `ssh root@77.81.234.151 "journalctl -u
+      mondo-crm \ · grep <codice>"`. Lì c'è l'errore per esteso, che a schermo
+      non esce apposta
+
+  Un salvataggio viene rifiutato con un riquadro rosso
+      Non è un guasto: è un controllo. Il riquadro sta sopra il pulsante Salva
+      e dice cosa manca; quello che avevi scritto è ancora nei campi (capitolo
+      9-sexies)
+
+
+13 · DOVE STANNO LE PASSWORD
+----------------------------
+
+Nessuna è in questo file né nel repository.
+
+  Accesso al gestionale
+      creato all'installazione, stampato a schermo; poi si gestisce da Utenti
+
+  SSH al server
+      chiave SSH sul PC
+
+  Pannello Aruba
+      account ARU-352439, credenziali personali
+
+  Pannello SiteGround
+      credenziali del sito
+
+  Chiave delle sessioni
+      generata dal programma in data/secret.key — non va cancellata:
+      cancellarla fa uscire tutti

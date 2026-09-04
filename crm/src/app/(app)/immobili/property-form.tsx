@@ -1,0 +1,279 @@
+import Link from "next/link";
+import { saveProperty } from "@/lib/actions";
+import { AvvisoModulo, ModuloConEsito, SubmitButton } from "@/components/client";
+import { Card, TextField, TextArea, SelectField, CheckboxRow, CheckboxGroup } from "@/components/ui";
+import { fromCsv } from "@/lib/format";
+import {
+  COMUNI,
+  ENERGY_CLASSES,
+  OUTDOOR_KINDS,
+  PROPERTY_CONDITIONS,
+  PROPERTY_KINDS,
+  PROPERTY_STATUSES,
+  ZONE_PER_COMUNE,
+} from "@/lib/types";
+import { PORTALI } from "@/lib/portali";
+import type { Property } from "@/lib/types";
+import { LuogoImmobile } from "./luogo-immobile";
+
+export function PropertyForm({
+  property,
+  userOptions,
+  defaultAgentId,
+  zoneOptions,
+}: {
+  property?: Property;
+  userOptions: { value: string; label: string }[];
+  defaultAgentId: number;
+  /** Zone gia' in archivio: suggerimenti, non un elenco chiuso. */
+  zoneOptions: string[];
+}) {
+  return (
+    <ModuloConEsito azione={saveProperty} className="space-y-5">
+      {property ? <input type="hidden" name="id" value={property.id} /> : null}
+
+      <Card title="L'immobile">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <TextField
+            label="Titolo"
+            name="title"
+            defaultValue={property?.title}
+            required
+            placeholder="Trilocale in via Parini, centro"
+            className="sm:col-span-2"
+          />
+          <TextField
+            label="Codice interno"
+            name="ref"
+            defaultValue={property?.ref}
+            placeholder="MI-0042"
+          />
+
+          <SelectField
+            label="Tipologia"
+            name="kind"
+            options={PROPERTY_KINDS}
+            defaultValue={property?.kind}
+          />
+          <SelectField
+            label="Contratto"
+            name="contract"
+            options={[
+              { value: "vendita", label: "Vendita" },
+              { value: "affitto", label: "Affitto" },
+            ]}
+            defaultValue={property?.contract ?? "vendita"}
+            placeholder={null}
+          />
+          <SelectField
+            label="Stato"
+            name="status"
+            options={PROPERTY_STATUSES}
+            defaultValue={property?.status ?? "acquisizione"}
+            placeholder={null}
+          />
+
+          <TextField
+            label="Indirizzo"
+            name="address"
+            defaultValue={property?.address}
+            required
+            placeholder="Via Roma 10"
+            className="sm:col-span-2"
+            hint="Serve a riconoscere l'immobile a colpo d'occhio nelle liste e nelle tendine"
+          />
+          <LuogoImmobile
+            comuneIniziale={property?.city ?? null}
+            zonaIniziale={property?.zone ?? null}
+            comuni={COMUNI}
+            zonePerComune={ZONE_PER_COMUNE}
+            zoneGiaUsate={zoneOptions}
+          />
+        </div>
+      </Card>
+
+      <Card title="Caratteristiche">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <TextField label="Metri quadri" name="sqm" defaultValue={property?.sqm} />
+          <TextField label="Vani" name="rooms" defaultValue={property?.rooms} />
+          <TextField label="Bagni" name="bathrooms" defaultValue={property?.bathrooms} />
+          <TextField label="Piano" name="floor" defaultValue={property?.floor} placeholder="2" />
+          <SelectField
+            label="Stato dell'immobile"
+            name="condition"
+            options={PROPERTY_CONDITIONS}
+            defaultValue={property?.condition}
+          />
+          <SelectField
+            label="Classe energetica"
+            name="energy_class"
+            options={ENERGY_CLASSES}
+            defaultValue={property?.energy_class}
+          />
+          <div className="sm:col-span-2">
+            <CheckboxGroup
+              label="Esterno"
+              name="outdoor"
+              options={OUTDOOR_KINDS}
+              selected={fromCsv(property?.outdoor)}
+              columns={3}
+              capitalizza={false}
+            />
+          </div>
+          <div className="flex flex-col justify-end">
+            <CheckboxRow
+              label="Ascensore"
+              name="elevator"
+              defaultChecked={property?.elevator === 1}
+            />
+            <CheckboxRow label="Box / posto auto" name="garage" defaultChecked={property?.garage === 1} />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Prezzo e incarico">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <TextField
+            label="Prezzo richiesto"
+            name="price"
+            defaultValue={property?.price}
+            placeholder="185000"
+            hint="Solo numeri"
+          />
+          <TextField
+            label="Prezzo minimo accettato"
+            name="min_price"
+            defaultValue={property?.min_price}
+            hint="Riservato: non compare negli annunci"
+          />
+          {/* Il proprietario si collega dalla scheda dell'immobile, dove c'e'
+              una ricerca: una tendina con tutto l'archivio clienti dentro non
+              e' utilizzabile. Qui viaggia nascosto per non perderlo. */}
+          <input
+            type="hidden"
+            name="owner_client_id"
+            value={property?.owner_client_id ?? ""}
+          />
+          <div className="text-xs text-slate-400 sm:col-span-2 lg:col-span-1">
+            <span className="field-label">Proprietario</span>
+            {property?.owner_client_id
+              ? "Collegato. Si cambia dalla scheda dell'immobile."
+              : "Si collega dalla scheda dell'immobile, dopo aver salvato: lì c'è la ricerca fra i clienti."}
+          </div>
+
+          <TextField
+            label="Inizio incarico"
+            name="mandate_start"
+            type="date"
+            defaultValue={property?.mandate_start}
+          />
+          <TextField
+            label="Scadenza incarico"
+            name="mandate_end"
+            type="date"
+            defaultValue={property?.mandate_end}
+            hint="Riceverai un avviso 45 giorni prima"
+          />
+          <TextField
+            label="Provvigione %"
+            name="commission_pct"
+            defaultValue={property?.commission_pct}
+            placeholder="3"
+          />
+
+          <SelectField
+            label="Agente di riferimento"
+            name="agent_id"
+            options={userOptions}
+            defaultValue={property?.agent_id ?? defaultAgentId}
+            placeholder="Nessuno"
+          />
+          <div className="flex items-end">
+            <CheckboxRow
+              label="Incarico in esclusiva"
+              name="exclusive"
+              defaultChecked={property?.exclusive === 1}
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Video">
+        <TextField
+          label="Video su YouTube"
+          name="video_url"
+          defaultValue={property?.video_url}
+          placeholder="https://www.youtube.com/watch?v=..."
+          // Il browser ferma qui quello che indirizzo non e' (uno spazio, o
+          // nessun punto), e lo dice accanto al campo prima ancora di partire.
+          // Adesso il server sa dire di no per conto suo, ma questo controllo
+          // resta: e' piu' vicino a chi scrive, e non fa fare il viaggio.
+          pattern="\S+\.\S+"
+          title="Incolla l'indirizzo del video, per esempio https://youtu.be/xxxxxxxxxxx"
+          hint="Incolla l'indirizzo del video. Serve a sapere quali immobili un video ce l'hanno, e finisce nell'esportazione per l'applicazione che gestisce il canale. Il gestionale non va a guardarlo."
+        />
+      </Card>
+
+      <Card title="Dove è pubblicato">
+        <p className="mb-3 text-sm text-slate-600">
+          L&apos;indirizzo dell&apos;annuncio su ogni portale. Il proprietario lo
+          vede nella sua pagina e può aprirlo per verificare da sé che la casa è
+          online — ed è il posto dove ritrovarli tutti il giorno del rogito, per
+          andare a toglierli.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PORTALI.map((portale) => (
+            <TextField
+              key={portale.chiave}
+              label={`Annuncio su ${portale.nome}`}
+              name={portale.colonna}
+              defaultValue={
+                portale.chiave === "idealista"
+                  ? property?.listing_idealista
+                  : property?.listing_immobiliare
+              }
+              placeholder={portale.esempio}
+              // La barra rovesciata qui e' quella dell'espressione, non di una
+              // stringa JavaScript: scritta doppia diventa una barra letterale,
+              // niente risulta piu' valido e il modulo non si invia piu', in
+              // silenzio. Trappola gia' pagata col campo del video.
+              pattern="\S+\.\S+"
+              title={`Incolla l'indirizzo dell'annuncio, per esempio ${portale.esempio}`}
+            />
+          ))}
+        </div>
+
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <TextField
+            label="Pagina idealista per il proprietario"
+            name="idealista_owner_url"
+            defaultValue={property?.idealista_owner_url}
+            placeholder="https://www.idealista.it/..."
+            pattern="\S+\.\S+"
+            title="Incolla l'indirizzo che idealista genera per il proprietario"
+            hint="Facoltativo. È la pagina che generi dal pannello idealista, con i loro numeri (visite all'annuncio, preferiti, contatti). Se la incolli, il proprietario la trova nella sua pagina. I numeri sono di idealista, non nostri: incollala solo dopo esserti convinto che dicano quello che sembrano dire."
+          />
+        </div>
+      </Card>
+
+      <Card title="Note">
+        <TextArea
+          label="Note interne"
+          name="notes"
+          defaultValue={property?.notes}
+          rows={4}
+          placeholder="Situazione urbanistica, trattabilità, chiavi in agenzia…"
+        />
+      </Card>
+
+      <AvvisoModulo />
+
+      <div className="flex items-center gap-3">
+        <SubmitButton>{property ? "Salva modifiche" : "Crea immobile"}</SubmitButton>
+        <Link href={property ? `/immobili/${property.id}` : "/immobili"} className="btn-secondary">
+          Annulla
+        </Link>
+      </div>
+    </ModuloConEsito>
+  );
+}

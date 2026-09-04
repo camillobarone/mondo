@@ -1,0 +1,390 @@
+import Link from "next/link";
+import { requireUser } from "@/lib/auth";
+import {
+  listProperties,
+  activeUserOptions,
+  distinctCities,
+  coverPhotos,
+  countPropertiesWithoutOwner,
+  countPropertiesWithoutAddress,
+  countPropertiesPerGruppo,
+  type PropertyFilters,
+} from "@/lib/queries";
+import { euro, shortDate, relative } from "@/lib/format";
+import { PageHeader, Card, EmptyState, StatusChip, Pagination, Chip, Banner } from "@/components/ui";
+import { PROPERTY_KINDS, PROPERTY_STATUSES, ZONES } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+export default async function PropertiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<PropertyFilters>;
+}) {
+  const user = await requireUser();
+  const filters = await searchParams;
+  const { rows, total, page, pages } = listProperties(user.id, filters);
+  const users = activeUserOptions();
+  const cities = distinctCities(user.id);
+  const copertine = coverPhotos(
+    user.id,
+    rows.map((property) => property.id),
+  );
+  const senzaProprietario = countPropertiesWithoutOwner(user.id);
+  const senzaVia = countPropertiesWithoutAddress(user.id);
+  const gruppi = countPropertiesPerGruppo(user.id, filters);
+
+  // Il gruppo scelto. Predefinito: gli attivi — aprendo l'elenco si vuole
+  // vedere cosa c'e' da vendere, non tutto quello che c'e' mai stato.
+  const gruppo = filters.gruppo ?? "attivi";
+
+  /** L'indirizzo di una scheda, conservando gli altri filtri e ripartendo da pagina 1. */
+  const schedaHref = (quale: string) => {
+    const q = new URLSearchParams(
+      Object.entries({ ...filters, gruppo: quale, page: undefined }).filter(
+        ([, v]) => Boolean(v),
+      ) as [string, string][],
+    );
+    return `/immobili?${q.toString()}`;
+  };
+
+  const exportQuery = new URLSearchParams(
+    Object.entries(filters).filter(([, value]) => Boolean(value)) as [string, string][],
+  ).toString();
+
+  return (
+    <>
+      <PageHeader
+        title="Immobili"
+        subtitle={`${total} ${total === 1 ? "immobile" : "immobili"} in archivio`}
+        actions={
+          <>
+            <Link
+              href={`/immobili/esporta${exportQuery ? `?${exportQuery}` : ""}`}
+              className="btn-secondary"
+              prefetch={false}
+            >
+              Esporta in Excel
+            </Link>
+            <Link href="/immobili/nuovo" className="btn-primary">
+              Nuovo immobile
+            </Link>
+          </>
+        }
+      />
+
+      {senzaProprietario > 0 && filters.noOwner !== "1" ? (
+        <div className="mb-4">
+          <Banner tone="amber">
+            {senzaProprietario}{" "}
+            {senzaProprietario === 1
+              ? "immobile non è collegato a una scheda venditore"
+              : "immobili non sono collegati a una scheda venditore"}
+            : senza quel collegamento non sai chi chiamare per una trattativa.{" "}
+            <Link href="/immobili?noOwner=1&gruppo=tutti" className="font-medium underline">
+              Vedili
+            </Link>
+            .
+          </Banner>
+        </div>
+      ) : null}
+
+      {senzaVia > 0 && filters.noAddress !== "1" ? (
+        <div className="mb-4">
+          <Banner tone="amber">
+            {senzaVia}{" "}
+            {senzaVia === 1
+              ? "immobile non ha la via"
+              : "immobili non hanno la via"}
+            : nelle liste e nelle tendine compare il titolo al posto
+            dell&apos;indirizzo, e non si riconoscono al volo. Si completano
+            aprendoli una volta.{" "}
+            <Link href="/immobili?noAddress=1&gruppo=tutti" className="font-medium underline">
+              Vedili
+            </Link>
+            .
+          </Banner>
+        </div>
+      ) : null}
+
+      {/*
+        Le due meta' del portafoglio. Non compaiono quando si e' scelto uno
+        stato preciso dalla tendina: sarebbero due comandi che dicono la stessa
+        cosa in modo diverso, e uno dei due starebbe mentendo.
+      */}
+      {!filters.status ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            { valore: "attivi", etichetta: "Attivi", quanti: gruppi.attivi },
+            { valore: "altri", etichetta: "Venduti e altri stati", quanti: gruppi.altri },
+            { valore: "tutti", etichetta: "Tutti", quanti: gruppi.attivi + gruppi.altri },
+          ].map((scheda) => (
+            <Link
+              key={scheda.valore}
+              href={schedaHref(scheda.valore)}
+              className={
+                gruppo === scheda.valore
+                  ? "rounded-full bg-brand-700 px-4 py-1.5 text-sm font-medium text-white"
+                  : "rounded-full bg-slate-100 px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-200"
+              }
+            >
+              {scheda.etichetta}
+              <span className={gruppo === scheda.valore ? "ml-2 text-white/70" : "ml-2 text-slate-400"}>
+                {scheda.quanti}
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : null}
+
+      <Card className="mb-5">
+        <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          {/*
+            Il gruppo va portato dentro il modulo: senza, premere «Filtra»
+            riporterebbe di soppiatto agli attivi anche chi stava guardando i
+            venduti, e la ricerca sembrerebbe non trovare piu' niente.
+          */}
+          <input type="hidden" name="gruppo" value={gruppo} />
+          <div className="sm:col-span-2">
+            <label className="field-label" htmlFor="q">
+              Cerca
+            </label>
+            <input
+              id="q"
+              name="q"
+              defaultValue={filters.q ?? ""}
+              placeholder="Titolo, indirizzo, codice…"
+              className="field"
+            />
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="status">
+              Stato
+            </label>
+            <select id="status" name="status" defaultValue={filters.status ?? ""} className="field">
+              <option value="">Tutti</option>
+              {PROPERTY_STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="contract">
+              Contratto
+            </label>
+            <select
+              id="contract"
+              name="contract"
+              defaultValue={filters.contract ?? ""}
+              className="field"
+            >
+              <option value="">Tutti</option>
+              <option value="vendita">Vendita</option>
+              <option value="affitto">Affitto</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="kind">
+              Tipologia
+            </label>
+            <select id="kind" name="kind" defaultValue={filters.kind ?? ""} className="field">
+              <option value="">Tutte</option>
+              {PROPERTY_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {kind}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="city">
+              Comune
+            </label>
+            <select id="city" name="city" defaultValue={filters.city ?? ""} className="field">
+              <option value="">Tutti</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="zone">
+              Zona
+            </label>
+            <select id="zone" name="zone" defaultValue={filters.zone ?? ""} className="field">
+              <option value="">Tutte</option>
+              {ZONES.map((zone) => (
+                <option key={zone} value={zone}>
+                  {zone}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="priceMax">
+              Prezzo massimo
+            </label>
+            <input
+              id="priceMax"
+              name="priceMax"
+              defaultValue={filters.priceMax ?? ""}
+              placeholder="250000"
+              className="field"
+            />
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="agent">
+              Agente
+            </label>
+            <select id="agent" name="agent" defaultValue={filters.agent ?? ""} className="field">
+              <option value="">Tutti</option>
+              {users.map((user) => (
+                <option key={user.value} value={user.value}>
+                  {user.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-end gap-2 sm:col-span-2">
+            <button type="submit" className="btn-primary">
+              Filtra
+            </button>
+            <Link href="/immobili" className="btn-ghost">
+              Azzera
+            </Link>
+          </div>
+        </form>
+      </Card>
+
+      <Card bodyClassName="">
+        {rows.length === 0 ? (
+          <EmptyState
+            title="Nessun immobile trovato."
+            action={
+              <Link href="/immobili/nuovo" className="btn-primary">
+                Aggiungi il primo
+              </Link>
+            }
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th className="w-44"></th>
+                  <th>Immobile</th>
+                  <th>Zona</th>
+                  <th>Caratteristiche</th>
+                  <th>Prezzo</th>
+                  <th>Stato</th>
+                  <th>Incarico</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((property) => {
+                  const expiring =
+                    property.mandate_end &&
+                    new Date(property.mandate_end).getTime() - Date.now() < 45 * 864e5;
+
+                  const cover = copertine.get(property.id);
+
+                  return (
+                    <tr key={property.id}>
+                      <td>
+                        <Link href={`/immobili/${property.id}`} className="block">
+                          {cover ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={`/foto/${property.id}/${cover.replace(/\.jpg$/, "-min.jpg")}`}
+                              alt=""
+                              loading="lazy"
+                              className="h-32 w-44 rounded-md border border-slate-200 object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-32 w-44 items-center justify-center rounded-md border border-dashed border-slate-200 text-xs text-slate-300">
+                              foto
+                            </span>
+                          )}
+                        </Link>
+                      </td>
+                      <td>
+                        <Link
+                          href={`/immobili/${property.id}`}
+                          className="font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                        >
+                          {property.title}
+                        </Link>
+                        <div className="text-xs text-slate-400">
+                          {property.ref ? `${property.ref} · ` : ""}
+                          {property.kind}
+                          {property.owner_name ? ` · ${property.owner_name}` : ""}
+                        </div>
+                      </td>
+                      <td className="text-xs text-slate-600">
+                        {property.city}
+                        {property.zone ? <div className="text-slate-400">{property.zone}</div> : null}
+                      </td>
+                      <td className="text-xs text-slate-600">
+                        {property.sqm ? `${property.sqm} mq` : "—"}
+                        {property.rooms ? ` · ${property.rooms} vani` : ""}
+                        {property.elevator ? " · ascensore" : ""}
+                      </td>
+                      <td className="text-sm font-medium whitespace-nowrap">
+                        {euro(property.price)}
+                        {property.sqm && property.price ? (
+                          <div className="text-xs font-normal text-slate-400">
+                            {Math.round(property.price / property.sqm)} €/mq
+                          </div>
+                        ) : null}
+                      </td>
+                      <td>
+                        <StatusChip value={property.status} kind="property" />
+                      </td>
+                      <td className="text-xs">
+                        {property.mandate_end ? (
+                          <span className={expiring ? "text-amber-700" : "text-slate-600"}>
+                            {shortDate(property.mandate_end)}
+                            {expiring ? (
+                              <div className="text-amber-700">{relative(property.mandate_end)}</div>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                        {property.exclusive ? (
+                          <div className="mt-0.5">
+                            <Chip tone="brand">esclusiva</Chip>
+                          </div>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <Pagination
+          page={page}
+          pages={pages}
+          total={total}
+          params={filters as Record<string, string | undefined>}
+          basePath="/immobili"
+        />
+      </Card>
+    </>
+  );
+}

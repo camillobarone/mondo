@@ -1,0 +1,833 @@
+# Mondo Immobiliare — Gestione clienti
+
+Gestionale per la gestione dei clienti e del portafoglio immobili di Studio RCS Srls
+(Mondo Immobiliare Lecce e Porto Cesareo).
+
+Fa una cosa sola e la fa bene: **tenere in ordine clienti, richieste, immobili e
+appuntamenti, e dire ogni mattina chi va richiamato e perché**. La pubblicazione
+degli annunci sui portali resta dove sta oggi: non passa da qui.
+
+---
+
+## Cosa fa
+
+| Area | In pratica |
+|---|---|
+| **Clienti** | Anagrafica completa, tipo di cliente (venditore, acquirente, locatore…), provenienza del contatto, etichette, storico di ogni telefonata ed email |
+| **Richieste** | Cosa cerca ogni acquirente: tipologie, comuni con le loro zone, stato dell'immobile, budget, metratura, requisiti irrinunciabili |
+| **Immobili** | Portafoglio con incarico, scadenze, prezzo minimo riservato, storico dei ribassi, visite, feedback, **foto** e **video**. L'elenco si apre sugli attivi |
+| **Venditori** | I proprietari, con gli immobili che ti hanno affidato e lo stato di ciascuno |
+| **Storico visite** | Una pagina da stampare per il proprietario: chi è venuto a vedere la casa, quando, con che numero, e cosa ha detto |
+| **Pagina del proprietario** | Un indirizzo riservato che il venditore apre dal telefono, senza password: foto, le visite con data, ora, nome del visitatore e cosa ha detto, a che punto è la vendita, e i collegamenti agli annunci sui portali. Senza nessun recapito telefonico |
+| **Incroci** | Il programma abbina da solo richieste e immobili, e ti dice chi chiamare — e per chi non l'ha proposto, ti dice perché |
+| **Agenda** | Cose da fare, appuntamenti, compleanni della settimana, promemoria per i clienti trascurati e gli incarichi in scadenza. Si modificano e si eliminano, entrano nel tuo calendario e avvisano 30 minuti prima |
+| **Trattative** | Proposte d'acquisto, compromesso, rogito e provvigioni |
+| **Report** | Da dove arrivano i clienti che comprano davvero, tempi medi di vendita, rendimento per collaboratore |
+| **Adempimenti** | Consenso privacy con data, dati per l'adeguata verifica antiriciclaggio, registro di chi ha fatto cosa |
+
+Non incluso in questa versione: invio annunci ai portali, firma digitale,
+invii massivi di email/WhatsApp, generazione automatica dei contratti, app da
+scaricare (si usa dal browser, anche dal telefono), fatturazione.
+
+---
+
+## Primo avvio
+
+Servono **Node.js 22 o successivo** e un terminale.
+
+```bash
+cd crm
+npm install          # installa le dipendenze (una volta sola)
+npm run seed         # crea il database e il primo utente
+npm run build        # prepara la versione veloce
+npm start            # avvia il programma
+```
+
+Poi apri **http://localhost:3000** e accedi con l'email e la password che il
+comando `seed` ha stampato a schermo. **Annotale subito: non vengono più mostrate.**
+
+Per scegliere tu email e password:
+
+```bash
+npm run seed -- --email tuonome@mondoimmobiliarelecce.it --password "una password lunga"
+```
+
+Per provarlo con dei dati finti prima di inserire quelli veri:
+
+```bash
+npm run seed -- --demo
+```
+
+### Durante lo sviluppo
+
+```bash
+npm run dev          # ricarica da solo a ogni modifica, su http://localhost:3000
+```
+
+---
+
+## La ricerca, il cruscotto e WhatsApp
+
+**Cerca** — nella colonna a sinistra (e nel menu, dal telefono) c'è un campo di
+ricerca unico: clienti e immobili insieme. Il caso tipico è il telefono che
+squilla: scrivi il numero che vedi sul display — anche solo un pezzo, anche
+scritto con gli spazi — e arrivi alla scheda prima di rispondere. Funziona
+anche con nome, email, riferimento (`MI-2041`) e zona.
+
+**Da sistemare** — sul cruscotto c'è un riquadro con le mancanze che non si
+vedono finché non fanno danno: acquirenti senza una richiesta aperta (che
+quindi gli incroci non vedono), immobili senza proprietario collegato,
+**immobili senza la via**, **immobili in vendita senza un video**, documenti
+antiriciclaggio scaduti, clienti senza consenso privacy. Ogni numero si clicca
+e apre l'elenco già filtrato. Quando è tutto a posto, il riquadro sparisce.
+
+Gli **immobili senza la via** sono quelli entrati in archivio prima che
+l'indirizzo diventasse obbligatorio: nelle liste e nelle tendine compare il
+titolo al posto della via, e non si riconoscono al volo. Il numero apre
+l'elenco dei soli immobili da completare, così non li apri tutti per scoprire
+quali sono. Lo stesso avviso compare in cima a **Immobili**, e sparisce da sé
+quando l'ultimo è stato completato.
+
+**Proponi su WhatsApp** — negli **Incroci**, e nella scheda immobile sotto *A
+chi proporlo*, accanto a ogni abbinamento c'è un pulsante che apre WhatsApp con
+la proposta **già scritta**: nome del cliente, immobile, zona, metri e prezzo.
+La si può ritoccare prima di inviare, è testo normale. L'incrocio da solo non
+vende: vende il messaggio mandato entro dieci minuti.
+
+I numeri di telefono vengono messi in formato internazionale da soli: i numeri
+dell'archivio sono quasi tutti senza +39, e senza questa correzione WhatsApp
+aprirebbe una chat vuota o sbagliata.
+
+---
+
+## Portare dentro i clienti che hai già
+
+1. Esporta l'archivio attuale dal gestionale che usi oggi. **Il file va bene
+   com'è**: Excel (`.xlsx`) o CSV, indifferente. Il formato viene riconosciuto
+   dal contenuto, non dal nome, e per il CSV anche il separatore (virgola,
+   punto e virgola, tabulazione) e la codifica, accenti compresi.
+   Non serve convertire niente: è il passaggio in cui si perdono i dati.
+2. Nel programma, apri **Importa**.
+3. **Prova prima con un file di 10 righe.** Controlla che i dati finiscano nelle
+   colonne giuste, poi carica tutto.
+
+Le colonne riconosciute (in qualsiasi ordine, le altre vengono ignorate):
+`Nome`, `Cognome`, `Ragione sociale`, `Cellulare`, `Telefono`, `Email`,
+`Indirizzo`, `Città`, `Codice fiscale`, `Ruolo`, `Provenienza`, `Etichette`, `Note`.
+
+**Lo stesso posto importa anche gli immobili.** Il tipo di file viene
+riconosciuto dalle intestazioni: se ci sono riferimento, tipologia e prezzo è
+un portafoglio, altrimenti sono clienti. Dell'elenco immobili vengono letti
+riferimento, contratto, tipologia, zona e comune, vani, metri, prezzo,
+esclusiva e scadenza dell'incarico; il proprietario viene collegato alla sua
+scheda cliente quando il telefono corrisponde a una già in archivio, altrimenti
+nome e recapito restano nelle note. I doppioni si riconoscono dal riferimento
+interno: reimportare lo stesso elenco non crea copie.
+
+Vengono capiti anche i tracciati degli altri gestionali immobiliari:
+
+- **`Cognome/Nome` in una colonna sola** viene diviso da solo, tenendo insieme
+  i cognomi composti (*De Santis Anna* → cognome *De Santis*).
+- **Più numeri nella stessa cella** (`3401112233/ 0832123456/`) finiscono uno
+  nel cellulare e uno nel telefono; gli altri restano nelle note.
+- **La colonna `Richieste`**, se contiene i blocchi `DETTAGLI RICHIESTA`, viene
+  letta e trasformata in richieste vere: contratto, comune, zone, budget,
+  metratura. Chi ne ha una diventa *acquirente* e **entra subito negli
+  incroci**. Un cliente con più richieste ne ottiene una per ciascuna.
+  Quello che non ha una casella corrispondente (camere, bagni, stato) finisce
+  nelle note della richiesta, non si perde.
+
+I doppioni vengono riconosciuti dal cellulare o dall'email e saltati, a meno che
+non chiedi esplicitamente di importarli.
+
+---
+
+## L'elenco immobili
+
+Aprendo **Immobili** compaiono gli **attivi**: quelli in acquisizione e in
+vendita, cioè quelli che stai lavorando. Venduti, ritirati, sotto proposta o
+compromesso restano in archivio ma non ti riempiono la pagina.
+
+In cima ci sono tre schede — **Attivi**, **Venduti e altri stati**, **Tutti** —
+ognuna col suo numero. Si passa dall'una all'altra con un clic, e la scheda
+scelta resta anche quando cerchi o filtri: se stai guardando i venduti e premi
+*Filtra*, continui a guardare i venduti.
+
+Se invece scegli uno stato preciso dalla tendina (*Venduto*, *Compromesso*…),
+le schede si tolgono di mezzo: comanda la tendina, e due controlli che dicono
+la stessa cosa in modo diverso confonderebbero e basta.
+
+> **L'esportazione segue quello che vedi.** Dagli attivi escono solo gli
+> attivi; per averli tutti, passa prima alla scheda *Tutti*. I numeri del
+> cruscotto invece aprono sempre l'elenco completo, così il numero promesso e
+> le righe che si aprono coincidono sempre.
+
+La **foto di copertina** nell'elenco è grande abbastanza da riconoscere
+l'immobile senza aprirlo — è passata da 56×40 a 176×128 pixel.
+
+---
+
+## Dove sta l'immobile, e cosa ha fuori
+
+Sulla scheda dell'immobile il **comune** si sceglie dallo stesso elenco che usi
+nella richiesta del cliente — i 96 comuni della provincia — e la **zona** fra i
+quartieri e le frazioni di quel comune. Prima erano due campi liberi, e potevi
+scrivere una zona che in quel comune non esiste senza che nessuno lo notasse.
+
+Due cose pensate per non darti fastidio:
+
+- **Quello che c'è già non si perde.** Gli immobili vecchi hanno comune e zona
+  scritti a mano, a volte in forme come *LECCE (LE)*: quel valore resta in cima
+  alla tendina, già selezionato. Salvando non cambia niente finché non lo cambi
+  tu.
+- **Se manca, si scrive.** In fondo a ogni tendina c'è *Altro comune…* e *Altra
+  zona…*. Per un comune di cui non conosciamo le zone, ti vengono proposte
+  quelle che hai già usato altrove.
+
+Cambiando comune la zona si azzera: apparteneva al comune di prima, e lasciarla
+lì vorrebbe dire attaccarla a un posto dove magari non esiste.
+
+**Esterno: se ne spunta più d'uno.** Balcone, terrazzo e giardino insieme — un
+appartamento con balcone e giardino è la normalità, non un caso strano. La voce
+*Nessuno* non c'è più: nessuna casella spuntata vuol dire già nessun esterno.
+Gli immobili che avevano *Nessuno* sono stati ripuliti da soli al primo avvio.
+
+---
+
+## Il video dell'immobile
+
+Sulla scheda di ogni immobile, in fondo, c'è **Video su YouTube**: si incolla lì
+l'indirizzo del video e il gestionale se lo tiene. Da quel momento sai a colpo
+d'occhio quali immobili un video ce l'hanno e quali no — il cruscotto conta
+quelli **in vendita che non ce l'hanno**, e il numero apre l'elenco.
+
+Il gestionale **non parla con YouTube** e non va a guardare il video: conserva
+il collegamento e basta. A usarlo è l'applicazione che gestisce il canale, che
+legge l'esportazione degli immobili.
+
+Va bene qualsiasi forma di indirizzo — quello della barra del browser, quello
+del pulsante *Condividi*, uno short, anche senza `https://` davanti. Se incolli
+per sbaglio del testo che indirizzo non è, il campo te lo dice subito invece di
+salvarlo.
+
+### Cosa trova l'altra applicazione nel CSV
+
+Nell'esportazione da **Immobili → Esporta in Excel** ci sono due colonne nuove:
+
+| Colonna | Cosa contiene |
+|---|---|
+| **Video YouTube** | il collegamento come l'hai incollato, da cliccare |
+| **ID video** | il codice del video ricavato da quel collegamento |
+
+Sono due e non una perché servono a due lettori diversi: il collegamento a una
+persona che lo apre, il codice a un programma che deve accoppiare ogni video al
+suo immobile. Senza il codice, l'altra applicazione dovrebbe indovinare dai
+titoli — funziona finché i titoli sono scritti in modo regolare, e sbaglia in
+silenzio quando non lo sono.
+
+La colonna *ID video* resta vuota se il collegamento non è di YouTube o non
+contiene un codice riconoscibile. È voluto: un codice inventato sarebbe peggio
+di nessun codice.
+
+---
+
+## Foto degli immobili
+
+Si caricano dalla scheda dell'immobile, anche più d'una alla volta. Dal telefono
+puoi scattarle sul momento.
+
+Vengono **ridotte da sole** appena caricate: una foto da 10 MB scende sotto il
+megabyte senza differenze visibili. Senza questo, cento immobili occuperebbero
+decine di gigabyte e le schede impiegherebbero mezzo minuto ad aprirsi da
+cellulare.
+
+La prima foto è la **copertina**: è quella che compare nell'elenco immobili. Per
+cambiarla, usa *Metti per prima* sotto la foto che preferisci.
+
+Le foto si vedono **solo dopo l'accesso**: non sono in una cartella pubblica.
+I file stanno in `data/foto/`, accanto al database, e finiscono nelle copie di
+sicurezza insieme all'archivio.
+
+Formati accettati: quelli delle fotocamere e dei telefoni, HEIC degli iPhone
+compreso. Massimo 30 foto per immobile, 25 MB per foto.
+
+---
+
+## Copie di sicurezza
+
+Tutto il programma vive in **un solo file**: `data/mondo.db`.
+
+Il pulsante *Scarica l'archivio* che stava in **Utenti** non c'è più. Da quando
+ognuno vede solo le proprie schede, un file con dentro l'intero archivio sarebbe
+la separazione aggirata con un clic: chi lo scarica si porta sul computer anche
+i clienti dei colleghi. La copia si prende dal server, dove l'archivio sta già
+tutto insieme (vedi il comando qui sotto).
+
+Chi vuole portarsi via **le proprie** schede lo fa da *Clienti* e da *Immobili*,
+con il pulsante *Esporta*: escono in CSV, apribili con Excel.
+
+```bash
+npm run backup       # crea una copia in backup/, coerente anche a programma acceso
+```
+
+Le copie più vecchie di 60 giorni vengono cancellate da sole.
+
+⚠️ **Per ripristinare una copia, ferma prima il programma.** Se sostituisci
+`data/mondo.db` mentre il programma è acceso, quello continua a usare il file
+vecchio e le modifiche finiscono nel nulla. L'ordine giusto è: ferma il
+programma → sostituisci il file → riavvia.
+
+**Fai in modo che questo comando giri ogni notte** e che la cartella `backup/`
+finisca su un disco diverso o su un servizio cloud. È l'unica cosa che sta fra te
+e la perdita dell'archivio.
+
+Esempio di riga da aggiungere a `crontab -e` per un backup ogni notte alle 2:
+
+```
+0 2 * * * cd /percorso/di/crm && /usr/bin/npm run backup >> backup/backup.log 2>&1
+```
+
+---
+
+## Quanto regge
+
+Provato con un archivio delle dimensioni reali dell'agenzia — 3.000 clienti,
+250 immobili, 600 richieste, 5.000 attività registrate:
+
+| Operazione | Tempo |
+|---|---|
+| Importazione dei 3.000 clienti da CSV | 2 secondi |
+| Apertura di qualsiasi elenco o scheda | meno di 2 decimi di secondo |
+| Incroci su 480 richieste aperte | 2 decimi di secondo |
+| Esportazione dei 3.000 clienti in Excel | meno di 1 decimo di secondo |
+
+L'intero archivio occupa **2,2 MB**: sta su una chiavetta USB migliaia di volte.
+C'è ampio margine — il programma reggerebbe dieci volte tanto senza affanno.
+
+## Venditori e compleanni
+
+**Venditori** è l'altra faccia dei clienti: non chi cerca, ma chi ti ha affidato
+qualcosa da vendere. Ogni scheda mostra i recapiti e sotto l'elenco degli
+immobili di quel proprietario, con prezzo e stato.
+
+Ci finisce chi ha il ruolo *venditore* o *locatore*, **più chiunque risulti
+intestatario di un immobile in portafoglio** anche senza avere il ruolo
+spuntato: l'immobile collegato dice la stessa cosa, e non dipende da come è
+stata compilata la scheda.
+
+**Il collegamento fra venditore e immobile si fa da entrambe le parti**, perché
+è lo stesso legame e lo si cerca da dove ci si trova in quel momento:
+
+- dalla **scheda dell'immobile**, quando manca il proprietario compare un
+  riquadro con una **ricerca**: scrivi cognome o numero di telefono e compaiono
+  i clienti che corrispondono, ognuno con il suo pulsante *Collega*. Senza
+  scrivere niente propone chi è già segnato come venditore. Una tendina con
+  tutto l'archivio dentro non sarebbe utilizzabile, e filtrarla per ruolo
+  renderebbe introvabile proprio chi serve: nelle schede importate quel ruolo
+  non c'è quasi mai;
+- dalla **scheda del cliente**, in fondo agli immobili di proprietà, si sceglie
+  fra quelli ancora senza intestatario — così non si porta via per sbaglio
+  l'immobile di qualcun altro.
+
+Non è obbligatorio: un venditore che ha già venduto tutto resta in elenco senza
+immobili collegati. Ma un immobile senza proprietario sì che è un problema, e
+l'elenco immobili lo segnala in cima con il collegamento per vedere quali sono.
+
+**I compleanni** compaiono in **Agenda**, in cima, da una settimana prima. Per
+ognuno c'è il pulsante per chiamare e quello per mandare gli auguri su WhatsApp
+**con il messaggio già scritto**. Basta compilare la data di nascita nella
+scheda cliente.
+
+È la telefonata che costa meno di tutte e vale più di molte altre. Se non
+compare da sola il giorno giusto, però, non la fa nessuno.
+
+---
+
+## Lo storico visite per il proprietario
+
+Sulla scheda di ogni immobile, in alto, c'è **Storico visite**: una pagina
+sola, fatta per essere stampata e consegnata a chi vende. Il pulsante *Stampa o
+salva in PDF* apre la finestra di stampa; scegliendo "Salva come PDF" invece
+della stampante si ottiene il file da mandare su WhatsApp.
+
+Serve a rispondere alla domanda che ogni proprietario fa prima o poi — *«ma la
+state facendo vedere?»* — prima ancora che la faccia. Il foglio riporta:
+
+- il **saluto** al proprietario, con il tuo nome in fondo;
+- **le visite fatte**, dalla più vecchia alla più recente: data, nome e cognome
+  di chi è venuto, il suo numero di telefono e il commento raccolto dopo il
+  sopralluogo;
+- **gli appuntamenti già fissati**, in un riquadro a parte: sapere che qualcuno
+  passa la settimana prossima vale quanto una visita fatta.
+
+Non c'è niente da compilare a parte: **l'elenco si riempie dall'agenda**. Ogni
+visita o appuntamento che registri sulla scheda dell'immobile compare qui da
+solo, con la data dell'appuntamento — non quella in cui hai messo la spunta.
+
+Perché una visita ci finisca servono due cose, tutte e due nella riga della
+visita:
+
+1. **l'immobile collegato** — si sceglie dal menù *Immobile*, che c'è sia sulla
+   scheda dell'immobile (già compilato), sia in agenda, sia sulla scheda del
+   cliente;
+2. **il commento**. Mettendo la spunta *Fatto* compare il campo **«Cosa ha
+   detto il cliente»**: quello che scrivi lì finisce nella colonna *Commento*.
+
+### Le note interne
+
+Il foglio riporta anche le **Note** della riga, dopo il commento. Sono i tuoi
+promemoria — «portare la planimetria», «chiedere se scende» — e in un foglio
+consegnato al proprietario possono sembrare frasi dette dal visitatore. In cima
+alla pagina c'è **Togli le note interne**: un clic e restano solo i commenti
+dei clienti. Il comando non si stampa, serve solo a te prima di stampare.
+
+Tieni presente che il foglio contiene **nome e telefono di chi ha visitato**:
+sono dati di altri clienti, e sta a te decidere caso per caso se consegnarli.
+
+---
+
+## La pagina del proprietario
+
+Lo storico visite qui sopra è un foglio: lo stampi, lo mandi, e il giorno dopo
+è già vecchio. **La pagina del proprietario è lo stesso racconto, ma sempre
+aggiornato**, a un indirizzo che il venditore apre dal telefono quando vuole,
+senza password e senza installare niente.
+
+### Crearla e mandarla
+
+Sulla scheda dell'immobile, nella colonna di sinistra, c'è **Link per il
+proprietario**. All'inizio ha un solo pulsante:
+
+1. **Crea il link.** Da quel momento l'indirizzo esiste. Prima non esisteva: è
+   voluto, perché un indirizzo vivo è una porta aperta e le porte si aprono
+   quando c'è da entrarci.
+2. **Guarda com'è** apre la pagina come la vedrà lui. Guardala sempre prima di
+   mandarla.
+3. **Invia su WhatsApp** apre la chat del proprietario col messaggio già
+   scritto — il suo nome, la via della casa, l'indirizzo e la raccomandazione
+   di non passarlo ad altri. Il pulsante compare solo se il proprietario è
+   collegato all'immobile e ha un numero in scheda.
+
+C'è anche **Copia**, se preferisci mandarlo per email o incollarlo altrove.
+
+### Cosa vede, e cosa non vede
+
+Vede: **le foto**, il prezzo, i metri quadri; **le visite** una per una — data,
+ora, **chi è venuto** e **cosa ha detto** — con le visite già fissate in
+evidenza; **a che punto è la vendita**, dall'incarico al rogito; **dove è
+pubblicata**, con i collegamenti veri agli annunci; il tuo nome e il numero
+dell'agenzia, con i pulsanti per chiamare o scrivere su WhatsApp.
+
+Le osservazioni sono quelle che scrivi in **«Cosa ha detto il cliente»** quando
+metti la spunta *Fatto*. La data è quella dell'**appuntamento**, la stessa che
+stampa il foglio: se le due pagine dicessero due date diverse per la stessa
+visita, una delle due mentirebbe.
+
+**Non vede, e non è una dimenticanza:**
+
+- **telefono ed email di chi è venuto a visitare.** Il nome dice al proprietario
+  chi è entrato in casa sua; il numero gli darebbe il modo di scavalcare
+  l'agenzia. È l'unica cosa che questa pagina toglie rispetto al foglio
+  stampato, dove il telefono invece c'è;
+- **le tue Note.** Sono i promemoria («portare la planimetria», «chiedere se
+  scende»), non le parole del cliente. Sul foglio le togli con un clic; qui non
+  compaiono mai, perché una pagina sempre accesa quel clic non ce l'ha;
+- il **prezzo minimo**, le **provvigioni**, le **note interne** sull'immobile;
+- le **proposte d'acquisto** ricevute e lo **storico dei ribassi**.
+
+### Quando la visita l'ha portata un collega
+
+Se chi è venuto a vedere è cliente di un altro collaboratore, al posto del nome
+compare **«Collaborazione con altra agenzia»**, e le sue osservazioni si vedono
+lo stesso. Il proprietario ha diritto di sapere che qualcuno è entrato in casa
+sua; il nome però verrebbe dall'archivio di un collega, e quello resta suo.
+
+### Togliere il link
+
+Sotto ci sono due comandi:
+
+- **Genera un link nuovo** — quello mandato prima smette di funzionare. Serve
+  se l'indirizzo è finito dove non doveva: inoltrato per sbaglio, o in una chat
+  di gruppo.
+- **Togli il link** — la pagina non si apre più per nessuno, finché non ne crei
+  un altro.
+
+Le foto già scaricate sul telefono di chi aveva il link possono restare visibili
+ancora per qualche minuto: la pagina invece muore subito.
+
+### Dove è pubblicato l'annuncio
+
+Sempre sulla scheda dell'immobile c'è **Dove è pubblicato**, con due caselle:
+l'indirizzo dell'annuncio su **idealista** e su **Immobiliare.it**. Servono a
+due cose:
+
+- il proprietario li vede nella sua pagina e **può aprirli per controllare da
+  sé** che foto, prezzo e descrizione siano quelli giusti — è il motivo per cui
+  quella sezione esiste;
+- tu hai un posto solo dove ritrovarli **il giorno del rogito**, per andare a
+  toglierli.
+
+Se incolli un annuncio nella casella sbagliata, il programma se ne accorge e te
+lo dice, senza cancellare quello che avevi scritto. E se la casa non è
+pubblicata da nessuna parte, la sezione **non compare affatto** nella pagina del
+proprietario: una riga «non pubblicata» non racconterebbe come va la vendita.
+
+C'è anche una terza casella, facoltativa: **Pagina idealista per il
+proprietario**. È l'indirizzo che generi dal pannello di idealista, con i
+**loro** numeri — quante persone hanno visto l'annuncio, quante hanno chiesto
+informazioni. Se la incolli, il proprietario la trova nella sua pagina, sotto
+una riga di separazione e con scritto che quei conteggi sono di idealista e non
+i nostri. Incollala solo dopo esserti convinto che quei numeri dicano davvero
+quello che sembrano dire: se mandi al proprietario un numero che significa
+un'altra cosa, la figura è tua.
+
+Nel cruscotto, fra le cose da sistemare, compaiono gli **annunci ancora online
+su case già vendute o ritirate**. È il richiamo che vale di più: un annuncio
+rimasto su dopo il rogito porta telefonate per una casa che non c'è più, e non
+te ne accorgi finché non squilla il telefono.
+
+---
+
+## L'agenda nel tuo calendario, e l'avviso mezz'ora prima
+
+Ogni riga dell'agenda ha ora **Modifica** e **Calendario**.
+
+**Modifica** apre l'attività per intero — anche quelle già svolte. Si sposta
+l'orario, si cambia il cliente o l'immobile, si aggiunge il commento che ci si
+ricorda mezz'ora dopo, si toglie la spunta *Fatto* per rimetterla fra le cose da
+fare, o si elimina. Prima l'unica strada era cancellare e riscrivere.
+
+**Calendario** scarica quell'appuntamento e lo apre nel calendario del telefono
+o del computer, con la sveglia già impostata **30 minuti prima**. È il modo più
+affidabile di avere l'avviso: entra subito e suona anche a gestionale chiuso.
+
+Da **Agenda → Calendario e avvisi** ci sono le altre due strade.
+
+### Abbonare il calendario
+
+C'è un indirizzo, uno per persona, che il calendario ricontrolla da solo:
+Google, iPhone e Outlook lo capiscono allo stesso modo. Nella pagina c'è il
+percorso esatto per ciascuno, e il pulsante per copiarlo.
+
+Non è un account collegato: è un indirizzo. Vuol dire che non c'è niente da
+autorizzare, ma anche che **quell'indirizzo vale come una password** — chi ce
+l'ha vede i tuoi appuntamenti. Se finisce dove non doveva, dalla stessa pagina
+se ne genera uno nuovo e il vecchio smette di rispondere.
+
+> **Su Google due cose da sapere.** La prima: ricontrolla quando decide lui,
+> anche dopo diverse ore, quindi un appuntamento appena inserito può non
+> comparire subito — Apple e Outlook sono più svelti. La seconda, che pesa di
+> più: **Google non fa suonare gli avvisi dei calendari a cui ti abboni.** La
+> sveglia a 30 minuti è dentro il file e Apple e Outlook la usano, Google la
+> ignora e mostra soltanto l'appuntamento.
+>
+> Quindi per **vedere** l'agenda in Google l'abbonamento va benissimo; per
+> **essere avvisato** servono le altre due strade: il pulsante *Calendario*
+> sulla riga dell'agenda, che mette l'appuntamento nel tuo calendario dove la
+> sveglia suona davvero, oppure l'avviso per email qui sotto.
+
+### L'avviso per email
+
+Trenta minuti prima di ogni appuntamento parte un'email a chi ce l'ha in agenda,
+con l'ora, il cliente, il suo numero e l'indirizzo dell'immobile. Non c'è niente
+da attivare per singolo appuntamento: parte da sé.
+
+Serve però che il server sappia spedire posta — è **una configurazione da fare
+una volta sola**, spiegata nel capitolo 6-bis di `CONSEGNA.md`. Finché non c'è,
+l'avviso per email semplicemente non parte e tutto il resto funziona lo stesso.
+
+Per sapere se quella configurazione è giusta c'è un comando apposta:
+
+```bash
+npm run posta              # apre la connessione e fa l'accesso, senza spedire
+npm run posta -- --manda   # manda un'email di prova a se stessi
+```
+
+Quando qualcosa non va dice **quale delle cinque righe è sbagliata** invece del
+codice d'errore del server di posta.
+
+---
+
+## Cosa cerca il cliente
+
+Il riquadro **«Cosa cerca»** sulla scheda del cliente è quello che alimenta gli
+incroci: più è preciso, meno telefonate a vuoto.
+
+**Tipologia — se ne spunta più d'una.** «Appartamento o villetta» è la
+richiesta normale, non l'eccezione. Non spuntarne nessuna vuol dire
+indifferente.
+
+**Dove cerca — un comune per volta, con le sue zone.** Si sceglie il comune da
+un elenco con tutti quelli della provincia di Lecce, compaiono i suoi quartieri
+e le sue frazioni, si spuntano quelli che interessano e si preme *Aggiungi*.
+Da quel momento l'area resta in elenco e si può ricominciare con **un altro
+comune**: chi cerca a Lecce in centro *oppure* a Porto Cesareo al mare ora può
+dirlo, e il programma sa quale zona appartiene a quale comune.
+
+Se per un comune non spunti nessuna zona, vuol dire **tutto il comune** — ed è
+il caso più frequente. Le zone che non trovi si scrivono nel campo *Altre zone*.
+Per un comune fuori provincia c'è *Altro comune…* in fondo alla tendina.
+
+> Le liste delle zone sono fitte dove lavorate — Lecce e Porto Cesareo prima di
+> tutto — e più scarne altrove. Se ne manca una che usi spesso, dilla: aggiungerla
+> è una riga, e da quel momento compare nella tendina.
+
+**Stato dell'immobile.** Nuovo/in costruzione, ottimo, ristrutturato, buono,
+discreto, da rivedere, da ristrutturare. Se ne spunta più d'uno, ed è la stessa
+lista che si usa sulla scheda dell'immobile: se fossero due liste diverse non si
+potrebbero confrontare.
+
+### Cosa esclude e cosa no
+
+Il motore **non nasconde** un immobile perché ha la zona o lo stato sbagliato:
+lo propone lo stesso, più in basso, scrivendo cosa non torna — *«Fuori dalle
+zone richieste (Frigole)»*, *«Stato diverso da quello cercato (Buono)»*. La
+telefonata la decidi tu.
+
+Escludono davvero soltanto: il tipo di contratto, il **comune** (se l'immobile
+non è in nessuno di quelli chiesti), la **famiglia di tipologia** (un negozio a
+chi cerca casa), il budget massimo e la metratura minima.
+
+---
+
+## Perché un cliente non compare negli incroci
+
+Il programma incrocia le **richieste**, non i clienti. Segnare un cliente come
+*acquirente* non basta: finché non registri **cosa cerca** (zona, budget,
+metratura), per il motore quel cliente non sta cercando niente.
+
+Per questo, un acquirente senza richiesta aperta viene segnalato in rosso —
+sia nell'elenco clienti (`manca la richiesta`) sia in cima alla sua scheda.
+
+Se invece la richiesta c'è ma l'immobile non compare lo stesso, apri la scheda
+dell'immobile: sotto agli abbinamenti c'è **Richieste scartate**, che elenca
+nome per nome chi è stato escluso e di quanto.
+
+---
+
+## Quando il programma dice di no
+
+Certe cose non si possono salvare: un cliente senza nome, un immobile senza
+titolo o senza via, un collegamento a un video che non è un indirizzo. Quando
+succede, il programma **te lo scrive sopra il pulsante Salva**, con la ragione
+per esteso, e **quello che avevi scritto resta dov'è**: correggi quella cosa
+lì e salvi di nuovo. Non si perde niente e non si ricomincia da capo.
+
+Finché la ragione è a schermo, in archivio non è stato scritto nulla: il
+controllo viene prima, non a metà.
+
+Se invece compare la schermata **«Qualcosa non ha funzionato»**, quello non è
+un rifiuto ma un guasto: nemmeno lì è stato salvato niente. C'è il pulsante
+*Riprova*, e in fondo alla pagina un **codice del guasto**. Se capita di nuovo
+sempre nello stesso punto, quel codice è la cosa da riferire: permette di
+ritrovare nel registro del server cos'è successo davvero.
+
+---
+
+## Metterlo online
+
+Per usarlo dalle due sedi, o da casa, serve un server raggiungibile da internet.
+Tutto il necessario sta in **[`deploy/`](deploy/README.md)**: un comando solo
+installa il programma, l'avvio automatico, il certificato HTTPS, il firewall e
+la copia di sicurezza notturna. Costo indicativo del server: 4-6 € al mese.
+
+---
+
+## Usarlo da più computer
+
+Il programma gira su **un** computer e gli altri lo aprono dal browser: non va
+installato su ognuno, e l'archivio resta uno solo.
+
+**In ufficio, sulla stessa rete.** All'avvio il programma stampa due indirizzi:
+
+```
+- Local:    http://localhost:3000        <- il computer su cui gira
+- Network:  http://192.168.1.7:3000      <- gli altri computer dell'ufficio
+```
+
+Il secondo si apre da qualsiasi computer, tablet o telefono collegato alla
+stessa rete. Perché funzioni servono tre cose: il computer che lo ospita
+acceso e con la finestra aperta, la porta 3000 aperta nel firewall di Windows,
+e **un utente a testa** (si creano da *Utenti*) — non la stessa password per
+tutti, altrimenti il registro accessi non dice più chi ha fatto cosa.
+
+**Fra sedi diverse, o da casa.** La rete locale non basta: serve un server
+raggiungibile da internet, con un indirizzo e un certificato HTTPS. È il
+passaggio successivo, e cambia poco del programma: sposta soltanto dove gira.
+
+---
+
+## Chi vede cosa
+
+**Ognuno vede soltanto le proprie schede.** Vale per tutti, titolare compreso:
+l'archivio è condiviso come edificio, non come contenuto. Due colleghi possono
+lavorare sullo stesso programma senza che nessuno dei due veda i clienti
+dell'altro.
+
+A decidere di chi è una scheda sono due campi soli:
+
+| Cosa | Chi la vede |
+|---|---|
+| Cliente | il suo **referente** (campo *Seguito da*) |
+| Immobile | il suo **agente di riferimento** |
+| Richieste, attività, proposte, valutazioni, foto, storico prezzi | chi vede il cliente o l'immobile a cui sono attaccate |
+
+Conseguenze pratiche, da conoscere prima di aggiungere un collega:
+
+- Elenchi, ricerca, incroci, agenda, cruscotto, report ed esportazioni si
+  fermano tutti allo stesso confine. Anche i **conteggi**: il numero in cima a
+  un elenco è sempre il numero di quell'elenco, mai quello dell'agenzia.
+- Scrivere a mano l'indirizzo della scheda di un collega (`/clienti/412`) dà
+  «non trovata», la stessa risposta di un numero inventato.
+- Un appuntamento può essere di uno e riguardare la scheda dell'altro — una
+  visita fatta insieme. In quel caso l'appuntamento si vede, ma al posto del
+  nome compare *«scheda di un collega»*.
+- Il **rilevamento doppioni** guarda solo il proprio archivio. Se la stessa
+  persona è seguita da tutti e due, il programma non lo segnala: per ora è una
+  cosa che si scopre parlandosi.
+- Anche una **richiesta di cancellazione** (GDPR) va girata a voce all'altro,
+  perché ognuno cancella solo la propria copia.
+
+### Quando qualcosa di tuo corrisponde a qualcosa di un collega
+
+La separazione avrebbe poco senso se poi le occasioni si perdessero. In
+**Incroci → Con i colleghi** il programma segnala, nei due versi, quando un tuo
+acquirente corrisponde all'immobile di un collega o quando un tuo immobile
+corrisponde a un acquirente suo.
+
+Valgono le stesse regole degli incroci tuoi — niente proposte in un altro
+comune o di un'altra famiglia di tipologie — ma cambia cosa si vede:
+**le caratteristiche sì, l'identità no.**
+
+| Del collega vedi | Non vedi |
+|---|---|
+| tipologia, comune, zona, metri, vani, prezzo richiesto | chi è il proprietario |
+| cosa cerca un suo acquirente e con che budget | nome e telefono di quell'acquirente |
+| | il **prezzo minimo** che il venditore accetterebbe |
+| | note interne e provvigioni |
+
+Il prezzo minimo in particolare non esce per nessun motivo: è la soglia sotto
+cui il venditore non scende, e conoscerla vuol dire sedersi al tavolo sapendo
+la mano dell'altro.
+
+Non c'è nessun pulsante per chiamare il cliente di un collega, perché non è un
+tuo cliente: si scrive al collega, e da lì in poi è un accordo fra voi due —
+provvigione compresa.
+
+Il ruolo **titolare** non dà più accesso ai dati altrui. Serve solo ad
+amministrare il programma: creare e disattivare gli utenti. Il **registro
+accessi** invece adesso ce l'hanno tutti, ma ognuno vede soltanto le proprie
+mosse.
+
+Gli utenti si creano da **Utenti** (solo il titolare).
+
+### La propria password
+
+Ognuno si cambia la propria da **Il mio accesso**, il collegamento in fondo alla
+colonna a sinistra. Serve la password di adesso, e la nuova deve avere almeno 8
+caratteri.
+
+Appena cambiata, **tutti gli accessi già aperti si chiudono** — anche quelli su
+altri computer, e anche quelli di chi conosceva la password vecchia. È il motivo
+per cui cambiarla serve a qualcosa: senza, chi era già entrato resterebbe dentro
+per due settimane.
+
+**Password dimenticata:** dalla pagina di accesso c'è *Password dimenticata?*.
+Si scrive il proprio indirizzo e arriva un'email con un collegamento che vale
+**un'ora e una volta sola**. La risposta a schermo è sempre la stessa, che
+l'indirizzo esista o no: altrimenti sarebbe un modo per sapere da fuori chi
+lavora in agenzia.
+
+> Il recupero per email funziona **solo con l'SMTP configurato** (capitolo 6-bis
+> di `CONSEGNA.md`). Finché manca, la pagina lo dice invece di far aspettare
+> un'email che non arriverà.
+
+**Se nessuno riesce più a entrare** — password persa e posta non configurata —
+si reimposta dal server:
+
+```bash
+npm run password -- --email nome@mondoimmobiliarelecce.it
+```
+
+Ne genera una a caso e la stampa. Con `--password "..."` la si sceglie.
+
+⚠️ Una cosa da sapere con chiarezza: questo separa gli sguardi dentro il
+programma, non l'accesso alla macchina. **Chi ha le chiavi del server ha il file
+dell'archivio**, e in quel file c'è tutto. Se serve una separazione che regga
+anche fra chi non si fida, la strada sono due installazioni distinte che si
+parlano solo per gli incroci.
+
+---
+
+## Privacy e antiriciclaggio
+
+- Ogni scheda cliente registra **se e quando** è stato dato il consenso privacy,
+  e a cosa. Le schede senza consenso sono segnalate con un avviso giallo.
+- I campi per l'**adeguata verifica** (documento d'identità, numero, scadenza)
+  sono nella scheda cliente: vanno compilati quando la trattativa si concretizza.
+- Il **registro accessi** conserva chi ha creato, modificato, eliminato o
+  esportato dati, con data e ora.
+- L'eliminazione di un cliente è *logica*: la scheda sparisce dagli elenchi ma
+  resta tracciata. La cancellazione definitiva su richiesta dell'interessato la
+  esegue chi ha quel contatto in carico — e va girata anche agli altri
+  collaboratori, perché ognuno cancella solo la propria copia.
+
+I dati non escono mai dal computer o dal server su cui gira il programma: non ci
+sono servizi esterni coinvolti.
+
+---
+
+## Configurazione (opzionale)
+
+Variabili d'ambiente, tutte facoltative:
+
+| Variabile | A cosa serve | Valore predefinito |
+|---|---|---|
+| `CRM_DB_PATH` | Dove sta il file del database | `data/mondo.db` |
+| `CRM_BACKUP_DIR` | Dove finiscono le copie di sicurezza | `backup/` |
+| `CRM_SECRET` | Chiave per firmare le sessioni | generata e salvata in `data/secret.key` |
+| `PORT` | Porta su cui gira il programma | `3000` |
+
+---
+
+## Com'è fatto (per chi mette le mani nel codice)
+
+- **Next.js 16** (App Router, Server Components, Server Actions) e **React 19**
+- **SQLite** via `better-sqlite3` — nessun server di database da installare
+- **Tailwind CSS v4**
+- Accesso con password (hash `scrypt`) e sessione su cookie firmato HMAC — nessuna
+  dipendenza esterna per l'autenticazione
+
+```
+src/
+  lib/
+    schema.ts     struttura del database (applicata a ogni avvio, idempotente)
+    db.ts         connessione e funzioni di base
+    auth.ts       password, sessioni, controllo dei ruoli
+    queries.ts    tutte le letture dal database
+    actions.ts    tutte le scritture (Server Actions)
+    matching.ts   il motore che incrocia richieste e immobili
+    csv.ts        lettura e scrittura dei file CSV
+    photos.ts     foto degli immobili: ridimensionamento e archiviazione
+    xlsx.ts       lettura dei file Excel (senza dipendenze: lo ZIP lo apre zlib)
+    import-map.ts i tracciati degli altri gestionali riportati ai nostri campi
+    format.ts     date, euro, etichette
+    types.ts      tipi e vocabolari dei menu a tendina
+  components/     pezzi di interfaccia riusabili
+  app/(app)/      le schermate del programma
+scripts/
+  seed.mjs        primo avvio e dati di esempio
+  backup.mjs      copia di sicurezza
+```
+
+Il motore degli incroci (`matching.ts`) esclude un immobile solo su tre criteri
+— tipo di contratto, budget **massimo** e metratura minima — e per il resto
+assegna un punteggio. Il budget *minimo* non esclude mai: un immobile che costa
+meno del previsto resta in elenco, segnalato, perché è comunque una telefonata
+da fare. Così un immobile leggermente fuori parametro compare comunque, con
+l'avviso del perché: la telefonata la decidi tu, non il programma.
+
+Le zone si confrontano come le leggerebbe una persona: maiuscole, accenti e
+punteggiatura non contano, e "Centro" trova "Centro storico". Chi viene escluso
+finisce nel riquadro **Richieste scartate** della scheda immobile, con scritto
+di quanto: `Mario Rossi — 12.000 € oltre il suo budget`.

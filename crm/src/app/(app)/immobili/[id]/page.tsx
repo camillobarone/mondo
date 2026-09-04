@@ -1,0 +1,687 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { all } from "@/lib/db";
+import {
+  getProperty,
+  activitiesOfProperty,
+  offersOfProperty,
+  priceHistory,
+  valuationsOfProperty,
+  activeUserOptions,
+} from "@/lib/queries";
+import { matchesForProperty, countMatchesForProperty, nearMissesForProperty } from "@/lib/matching";
+import { photosOfProperty, searchOwnerCandidates, ownerPhoneForProperty } from "@/lib/queries";
+import { linkOwner } from "@/lib/actions";
+import { SubmitButton } from "@/components/client";
+import { PhotoGallery } from "./photo-gallery";
+import { TrackingBox } from "./tracking-box";
+import { PORTALI } from "@/lib/portali";
+import { deleteProperty } from "@/lib/actions";
+import { fromCsv, euro, shortDate, dateTime, relative, label, fullName, whatsappHref } from "@/lib/format";
+import {
+  PageHeader,
+  Card,
+  DataRow,
+  Chip,
+  StatusChip,
+  EmptyState,
+  Banner,
+} from "@/components/ui";
+import { ConfirmButton, Collapsible } from "@/components/client";
+import { ActivityForm } from "../../agenda/activity-form";
+import { CompleteButton } from "../../agenda/complete-button";
+import { OfferForm, OfferStatusForm, CloseDealForm, ValuationForm } from "./forms";
+import { PROPERTY_STATUSES, OFFER_STATUSES } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+export default async function PropertyPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ proprietario?: string }>;
+}) {
+  const user = await requireUser();
+  const { id } = await params;
+  const query = await searchParams;
+  const propertyId = Number(id);
+
+  // L'immobile di un collega qui non esiste: getProperty non lo restituisce e
+  // la pagina risponde 404, la stessa risposta di un numero inventato.
+  const property = getProperty(user.id, propertyId);
+  if (!property) notFound();
+
+  const matches = matchesForProperty(user.id, property);
+  const matchCount = countMatchesForProperty(user.id, property);
+  const missed = nearMissesForProperty(user.id, property);
+  const photos = photosOfProperty(user.id, property.id);
+  const proprietari = property.owner_client_id
+    ? { rows: [], total: 0, searched: false }
+    : searchOwnerCandidates(user.id, query.proprietario);
+  const telefonoProprietario = ownerPhoneForProperty(user.id, property.id);
+  const offers = offersOfProperty(user.id, propertyId);
+  const activities = activitiesOfProperty(user.id, propertyId);
+  const prices = priceHistory(user.id, propertyId);
+  const valuations = valuationsOfProperty(user.id, propertyId);
+  const users = activeUserOptions();
+
+  const clients = all<{ id: number; name: string }>(
+    `SELECT id, TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')) AS name
+       FROM clients WHERE deleted_at IS NULL AND owner_id = ?
+      ORDER BY last_name COLLATE NOCASE LIMIT 1000`,
+    [user.id],
+  );
+  const clientOptions = clients.map((client) => ({
+    value: String(client.id),
+    label: client.name || `Cliente #${client.id}`,
+  }));
+
+  const visits = activities.filter((activity) => activity.type === "visita");
+  const mandateExpiring =
+    property.mandate_end &&
+    new Date(property.mandate_end).getTime() - Date.now() < 45 * 864e5 &&
+    !["venduto", "ritirato"].includes(property.status);
+
+  return (
+    <>
+      <PageHeader
+        title={property.title}
+        subtitle={
+          <span className="flex flex-wrap items-center gap-2">
+            <StatusChip value={property.status} kind="property" />
+            {property.exclusive ? <Chip tone="brand">esclusiva</Chip> : null}
+            <span className="text-sm text-slate-500">
+              {[property.kind, property.zone, property.city].filter(Boolean).join(" · ")}
+            </span>
+          </span>
+        }
+        actions={
+          <>
+            <Link href={`/immobili/${property.id}/visite`} className="btn-secondary">
+              Storico visite
+            </Link>
+            <Link href={`/immobili/${property.id}/modifica`} className="btn-primary">
+              Modifica
+            </Link>
+          </>
+        }
+      />
+
+      {mandateExpiring ? (
+        <div className="mb-4">
+          <Banner tone="amber">
+            L&apos;incarico scade il {shortDate(property.mandate_end)} ({relative(property.mandate_end)}).
+            Contatta il proprietario per il rinnovo.
+          </Banner>
+        </div>
+      ) : null}
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* ------------------------------------------------- colonna sinistra */}
+        <div className="space-y-5">
+          <Card title="Scheda">
+            <dl>
+              <DataRow label="Prezzo richiesto">
+                <span className="text-base font-semibold text-slate-900">
+                  {euro(property.price)}
+                </span>
+                {property.sqm && property.price ? (
+                  <span className="ml-2 text-xs text-slate-500">
+                    {Math.round(property.price / property.sqm)} €/mq
+                  </span>
+                ) : null}
+              </DataRow>
+              <DataRow label="Minimo accettato">{euro(property.min_price)}</DataRow>
+              <DataRow label="Contratto">{property.contract}</DataRow>
+              <DataRow label="Stato">{label(property.status, PROPERTY_STATUSES)}</DataRow>
+              <DataRow label="Codice">{property.ref}</DataRow>
+              <DataRow label="Indirizzo">{property.address}</DataRow>
+              <DataRow label="Metri quadri">{property.sqm ? `${property.sqm} mq` : null}</DataRow>
+              <DataRow label="Vani / bagni">
+                {[property.rooms, property.bathrooms].some(Boolean)
+                  ? `${property.rooms ?? "?"} vani · ${property.bathrooms ?? "?"} bagni`
+                  : null}
+              </DataRow>
+              <DataRow label="Piano">
+                {property.floor}
+                {property.elevator ? " · con ascensore" : ""}
+              </DataRow>
+              <DataRow label="Esterno">{fromCsv(property.outdoor).join(" · ")}</DataRow>
+              <DataRow label="Box">{property.garage ? "Sì" : "No"}</DataRow>
+              <DataRow label="Stato immobile">{property.condition}</DataRow>
+              <DataRow label="Classe energetica">{property.energy_class}</DataRow>
+              <DataRow label="Video">
+                {property.video_url ? (
+                  <a
+                    href={property.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-700 hover:underline"
+                  >
+                    Guarda il video ↗
+                  </a>
+                ) : null}
+              </DataRow>
+              {/* Uno per portale, sempre visibili anche da vuoti: una riga
+                  vuota dice «qui non e' pubblicato», che il giorno del rogito
+                  e' l'informazione che serve. Un elenco che mostra solo quelli
+                  compilati farebbe sembrare completo un immobile pubblicato a
+                  meta'. */}
+              {PORTALI.map((portale) => {
+                const indirizzo =
+                  portale.chiave === "idealista"
+                    ? property.listing_idealista
+                    : property.listing_immobiliare;
+                return (
+                  <DataRow key={portale.chiave} label={`Annuncio ${portale.nome}`}>
+                    {indirizzo ? (
+                      <a
+                        href={indirizzo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-700 hover:underline"
+                      >
+                        Apri l&apos;annuncio ↗
+                      </a>
+                    ) : null}
+                  </DataRow>
+                );
+              })}
+              <DataRow label="Pagina idealista">
+                {property.idealista_owner_url ? (
+                  <a
+                    href={property.idealista_owner_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-700 hover:underline"
+                  >
+                    Apri i numeri di idealista ↗
+                  </a>
+                ) : null}
+              </DataRow>
+            </dl>
+          </Card>
+
+          {!property.owner_client_id ? (
+            <Card title="Collega il proprietario" bodyClassName="">
+              <form method="get" className="flex flex-wrap items-end gap-2 p-4 pb-3">
+                <div className="min-w-0 flex-1">
+                  <label className="field-label" htmlFor="proprietario">
+                    Cerca il proprietario
+                  </label>
+                  <input
+                    id="proprietario"
+                    name="proprietario"
+                    defaultValue={query.proprietario ?? ""}
+                    placeholder="Cognome, nome o numero di telefono"
+                    className="field"
+                    autoComplete="off"
+                  />
+                </div>
+                <button type="submit" className="btn-secondary">
+                  Cerca
+                </button>
+              </form>
+
+              {proprietari.rows.length === 0 ? (
+                <p className="px-4 pb-4 text-sm text-slate-500">
+                  {proprietari.searched
+                    ? "Nessun cliente trovato con questo nome."
+                    : "Nessun cliente è ancora segnato come venditore: cerca per cognome qui sopra."}
+                </p>
+              ) : (
+                <>
+                  <p className="px-4 pb-1 text-xs text-slate-400">
+                    {proprietari.searched
+                      ? `${proprietari.total} trovati${
+                          proprietari.total > proprietari.rows.length
+                            ? `, mostrati i primi ${proprietari.rows.length} — restringi la ricerca`
+                            : ""
+                        }`
+                      : "Clienti già segnati come venditori. Se non c'è, cercalo qui sopra."}
+                  </p>
+                  <ul className="divide-y divide-slate-100 border-t border-slate-100">
+                    {proprietari.rows.map((candidato) => (
+                      <li
+                        key={candidato.id}
+                        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm text-slate-800">{fullName(candidato)}</p>
+                          <p className="text-xs text-slate-500">
+                            {candidato.mobile ?? candidato.phone ?? "nessun recapito"}
+                            {candidato.city ? ` · ${candidato.city}` : ""}
+                          </p>
+                        </div>
+                        <form action={linkOwner}>
+                          <input type="hidden" name="property_id" value={property.id} />
+                          <input type="hidden" name="client_id" value={candidato.id} />
+                          <SubmitButton>Collega</SubmitButton>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              <p className="px-4 py-3 text-xs text-slate-400">
+                Se non è ancora in archivio,{" "}
+                <Link href="/clienti/nuovo" className="text-brand-700 hover:underline">
+                  creagli prima la scheda
+                </Link>
+                .
+              </p>
+            </Card>
+          ) : null}
+
+          <Card title="Incarico">
+            <dl>
+              <DataRow label="Proprietario">
+                {property.owner_client_id ? (
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/clienti/${property.owner_client_id}`}
+                      className="text-brand-700 hover:underline"
+                    >
+                      {property.owner_name}
+                    </Link>
+                    <form action={linkOwner}>
+                      <input type="hidden" name="property_id" value={property.id} />
+                      <input type="hidden" name="client_id" value="" />
+                      <button type="submit" className="text-xs text-slate-400 hover:text-red-600">
+                        scollega
+                      </button>
+                    </form>
+                  </span>
+                ) : (
+                  <span className="text-amber-700">non collegato a una scheda</span>
+                )}
+              </DataRow>
+              <DataRow label="Agente">{property.agent_name}</DataRow>
+              <DataRow label="Dal">{shortDate(property.mandate_start)}</DataRow>
+              <DataRow label="Fino al">
+                <span className={mandateExpiring ? "text-amber-700" : ""}>
+                  {shortDate(property.mandate_end)}
+                </span>
+              </DataRow>
+              <DataRow label="Esclusiva">{property.exclusive ? "Sì" : "No"}</DataRow>
+              <DataRow label="Provvigione">
+                {property.commission_pct ? `${property.commission_pct}%` : null}
+              </DataRow>
+            </dl>
+          </Card>
+
+          {prices.length > 1 ? (
+            <Card title="Storico prezzi">
+              <ul className="space-y-1.5 text-sm">
+                {prices.map((entry, index) => {
+                  const previous = prices[index + 1];
+                  const delta = previous ? entry.price - previous.price : 0;
+                  return (
+                    <li key={entry.id} className="flex items-center justify-between">
+                      <span className="text-slate-700">{euro(entry.price)}</span>
+                      <span className="text-xs text-slate-400">
+                        {delta !== 0 ? (
+                          <span className={delta < 0 ? "text-red-600" : "text-emerald-600"}>
+                            {delta > 0 ? "+" : ""}
+                            {euro(delta)}{" "}
+                          </span>
+                        ) : null}
+                        {shortDate(entry.changed_at)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          ) : null}
+
+          {/*
+            Rogito e provvigioni li vede chi ha in carico l'immobile, non chi ha
+            un certo ruolo. Prima erano riservati al titolare, e allora aveva
+            senso: era l'unico a vedere anche il portafoglio degli altri. Da
+            quando ognuno vede solo il proprio — e da quando fra gli utenti c'e'
+            un'agenzia indipendente che lavora per conto suo — nasconderli
+            all'agente significa nascondergli i propri incassi.
+
+            Qui non serve nessun controllo: questa scheda si apre solo se
+            l'immobile e' tuo, altrimenti getProperty non lo restituisce
+            proprio e la pagina risponde "non trovato".
+          */}
+          {property.status === "venduto" ? (
+            <Card title="Chiusura">
+              <dl>
+                <DataRow label="Prezzo di rogito">{euro(property.sold_price)}</DataRow>
+                <DataRow label="Compromesso">{shortDate(property.preliminary_date)}</DataRow>
+                <DataRow label="Rogito">{shortDate(property.deed_date)}</DataRow>
+                <DataRow label="Provvigione venditore">{euro(property.commission_seller)}</DataRow>
+                <DataRow label="Provvigione acquirente">{euro(property.commission_buyer)}</DataRow>
+                <DataRow label="Incassate">{property.commission_paid ? "Sì" : "No"}</DataRow>
+              </dl>
+            </Card>
+          ) : null}
+
+          <TrackingBox
+            propertyId={property.id}
+            token={property.tracking_token}
+            indirizzo={property.address}
+            ownerName={property.owner_name}
+            ownerPhone={telefonoProprietario}
+          />
+
+          {property.notes ? (
+            <Card title="Note interne">
+              <p className="text-sm whitespace-pre-line text-slate-700">{property.notes}</p>
+            </Card>
+          ) : null}
+
+          <form action={deleteProperty}>
+            <input type="hidden" name="id" value={property.id} />
+            <ConfirmButton
+              message={`Eliminare "${property.title}"? Resterà nel registro ma sparirà dagli elenchi.`}
+              className="w-full"
+            >
+              Elimina immobile
+            </ConfirmButton>
+          </form>
+        </div>
+
+        {/* --------------------------------------------------- colonna destra */}
+        <div className="space-y-5 lg:col-span-2">
+          {/* ------------------------------------------------------------ foto */}
+          <Card title={`Foto (${photos.length})`}>
+            <PhotoGallery propertyId={property.id} photos={photos} />
+          </Card>
+
+          {/* -------------------------------------------------- a chi proporlo */}
+          <Card
+            title={`A chi proporlo (${matchCount})`}
+            actions={
+              <Link href="/incroci" className="text-xs text-brand-700 hover:underline">
+                Tutti gli incroci
+              </Link>
+            }
+            bodyClassName=""
+          >
+            {matches.length === 0 ? (
+              <EmptyState
+                title="Nessuna richiesta aperta corrisponde a questo immobile."
+                hint="Registra le richieste dei tuoi acquirenti: gli incroci compariranno qui da soli."
+              />
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {matches.map((match) => (
+                  <li key={match.requirement.id} className="px-4 py-2.5">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/clienti/${match.requirement.client_id}`}
+                          className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                        >
+                          {match.client_name}
+                        </Link>
+                        <p className="text-xs text-slate-500">
+                          {match.reasons.join(" · ") || "Corrispondenza parziale"}
+                        </p>
+                        {match.warnings.length ? (
+                          <p className="text-xs text-amber-700">{match.warnings.join(" · ")}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {whatsappHref(match.client_phone) ? (
+                          <a
+                            href={
+                              whatsappHref(
+                                match.client_phone,
+                                `Buongiorno${(match.client_name.split(" ")[0] ?? "") ? ` ${match.client_name.split(" ")[0]}` : ""}, sono ${user.name} di Mondo Immobiliare. ` +
+                                  `È arrivato un immobile in linea con la sua ricerca: ${[
+                                    property.title,
+                                    [property.zone, property.city].filter(Boolean).join(", "),
+                                    property.sqm ? `${property.sqm} mq` : "",
+                                    property.price ? euro(property.price) : "",
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ")}. Se le interessa possiamo organizzare una visita.`,
+                              ) ?? "#"
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-secondary px-2.5 py-1 text-xs"
+                            title="Apre WhatsApp con la proposta già scritta"
+                          >
+                            Proponi
+                          </a>
+                        ) : null}
+                        <Chip tone={match.warnings.length === 0 ? "green" : "amber"}>
+                          {match.score}/{match.total}
+                        </Chip>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {/* ------------------------------------------------- perche' esclusi */}
+          {missed.total > 0 ? (
+            <Card title={`Richieste scartate (${missed.total})`} bodyClassName="">
+              <p className="px-4 pt-3 text-xs text-slate-500">
+                {[
+                  missed.byReason.budget
+                    ? `${missed.byReason.budget} fuori budget`
+                    : null,
+                  missed.byReason.metratura
+                    ? `${missed.byReason.metratura} sotto la metratura richiesta`
+                    : null,
+                  missed.byReason.contratto
+                    ? `${missed.byReason.contratto} cercano l'altro tipo di contratto`
+                    : null,
+                  missed.byReason.comune
+                    ? `${missed.byReason.comune} cercano in un altro comune`
+                    : null,
+                  missed.byReason.tipologia
+                    ? `${missed.byReason.tipologia} cercano un'altra tipologia`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+                .
+              </p>
+              {missed.items.length ? (
+                <ul className="divide-y divide-slate-100">
+                  {missed.items.map((item) => (
+                    <li
+                      key={item.requirement.id}
+                      className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-2"
+                    >
+                      <Link
+                        href={`/clienti/${item.requirement.client_id}`}
+                        className="text-sm text-slate-700 hover:text-brand-700 hover:underline"
+                      >
+                        {item.clientName}
+                      </Link>
+                      <span className="text-xs text-slate-500">
+                        {item.reason === "budget"
+                          ? `${euro(item.gap)} oltre il suo budget`
+                          : `${item.gap} mq sotto il suo minimo`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="px-4 pb-3 pt-1 text-xs text-slate-400">
+                Se qualcuno di questi ti sembra comunque da chiamare, allarga il suo budget o
+                la metratura minima nella sua richiesta.
+              </p>
+            </Card>
+          ) : null}
+
+          {/* --------------------------------------------------------- proposte */}
+          <Card title={`Proposte ricevute (${offers.length})`} bodyClassName="">
+            {offers.length === 0 ? (
+              <div className="p-4">
+                <p className="mb-3 text-sm text-slate-500">Nessuna proposta registrata.</p>
+                <OfferForm propertyId={property.id} clientOptions={clientOptions} />
+              </div>
+            ) : (
+              <>
+                <ul className="divide-y divide-slate-100">
+                  {offers.map((offer) => (
+                    <li
+                      key={offer.id}
+                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5"
+                    >
+                      <div className="min-w-0">
+                        <Link
+                          href={`/clienti/${offer.client_id}`}
+                          className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                        >
+                          {offer.client_name}
+                        </Link>
+                        <p className="text-xs text-slate-500">
+                          {euro(offer.amount)}
+                          {property.price
+                            ? ` · ${Math.round((offer.amount / property.price - 1) * 100)}% sul richiesto`
+                            : ""}
+                          {" · "}
+                          {shortDate(offer.offered_at)}
+                          {offer.valid_until ? ` · valida fino al ${shortDate(offer.valid_until)}` : ""}
+                        </p>
+                        {offer.notes ? (
+                          <p className="mt-0.5 text-xs text-slate-600">{offer.notes}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Chip
+                          tone={
+                            offer.status === "accettata"
+                              ? "green"
+                              : offer.status === "rifiutata"
+                                ? "red"
+                                : "amber"
+                          }
+                        >
+                          {label(offer.status, OFFER_STATUSES)}
+                        </Chip>
+                        <OfferStatusForm id={offer.id} status={offer.status} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="border-t border-slate-200 p-4">
+                  <OfferForm propertyId={property.id} clientOptions={clientOptions} />
+                </div>
+              </>
+            )}
+          </Card>
+
+          {/* ------------------------------------------------------ valutazione */}
+          <Collapsible title={`Valutazioni (${valuations.length})`}>
+            {valuations.length > 0 ? (
+              <ul className="mb-4 space-y-2">
+                {valuations.map((valuation) => (
+                  <li key={valuation.id} className="rounded-md bg-slate-50 px-3 py-2 text-sm">
+                    <p className="font-medium text-slate-800">
+                      {euro(valuation.value_min)} – {euro(valuation.value_max)}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {valuation.eur_sqm_min && valuation.eur_sqm_max
+                        ? `${valuation.eur_sqm_min}–${valuation.eur_sqm_max} €/mq`
+                        : ""}
+                      {valuation.zone ? ` · ${valuation.zone}` : ""}
+                      {valuation.method ? ` · ${valuation.method}` : ""}
+                      {` · ${shortDate(valuation.created_at)}`}
+                    </p>
+                    {valuation.notes ? (
+                      <p className="mt-1 text-xs text-slate-600">{valuation.notes}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <ValuationForm property={property} />
+          </Collapsible>
+
+          {/* ---------------------------------------------------- chiusura deal */}
+          {["proposta", "compromesso", "venduto"].includes(property.status) ? (
+            <Collapsible
+              title="Chiusura della trattativa"
+              defaultOpen={property.status === "compromesso"}
+            >
+              <CloseDealForm property={property} />
+            </Collapsible>
+          ) : null}
+
+          {/* ----------------------------------------------------------- visite */}
+          <Card title="Registra una visita o un'attività">
+            <ActivityForm
+              propertyId={property.id}
+              userOptions={users}
+              defaultUserId={user.id}
+              clientOptions={clientOptions}
+              compact
+            />
+          </Card>
+
+          <Card title={`Storico (${activities.length} · ${visits.length} visite)`} bodyClassName="">
+            {activities.length === 0 ? (
+              <EmptyState title="Nessuna attività registrata su questo immobile." />
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {activities.map((activity) => (
+                  <li key={activity.id} className="flex items-start gap-3 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Chip tone={activity.type === "visita" ? "blue" : "slate"}>
+                          {activity.type}
+                        </Chip>
+                        <span className="text-sm text-slate-800">{activity.title}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {dateTime(activity.due_at ?? activity.done_at ?? activity.created_at)}
+                        {activity.client_name ? (
+                          <>
+                            {" · "}
+                            <Link
+                              href={`/clienti/${activity.client_id}`}
+                              className="text-brand-700 hover:underline"
+                            >
+                              {activity.client_name}
+                            </Link>
+                          </>
+                        ) : null}
+                        {activity.user_name ? ` · ${activity.user_name}` : ""}
+                      </p>
+                      {activity.notes ? (
+                        <p className="mt-1 text-xs whitespace-pre-line text-slate-600">
+                          {activity.notes}
+                        </p>
+                      ) : null}
+                      {activity.outcome ? (
+                        <p className="mt-1 text-xs text-slate-700">
+                          <span className="font-medium">Feedback:</span> {activity.outcome}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Link
+                        href={`/agenda/${activity.id}/modifica?da=/immobili/${property.id}`}
+                        className="text-xs text-slate-400 hover:text-brand-700 hover:underline"
+                      >
+                        Modifica
+                      </Link>
+                      {!activity.done_at ? <CompleteButton id={activity.id} /> : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
