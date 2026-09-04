@@ -529,7 +529,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
-| **Applicazione per i venditori** («Mondo Tracking») | **Cominciata il 4 settembre: c'e' lo strato dei dati.** Chiave per immobile, lettura che apre un immobile solo, e le visite senza nomi. Mancano le pagine, e le blocca una cosa sola: **i file preparati da Gemini**, che stanno sul computer di Camillo e da qui non si leggono. Vedi «I due progetti nuovi», qui sotto. |
+| **Applicazione per i venditori** («Mondo Tracking») | **Cominciata il 4 settembre: ci sono i dati e le foto.** Chiave per immobile, lettura che apre un immobile solo, visite senza nomi, e la rotta pubblica delle foto. **Manca la pagina.** La guida di Gemini e' arrivata ed e' stata letta: se ne tiene la forma, non il codice — vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
@@ -672,16 +672,61 @@ i NULL che convivono sotto un indice univoco, il collega che non riesce a farsi
 generare la chiave di un immobile non suo, le colonne vietate che non escono, e
 le visite che escono con tre campi soli — `id`, `due_at`, `done_at`.
 
-**I due buchi che restano**, da tappare ai passi successivi:
+- **Il Passo 3: le foto.** `trackingPhotos`, `trackingPhotoBelongs` e la rotta
+  `src/app/tracking/[token]/foto/[file]/route.ts`. Serviva una rotta apposta:
+  `/foto/[id]/[file]` vuole l'accesso **e** che l'immobile sia di chi guarda, e
+  da fuori non e' vera nessuna delle due — le foto sarebbero arrivate tutte
+  rotte, e il guasto non da' nessun errore (la pagina si apre, le foto no).
+  Il controllo poggia su un'altra gamba: al posto dell'utente la chiave, al
+  posto di «l'immobile e' tuo» **«la foto e' di questo immobile»**. Senza la
+  seconda meta' basterebbe cambiare il nome del file nell'indirizzo per
+  sfogliare gli interni di casa d'altri tenendosi la propria chiave, che e'
+  buona. `Cache-Control: private` e' obbligatorio: l'indirizzo contiene la
+  chiave e non deve fermarsi in nessuna cache condivisa.
 
-1. **Le foto.** `/foto/[id]/[file]` vuole l'accesso **e** che l'immobile sia
-   tuo. Su una pagina pubblica le foto verrebbero tutte rotte: serve una rotta
-   sua, agganciata al token e non all'utente. E' il prossimo ostacolo vero.
-2. **Il muro.** Ogni lettura di `queries.ts` vuole per primo l'id di chi
-   guarda, e qui non c'e' nessuno che ha fatto l'accesso. Il muro non sparisce,
-   **cambia forma**: la chiave apre *un immobile solo* e ogni lettura va
-   agganciata a quell'`id`. Una funzione scritta senza pensarci non filtrerebbe
-   niente.
+**Il muro, per chi scrive il prossimo pezzo.** Ogni lettura di `queries.ts`
+vuole per primo l'id di chi guarda, e qui non c'e' nessuno che ha fatto
+l'accesso. Il muro non sparisce, **cambia forma**: la chiave apre *un immobile
+solo*, e ogni lettura va agganciata a quell'`id`. Una funzione scritta senza
+pensarci non filtrerebbe niente.
+
+#### La guida di Gemini: cosa se ne tiene
+
+`INTEGRAZIONE_CLAUDE.md` e' arrivato il 4 settembre ed e' stato letto tutto.
+
+**La forma e' buona e si tiene**: pagina pubblica a schede, i portali come
+*registro di garanzia* con i link di verifica invece di API che non esistono,
+la roadmap dall'incarico al rogito, la scheda del consulente, e il riquadro
+sulla scheda immobile per mandare il link su WhatsApp.
+
+**Il codice no, e non e' un dettaglio di stile.** Sette cose, tutte verificate
+contro il database vero:
+
+1. `SELECT p.*` sulla vista del proprietario: porta fuori **prezzo minimo,
+   provvigioni, prezzo di vendita e note interne**. E' la trappola gia' scritta
+   qui sopra per gli incroci fra colleghi, qui fuori dall'agenzia.
+2. **Tre colonne che non esistono**: `users.full_name`, `users.phone`,
+   `clients.full_name`. Sono `users.name`, niente telefono sugli utenti, e
+   `clients.first_name`/`last_name`. La pagina sarebbe morta al primo
+   caricamento.
+3. La lettura delle attivita' porta `title`, `notes`, `outcome` e `interest`
+   ed e' etichettata «anonima». **Non lo e'**: `title` e' il campo «Cosa», dove
+   si scrive «Visita sig. Rossi».
+4. Uno script che genera il token **per tutti e 53 gli immobili** e li stampa a
+   video. Cinquantatre link vivi che nessuno ha chiesto, piu' l'elenco delle
+   chiavi in un registro.
+5. Token da 8 byte (16 caratteri), la meta' di quello del calendario. Qui se ne
+   usano 24, come per il calendario.
+6. `cleanPhone(...)` non esiste, e `wa.me` scritto a mano e' una trappola gia'
+   pagata: i numeri in archivio sono senza +39, si passa da `whatsappHref()`.
+7. `logQuickViewingAction` **non controlla che l'immobile sia di chi scrive** —
+   un buco nel muro — e restituisce `{success:true}` invece della convenzione
+   dei rifiuti del punto 20.
+
+Tre delle cinque schede previste (**feedback a stelle, offerte, storico
+prezzi**) non si costruiscono: le ha escluse Camillo. Vanno tolte, non lasciate
+vuote — un riquadro sempre vuoto su una pagina che il proprietario guarda e'
+peggio che non averlo.
 
 #### B · Pubblicazione sui portali
 

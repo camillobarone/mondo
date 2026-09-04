@@ -996,6 +996,46 @@ export function propertyByTrackingToken(
   );
 }
 
+export type TrackingPhoto = {
+  file: string;
+  caption: string | null;
+};
+
+/**
+ * Le foto della casa, nell'ordine deciso in agenzia.
+ *
+ * Escono due campi soli: il nome del file e la didascalia. Il numero della
+ * foto e quello dell'immobile non servono a chi guarda — `file` non si ripete
+ * mai — e un numero di scheda che esce e' un numero di scheda che qualcuno
+ * prova a cambiare nell'indirizzo.
+ */
+export function trackingPhotos(propertyId: number): TrackingPhoto[] {
+  return all<TrackingPhoto>(
+    `SELECT f.file, f.caption
+       FROM photos f
+      WHERE f.property_id = ?
+      ORDER BY f.position, f.id`,
+    [propertyId],
+  );
+}
+
+/**
+ * Questa foto e' di questo immobile?
+ *
+ * E' la seconda meta' del controllo sulla rotta delle foto. La chiave dice
+ * quale casa; senza questa domanda, chi ha un link buono cambierebbe il nome
+ * del file nell'indirizzo e sfoglierebbe gli interni di casa d'altri tenendosi
+ * la propria chiave.
+ */
+export function trackingPhotoBelongs(propertyId: number, file: string): boolean {
+  return (
+    count(`SELECT COUNT(*) AS n FROM photos WHERE property_id = ? AND file = ?`, [
+      propertyId,
+      file,
+    ]) > 0
+  );
+}
+
 /**
  * Una visita cosi' come la vede il proprietario: una data, e basta.
  *
