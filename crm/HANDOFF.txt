@@ -550,11 +550,10 @@ Le cose costruite in questa sessione, in ordine
       previsto: la via non si inventa.
 
   Applicazione per i venditori («Mondo Tracking»)
-      Cominciata il 4 settembre: ci sono i dati e le foto. Chiave per immobile,
-      lettura che apre un immobile solo, visite senza nomi, e la rotta pubblica
-      delle foto. Manca la pagina. La guida di Gemini e' arrivata ed e' stata
-      letta: se ne tiene la forma, non il codice — vedi «I due progetti nuovi»,
-      qui sotto.
+      La pagina c'e' e funziona (4 settembre): /tracking/[token], provata in
+      browser su un telefono. Manca il modo di mandarla: il riquadro sulla
+      scheda immobile con il link e il pulsante WhatsApp. Poi i portali, che
+      vogliono un campo nuovo. Vedi «I due progetti nuovi», qui sotto.
 
   Pubblicazione sui portali
       Progetto nuovo, e il piu' urgente dei due. Ha dismesso Casagest24 e
@@ -723,6 +722,35 @@ le visite che escono con tre campi soli — id, due_at, done_at.
   sfogliare gli interni di casa d'altri tenendosi la propria chiave, che e'
   buona. Cache-Control: private e' obbligatorio: l'indirizzo contiene la
   chiave e non deve fermarsi in nessuna cache condivisa.
+
+- Il Passo 4: la pagina. src/app/tracking/[token]/page.tsx. Testata con
+  via, comune, zona e prezzo; le foto; le visite (quante, con le date, e gli
+  appuntamenti in programma in un riquadro a parte); a che punto siamo, una
+  scala dall'incarico al rogito con il gradino di adesso in evidenza; chi segue
+  la casa. Nessun javascript di client: e' tutta renderizzata dal server, il che
+  su una pagina pubblica e' una cosa in meno che puo' rompersi.
+
+  ritirato sta fuori dalla scala e ha un riquadro suo: metterlo in fondo
+  direbbe al proprietario che il ritiro viene dopo il rogito.
+
+  Verificata in browser vero su un telefono (390x844), 17 controlli, piu' 23 sul
+  contenuto della pagina. L'archivio di prova e' costruito apposta con tutto
+  quello che non deve uscire gia' scritto dentro — cognome del visitatore nel
+  campo «Cosa», il suo cellulare e la sua email, prezzo minimo, provvigione,
+  note interne, giudizio sulla visita — e la prova va a cercarli uno per uno
+  nella pagina consegnata. Nessuno esce.
+
+Due cose trovate dal browser, che il codice non mostrava:
+
+1. ml-2 non e' uno spazio. «2 visite finora» era due elementi accostati
+   da un margine: a occhio giusto, nel testo della pagina «2visite finora», che
+   e' come lo legge una sintesi vocale. Lo spazio va scritto.
+2. La cache teneva in vita le foto dopo la revoca. Il server rispondeva
+   404 correttamente, ma la rotta copiava da /foto/[id]/[file] un
+   max-age di un anno con immutable: le foto gia' scaricate continuavano ad
+   aprirsi da quel browser per dodici mesi. Ora sono cinque minuti — bastano
+   a non riscaricare la galleria mentre si scorre, e fanno mordere la revoca
+   quasi subito. Sull'altra rotta un anno resta giusto: li' non c'e' revoca.
 
 Il muro, per chi scrive il prossimo pezzo. Ogni lettura di queries.ts
 vuole per primo l'id di chi guarda, e qui non c'e' nessuno che ha fatto

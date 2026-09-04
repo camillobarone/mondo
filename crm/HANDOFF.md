@@ -529,7 +529,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
-| **Applicazione per i venditori** («Mondo Tracking») | **Cominciata il 4 settembre: ci sono i dati e le foto.** Chiave per immobile, lettura che apre un immobile solo, visite senza nomi, e la rotta pubblica delle foto. **Manca la pagina.** La guida di Gemini e' arrivata ed e' stata letta: se ne tiene la forma, non il codice — vedi «I due progetti nuovi», qui sotto. |
+| **Applicazione per i venditori** («Mondo Tracking») | **La pagina c'e' e funziona** (4 settembre): `/tracking/[token]`, provata in browser su un telefono. **Manca il modo di mandarla**: il riquadro sulla scheda immobile con il link e il pulsante WhatsApp. Poi i portali, che vogliono un campo nuovo. Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
@@ -683,6 +683,35 @@ le visite che escono con tre campi soli — `id`, `due_at`, `done_at`.
   sfogliare gli interni di casa d'altri tenendosi la propria chiave, che e'
   buona. `Cache-Control: private` e' obbligatorio: l'indirizzo contiene la
   chiave e non deve fermarsi in nessuna cache condivisa.
+
+- **Il Passo 4: la pagina.** `src/app/tracking/[token]/page.tsx`. Testata con
+  via, comune, zona e prezzo; le foto; **le visite** (quante, con le date, e gli
+  appuntamenti in programma in un riquadro a parte); **a che punto siamo**, una
+  scala dall'incarico al rogito con il gradino di adesso in evidenza; chi segue
+  la casa. Nessun javascript di client: e' tutta renderizzata dal server, il che
+  su una pagina pubblica e' una cosa in meno che puo' rompersi.
+
+  `ritirato` **sta fuori dalla scala** e ha un riquadro suo: metterlo in fondo
+  direbbe al proprietario che il ritiro viene dopo il rogito.
+
+  Verificata in browser vero su un telefono (390x844), 17 controlli, piu' 23 sul
+  contenuto della pagina. L'archivio di prova e' costruito apposta con **tutto
+  quello che non deve uscire gia' scritto dentro** — cognome del visitatore nel
+  campo «Cosa», il suo cellulare e la sua email, prezzo minimo, provvigione,
+  note interne, giudizio sulla visita — e la prova va a cercarli uno per uno
+  nella pagina consegnata. Nessuno esce.
+
+**Due cose trovate dal browser, che il codice non mostrava:**
+
+1. **`ml-2` non e' uno spazio.** «2 visite finora» era due elementi accostati
+   da un margine: a occhio giusto, nel testo della pagina «2visite finora», che
+   e' come lo legge una sintesi vocale. Lo spazio va scritto.
+2. **La cache teneva in vita le foto dopo la revoca.** Il server rispondeva
+   404 correttamente, ma la rotta copiava da `/foto/[id]/[file]` un
+   `max-age` di un anno con `immutable`: le foto gia' scaricate continuavano ad
+   aprirsi da quel browser per dodici mesi. Ora sono **cinque minuti** — bastano
+   a non riscaricare la galleria mentre si scorre, e fanno mordere la revoca
+   quasi subito. Sull'altra rotta un anno resta giusto: li' non c'e' revoca.
 
 **Il muro, per chi scrive il prossimo pezzo.** Ogni lettura di `queries.ts`
 vuole per primo l'id di chi guarda, e qui non c'e' nessuno che ha fatto

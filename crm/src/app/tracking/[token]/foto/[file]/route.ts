@@ -49,11 +49,19 @@ export async function GET(
   return new NextResponse(new Uint8Array(dati), {
     headers: {
       "Content-Type": "image/jpeg",
-      // Il nome del file non si ripete mai, quindi si puo' tenere in cache a
-      // lungo. `private` pero' e' obbligatorio: l'indirizzo contiene la
-      // chiave, e queste immagini non devono fermarsi in nessuna cache
-      // condivisa lungo la strada.
-      "Cache-Control": "private, max-age=31536000, immutable",
+      // `private` e' obbligatorio: l'indirizzo contiene la chiave, e queste
+      // immagini non devono fermarsi in nessuna cache condivisa lungo la
+      // strada.
+      //
+      // E la durata e' breve, al contrario di `/foto/[id]/[file]` che tiene un
+      // anno «immutable». Il nome del file non si ripete mai, quindi un anno
+      // sarebbe corretto sul contenuto — ma qui c'e' la revoca di mezzo: una
+      // volta tolta la chiave la pagina muore subito, mentre le foto gia'
+      // scaricate continuerebbero ad aprirsi dalla cache di quel browser per
+      // dodici mesi. Cinque minuti bastano a non riscaricare la galleria
+      // mentre il proprietario la scorre, e fanno mordere la revoca quasi
+      // subito. Trovato in browser: dal server il 404 arrivava gia' giusto.
+      "Cache-Control": "private, max-age=300",
     },
   });
 }
