@@ -550,11 +550,12 @@ Le cose costruite in questa sessione, in ordine
       previsto: la via non si inventa.
 
   Applicazione per i venditori («Mondo Tracking»)
-      Finita, portali compresi (4 settembre). La pagina /tracking/[token], il
-      riquadro sulla scheda immobile per creare e mandare il link, e il
-      registro di garanzia con i collegamenti agli annunci. I passi 1-5 sono in
-      esercizio; i portali (passo 6) non sono ancora sul server. Vedi «I due
-      progetti nuovi», qui sotto.
+      Scritta tutta e provata in browser, ma NON ancora provata sul gestionale
+      vero (4 settembre). La pagina /tracking/[token], il riquadro sulla scheda
+      immobile, il registro di garanzia. I passi 1-5 sono stati messi sul
+      server; il passo 6 (i portali) no. Camillo non ha ancora aperto il
+      gestionale: nessun link e' mai stato creato su un immobile vero, e nessun
+      proprietario l'ha ricevuto. Vedi «I due progetti nuovi», qui sotto.
 
   Pubblicazione sui portali
       Progetto nuovo, e il piu' urgente dei due. Ha dismesso Casagest24 e
@@ -1160,10 +1161,16 @@ ballo. Risparmia un giro di domande.
   | WhatsApp e revocarlo; nel cruscotto il richiamo per gli annunci rimasti
   | online su case gia' vendute.
   | 
-  | So che i passi 1-5 sono gia' sul server e il passo 6 (i portali) no:
-  | va lanciato aggiorna.sh. E' la prima pagina di questo programma
-  | raggiungibile senza accesso, quindi ogni lettura nuova che la riguarda va
-  | agganciata all'immobile della chiave, mai a un utente.
+  | So che i passi 1-5 sono stati messi sul server e il passo 6 (i portali)
+  | no: va lanciato aggiorna.sh. Ma so anche che nessuno l'ha ancora provato
+  | sul gestionale vero — nessun link e' mai stato creato su un immobile vero,
+  | nessun proprietario ne ha ricevuto uno, e le 76 prove sono tutte su un
+  | archivio finto. Se la prima cosa che facciamo e' costruirci sopra, si
+  | costruisce su una cosa che nessuno ha visto funzionare.
+  | 
+  | E' la prima pagina di questo programma raggiungibile senza accesso, quindi
+  | ogni lettura nuova che la riguarda va agganciata all'immobile della chiave,
+  | mai a un utente.
   | 
   | So che Camillo ha deciso il 4 settembre cosa vede il proprietario: le
   | visite senza nomi, e nient'altro. Fuori i giudizi sulle visite, fuori le
