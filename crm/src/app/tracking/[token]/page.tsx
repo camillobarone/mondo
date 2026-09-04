@@ -5,7 +5,8 @@ import {
   trackingPhotos,
   trackingVisits,
 } from "@/lib/queries";
-import { euro, shortDate } from "@/lib/format";
+import { euro, shortDate, phoneHref, whatsappHref } from "@/lib/format";
+import { AGENZIA } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,15 @@ export default async function TrackingPage({
   // `due_at` e' ora locale senza fuso e i confronti sono una fonte di errori.
   const svolte = visite.filter((visita) => visita.done_at);
   const inProgramma = visite.filter((visita) => !visita.done_at);
+
+  const telefono = phoneHref(AGENZIA.telefono);
+  // Il messaggio parte gia' scritto con la via: in agenzia arrivano messaggi da
+  // proprietari diversi, e "buongiorno, ci sono novita'?" non dice di quale
+  // casa si parli.
+  const scrivi = whatsappHref(
+    AGENZIA.telefono,
+    `Buongiorno, sono il proprietario dell'immobile in ${casa.address?.trim() || casa.title}.`,
+  );
 
   const ritirato = casa.status === "ritirato";
   const gradino = PERCORSO.findIndex((passo) => passo.stato === casa.status);
@@ -269,8 +279,23 @@ export default async function TrackingPage({
           </p>
           <p className="mt-1 text-sm text-slate-600">
             Per qualsiasi cosa sulla vendita — il prezzo, una visita, una
-            proposta — scrivi o telefona in agenzia: rispondiamo noi.
+            proposta — chiama o scrivi: rispondiamo noi.
           </p>
+
+          {/* Due pulsanti e non un numero scritto: sul telefono si tocca e
+              parte la chiamata, senza ricopiare dieci cifre a mano. */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {telefono ? (
+              <a href={`tel:${telefono}`} className="btn-primary">
+                Chiama {AGENZIA.telefono}
+              </a>
+            ) : null}
+            {scrivi ? (
+              <a href={scrivi} target="_blank" rel="noreferrer" className="btn-secondary">
+                Scrivi su WhatsApp
+              </a>
+            ) : null}
+          </div>
         </div>
       </section>
 

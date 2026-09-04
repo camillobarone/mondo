@@ -529,7 +529,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
-| **Applicazione per i venditori** («Mondo Tracking») | **La pagina c'e' e funziona** (4 settembre): `/tracking/[token]`, provata in browser su un telefono. **Manca il modo di mandarla**: il riquadro sulla scheda immobile con il link e il pulsante WhatsApp. Poi i portali, che vogliono un campo nuovo. Vedi «I due progetti nuovi», qui sotto. |
+| **Applicazione per i venditori** («Mondo Tracking») | **Finita e usabile** (4 settembre): la pagina `/tracking/[token]`, e sulla scheda immobile il riquadro per creare il link, mandarlo su WhatsApp e revocarlo. Provata in browser da capo a fondo. **Non e' ancora sul server.** Resta fuori solo la sezione **Portali**, che vuole un campo nuovo sulla scheda. Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
@@ -712,6 +712,45 @@ le visite che escono con tre campi soli — `id`, `due_at`, `done_at`.
    aprirsi da quel browser per dodici mesi. Ora sono **cinque minuti** — bastano
    a non riscaricare la galleria mentre si scorre, e fanno mordere la revoca
    quasi subito. Sull'altra rotta un anno resta giusto: li' non c'e' revoca.
+
+- **Il Passo 5: il riquadro sulla scheda dell'agente.**
+  `immobili/[id]/tracking-box.tsx`, con le tre azioni `creaLinkTracking`,
+  `rigeneraLinkTracking` e `revocaLinkTracking` in `actions.ts`. Il link non
+  esiste finche' non lo si crea: il riquadro parte da un pulsante solo.
+  Il messaggio WhatsApp passa da **`whatsappHref()`** — i numeri in archivio
+  sono senza +39 e `wa.me` a mano non aprirebbe nessuna chat — e porta dentro
+  il nome del proprietario e la via, perche' chi ha due immobili con noi deve
+  capire di quale gli stiamo parlando.
+
+  **`ownerPhoneForProperty` e' una funzione a se' e non un campo in
+  `PropertyRow`**: quel tipo lo costruiscono **tre** query diverse, e un campo
+  aggiunto al tipo ma non a tutte e tre sarebbe `undefined` in due pagine su
+  tre senza che TypeScript dica niente — gli oggetti si costruiscono con un
+  cast. E' la stessa trappola degli incroci fra colleghi, evitata stavolta
+  prima di scriverla.
+
+  `CopyField` si e' spostata da `agenda/calendario/` a `components/client.tsx`:
+  da quando la usano due pagine, il suo posto e' fra gli attrezzi condivisi.
+
+- **Il recapito dell'agenzia** sta in **`AGENZIA`** (`types.ts`): nome,
+  ragione sociale e telefono **3927282442**, dato da Camillo il 4 settembre.
+  Scritto li' e non in archivio perche' l'agenzia e' una sola, e una tabella di
+  configurazione con dentro una riga sarebbe una tabella in piu' da riempire.
+  Gli utenti del gestionale **non hanno un campo telefono**: per questo anche
+  il consulente, sulla pagina del proprietario, risponde a quel numero.
+
+  Verificato in browser da capo a fondo, 17 controlli: l'agente entra, apre la
+  scheda, crea il link, e lo stesso indirizzo si apre **in un browser senza
+  cookie** mostrando la casa giusta; poi lo toglie, e quell'indirizzo non apre
+  piu' niente. Compresi i due `wa.me` col prefisso `39` davanti e il `tel:`
+  che parte davvero.
+
+  **Trappola nelle prove:** i pulsanti pericolosi chiedono conferma con
+  `window.confirm`, e **Playwright annulla ogni dialogo** se non gli si dice
+  altro (`page.on("dialog", (d) => d.accept())`). Senza quella riga la revoca
+  non parte e il controllo fallisce dando la colpa al codice. E la prova va
+  fatta ripartire **azzerando `tracking_token`**: alla seconda corsa il
+  pulsante «Crea il link» non c'e' piu', perche' la prima lo ha gia' creato.
 
 **Il muro, per chi scrive il prossimo pezzo.** Ogni lettura di `queries.ts`
 vuole per primo l'id di chi guarda, e qui non c'e' nessuno che ha fatto

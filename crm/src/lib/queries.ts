@@ -996,6 +996,32 @@ export function propertyByTrackingToken(
   );
 }
 
+/**
+ * Il recapito del proprietario, per mandargli il suo link.
+ *
+ * Sta in una funzione sua e non dentro `PropertyRow`: quel tipo lo
+ * costruiscono **tre** query diverse, e un campo aggiunto al tipo ma non a
+ * tutte e tre sarebbe `undefined` in due pagine su tre senza che TypeScript
+ * dica niente — gli oggetti si costruiscono con un cast. E' la trappola gia'
+ * pagata sugli incroci fra colleghi.
+ *
+ * Il muro e' sull'immobile: la scheda si apre solo se e' tuo, e di conseguenza
+ * il suo proprietario e' un contatto che stai gia' vedendo.
+ */
+export function ownerPhoneForProperty(
+  utente: number,
+  propertyId: number,
+): string | null {
+  const riga = one<{ phone: string | null }>(
+    `SELECT COALESCE(c.mobile, c.phone) AS phone
+       FROM properties p
+       JOIN clients c ON c.id = p.owner_client_id
+      WHERE p.id = ? AND p.deleted_at IS NULL AND ${IMMOBILE_MIO}`,
+    [propertyId, utente],
+  );
+  return riga?.phone ?? null;
+}
+
 export type TrackingPhoto = {
   file: string;
   caption: string | null;

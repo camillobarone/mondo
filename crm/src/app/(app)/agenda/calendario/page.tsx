@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { calendarToken } from "@/lib/queries";
 import { PREAVVISO_MINUTI } from "@/lib/calendar";
 import { PageHeader, Card } from "@/components/ui";
-import { CopyField } from "./copy-field";
+import { CopyField } from "@/components/client";
 import { ResetTokenButton } from "./reset-button";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +60,7 @@ export default async function CalendarioPage() {
             trattalo come una password, non mandarlo in giro.
           </p>
 
-          <CopyField value={indirizzo} />
+          <CopyField value={indirizzo} etichetta="Indirizzo del calendario" />
 
           <div className="mt-4 space-y-3 text-sm text-slate-600">
             <div>

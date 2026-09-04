@@ -193,3 +193,50 @@ export function AvvisoModulo() {
     </p>
   );
 }
+
+/**
+ * Casella di sola lettura con il pulsante per copiare: l'indirizzo e' lungo e
+ * selezionarlo a mano sul telefono e' un supplizio.
+ *
+ * Stava nella cartella del calendario finche' a usarla era solo quella pagina.
+ * Da quando c'e' anche il link del proprietario e' roba di due, e il posto di
+ * un attrezzo usato da due pagine e' qui.
+ */
+export function CopyField({
+  value,
+  etichetta = "Indirizzo da copiare",
+}: {
+  value: string;
+  etichetta?: string;
+}) {
+  const [copiato, setCopiato] = useState(false);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <input
+        readOnly
+        value={value}
+        onFocus={(event) => event.currentTarget.select()}
+        className="field min-w-0 flex-1 font-mono text-xs"
+        aria-label={etichetta}
+      />
+      <button
+        type="button"
+        className="btn-secondary shrink-0"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+          } catch {
+            // Senza permesso per gli appunti resta la selezione manuale: la
+            // casella e' gia' selezionata al tocco.
+            return;
+          }
+          setCopiato(true);
+          setTimeout(() => setCopiato(false), 2000);
+        }}
+      >
+        {copiato ? "Copiato" : "Copia"}
+      </button>
+    </div>
+  );
+}

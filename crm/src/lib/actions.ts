@@ -19,6 +19,11 @@ import {
   splitName, splitPhones, parseRequirements,
   numero, dataItaliana, zonaEComune, tipologia,
 } from "./import-map";
+import {
+  trackingToken,
+  resetTrackingToken,
+  revokeTrackingToken,
+} from "./queries";
 import type { Property } from "./types";
 import { ACTIVITY_TYPES } from "./types";
 
@@ -1501,6 +1506,59 @@ export async function importClients(
   );
   revalidatePath("/clienti");
   return result;
+}
+
+/* ================================ il link riservato al proprietario */
+
+/**
+ * Le tre azioni del link di Mondo Tracking.
+ *
+ * Il muro non e' scritto qui: sta dentro `trackingToken`, `resetTrackingToken`
+ * e `revokeTrackingToken`, che lavorano solo sull'immobile di chi chiede e
+ * altrimenti non fanno niente. Quando non fanno niente, qui non si dice nulla:
+ * la scheda di un collega non si apre nemmeno, e chi arriva a mandare questo
+ * modulo a mano non merita una spiegazione.
+ */
+function immobileDelModulo(formData: FormData): number {
+  return Number(formData.get("property_id"));
+}
+
+/**
+ * Crea il link del proprietario, la prima volta che serve.
+ *
+ * Si crea qui e non alla nascita dell'immobile di proposito: un link vivo e'
+ * una porta aperta verso fuori, e le porte si aprono quando c'e' da entrarci.
+ * Farlo per tutti in blocco vorrebbe dire cinquantatre porte che nessuno ha
+ * chiesto e nessuno sorveglia.
+ */
+export async function creaLinkTracking(formData: FormData) {
+  const user = await requireUser();
+  const id = immobileDelModulo(formData);
+  if (!trackingToken(user.id, id)) return;
+  audit(user.id, "modifica", "immobile", id, "creato il link del proprietario");
+  revalidatePath(`/immobili/${id}`);
+}
+
+/**
+ * Genera un link nuovo: quello mandato prima smette di funzionare.
+ * Serve quando un indirizzo e' finito dove non doveva — inoltrato, o in una
+ * chat di gruppo.
+ */
+export async function rigeneraLinkTracking(formData: FormData) {
+  const user = await requireUser();
+  const id = immobileDelModulo(formData);
+  if (!resetTrackingToken(user.id, id)) return;
+  audit(user.id, "modifica", "immobile", id, "generato un link nuovo per il proprietario");
+  revalidatePath(`/immobili/${id}`);
+}
+
+/** Toglie il link: l'indirizzo gia' mandato non apre piu' niente. */
+export async function revocaLinkTracking(formData: FormData) {
+  const user = await requireUser();
+  const id = immobileDelModulo(formData);
+  if (!revokeTrackingToken(user.id, id)) return;
+  audit(user.id, "modifica", "immobile", id, "revocato il link del proprietario");
+  revalidatePath(`/immobili/${id}`);
 }
 
 /* ============================================================ calendario */

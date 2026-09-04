@@ -1,3 +1,18 @@
+/**
+ * I recapiti dell'agenzia, per le pagine che qualcuno guarda da fuori.
+ *
+ * Scritti qui e non in archivio perche' l'agenzia e' una sola: una tabella di
+ * configurazione con dentro una riga sarebbe una tabella in piu' da mantenere
+ * e da ricordarsi di riempire. Il numero e' anche quello del consulente —
+ * gli utenti del gestionale non hanno un campo telefono, e in agenzia
+ * risponde comunque chi c'e'.
+ */
+export const AGENZIA = {
+  nome: "Mondo Immobiliare Lecce",
+  ragioneSociale: "Studio RCS Srls",
+  telefono: "3927282442",
+} as const;
+
 export type Role = "titolare" | "agente";
 
 export interface User {
@@ -81,6 +96,11 @@ export interface Property {
   commission_paid: number;
   /** Il video dell'immobile su YouTube. Il gestionale lo conserva e basta: non ci parla. */
   video_url: string | null;
+  /**
+   * La chiave del link riservato al proprietario. `null` finche' l'agente non
+   * lo crea, e di nuovo `null` quando lo revoca: e' la revoca stessa.
+   */
+  tracking_token: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

@@ -11,10 +11,11 @@ import {
   activeUserOptions,
 } from "@/lib/queries";
 import { matchesForProperty, countMatchesForProperty, nearMissesForProperty } from "@/lib/matching";
-import { photosOfProperty, searchOwnerCandidates } from "@/lib/queries";
+import { photosOfProperty, searchOwnerCandidates, ownerPhoneForProperty } from "@/lib/queries";
 import { linkOwner } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
+import { TrackingBox } from "./tracking-box";
 import { deleteProperty } from "@/lib/actions";
 import { fromCsv, euro, shortDate, dateTime, relative, label, fullName, whatsappHref } from "@/lib/format";
 import {
@@ -58,6 +59,7 @@ export default async function PropertyPage({
   const proprietari = property.owner_client_id
     ? { rows: [], total: 0, searched: false }
     : searchOwnerCandidates(user.id, query.proprietario);
+  const telefonoProprietario = ownerPhoneForProperty(user.id, property.id);
   const offers = offersOfProperty(user.id, propertyId);
   const activities = activitiesOfProperty(user.id, propertyId);
   const prices = priceHistory(user.id, propertyId);
@@ -322,6 +324,14 @@ export default async function PropertyPage({
               </dl>
             </Card>
           ) : null}
+
+          <TrackingBox
+            propertyId={property.id}
+            token={property.tracking_token}
+            indirizzo={property.address}
+            ownerName={property.owner_name}
+            ownerPhone={telefonoProprietario}
+          />
 
           {property.notes ? (
             <Card title="Note interne">
