@@ -16,6 +16,7 @@ import { linkOwner } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
 import { TrackingBox } from "./tracking-box";
+import { PORTALI } from "@/lib/portali";
 import { deleteProperty } from "@/lib/actions";
 import { fromCsv, euro, shortDate, dateTime, relative, label, fullName, whatsappHref } from "@/lib/format";
 import {
@@ -163,6 +164,31 @@ export default async function PropertyPage({
                   </a>
                 ) : null}
               </DataRow>
+              {/* Uno per portale, sempre visibili anche da vuoti: una riga
+                  vuota dice «qui non e' pubblicato», che il giorno del rogito
+                  e' l'informazione che serve. Un elenco che mostra solo quelli
+                  compilati farebbe sembrare completo un immobile pubblicato a
+                  meta'. */}
+              {PORTALI.map((portale) => {
+                const indirizzo =
+                  portale.chiave === "idealista"
+                    ? property.listing_idealista
+                    : property.listing_immobiliare;
+                return (
+                  <DataRow key={portale.chiave} label={`Annuncio ${portale.nome}`}>
+                    {indirizzo ? (
+                      <a
+                        href={indirizzo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-700 hover:underline"
+                      >
+                        Apri l&apos;annuncio ↗
+                      </a>
+                    ) : null}
+                  </DataRow>
+                );
+              })}
             </dl>
           </Card>
 

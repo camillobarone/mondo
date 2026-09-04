@@ -110,6 +110,16 @@ const COLONNE_AGGIUNTE: {
   // dire far vedere a un proprietario la casa di un altro. In SQLite un indice
   // univoco lascia passare quanti NULL si vuole, quindi gli immobili che una
   // chiave non ce l'hanno — oggi tutti — non danno nessun fastidio.
+  // Dove l'annuncio e' pubblicato. Due colonne e non una lista: sono due, e
+  // due campi con la loro etichetta si compilano senza spiegazioni. Il costo di
+  // aggiungerne un terzo sta scritto in cima a `portali.ts`.
+  //
+  // Il gestionale non interroga i portali e non lo fara': conserva l'indirizzo
+  // perche' il proprietario possa aprirlo e verificare da se' che la sua casa
+  // e' online, e perche' l'agenzia sappia dove andare a togliere l'annuncio il
+  // giorno del rogito.
+  { tabella: "properties", colonna: "listing_idealista", definizione: "TEXT" },
+  { tabella: "properties", colonna: "listing_immobiliare", definizione: "TEXT" },
   {
     tabella: "properties",
     colonna: "tracking_token",

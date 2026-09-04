@@ -7,6 +7,7 @@ import {
 } from "@/lib/queries";
 import { euro, shortDate, phoneHref, whatsappHref } from "@/lib/format";
 import { AGENZIA } from "@/lib/types";
+import { PORTALI } from "@/lib/portali";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,19 @@ export default async function TrackingPage({
     AGENZIA.telefono,
     `Buongiorno, sono il proprietario dell'immobile in ${casa.address?.trim() || casa.title}.`,
   );
+
+  // Solo i portali dove la casa e' davvero pubblicata: una riga «non
+  // pubblicata su X» al proprietario non racconta come sta andando la vendita,
+  // racconta cosa l'agenzia non ha fatto. Quella riga serve in ufficio, sulla
+  // scheda dell'immobile, e li' infatti c'e'.
+  const pubblicata: { nome: string; url: string }[] = [];
+  for (const portale of PORTALI) {
+    const url =
+      portale.chiave === "idealista"
+        ? casa.listing_idealista
+        : casa.listing_immobiliare;
+    if (url) pubblicata.push({ nome: portale.nome, url });
+  }
 
   const ritirato = casa.status === "ritirato";
   const gradino = PERCORSO.findIndex((passo) => passo.stato === casa.status);
@@ -215,6 +229,35 @@ export default async function TrackingPage({
           </p>
         </div>
       </section>
+
+      {/* ----------------------------------------------------------- portali */}
+      {pubblicata.length > 0 ? (
+        <section className="card mb-6">
+          <div className="card-head">
+            <h2 className="card-title">Dove è pubblicata</h2>
+          </div>
+          <div className="px-4 py-4">
+            <ul className="space-y-2">
+              {pubblicata.map((riga) => (
+                <li key={riga.nome}>
+                  <a
+                    href={riga.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-medium text-brand-700 hover:underline"
+                  >
+                    Vedi l&apos;annuncio su {riga.nome} ↗
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-slate-400">
+              Sono gli annunci veri: aprili quando vuoi per controllare che
+              foto, prezzo e descrizione siano quelli giusti.
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       {/* ----------------------------------------------------------- percorso */}
       <section className="card mb-6">

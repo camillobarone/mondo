@@ -12,6 +12,7 @@ import {
   PROPERTY_STATUSES,
   ZONE_PER_COMUNE,
 } from "@/lib/types";
+import { PORTALI } from "@/lib/portali";
 import type { Property } from "@/lib/types";
 import { LuogoImmobile } from "./luogo-immobile";
 
@@ -211,6 +212,36 @@ export function PropertyForm({
           title="Incolla l'indirizzo del video, per esempio https://youtu.be/xxxxxxxxxxx"
           hint="Incolla l'indirizzo del video. Serve a sapere quali immobili un video ce l'hanno, e finisce nell'esportazione per l'applicazione che gestisce il canale. Il gestionale non va a guardarlo."
         />
+      </Card>
+
+      <Card title="Dove è pubblicato">
+        <p className="mb-3 text-sm text-slate-600">
+          L&apos;indirizzo dell&apos;annuncio su ogni portale. Il proprietario lo
+          vede nella sua pagina e può aprirlo per verificare da sé che la casa è
+          online — ed è il posto dove ritrovarli tutti il giorno del rogito, per
+          andare a toglierli.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PORTALI.map((portale) => (
+            <TextField
+              key={portale.chiave}
+              label={`Annuncio su ${portale.nome}`}
+              name={portale.colonna}
+              defaultValue={
+                portale.chiave === "idealista"
+                  ? property?.listing_idealista
+                  : property?.listing_immobiliare
+              }
+              placeholder={portale.esempio}
+              // La barra rovesciata qui e' quella dell'espressione, non di una
+              // stringa JavaScript: scritta doppia diventa una barra letterale,
+              // niente risulta piu' valido e il modulo non si invia piu', in
+              // silenzio. Trappola gia' pagata col campo del video.
+              pattern="\S+\.\S+"
+              title={`Incolla l'indirizzo dell'annuncio, per esempio ${portale.esempio}`}
+            />
+          ))}
+        </div>
       </Card>
 
       <Card title="Note">

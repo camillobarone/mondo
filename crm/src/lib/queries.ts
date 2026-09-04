@@ -325,6 +325,7 @@ export interface PropertyFilters {
   noAddress?: string;
   /** Solo quelli ancora proponibili a cui manca il video. */
   noVideo?: string;
+  annuncioAperto?: string;
   /** Quale meta' del portafoglio: `attivi` (predefinito), `altri`, `tutti`. */
   gruppo?: string;
   page?: string;
@@ -364,6 +365,27 @@ const IMMOBILE_SENZA_VIA = `(p.address IS NULL OR TRIM(p.address) = '')`;
  */
 const IMMOBILE_SENZA_VIDEO = `((p.video_url IS NULL OR TRIM(p.video_url) = '')
   AND p.status IN ('acquisizione','in_vendita'))`;
+
+/**
+ * Un immobile **venduto o ritirato che ha ancora un annuncio online**.
+ *
+ * E' il richiamo che vale piu' di tutti gli altri di questa famiglia: un
+ * annuncio rimasto pubblicato dopo il rogito porta telefonate per una casa che
+ * non c'e' piu' — si fa perdere tempo a chi chiama e si fa fare una figura
+ * all'agenzia, e nessuno se ne accorge finche' non squilla il telefono.
+ *
+ * Al contrario di «senza video» qui si guardano **solo** i non proponibili:
+ * per un immobile in vendita l'annuncio online e' giusto che ci sia.
+ *
+ * Le parentesi esterne non sono decorative: senza, l'`OR` fra i due portali si
+ * mangerebbe l'`AND` sullo stato e il conteggio comprenderebbe tutto il
+ * portafoglio pubblicato.
+ */
+const IMMOBILE_ANNUNCIO_DA_TOGLIERE = `(
+  ((p.listing_idealista IS NOT NULL AND TRIM(p.listing_idealista) <> '')
+    OR (p.listing_immobiliare IS NOT NULL AND TRIM(p.listing_immobiliare) <> ''))
+  AND p.status IN ('venduto','ritirato')
+)`;
 
 export type PropertyRow = Property & {
   owner_name: string | null;
@@ -416,6 +438,9 @@ function propertyWhere(
   }
   if (filters.noAddress === "1") {
     clauses.push(IMMOBILE_SENZA_VIA);
+  }
+  if (filters.annuncioAperto === "1") {
+    clauses.push(IMMOBILE_ANNUNCIO_DA_TOGLIERE);
   }
   if (filters.noVideo === "1") {
     clauses.push(IMMOBILE_SENZA_VIDEO);
@@ -954,6 +979,14 @@ export type TrackingProperty = {
   price: number | null;
   status: string;
   video_url: string | null;
+  /**
+   * Dove l'annuncio e' pubblicato. Escono di proposito: sono l'unica cosa di
+   * questa pagina che il proprietario puo' **verificare da solo**, aprendo il
+   * collegamento. E' il motivo per cui la sezione si chiama registro di
+   * garanzia e non statistiche.
+   */
+  listing_idealista: string | null;
+  listing_immobiliare: string | null;
   mandate_start: string | null;
   mandate_end: string | null;
   created_at: string;
@@ -987,6 +1020,7 @@ export function propertyByTrackingToken(
             p.address, p.city, p.zone,
             p.sqm, p.rooms, p.bathrooms, p.floor,
             p.price, p.status, p.video_url,
+            p.listing_idealista, p.listing_immobiliare,
             p.mandate_start, p.mandate_end, p.created_at,
             u.name AS agent_name
        FROM properties p
@@ -1328,6 +1362,15 @@ export function countPropertiesWithoutVideo(utente: number): number {
   );
 }
 
+/** Quanti annunci sono rimasti online su una casa gia' chiusa. Stessa condizione del filtro. */
+export function countListingsToRemove(utente: number): number {
+  return count(
+    `SELECT COUNT(*) AS n FROM properties p
+      WHERE p.deleted_at IS NULL AND ${IMMOBILE_ANNUNCIO_DA_TOGLIERE} AND ${IMMOBILE_MIO}`,
+    [utente],
+  );
+}
+
 /**
  * Le mancanze che non si vedono finche' non fanno danno: l'acquirente che non
  * entra negli incroci perche' nessuno ha scritto cosa cerca, il consenso
@@ -1338,6 +1381,7 @@ export function daSistemare(utente: number): {
   senzaProprietario: number;
   senzaVia: number;
   senzaVideo: number;
+  annunciDaTogliere: number;
   senzaRichiesta: number;
   senzaPrivacy: number;
   amlScaduti: number;
@@ -1346,6 +1390,7 @@ export function daSistemare(utente: number): {
     senzaProprietario: countPropertiesWithoutOwner(utente),
     senzaVia: countPropertiesWithoutAddress(utente),
     senzaVideo: countPropertiesWithoutVideo(utente),
+    annunciDaTogliere: countListingsToRemove(utente),
     senzaRichiesta: count(
       `SELECT COUNT(*) AS n FROM clients c
         WHERE c.deleted_at IS NULL

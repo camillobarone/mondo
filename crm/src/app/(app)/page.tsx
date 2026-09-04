@@ -88,6 +88,14 @@ export default async function DashboardPage() {
       href: "/immobili?noVideo=1&gruppo=tutti",
     },
     {
+      quanti: cure.annunciDaTogliere,
+      testo: "annunci ancora online su case già vendute o ritirate: vanno tolti",
+      // `gruppo=tutti` obbligatorio: venduti e ritirati stanno fra gli «altri»,
+      // e senza questo l'elenco si aprirebbe sugli attivi e non mostrerebbe
+      // nessuna delle righe che il numero ha appena promesso.
+      href: "/immobili?annuncioAperto=1&gruppo=tutti",
+    },
+    {
       quanti: cure.amlScaduti,
       testo: "documenti antiriciclaggio scaduti",
       href: "/clienti?senza=aml",

@@ -96,6 +96,10 @@ export interface Property {
   commission_paid: number;
   /** Il video dell'immobile su YouTube. Il gestionale lo conserva e basta: non ci parla. */
   video_url: string | null;
+  /** L'annuncio su idealista, come e' stato incollato. */
+  listing_idealista: string | null;
+  /** L'annuncio su Immobiliare.it, come e' stato incollato. */
+  listing_immobiliare: string | null;
   /**
    * La chiave del link riservato al proprietario. `null` finche' l'agente non
    * lo crea, e di nuovo `null` quando lo revoca: e' la revoca stessa.

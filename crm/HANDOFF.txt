@@ -550,11 +550,11 @@ Le cose costruite in questa sessione, in ordine
       previsto: la via non si inventa.
 
   Applicazione per i venditori («Mondo Tracking»)
-      Finita e usabile (4 settembre): la pagina /tracking/[token], e sulla
-      scheda immobile il riquadro per creare il link, mandarlo su WhatsApp e
-      revocarlo. Provata in browser da capo a fondo. Non e' ancora sul server.
-      Resta fuori solo la sezione Portali, che vuole un campo nuovo sulla
-      scheda. Vedi «I due progetti nuovi», qui sotto.
+      Finita, portali compresi (4 settembre). La pagina /tracking/[token], il
+      riquadro sulla scheda immobile per creare e mandare il link, e il
+      registro di garanzia con i collegamenti agli annunci. I passi 1-5 sono in
+      esercizio; i portali (passo 6) non sono ancora sul server. Vedi «I due
+      progetti nuovi», qui sotto.
 
   Pubblicazione sui portali
       Progetto nuovo, e il piu' urgente dei due. Ha dismesso Casagest24 e
@@ -791,6 +791,62 @@ Due cose trovate dal browser, che il codice non mostrava:
   non parte e il controllo fallisce dando la colpa al codice. E la prova va
   fatta ripartire azzerando tracking_token: alla seconda corsa il
   pulsante «Crea il link» non c'e' piu', perche' la prima lo ha gia' creato.
+
+- Il Passo 6: i portali. src/lib/portali.ts tiene l'elenco PORTALI
+  (idealista e Immobiliare.it) e collegamentoAnnuncio(). Due colonne nuove,
+  listing_idealista e listing_immobiliare: due e non una lista, perche' i
+  portali sono due e due caselle con la loro etichetta si compilano senza
+  spiegazioni. Il costo di aggiungerne un terzo sta scritto in cima a
+  portali.ts — poco, ma non gratis.
+
+  Il controllo che vale davvero non e' che sia un indirizzo: e' che sia il
+  sito giusto. Due caselle vicine, e incollare l'annuncio di idealista sotto
+  Immobiliare.it e' l'errore piu' facile del mondo — il proprietario si
+  vedrebbe scritto «pubblicata su Immobiliare.it» con sotto un collegamento che
+  porta altrove, che e' peggio di non scriverlo affatto.
+
+  Sulla pagina del proprietario la sezione «Dove è pubblicata» mostra solo i
+  portali dove la casa c'e' davvero, e sparisce del tutto se non e'
+  pubblicata da nessuna parte: una riga «non pubblicata su X» non racconta come
+  va la vendita, racconta cosa l'agenzia non ha fatto. Quella riga serve in
+  ufficio, e sulla scheda dell'immobile infatti c'e', vuota compresa.
+
+- Il richiamo che vale di piu': gli annunci da togliere.
+  IMMOBILE_ANNUNCIO_DA_TOGLIERE in queries.ts, scritta una volta sola come
+  le sorelle, conta gli immobili venduti o ritirati che hanno ancora un
+  annuncio online. Un annuncio rimasto pubblicato dopo il rogito porta
+  telefonate per una casa che non c'e' piu', e nessuno se ne accorge finche' non
+  squilla il telefono. Il collegamento del cruscotto porta gruppo=tutti, che
+  qui e' obbligatorio: venduti e ritirati stanno fra gli «altri».
+
+  Le parentesi esterne di quella condizione non sono decorative: senza,
+  l'OR fra i due portali si mangerebbe l'AND sullo stato e il numero
+  comprenderebbe tutto il portafoglio pubblicato. La prova lo verifica.
+
+  Non e' stato fatto il richiamo gemello «in vendita e non pubblicato da
+  nessuna parte». Oggi darebbe 53 su 53 — Camillo ha appena cominciato a
+  pubblicare a mano — e un numero che comprende tutto non e' un richiamo, e'
+  rumore. Quando gli annunci saranno caricati, e' una condizione di tre righe.
+
+  SELECT e segnaposto: aggiungendo le due colonne, l'INSERT di
+  saveProperty si e' ritrovato con 29 colonne e 27 ?. TypeScript non se ne
+  accorge e il build passa: si rompe al primo salvataggio. Contati a macchina,
+  colonne e parametri, prima di provare — vale la pena rifarlo ogni volta che
+  si tocca quella query.
+
+  Verificato: 6 controlli sulla condizione del richiamo (comprese le parentesi
+  e la casella di soli spazi) e 15 in browser — il cruscotto che conta, il
+  collegamento che apre esattamente la riga promessa, l'annuncio incollato
+  nella casella sbagliata che viene rifiutato senza portare via le note, il
+  salvataggio buono, e la sezione che sparisce quando la casa non e' pubblicata.
+  Piu' le prove di prima rifatte: 38 + 17, tutte verdi.
+
+Quello che ancora non c'e', e aspetta lui: la pagina del proprietario di
+idealista (quella coi numeri di visite e contatti). Il collegamento e' per
+immobile e stabile, quindi si salverebbe in un campo come questi — ma prima
+vanno verificati i suoi numeri, che al capitolo 5 non tornavano: 1.221 visite
+su un annuncio con 0 giorni di pubblicazione. Mandare al proprietario un
+numero che significa un'altra cosa e' una figura sua.
 
 Il muro, per chi scrive il prossimo pezzo. Ogni lettura di queries.ts
 vuole per primo l'id di chi guarda, e qui non c'e' nessuno che ha fatto

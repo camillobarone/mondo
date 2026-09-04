@@ -13,6 +13,7 @@ import { invia, postaConfigurata, indirizzoBase } from "./posta";
 import { parseCsv, decodeText } from "./csv";
 import { leggiAree, scriviAree, proiezione } from "./aree";
 import { collegamentoVideo } from "./video";
+import { PORTALI, collegamentoAnnuncio } from "./portali";
 import { readXlsx, looksLikeXlsx } from "./xlsx";
 import { salvaFoto, cancellaFile, MAX_FOTO_PER_IMMOBILE } from "./photos";
 import {
@@ -400,6 +401,8 @@ export async function saveProperty(_prev: string | null, form: FormData) {
     exclusive: bool(form, "exclusive"),
     commission_pct: decimal(form, "commission_pct"),
     video_url: null as string | null,
+    listing_idealista: null as string | null,
+    listing_immobiliare: null as string | null,
     notes: nullable(form, "notes"),
   };
 
@@ -409,6 +412,18 @@ export async function saveProperty(_prev: string | null, form: FormData) {
   const video = collegamentoVideo(text(form, "video_url"));
   if (video.errore) return video.errore;
   values.video_url = video.url;
+
+  // Gli annunci sui portali, con la stessa regola del video piu' una: che il
+  // sito sia quello giusto. Due caselle vicine, e incollare l'annuncio di
+  // idealista sotto Immobiliare.it e' l'errore piu' facile del mondo — il
+  // proprietario si vedrebbe scritto «pubblicata su Immobiliare.it» con sotto
+  // un collegamento che porta altrove.
+  for (const portale of PORTALI) {
+    const esito = collegamentoAnnuncio(portale, text(form, portale.colonna));
+    if (esito.errore) return esito.errore;
+    if (portale.chiave === "idealista") values.listing_idealista = esito.url;
+    else values.listing_immobiliare = esito.url;
+  }
 
   if (!values.title) return "Serve un titolo per l'immobile.";
   // Senza indirizzo, l'immobile compare nelle liste e nelle tendine col solo
@@ -429,7 +444,8 @@ export async function saveProperty(_prev: string | null, form: FormData) {
          sqm = ?, rooms = ?, bathrooms = ?, floor = ?, elevator = ?, outdoor = ?, garage = ?,
          condition = ?, energy_class = ?, price = ?, min_price = ?, status = ?,
          owner_client_id = ?, agent_id = ?, mandate_start = ?, mandate_end = ?,
-         exclusive = ?, commission_pct = ?, video_url = ?, notes = ?,
+         exclusive = ?, commission_pct = ?, video_url = ?,
+         listing_idealista = ?, listing_immobiliare = ?, notes = ?,
          updated_at = datetime('now')
        WHERE id = ?`,
       [
@@ -438,7 +454,8 @@ export async function saveProperty(_prev: string | null, form: FormData) {
         values.outdoor, values.garage, values.condition, values.energy_class, values.price,
         values.min_price, values.status, values.owner_client_id, values.agent_id ?? user.id,
         values.mandate_start, values.mandate_end, values.exclusive, values.commission_pct,
-        values.video_url, values.notes, id,
+        values.video_url, values.listing_idealista, values.listing_immobiliare,
+        values.notes, id,
       ],
     );
 
@@ -463,15 +480,16 @@ export async function saveProperty(_prev: string | null, form: FormData) {
        ref, title, kind, contract, address, city, zone, sqm, rooms, bathrooms, floor,
        elevator, outdoor, garage, condition, energy_class, price, min_price, status,
        owner_client_id, agent_id, mandate_start, mandate_end, exclusive, commission_pct,
-       video_url, notes
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       video_url, listing_idealista, listing_immobiliare, notes
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       values.ref, values.title, values.kind, values.contract, values.address, values.city,
       values.zone, values.sqm, values.rooms, values.bathrooms, values.floor, values.elevator,
       values.outdoor, values.garage, values.condition, values.energy_class, values.price,
       values.min_price, values.status, values.owner_client_id, values.agent_id ?? user.id,
       values.mandate_start, values.mandate_end, values.exclusive, values.commission_pct,
-      values.video_url, values.notes,
+      values.video_url, values.listing_idealista, values.listing_immobiliare,
+      values.notes,
     ],
   );
 
