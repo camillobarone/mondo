@@ -16,7 +16,7 @@ import { linkOwner } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
 import { TrackingBox } from "./tracking-box";
-import { PORTALI } from "@/lib/portali";
+import { PORTALI, annuncioDi } from "@/lib/portali";
 import { deleteProperty } from "@/lib/actions";
 import { fromCsv, euro, shortDate, dateTime, relative, label, fullName, whatsappHref } from "@/lib/format";
 import {
@@ -171,9 +171,7 @@ export default async function PropertyPage({
                   meta'. */}
               {PORTALI.map((portale) => {
                 const indirizzo =
-                  portale.chiave === "idealista"
-                    ? property.listing_idealista
-                    : property.listing_immobiliare;
+                  annuncioDi(portale, property);
                 return (
                   <DataRow key={portale.chiave} label={`Annuncio ${portale.nome}`}>
                     {indirizzo ? (
@@ -369,6 +367,7 @@ export default async function PropertyPage({
             indirizzo={property.address}
             ownerName={property.owner_name}
             ownerPhone={telefonoProprietario}
+            annunci={property}
           />
 
           {property.notes ? (

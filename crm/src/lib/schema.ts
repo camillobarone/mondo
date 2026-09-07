@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS properties (
   commission_paid   INTEGER NOT NULL DEFAULT 0,
   video_url         TEXT,                              -- il video dell'immobile su YouTube
   tracking_token    TEXT,                              -- chiave del link riservato al proprietario
+  listing_sito      TEXT,                              -- l'annuncio sul nostro sito
   listing_idealista TEXT,                              -- l'annuncio su idealista
   listing_immobiliare TEXT,                            -- l'annuncio su Immobiliare.it
   idealista_owner_url TEXT,                            -- la pagina che idealista fa per il proprietario

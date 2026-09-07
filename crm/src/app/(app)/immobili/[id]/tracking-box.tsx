@@ -7,6 +7,9 @@ import {
   revocaLinkTracking,
 } from "@/lib/actions";
 import { whatsappHref } from "@/lib/format";
+import { AGENZIA } from "@/lib/types";
+import { PORTALI, annuncioDi } from "@/lib/portali";
+import type { AnnunciImmobile } from "@/lib/portali";
 
 /**
  * Il link riservato al proprietario, sulla scheda dell'agente.
@@ -21,6 +24,7 @@ export async function TrackingBox({
   indirizzo,
   ownerName,
   ownerPhone,
+  annunci,
 }: {
   propertyId: number;
   token: string | null;
@@ -28,6 +32,8 @@ export async function TrackingBox({
   indirizzo: string | null;
   ownerName: string | null;
   ownerPhone: string | null;
+  /** Dove l'immobile e' pubblicato: entra anch'esso nel messaggio. */
+  annunci: AnnunciImmobile;
 }) {
   if (!token) {
     return (
@@ -54,10 +60,31 @@ export async function TrackingBox({
   const link = `${protocollo}://${host}/tracking/${token}`;
 
   const casa = indirizzo?.trim();
-  const messaggio =
+
+  // Dove l'annuncio e' online, nell'ordine in cui stanno in PORTALI: il nostro
+  // sito per primo. Sono collegamenti pubblici — il proprietario li puo' gia'
+  // trovare cercando la sua casa — e averli nel messaggio gli risparmia di
+  // andarseli a cercare per controllare che ci siano davvero.
+  const pubblicato: string[] = [];
+  for (const p of PORTALI) {
+    const url = annuncioDi(p, annunci);
+    if (url) pubblicato.push(`${p.nome} — ${url}`);
+  }
+
+  const messaggio = [
     `Gentile ${ownerName || "cliente"}, da questo collegamento può seguire ` +
-    `l'andamento della vendita${casa ? ` del suo immobile in ${casa}` : ""}: ` +
-    `${link}\n\nÈ riservato a lei, la preghiamo di non condividerlo.`;
+      `l'andamento della vendita${casa ? ` del suo immobile in ${casa}` : ""}:`,
+    link,
+    ...(pubblicato.length ? ["", "L'annuncio è online su:", ...pubblicato] : []),
+    "",
+    "Il collegamento qui sopra è riservato a lei: la preghiamo di non condividerlo.",
+    "",
+    // Firma la coordinatrice, non chi ha premuto il pulsante: al cliente
+    // risponde sempre lei, e una firma che cambia a seconda di chi manda il
+    // messaggio e' una firma che non dice niente.
+    AGENZIA.coordinatrice,
+    AGENZIA.nome,
+  ].join("\n");
 
   // Mai wa.me scritto a mano: i numeri in archivio sono senza +39, e senza
   // prefisso WhatsApp non apre nessuna conversazione.

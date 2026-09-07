@@ -118,6 +118,7 @@ const COLONNE_AGGIUNTE: {
   // perche' il proprietario possa aprirlo e verificare da se' che la sua casa
   // e' online, e perche' l'agenzia sappia dove andare a togliere l'annuncio il
   // giorno del rogito.
+  { tabella: "properties", colonna: "listing_sito", definizione: "TEXT" },
   { tabella: "properties", colonna: "listing_idealista", definizione: "TEXT" },
   { tabella: "properties", colonna: "listing_immobiliare", definizione: "TEXT" },
   // La pagina che idealista genera per il proprietario, con i loro numeri

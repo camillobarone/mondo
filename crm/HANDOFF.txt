@@ -926,6 +926,43 @@ Finche' non lo fa, la casella resta vuota e la sezione non compare: il codice
 non aspetta niente, aspetta lui. Da qui non si verifica: la rete verso
 l'esterno e' chiusa e idealista non si raggiunge.
 
+
+La firma e il sito (7 settembre)
+
+Due richieste sue, fatte insieme.
+
+Firma la coordinatrice, non l'agente. AGENZIA.coordinatrice in
+types.ts, oggi Virginia. Vale per il messaggio WhatsApp del link e per il
+foglio delle visite da stampare, che prima portava il nome di chi aveva
+fatto l'accesso — cioe' una firma diversa a seconda di chi premeva il pulsante.
+Non e' stata toccata la scheda «Chi segue la tua casa» sulla pagina del
+proprietario: li' c'e' l'agente, ed e' giusto — sono due cose diverse, chi
+segue l'immobile e chi firma quello che l'agenzia manda. Se un giorno volesse
+Virginia anche li', e' una riga.
+
+Il nostro sito e' diventato un portale. Colonna listing_sito, e una voce
+in cima a PORTALI: il sito dell'agenzia e' un posto dove l'immobile e'
+pubblicato come gli altri, e cosi' entra da solo nella sezione «Dove e'
+pubblicata» e nel messaggio, senza codice suo. Il controllo sul dominio vale
+anche per lui: un link di idealista incollato nella casella del sito viene
+rifiutato.
+
+Il messaggio dell'invito porta ora, sotto il link riservato, l'elenco dei
+posti dove l'annuncio e' online — solo quelli compilati — e in fondo la firma.
+
+La trappola pagata qui, e vale per il prossimo portale. Con due portali la
+scelta del campo era un ternario chiave === "idealista" ? a : b, ripetuto in
+quattro file. Al terzo portale quel ternario compila ancora e sbaglia in
+silenzio: tiene il secondo campo per tutti quelli dopo il primo. Adesso c'e'
+annuncioDi(portale, immobile) in portali.ts, che indicizza per nome di
+colonna ed e' controllato da TypeScript. Aggiungere un portale non deve piu'
+voler dire cercare gli if sparsi.
+
+Verificato: 97 controlli, tutte le prove rifatte due volte di fila per
+essere sicuri che siano indipendenti — tre di loro sporcavano l'archivio e non
+lo rimettevano a posto, e la seconda corsa falliva dando la colpa al codice.
+Adesso ognuna riparte da uno stato noto.
+
 Il muro, per chi scrive il prossimo pezzo. Ogni lettura di queries.ts
 vuole per primo l'id di chi guarda, e qui non c'e' nessuno che ha fatto
 l'accesso. Il muro non sparisce, cambia forma: la chiave apre *un immobile
@@ -1123,6 +1160,13 @@ Trappole già pagate (non ripeterle)
   con TZID=Europe/Rome, senza passare da Date.
 - Le colonne nuove non arrivano da CREATE TABLE IF NOT EXISTS: si
   aggiungono nell'elenco COLONNE_AGGIUNTE in src/lib/db.ts.
+- Aggiungendo una colonna a properties, conta i ? dell'INSERT. In
+  saveProperty colonne e segnaposto stanno in due punti diversi della stessa
+  query: ne aggiungi una e i ? restano quelli di prima. Ha morso tre volte
+  in due giorni — TypeScript non se ne accorge, next build passa, e si
+  rompe al primo salvataggio. Si contano a macchina, non a occhio:
+  python3 che spacchetta la lista fra parentesi e conta i ?. Vale anche per
+  l'UPDATE, che vuole un parametro in piu' (l'id in fondo).
 - Servizio, cron e file della posta stanno in deploy/servizi.sh, usato
   sia da installa.sh sia da aggiorna.sh: scritti solo dall'installazione,
   un aggiornamento non li applicherebbe mai.

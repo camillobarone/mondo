@@ -23,6 +23,15 @@
  */
 export const PORTALI = [
   {
+    chiave: "sito",
+    // Il nome compare al proprietario dentro «Vedi l'annuncio su ...»: va
+    // scritto come si legge in una frase, non come si chiama la casella.
+    nome: "Mondo Immobiliare",
+    colonna: "listing_sito",
+    dominio: "mondoimmobiliarelecce.it",
+    esempio: "https://www.mondoimmobiliarelecce.it/immobili/...",
+  },
+  {
     chiave: "idealista",
     /** Come si chiama, scritto come lo scrivono loro. */
     nome: "idealista",
@@ -42,6 +51,31 @@ export const PORTALI = [
 ] as const;
 
 export type Portale = (typeof PORTALI)[number];
+
+/** Il portale con quella chiave. Va in errore se non c'e': e' un refuso, non un dato. */
+export function portale(chiave: Portale["chiave"]): Portale {
+  const trovato = PORTALI.find((p) => p.chiave === chiave);
+  if (!trovato) throw new Error(`Portale sconosciuto: ${chiave}`);
+  return trovato;
+}
+
+/**
+ * Le colonne di `properties` che tengono gli annunci, una per portale.
+ *
+ * Serve a leggerle senza scrivere una catena di `if` che va allungata a ogni
+ * portale nuovo — ed e' successo: con due portali la scelta era un ternario,
+ * al terzo si sarebbe rotta in silenzio, tenendo l'ultimo per tutti quelli
+ * dopo il primo.
+ */
+export type AnnunciImmobile = { [K in Portale["colonna"]]: string | null };
+
+/** L'annuncio di quell'immobile su quel portale. */
+export function annuncioDi(
+  p: Portale,
+  immobile: AnnunciImmobile | null | undefined,
+): string | null {
+  return immobile?.[p.colonna] ?? null;
+}
 
 /**
  * Controlla il collegamento a un annuncio.

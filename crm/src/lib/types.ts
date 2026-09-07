@@ -11,6 +11,15 @@ export const AGENZIA = {
   nome: "Mondo Immobiliare Lecce",
   ragioneSociale: "Studio RCS Srls",
   telefono: "3927282442",
+  /**
+   * Chi firma quello che l'agenzia manda ai clienti.
+   *
+   * Non e' l'agente che segue l'immobile: le comunicazioni al venditore le
+   * cura la coordinatrice, ed e' a lei che il cliente risponde. Prima ci
+   * finiva il nome di chi aveva fatto l'accesso, che voleva dire una firma
+   * diversa a seconda di chi premeva il pulsante.
+   */
+  coordinatrice: "Virginia",
 } as const;
 
 export type Role = "titolare" | "agente";
@@ -96,6 +105,8 @@ export interface Property {
   commission_paid: number;
   /** Il video dell'immobile su YouTube. Il gestionale lo conserva e basta: non ci parla. */
   video_url: string | null;
+  /** L'annuncio sul sito dell'agenzia. */
+  listing_sito: string | null;
   /** L'annuncio su idealista, come e' stato incollato. */
   listing_idealista: string | null;
   /** L'annuncio su Immobiliare.it, come e' stato incollato. */

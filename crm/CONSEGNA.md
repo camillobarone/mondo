@@ -797,7 +797,9 @@ gli interni di casa d'altri.
 
 ### Dove è pubblicato l'annuncio
 
-Due caselle sulla scheda dell'immobile, per **idealista** e **Immobiliare.it**.
+Tre caselle sulla scheda dell'immobile: il **sito dell'agenzia**, **idealista**
+e **Immobiliare.it**. Gli stessi collegamenti finiscono nel messaggio WhatsApp
+che si manda al proprietario insieme al link riservato.
 Il gestionale **non parla con i portali e non lo farà**: conserva l'indirizzo
 perché il proprietario possa aprirlo e verificare da sé che la sua casa è
 online — per questo la sezione si chiama *registro di garanzia* e non
@@ -824,6 +826,13 @@ le email dei visitatori, le note interne dell'agente, il prezzo minimo, le
 provvigioni — e le prove vanno a cercarli uno per uno nella pagina consegnata.
 Nessuno esce. C'è anche un visitatore che è cliente di un collega, per
 verificare che al suo posto compaia l'etichetta e non il nome.
+
+**Chi firma.** Le comunicazioni al venditore — il messaggio col link e il
+foglio delle visite da stampare — sono firmate dalla **coordinatrice**
+(`AGENZIA.coordinatrice` in `types.ts`, oggi *Virginia*), non dall'agente che
+ha premuto il pulsante. Al cliente risponde sempre lei, e una firma che cambia
+a seconda di chi manda il messaggio è una firma che non dice niente. Cambiarla
+è una riga sola.
 
 Messa in esercizio il 4 settembre e **provata da lui sul gestionale vero**:
 link creato su un immobile suo, pagina aperta dal telefono, foto, portali,

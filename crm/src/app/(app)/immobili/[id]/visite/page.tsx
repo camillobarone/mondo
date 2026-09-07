@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getProperty, visitHistory } from "@/lib/queries";
 import { shortDate } from "@/lib/format";
+import { AGENZIA } from "@/lib/types";
 import { PrintButton } from "@/components/print-button";
 
 export const dynamic = "force-dynamic";
@@ -146,10 +147,15 @@ export default async function VisitHistoryPage({
         <p className="text-sm leading-relaxed text-slate-700">
           Restiamo a disposizione per qualsiasi chiarimento.
         </p>
+        {/* Firma la coordinatrice, non l'agente che ha stampato il foglio: al
+            proprietario risponde sempre lei, e una firma diversa a seconda di
+            chi preme «Stampa» e' una firma che non dice niente. */}
         <p className="mt-4 text-sm text-slate-800">
           Cordiali saluti,
           <br />
-          <strong>{property.agent_name || "Mondo Immobiliare Lecce"}</strong>
+          <strong>{AGENZIA.coordinatrice}</strong>
+          <br />
+          {AGENZIA.nome}
         </p>
       </section>
 

@@ -12,7 +12,7 @@ import {
   PROPERTY_STATUSES,
   ZONE_PER_COMUNE,
 } from "@/lib/types";
-import { PORTALI } from "@/lib/portali";
+import { PORTALI, annuncioDi } from "@/lib/portali";
 import type { Property } from "@/lib/types";
 import { LuogoImmobile } from "./luogo-immobile";
 
@@ -228,9 +228,7 @@ export function PropertyForm({
               label={`Annuncio su ${portale.nome}`}
               name={portale.colonna}
               defaultValue={
-                portale.chiave === "idealista"
-                  ? property?.listing_idealista
-                  : property?.listing_immobiliare
+                annuncioDi(portale, property)
               }
               placeholder={portale.esempio}
               // La barra rovesciata qui e' quella dell'espressione, non di una

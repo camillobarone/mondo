@@ -985,6 +985,7 @@ export type TrackingProperty = {
    * collegamento. E' il motivo per cui la sezione si chiama registro di
    * garanzia e non statistiche.
    */
+  listing_sito: string | null;
   listing_idealista: string | null;
   listing_immobiliare: string | null;
   /** La pagina che idealista fa per il proprietario, se Camillo l'ha incollata. */
@@ -1022,7 +1023,8 @@ export function propertyByTrackingToken(
             p.address, p.city, p.zone,
             p.sqm, p.rooms, p.bathrooms, p.floor,
             p.price, p.status, p.video_url,
-            p.listing_idealista, p.listing_immobiliare, p.idealista_owner_url,
+            p.listing_sito, p.listing_idealista, p.listing_immobiliare,
+            p.idealista_owner_url,
             p.mandate_start, p.mandate_end, p.created_at,
             u.name AS agent_name
        FROM properties p

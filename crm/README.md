@@ -404,11 +404,34 @@ proprietario**. All'inizio ha un solo pulsante:
 2. **Guarda com'è** apre la pagina come la vedrà lui. Guardala sempre prima di
    mandarla.
 3. **Invia su WhatsApp** apre la chat del proprietario col messaggio già
-   scritto — il suo nome, la via della casa, l'indirizzo e la raccomandazione
-   di non passarlo ad altri. Il pulsante compare solo se il proprietario è
-   collegato all'immobile e ha un numero in scheda.
+   scritto. Il pulsante compare solo se il proprietario è collegato
+   all'immobile e ha un numero in scheda.
 
 C'è anche **Copia**, se preferisci mandarlo per email o incollarlo altrove.
+
+Il messaggio è già composto così, e non c'è niente da scrivere a mano:
+
+> Gentile Giuseppe Verdi, da questo collegamento può seguire l'andamento della
+> vendita del suo immobile in Via dei Palumbo 12:
+> https://gestionale.mondoimmobiliarelecce.it/tracking/…
+>
+> L'annuncio è online su:
+> Mondo Immobiliare — https://www.mondoimmobiliarelecce.it/immobili/…
+> idealista — https://www.idealista.it/immobile/…
+>
+> Il collegamento qui sopra è riservato a lei: la preghiamo di non condividerlo.
+>
+> Virginia
+> Mondo Immobiliare Lecce
+
+Gli annunci compaiono **solo quelli che hai compilato** (vedi più sotto): se
+la casa non è ancora pubblicata da nessuna parte, quel blocco non c'è.
+
+**Firma sempre Virginia**, la coordinatrice, non chi ha premuto il pulsante. Al
+cliente risponde lei, e una firma che cambia a seconda di chi manda il
+messaggio è una firma che non dice niente. Vale anche per il **foglio delle
+visite** da stampare. Se un giorno deve firmare qualcun altro, è una riga sola
+da cambiare — il nome sta in un punto solo del programma.
 
 ### Cosa vede, e cosa non vede
 
@@ -457,13 +480,14 @@ ancora per qualche minuto: la pagina invece muore subito.
 
 ### Dove è pubblicato l'annuncio
 
-Sempre sulla scheda dell'immobile c'è **Dove è pubblicato**, con due caselle:
-l'indirizzo dell'annuncio su **idealista** e su **Immobiliare.it**. Servono a
+Sempre sulla scheda dell'immobile c'è **Dove è pubblicato**, con tre caselle:
+l'indirizzo dell'annuncio sul **nostro sito**, su **idealista** e su
+**Immobiliare.it**. Servono a
 due cose:
 
-- il proprietario li vede nella sua pagina e **può aprirli per controllare da
-  sé** che foto, prezzo e descrizione siano quelli giusti — è il motivo per cui
-  quella sezione esiste;
+- il proprietario li vede nella sua pagina **e nel messaggio che gli mandi**, e
+  può aprirli per controllare da sé che foto, prezzo e descrizione siano quelli
+  giusti — è il motivo per cui quella sezione esiste;
 - tu hai un posto solo dove ritrovarli **il giorno del rogito**, per andare a
   toglierli.
 
@@ -472,8 +496,8 @@ lo dice, senza cancellare quello che avevi scritto. E se la casa non è
 pubblicata da nessuna parte, la sezione **non compare affatto** nella pagina del
 proprietario: una riga «non pubblicata» non racconterebbe come va la vendita.
 
-C'è anche una terza casella, facoltativa: **Pagina idealista per il
-proprietario**. È l'indirizzo che generi dal pannello di idealista, con i
+C'è poi una quarta casella, facoltativa e diversa dalle altre tre: **Pagina
+idealista per il proprietario**. È l'indirizzo che generi dal pannello di idealista, con i
 **loro** numeri — quante persone hanno visto l'annuncio, quante hanno chiesto
 informazioni. Se la incolli, il proprietario la trova nella sua pagina, sotto
 una riga di separazione e con scritto che quei conteggi sono di idealista e non

@@ -7,7 +7,7 @@ import {
 } from "@/lib/queries";
 import { euro, dateTime, phoneHref, whatsappHref } from "@/lib/format";
 import { AGENZIA } from "@/lib/types";
-import { PORTALI } from "@/lib/portali";
+import { PORTALI, annuncioDi } from "@/lib/portali";
 
 export const dynamic = "force-dynamic";
 
@@ -92,9 +92,7 @@ export default async function TrackingPage({
   const pubblicata: { nome: string; url: string }[] = [];
   for (const portale of PORTALI) {
     const url =
-      portale.chiave === "idealista"
-        ? casa.listing_idealista
-        : casa.listing_immobiliare;
+      annuncioDi(portale, casa);
     if (url) pubblicata.push({ nome: portale.nome, url });
   }
 
