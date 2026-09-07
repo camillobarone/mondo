@@ -578,6 +578,15 @@ Le cose costruite in questa sessione, in ordine
   Controllo giornaliero della PR #2
       Vedi capitolo 7.
 
+  La descrizione della PR #2 e' indietro
+      Notato al controllo del 7 settembre. Elenca fra le cose aperte i messaggi
+      di errore, fatti il 3 settembre, e non nomina Mondo Tracking, che e' la
+      cosa piu' grossa del progetto. Chi aprisse la PR per capire cos'e'
+      leggerebbe un testo di tre funzioni indietro. Non e' urgente — la PR e'
+      in bozza e nessuno la sta revisionando — ma va rifatta prima di toglierla
+      dalla bozza. Da chiedere a Camillo: non e' una cosa da fare di nascosto
+      in un controllo automatico.
+
   Incroci fra colleghi
       Fatto (/incroci/colleghi, incrociFraColleghi in matching.ts). Le due
       letture che scavalcano il muro sono le uniche del programma, hanno la
