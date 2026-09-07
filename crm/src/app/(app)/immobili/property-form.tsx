@@ -225,7 +225,7 @@ export function PropertyForm({
           {PORTALI.map((portale) => (
             <TextField
               key={portale.chiave}
-              label={`Annuncio su ${portale.nome}`}
+              label={portale.etichetta}
               name={portale.colonna}
               defaultValue={
                 annuncioDi(portale, property)

@@ -173,7 +173,7 @@ export default async function PropertyPage({
                 const indirizzo =
                   annuncioDi(portale, property);
                 return (
-                  <DataRow key={portale.chiave} label={`Annuncio ${portale.nome}`}>
+                  <DataRow key={portale.chiave} label={portale.etichetta}>
                     {indirizzo ? (
                       <a
                         href={indirizzo}

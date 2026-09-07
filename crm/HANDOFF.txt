@@ -950,6 +950,15 @@ rifiutato.
 Il messaggio dell'invito porta ora, sotto il link riservato, l'elenco dei
 posti dove l'annuncio e' online — solo quelli compilati — e in fondo la firma.
 
+Ogni portale ha due nomi, e servono tutti e due. nome e' come lo chiamiamo
+al proprietario («Vedi l'annuncio su Mondo Immobiliare»: lui non sa cosa sia
+«il nostro sito»); etichetta e' come lo chiamiamo in ufficio, sulla casella
+(«Annuncio sul nostro sito»). Se ne accorse Camillo guardando la schermata:
+«Annuncio su Mondo Immobiliare» accanto a «Annuncio su Immobiliare.it» sono due
+nomi che si somigliano troppo, e chi compila di fretta sbaglia casella.
+
+salentoproperties.com non serve, glielo e' stato chiesto il 7 settembre.
+
 La trappola pagata qui, e vale per il prossimo portale. Con due portali la
 scelta del campo era un ternario chiave === "idealista" ? a : b, ripetuto in
 quattro file. Al terzo portale quel ternario compila ancora e sbaglia in

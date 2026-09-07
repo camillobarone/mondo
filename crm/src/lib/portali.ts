@@ -24,26 +24,39 @@
 export const PORTALI = [
   {
     chiave: "sito",
-    // Il nome compare al proprietario dentro «Vedi l'annuncio su ...»: va
-    // scritto come si legge in una frase, non come si chiama la casella.
+    /**
+     * Come lo chiamiamo **al proprietario**, dentro «Vedi l'annuncio su ...»:
+     * li' il nome dell'agenzia e' quello giusto, perche' lui non sa cosa sia
+     * «il nostro sito».
+     */
     nome: "Mondo Immobiliare",
+    /**
+     * Come lo chiamiamo **in ufficio**, sull'etichetta della casella.
+     *
+     * Sono due parole diverse per lo stesso posto, e servono tutte e due:
+     * «Annuncio su Mondo Immobiliare» accanto a «Annuncio su Immobiliare.it»
+     * sono due nomi che si somigliano troppo, e chi compila di fretta sbaglia
+     * casella. Dentro casa «il nostro sito» non si confonde con niente.
+     */
+    etichetta: "Annuncio sul nostro sito",
+    /** La colonna di `properties` che tiene il collegamento. */
     colonna: "listing_sito",
+    /** Deve comparire nel nome del sito, altrimenti il campo e' quello sbagliato. */
     dominio: "mondoimmobiliarelecce.it",
     esempio: "https://www.mondoimmobiliarelecce.it/immobili/...",
   },
   {
     chiave: "idealista",
-    /** Come si chiama, scritto come lo scrivono loro. */
     nome: "idealista",
-    /** La colonna di `properties` che tiene il collegamento. */
+    etichetta: "Annuncio su idealista",
     colonna: "listing_idealista",
-    /** Deve comparire nel nome del sito, altrimenti il campo e' quello sbagliato. */
     dominio: "idealista",
     esempio: "https://www.idealista.it/immobile/12345678/",
   },
   {
     chiave: "immobiliare",
     nome: "Immobiliare.it",
+    etichetta: "Annuncio su Immobiliare.it",
     colonna: "listing_immobiliare",
     dominio: "immobiliare.it",
     esempio: "https://www.immobiliare.it/annunci/12345678/",
