@@ -141,6 +141,11 @@ export default async function MatchesPage({
                       {match.warnings.length ? (
                         <p className="text-xs text-amber-700">{match.warnings.join(" · ")}</p>
                       ) : null}
+                      {match.notes.length ? (
+                        <p className="text-xs font-medium text-slate-600">
+                          {match.notes.join(" · ")}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       {whatsappHref(group.clientPhone) ? (

@@ -100,6 +100,9 @@ function Riga({ incrocio }: { incrocio: IncrocioCollega }) {
         {incrocio.avvertenze.length ? (
           <p className="text-xs text-amber-700">{incrocio.avvertenze.join(" · ")}</p>
         ) : null}
+        {incrocio.note.length ? (
+          <p className="text-xs font-medium text-slate-600">{incrocio.note.join(" · ")}</p>
+        ) : null}
       </div>
 
       <div className="flex shrink-0 items-center gap-2">

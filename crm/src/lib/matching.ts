@@ -30,6 +30,7 @@ export interface Match {
   total: number;      // criteri valutati
   reasons: string[];  // perche' e' un buon incrocio
   warnings: string[]; // dove non corrisponde del tutto
+  notes: string[];    // contesto da tenere a mente, ne' pro ne' contro
 }
 
 interface Scored {
@@ -332,6 +333,7 @@ function explain(scored: Scored): Match {
   const property = prepareProperty(scored.property);
   const reasons: string[] = [];
   const warnings: string[] = [];
+  const notes: string[] = [];
 
   if (requirement.budgetMax) {
     if (property.price > 0 && property.price <= requirement.budgetMax) {
@@ -362,10 +364,12 @@ function explain(scored: Scored): Match {
   if (zoneChieste) {
     if (zoneChieste.some((zone) => samePlace(zone, property.zone))) {
       reasons.push(`Zona richiesta: ${scored.property.zone}`);
-    } else if (scored.property.zone) {
-      // Senza zona sull'immobile non c'e' niente da segnalare: e' un dato
-      // mancante in scheda, non una zona diversa da quella cercata.
-      warnings.push(`Fuori dalle zone richieste (${scored.property.zone})`);
+    } else {
+      // Zona diversa non e' un difetto dell'immobile: in una citta' come
+      // Lecce il cliente scrive due quartieri e ne visita quattro. Invece
+      // dell'avvertenza si ricorda dove cercava, cosi' la valutazione resta
+      // a chi telefona.
+      notes.push(`Cercava in zona: ${zoneChieste.join(", ")}`);
     }
   }
   if (requirement.conditions.length && property.condition) {
@@ -403,6 +407,7 @@ function explain(scored: Scored): Match {
     total: scored.total,
     reasons,
     warnings,
+    notes,
   };
 }
 
@@ -734,6 +739,7 @@ export interface IncrocioCollega {
   totale: number;
   motivi: string[];
   avvertenze: string[];
+  note: string[];
   /** Presenti a coppie: uno dei due lati e' mio, l'altro del collega. */
   mioCliente?: { id: number; nome: string; telefono: string | null; richiestaId: number };
   immobileDelCollega?: ImmobileDiUnCollega;
@@ -899,6 +905,7 @@ export function incrociFraColleghi(
         misses: esito.misses,
         motivi: spiegato.reasons,
         avvertenze: spiegato.warnings,
+        note: spiegato.notes,
         mioCliente: {
           id: richiesta.source.client_id,
           nome: richiesta.clientName,
@@ -930,6 +937,7 @@ export function incrociFraColleghi(
         misses: esito.misses,
         motivi: spiegato.reasons,
         avvertenze: spiegato.warnings,
+        note: spiegato.notes,
         mioImmobile: {
           id: immobile.source.id,
           titolo: immobile.source.title,
