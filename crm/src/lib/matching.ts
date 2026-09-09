@@ -362,8 +362,10 @@ function explain(scored: Scored): Match {
   if (zoneChieste) {
     if (zoneChieste.some((zone) => samePlace(zone, property.zone))) {
       reasons.push(`Zona richiesta: ${scored.property.zone}`);
-    } else {
-      warnings.push(`Fuori dalle zone richieste (${scored.property.zone || "zona non indicata"})`);
+    } else if (scored.property.zone) {
+      // Senza zona sull'immobile non c'e' niente da segnalare: e' un dato
+      // mancante in scheda, non una zona diversa da quella cercata.
+      warnings.push(`Fuori dalle zone richieste (${scored.property.zone})`);
     }
   }
   if (requirement.conditions.length && property.condition) {
