@@ -543,7 +543,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
-| **Applicazione per i venditori** («Mondo Tracking») | **Fatta, in esercizio e confermata da lui** (4 settembre): *«fatto tutto ok»* dopo aver seguito i sette punti della prova — link creato su un immobile vero, pagina aperta dal telefono, foto, portali, rifiuto della casella sbagliata e revoca. Documentata anche per l'agenzia: **«La pagina del proprietario»** in `README.md` e **9-septies** in `CONSEGNA.md`. Vedi «I due progetti nuovi», qui sotto. |
+| **Applicazione per i venditori** («Mondo Tracking») | **Finita, in esercizio e provata da lui**, fino alle modifiche del 7 settembre comprese: *«fatto tutto, funziona»*. La pagina col nome e le osservazioni dei visitatori, il riquadro per mandare il link, i tre portali col nostro sito, la firma di Virginia. Documentata per l'agenzia in `README.md` («La pagina del proprietario») e `CONSEGNA.md` (9-septies). Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **La descrizione della PR #2** | **Rifatta il 7 settembre**, su sua richiesta. Adesso racconta la pagina del proprietario, i portali e i messaggi di rifiuto, e l'elenco delle cose aperte e' quello vero. Se si aggiunge una funzione, va rifatta anche li': e' l'unica presentazione del progetto che un estraneo legge. |
@@ -1227,33 +1227,31 @@ ballo. Risparmia un giro di domande.
 > So che ogni collaboratore vede solo le proprie schede (capitolo 10-bis di
 > `CONSEGNA.md`), e che l'ultima cosa costruita e' **Mondo Tracking**: la pagina
 > `/tracking/[token]` che il proprietario apre dal telefono senza password, con
-> le foto, **le visite senza nomi**, a che punto e' la vendita, il registro di
-> garanzia con i collegamenti agli annunci, e i recapiti dell'agenzia. Sulla
-> scheda dell'immobile c'e' il riquadro per creare il link, mandarlo su
-> WhatsApp e revocarlo; nel cruscotto il richiamo per **gli annunci rimasti
-> online su case gia' vendute**.
+> le foto, **le visite** (data, ora, nome di chi e' venuto e cosa ha detto), a
+> che punto e' la vendita, **dove e' pubblicata** la casa, e i recapiti
+> dell'agenzia. Sulla scheda dell'immobile c'e' il riquadro per creare il link,
+> mandarlo su WhatsApp e revocarlo; nel cruscotto il richiamo per **gli annunci
+> rimasti online su case gia' vendute**.
 >
-> So che e' **tutto in esercizio e provato sul gestionale vero**: ho seguito i
-> sette punti della prova — link creato su un immobile mio, pagina aperta dal
-> telefono, foto, portali, la casella sbagliata rifiutata, la revoca — e
-> funziona.
+> So che e' **tutto in esercizio e l'ho provato io sul gestionale vero**, fino
+> all'ultima modifica del 7 settembre: funziona.
+>
+> **Le tre decisioni mie che il codice segue**, e che non si cambiano da soli:
+> il proprietario vede il **nome** di chi ha visitato e le sue **osservazioni**,
+> mai i recapiti; se il visitatore e' cliente di un collega compare
+> **«Collaborazione con altra agenzia»** al posto del nome; e le comunicazioni
+> al venditore le firma **Virginia**, la coordinatrice, non l'agente che preme
+> il pulsante.
 >
 > E' la prima pagina di questo programma raggiungibile senza accesso, quindi
 > ogni lettura nuova che la riguarda va agganciata all'immobile della chiave,
 > mai a un utente.
-
 >
-> So che **il 4 settembre, a sera, Camillo ha cambiato idea su cosa vede il
-> proprietario**: adesso vuole nella pagina anche il **nome dell'acquirente che
-> ha visitato**, le sue **osservazioni**, e **data e ora** della visita — senza
-> nessun riferimento telefonico. **Non e' ancora stato fatto**, ed e' la prima
-> cosa da fare. Il come sta nel capitolo 5, «I due progetti nuovi».
->
-> Resta aperto, e aspetta lui: la **pagina del proprietario di idealista**
-> (quella coi numeri, da verificare prima di fidarsene); le risposte dei portali
-> sullo stacco di Casagest24 e sul flusso **XML**; l'**SMTP**, fermo sulla sola
-> password per le app di Gmail; i **dati dei venditori**; gli **indirizzi degli
-> immobili vecchi**; le **zone in `ZONE_PER_COMUNE`** da far correggere a lui,
-> che il mercato lo conosce.
+> Resta aperto, e aspetta me: la **pagina del proprietario di idealista**
+> (quella coi numeri, che vanno verificati prima di fidarsene); le risposte dei
+> portali sullo stacco di Casagest24 e sul flusso **XML**; l'**SMTP**, fermo
+> sulla sola password per le app di Gmail; i **dati dei venditori**; gli
+> **indirizzi degli immobili vecchi**; le **zone in `ZONE_PER_COMUNE`**, che il
+> mercato lo conosco io.
 >
 > Dimmi da dove ripartiamo.
