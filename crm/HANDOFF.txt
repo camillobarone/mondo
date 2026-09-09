@@ -1209,26 +1209,42 @@ Trappole già pagate (non ripeterle)
 7 · IL CONTROLLO PERIODICO DELLA PR
 -----------------------------------
 
-C'è un promemoria automatico che rientra una volta al giorno, alle 07:00
-UTC (le 9 in Italia), con questo testo:
+C'è un promemoria automatico che rientra il primo di ogni mese, alle 07:00
+UTC (le 9 in Italia). Era ogni ora fino al 4 agosto, poi giornaliero, e dal
+9 settembre 2026 è mensile: lo ha chiesto lui, e ha ragione — la PR è in
+bozza, nessuno la revisiona, e un controllo che dice sempre «niente di nuovo»
+si smette di leggere.
 
-  | Controllo giornaliero della PR camillobarone/mondo#2 (gestionale clienti):
-  | verifica stato CI, eventuali commenti di revisione e conflitti di merge. Se
-  | non è cambiato nulla, ri-arma il controllo per il giorno dopo alle 07:00 UTC
-  | silenziosamente, senza scrivere all'utente.
+Cosa fare quando arriva, dal più economico al più caro:
 
-Cosa fare quando arriva: leggere lo stato della PR #2, e
-se non è cambiato nulla ri-armarlo con send_later per il giorno dopo,
-senza scrivere all'utente.
+1. Conflitti. git fetch origin jules-4092590956749443987-c47f811b claude/real-estate-client-management-app-xl7dnx, poi
+   git merge-base --is-ancestor origin/jules-...  origin/claude/...: se la
+   base è già dentro il ramo, nessun conflitto è possibile e non serve
+   chiedere altro.
+2. Revisioni e commenti. mcp__github__pull_request_read con get_reviews
+   e get_comments.
+3. CI. Se la testa del ramo non è cambiata dall'ultima volta, non possono
+   essere cambiate nemmeno quelle.
 
-Era ogni ora fino al 4 agosto 2026, poi lui ha chiesto di diradarlo. Il
-promemoria si crea con send_later e non con create_trigger: un promemoria
-ricorrente vero parte senza gli strumenti mcp__github__* e non riuscirebbe a
-leggere la PR.
+Non chiedere mergeable_state con pull_request_read get: quella chiamata
+si porta dietro 26 KB di descrizione della PR a ogni controllo, e i tre passi
+qui sopra dicono la stessa cosa gratis.
 
-Stato noto all'ultimo controllo: aperta in bozza, mergeable_state: clean,
-nessuna CI configurata, nessuna review, un solo commento (il bot Gemini del
-2 agosto, da ignorare).
+Se non è cambiato nulla, si ri-arma con send_later per il primo del mese
+successivo, senza scrivere a Camillo. Se invece è cambiato qualcosa, gli si
+scrive.
+
+Si usa send_later e non create_trigger: un promemoria ricorrente vero parte
+in una sessione nuova, senza gli strumenti mcp__github__*, e non riuscirebbe
+a leggere la PR. send_later invece rientra in questa sessione, che gli
+strumenti ce li ha — e sopravvive anche a un /clear, perché è legato al
+numero della sessione e non alla conversazione. Il testo del promemoria è però
+scritto per bastare a se stesso, nel caso il contesto non ci sia più.
+
+Stato all'ultimo controllo (9 settembre 2026): aperta in bozza, nessun
+conflitto possibile, nessuna CI configurata, nessuna review, un solo
+commento — il bot Gemini del 2 agosto che annuncia la propria dismissione, da
+ignorare.
 
 Il controllo si ferma solo quando la PR viene unita o chiusa, o se lo chiede
 lui.
