@@ -531,6 +531,26 @@ Le cose costruite in questa sessione, in ordine
     «I due progetti nuovi». Messa in esercizio e confermata da lui sul
     gestionale vero: «fatto tutto ok».
 
+22. La zona diversa non e' piu' un'avvertenza (9 settembre 2026, fatto da
+    un'altra finestra su questo stesso progetto). Negli Incroci un immobile
+    in una zona diversa da quelle cercate finiva fra le avvertenze in ambra,
+    come se avesse un difetto. In una citta' come Lecce il cliente scrive due
+    quartieri e ne visita quattro: la zona diversa e' contesto per chi telefona,
+    non un motivo di scarto.
+
+    - Match ha un terzo elenco accanto a reasons e warnings: notes,
+      «ne' pro ne' contro». Al posto dell'avvertenza ci va *«Cercava in zona:
+      …»*, e solo quando la richiesta le zone le specifica.
+    - Il punteggio non cambia: la zona continua a pesare sul ranking e sul
+      filtro «solo corrispondenze piene». E' cambiato come si racconta, non come
+      si decide.
+    - Prima, un immobile senza zona in scheda dava *«Fuori dalle zone
+      richieste (zona non indicata)»*: un dato mancante presentato come
+      differenza. Adesso l'avviso compare solo se una zona c'e' e non e' quella.
+    - notes attraversa anche incrociFraColleghi, dove gli oggetti si
+      costruiscono a mano campo per campo — se lo si dimentica li', la nota non
+      compare e nessuno se ne accorge.
+
 
 5 · COSA RESTA APERTO
 ---------------------
