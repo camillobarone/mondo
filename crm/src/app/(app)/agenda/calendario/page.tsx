@@ -69,6 +69,10 @@ export default async function CalendarioPage() {
                 calendar.google.com → <em>Altri calendari</em> → <em>+</em> →{" "}
                 <em>Da URL</em> → incolla l&apos;indirizzo → <em>Aggiungi calendario</em>.
               </p>
+              <p className="mt-1 text-amber-800">
+                Su Google vedi gli appuntamenti ma <strong>non vieni avvisato</strong>:
+                leggi il riquadro qui sotto.
+              </p>
             </div>
             <div>
               <p className="font-medium text-slate-800">iPhone e iPad</p>
@@ -82,6 +86,11 @@ export default async function CalendarioPage() {
                 </a>{" "}
                 dal telefono.
               </p>
+              <p className="mt-1 text-slate-500">
+                Da qui la sveglia dei {PREAVVISO_MINUTI} minuti prima{" "}
+                <strong>suona davvero</strong>, su tutti gli appuntamenti e senza
+                impostare niente.
+              </p>
             </div>
             <div>
               <p className="font-medium text-slate-800">Outlook</p>
@@ -93,20 +102,32 @@ export default async function CalendarioPage() {
           </div>
 
           <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            <p className="font-medium">Una cosa da sapere su Google</p>
+            <p className="font-medium">Due cose da sapere su Google</p>
             <p className="mt-1">
-              Google ricontrolla i calendari esterni quando decide lui, anche dopo diverse
-              ore: un appuntamento appena inserito può non comparire subito. Apple e Outlook
-              sono più svelti. Per l&apos;appuntamento di oggi usa{" "}
-              <strong>Calendario</strong> sulla riga dell&apos;agenda, che è immediato.
+              <strong>La sveglia non suona.</strong> Dentro ogni appuntamento la sveglia
+              dei {PREAVVISO_MINUTI} minuti prima c&apos;è, e Apple e Outlook la fanno{" "}
+              suonare: Google invece <strong>non avvisa mai</strong> per i calendari a cui ci si
+              abbona, li mostra e basta. Non è una cosa da impostare — Google non offre
+              proprio la possibilità. Quindi su Google l&apos;abbonamento serve a{" "}
+              <em>vedere</em> l&apos;agenda, non a essere avvisati.
+            </p>
+            <p className="mt-2">
+              <strong>Gli appuntamenti nuovi arrivano tardi.</strong> Google ricontrolla i
+              calendari esterni quando decide lui, anche dopo diverse ore. Apple e Outlook
+              sono più svelti.
+            </p>
+            <p className="mt-2">
+              Per tutti e due i problemi la risposta è la stessa:{" "}
+              <strong>Calendario</strong> sulla riga dell&apos;agenda. Quell&apos;appuntamento
+              entra subito e diventa tuo, e da lì la sveglia suona anche su Google.
             </p>
           </div>
         </Card>
 
         <Card title="Avviso per email">
           <p className="text-sm text-slate-600">
-            Se il server è configurato per spedire posta, {PREAVVISO_MINUTI} minuti prima di
-            ogni appuntamento arriva un&apos;email a{" "}
+            Se il server è configurato per spedire posta, {PREAVVISO_MINUTI} minuti{" "}
+            prima di ogni appuntamento arriva un&apos;email a{" "}
             <strong>{user.email}</strong>. Non serve fare niente: parte da sé per gli
             appuntamenti assegnati a te.
           </p>

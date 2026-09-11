@@ -600,6 +600,47 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     colpa della prova — `--manda` finiva dentro `env` come se fosse il nome di
     una variabile. Nel dubbio si guarda prima la prova.
 
+24. **La sveglia sul calendario: detta dove si legge** (11 settembre 2026). Sua
+    domanda: *«l'invio di un allarme trenta minuti prima dell'appuntamento
+    stabilito, si puo' inserire?»*, dopo aver scelto di usare l'agenda dentro
+    Google Calendar.
+
+    **Non c'era niente da inserire: la sveglia c'e' da sempre.** Ogni evento
+    esce con `VALARM` / `TRIGGER:-PT30M`, sia nel file del singolo appuntamento
+    sia nell'abbonamento (`src/lib/calendar.ts`). E' **Google** che la butta
+    via: per i calendari a cui ci si abbona non avvisa mai, e non lo si puo'
+    nemmeno impostare — non offre la voce. Apple e Outlook la fanno suonare.
+
+    Il difetto vero era un altro, ed era di documentazione: **la pagina del
+    programma non lo diceva**. Stava in `README.md` e in `CONSEGNA.md`, cioe'
+    ovunque tranne che in *Agenda → Calendario e avvisi*, dove il titolo
+    promette «con l'avviso 30 minuti prima» e sotto ci sono le istruzioni per
+    Google. Adesso il riquadro ambra ne racconta **due** di cose (la sveglia che
+    non suona, e il ritardo con cui Google si aggiorna), sotto le istruzioni di
+    Google c'e' la riga che avvisa, e sotto quelle dell'iPhone che li' invece
+    suona davvero.
+
+    **Trovato per strada, ed e' un difetto vero:** su questa pagina si leggeva
+    **«30minuti»** attaccato, nel riquadro dell'avviso per email, da prima di
+    oggi. E' la trappola dello spazio dopo `{espressione}` che va a capo, ora
+    scritta nel capitolo 6. Una passata su tutti i `.tsx` ha trovato **un solo
+    altro punto** con la stessa forma — `luogo-immobile.tsx`, che diceva «Per
+    Tuglienon abbiamo un elenco di zone» — corretto anche quello. Tutti gli
+    altri riscontri della ricerca erano stringhe con template literal, dove la
+    regola di JSX non c'entra.
+
+    Verificato in browser sulla **build di produzione**, a schermo di telefono
+    (390x844): 21 controlli sulla pagina del calendario (compreso che non sia
+    sparito niente di quello che c'era prima) e 6 sui due spazi, rifatti due
+    volte di fila. Piu' il file dell'abbonamento chiesto **senza cookie**, come
+    fa Google, per rileggerci dentro `TRIGGER:-PT30M`.
+
+    **Trappola nelle prove, e ha fatto perdere due giri:** `next start` non era
+    ripartito — `EADDRINUSE` finito solo nel registro — e le prove stavano
+    leggendo **la build vecchia**. Due controlli davano rosso su una correzione
+    che era gia' giusta. Dopo aver rilanciato il server si guarda che sia
+    partito davvero, non che risponda: a rispondere era quello di prima.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -1237,6 +1278,15 @@ email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
 - **Le prove sui messaggi vanno fatte sulla build di produzione**
   (`npm run build` + `npx next start`), mai in sviluppo: lì i messaggi si
   vedono comunque e ogni prova passa.
+- **Lo spazio dopo `{espressione}` sparisce se il testo va a capo.** In JSX,
+  `posta, {PREAVVISO_MINUTI} minuti prima di` seguito a capo da altro testo
+  rende **«30minuti»**: la riga successiva viene ripulita e con lei se ne va lo
+  spazio iniziale. Se invece il testo dopo l'espressione **non** va a capo (o la
+  riga finisce con `{" "}`), lo spazio resta. E' la sorella della trappola
+  dell'`ml-2`, e come quella **non si vede nel codice**: `tsc` e `next build`
+  passano, e a occhio la riga sembra giusta. Si trova solo leggendo il testo
+  della pagina in un browser. Cura: tenere espressione e parola sulla stessa
+  riga, e andare a capo con `{" "}`.
 - **I numeri di telefono dell'archivio sono senza +39**: per WhatsApp si passa
   da `whatsappHref()` in `src/lib/format.ts`, mai da `wa.me` a mano.
 - **La posta del dominio non sta dove sta il gestionale.** Il server è su Aruba,

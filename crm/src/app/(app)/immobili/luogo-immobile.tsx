@@ -135,8 +135,8 @@ export function LuogoImmobile({
         ) : null}
         {comuneFinale && !zoneDelComune.length ? (
           <p className="mt-1 text-xs text-slate-500">
-            Per {comuneFinale} non abbiamo un elenco di zone: scegli fra quelle già usate o
-            scrivine una con «Altra zona…».
+            Per {comuneFinale} non abbiamo un elenco di zone: scegli fra quelle{" "}
+            già usate o scrivine una con «Altra zona…».
           </p>
         ) : null}
       </div>
