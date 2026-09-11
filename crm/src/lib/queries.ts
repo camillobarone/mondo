@@ -3,6 +3,8 @@ import crypto from "node:crypto";
 import { all, one, count, run } from "./db";
 import { fromCsv, euro } from "./format";
 import { ZONES } from "./types";
+import { generaChiaviVapid } from "./push";
+import type { ChiaviVapid, Iscrizione } from "./push";
 import type {
   Activity,
   Client,
@@ -937,6 +939,113 @@ export function resetCalendarToken(userId: number): string {
   const token = crypto.randomBytes(24).toString("base64url");
   run(`UPDATE users SET calendar_token = ? WHERE id = ?`, [token, userId]);
   return token;
+}
+
+/* ================================================== avvisi sul telefono */
+
+/**
+ * Le chiavi VAPID dell'agenzia, generate alla prima richiesta e poi sempre
+ * quelle. Stanno in `settings` e non in un file sul server di proposito:
+ * questo programma si e' gia' fermato una volta su una riga da compilare a
+ * mano, e un avviso che non parte finche' qualcuno non apre `nano` e' un
+ * avviso che non parte.
+ *
+ * Le variabili d'ambiente hanno comunque la precedenza, se un giorno si
+ * volesse spostarle fuori: cambiarle butta via tutte le iscrizioni, perche'
+ * ogni telefono lega la propria alla chiave pubblica con cui l'ha chiesta.
+ */
+export function chiaviAvvisi(): ChiaviVapid {
+  const daAmbiente = process.env.VAPID_PUBLIC_KEY;
+  if (daAmbiente && process.env.VAPID_PRIVATE_KEY) {
+    return { pubblica: daAmbiente, privata: process.env.VAPID_PRIVATE_KEY };
+  }
+
+  const righe = all<{ key: string; value: string }>(
+    `SELECT key, value FROM settings WHERE key IN ('vapid_public', 'vapid_private')`,
+  );
+  const salvate = Object.fromEntries(righe.map((r) => [r.key, r.value]));
+  if (salvate.vapid_public && salvate.vapid_private) {
+    return { pubblica: salvate.vapid_public, privata: salvate.vapid_private };
+  }
+
+  // Mai meta' e meta': se ne manca una si rifa' la coppia. Una pubblica
+  // spaiata dalla sua privata firmerebbe con la chiave sbagliata, e il
+  // servizio di consegna risponderebbe 401 per sempre.
+  const chiavi = generaChiaviVapid();
+  run(`DELETE FROM settings WHERE key IN ('vapid_public', 'vapid_private')`);
+  run(`INSERT INTO settings (key, value) VALUES ('vapid_public', ?), ('vapid_private', ?)`, [
+    chiavi.pubblica,
+    chiavi.privata,
+  ]);
+  return chiavi;
+}
+
+/** La sola chiave pubblica, che e' quella che va data al browser. */
+export function chiavePubblicaAvvisi(): string {
+  return chiaviAvvisi().pubblica;
+}
+
+export interface TelefonoIscritto {
+  id: number;
+  endpoint: string;
+  device: string | null;
+  created_at: string;
+  last_ok_at: string | null;
+}
+
+/** I telefoni di chi guarda. Nessuno vede quelli di un altro. */
+export function telefoniIscritti(userId: number): TelefonoIscritto[] {
+  return all<TelefonoIscritto>(
+    `SELECT id, endpoint, device, created_at, last_ok_at
+       FROM push_subscriptions
+      WHERE user_id = ?
+      ORDER BY created_at`,
+    [userId],
+  );
+}
+
+/**
+ * Registra (o aggiorna) il telefono di chi sta guardando.
+ *
+ * L'indirizzo di consegna e' unico in tabella, e lo stesso telefono lo
+ * ripropone uguale a ogni visita della pagina: senza `ON CONFLICT` si
+ * accumulerebbe una riga per ogni apertura. E se quell'indirizzo era di un
+ * altro utente — succede quando due colleghi usano lo stesso telefono a turno
+ * — **passa a chi si e' appena iscritto**, altrimenti gli avvisi continuerebbero
+ * ad arrivare al precedente.
+ */
+export function iscriviTelefono(
+  userId: number,
+  iscrizione: { endpoint: string; p256dh: string; auth: string },
+  device: string | null,
+): void {
+  run(
+    `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, device)
+          VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(endpoint) DO UPDATE
+            SET user_id = excluded.user_id,
+                p256dh  = excluded.p256dh,
+                auth    = excluded.auth,
+                device  = excluded.device`,
+    [userId, iscrizione.endpoint, iscrizione.p256dh, iscrizione.auth, device],
+  );
+}
+
+/**
+ * Toglie un telefono. Il `user_id` nella condizione non e' ridondante: senza,
+ * chiunque conoscesse l'indirizzo di consegna di un collega potrebbe
+ * zittirgli gli avvisi.
+ */
+export function disiscriviTelefono(userId: number, endpoint: string): void {
+  run(`DELETE FROM push_subscriptions WHERE user_id = ? AND endpoint = ?`, [userId, endpoint]);
+}
+
+/** Le iscrizioni a cui mandare, per una persona. Le usa anche il cron. */
+export function iscrizioniDi(userId: number): Iscrizione[] {
+  return all<Iscrizione>(
+    `SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?`,
+    [userId],
+  );
 }
 
 export function userByCalendarToken(

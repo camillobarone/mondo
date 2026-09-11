@@ -262,6 +262,47 @@ ssh root@IP "cd /opt/mondo-crm && sudo -u mondo node scripts/backup.mjs"
 
 ---
 
+## 6-ter · L'avviso sul telefono — non c'è niente da configurare
+
+**Questa è la strada che funziona su iPhone, Samsung e Xiaomi allo stesso modo**,
+e a differenza di tutto il resto di questo capitolo **non richiede niente sul
+server**: nessuna password, nessun account, nessun file da compilare. Trenta
+minuti prima di ogni appuntamento il gestionale fa comparire l'avviso sul
+telefono, anche a programma chiuso.
+
+**Come si accende**, e va fatto una volta per ogni telefono:
+
+1. dal telefono, entra nel gestionale e vai su **Agenda → Calendario e avvisi**;
+2. tocca **Accendi gli avvisi su questo telefono**;
+3. il telefono chiede il permesso per le notifiche: **dai il permesso**;
+4. tocca **Mandami una prova** e guarda che arrivi davvero.
+
+Il quarto passo non è una formalità: il permesso dato dice che il telefono è
+disposto a ricevere, non che l'avviso arriva. Fra le due cose c'è tutto il
+resto, e l'unico modo di saperlo è vederlo.
+
+> **Su iPhone c'è un passaggio in più, e senza quello il pulsante non compare
+> nemmeno.** Apple non manda notifiche a un sito aperto in Safari: le manda solo
+> ai siti aggiunti alla schermata Home. Quindi, dall'iPhone: apri il gestionale
+> in **Safari** → **Condividi** (il quadrato con la freccia in su) →
+> **Aggiungi a Home**. Poi apri il gestionale **da quell'icona** e rifai i
+> quattro passi qui sopra. La pagina te lo dice da sola quando sei nel caso.
+
+**Se il permesso è stato rifiutato una volta**, il gestionale non può più
+chiederlo: lo decide il browser. Va rimesso a mano nelle impostazioni del sito,
+alla voce *Notifiche*, e poi si ricarica la pagina.
+
+Nella stessa pagina c'è l'elenco dei telefoni accesi, con l'ultima volta che
+hanno ricevuto qualcosa, e accanto a ognuno un *togli*. Un telefono perso o
+cambiato si toglie da lì.
+
+**Cosa c'è scritto nell'avviso:** l'ora, il titolo dell'appuntamento e — solo se
+quella scheda è tua — il nome del cliente e la via. Su una scheda di un collega
+l'avviso arriva lo stesso, senza il nome. Il numero di telefono del cliente non
+c'è mai: quello resta nell'email.
+
+---
+
 ## 6-bis · Far partire gli avvisi per email
 
 Da questa configurazione dipendono **due cose**: l'avviso 30 minuti prima di

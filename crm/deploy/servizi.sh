@@ -112,8 +112,11 @@ TZ=Europe/Rome
 # notturna, cosi' trova sempre una copia fresca pronta da mandare. Finche'
 # rclone non e' installato e collegato a Google Drive non fa nulla di male.
 0 3 1 * * $UTENTE cd $CARTELLA && bash deploy/backup-esterno.sh
-# Avviso per email 30 minuti prima degli appuntamenti. Gira ogni 5 minuti;
-# senza la configurazione della posta esce subito senza fare niente.
+# Avviso 30 minuti prima degli appuntamenti, per due strade: la notifica sul
+# telefono (non ha bisogno di niente configurato) e l'email, se la posta c'e'.
+# Gira ogni 5 minuti. Il file dell'ambiente si carica lo stesso anche senza
+# posta: dentro potrebbero esserci le chiavi degli avvisi, se un giorno le si
+# spostasse fuori dall'archivio.
 */5 * * * * $UTENTE set -a; . /etc/mondo-crm.env; set +a; cd $CARTELLA && CRM_BASE_URL=https://$DOMINIO /usr/bin/node scripts/promemoria.mjs >> $CARTELLA/backup/promemoria.log 2>&1
 CRON
   chmod 644 /etc/cron.d/mondo-crm

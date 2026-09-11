@@ -1,22 +1,32 @@
 #!/usr/bin/env node
 /**
- * Avviso per email 30 minuti prima di ogni appuntamento.
+ * Avviso 30 minuti prima di ogni appuntamento, per due strade.
  *
  * Lo fa girare il cron ogni 5 minuti. Guarda gli appuntamenti non ancora
- * svolti che cadono entro la mezz'ora, manda un'email a chi ce l'ha in agenda
- * e segna che l'avviso e' partito: senza quella traccia ripartirebbe a ogni
- * giro, e in mezz'ora arriverebbero sei email per lo stesso appuntamento.
+ * svolti che cadono entro la mezz'ora e avvisa chi ce l'ha in agenda:
+ *
+ *   - **sul telefono** (Web Push), per chi ha acceso gli avvisi da
+ *     Agenda > Calendario e avvisi. Non ha bisogno di niente configurato;
+ *   - **per email**, se il server sa spedire (SMTP_HOST e compagnia).
+ *
+ * Le due strade sono **indipendenti** e hanno ognuna la propria traccia
+ * (`pushed_at` e `reminded_at`): senza, ripartirebbero a ogni giro — in
+ * mezz'ora sei avvisi per lo stesso appuntamento — e accendere la posta
+ * spegnerebbe in silenzio le notifiche.
  *
  *   node scripts/promemoria.mjs          manda gli avvisi
  *   node scripts/promemoria.mjs --prova  mostra cosa manderebbe, senza mandare
  *
- * Senza la configurazione della posta (SMTP_HOST e compagnia) esce dicendolo e
- * non fa niente: il calendario funziona lo stesso.
+ * Se non c'e' ne' la posta ne' un telefono iscritto non fa niente e lo dice: il
+ * calendario funziona lo stesso.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import nodemailer from "nodemailer";
+// Il protocollo sta in un file .ts perche' lo usa anche il programma; Node lo
+// legge cosi' com'e', come gia' fa seed.mjs con schema.ts.
+import { manda } from "../src/lib/push.ts";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const dbPath = process.env.CRM_DB_PATH ?? path.join(root, "data", "mondo.db");
@@ -34,12 +44,9 @@ const posta = {
   from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
 };
 
-if (!posta.host || !posta.user || !posta.pass) {
-  console.log(
-    "Posta non configurata (mancano SMTP_HOST, SMTP_USER o SMTP_PASS): nessun avviso inviato.",
-  );
-  process.exit(0);
-}
+// La posta puo' non esserci: le notifiche sul telefono partono lo stesso. Era
+// un'uscita anticipata, e teneva ferme anche loro.
+const postaPronta = Boolean(posta.host && posta.user && posta.pass);
 
 const db = new Database(dbPath);
 db.pragma("foreign_keys = ON");
@@ -50,6 +57,19 @@ const colonne = db.prepare("PRAGMA table_info(activities)").all();
 if (!colonne.some((campo) => campo.name === "reminded_at")) {
   db.exec("ALTER TABLE activities ADD COLUMN reminded_at TEXT");
 }
+if (!colonne.some((campo) => campo.name === "pushed_at")) {
+  db.exec("ALTER TABLE activities ADD COLUMN pushed_at TEXT");
+}
+// Stessa ragione: il cron puo' girare prima che il programma sia ripartito e
+// abbia creato la tabella.
+db.exec(`CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL,
+  device TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_ok_at TEXT)`);
+db.exec(`CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY, value TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')))`);
 
 /**
  * L'orario di un appuntamento e' quello scritto guardando l'orologio. Il cron
@@ -84,14 +104,15 @@ const candidati = db
             CASE WHEN p.agent_id = u.id
                  THEN TRIM(COALESCE(p.address,'') || ' ' || COALESCE(p.city,''))
                  END AS indirizzo,
-            u.name AS agente, u.email AS email
+            u.name AS agente, u.email AS email, u.id AS utente,
+            a.reminded_at, a.pushed_at
        FROM activities a
        LEFT JOIN clients    c ON c.id = a.client_id
        LEFT JOIN properties p ON p.id = a.property_id
        JOIN users u ON u.id = COALESCE(a.user_id, c.owner_id, p.agent_id)
       WHERE a.done_at IS NULL
         AND a.due_at IS NOT NULL
-        AND a.reminded_at IS NULL
+        AND (a.reminded_at IS NULL OR a.pushed_at IS NULL)
         AND u.active = 1
         AND u.email IS NOT NULL AND u.email != ''
         AND date(a.due_at) BETWEEN date('now','localtime','-1 day') AND date('now','localtime','+2 days')`,
@@ -115,15 +136,56 @@ if (daAvvisare.length === 0) {
   process.exit(0);
 }
 
-const trasporto = nodemailer.createTransport({
-  host: posta.host,
-  port: posta.port,
-  secure: posta.port === 465,
-  auth: { user: posta.user, pass: posta.pass },
-});
+const trasporto = postaPronta
+  ? nodemailer.createTransport({
+      host: posta.host,
+      port: posta.port,
+      secure: posta.port === 465,
+      auth: { user: posta.user, pass: posta.pass },
+    })
+  : null;
 
-const segna = db.prepare("UPDATE activities SET reminded_at = datetime('now') WHERE id = ?");
+const segnaEmail = db.prepare("UPDATE activities SET reminded_at = datetime('now') WHERE id = ?");
+const segnaPush = db.prepare("UPDATE activities SET pushed_at = datetime('now') WHERE id = ?");
+const telefoniDi = db.prepare(
+  "SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?",
+);
+const segnaConsegna = db.prepare(
+  "UPDATE push_subscriptions SET last_ok_at = datetime('now') WHERE endpoint = ?",
+);
+const buttaTelefono = db.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?");
+
+// Le chiavi si leggono dalla stessa tabella che usa il programma. Qui NON si
+// generano: questo script gira come processo di sistema, e due processi che si
+// svegliassero insieme a tabella vuota ne creerebbero due coppie diverse —
+// meta' dei telefoni resterebbe legata a quella persa.
+const chiaviSalvate = Object.fromEntries(
+  db.prepare("SELECT key, value FROM settings WHERE key LIKE 'vapid_%'").all()
+    .map((r) => [r.key, r.value]),
+);
+const chiavi =
+  process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
+    ? { pubblica: process.env.VAPID_PUBLIC_KEY, privata: process.env.VAPID_PRIVATE_KEY }
+    : chiaviSalvate.vapid_public && chiaviSalvate.vapid_private
+      ? { pubblica: chiaviSalvate.vapid_public, privata: chiaviSalvate.vapid_private }
+      : null;
+
+// Se ci sono telefoni iscritti ma non le chiavi, qualcosa e' andato storto
+// davvero (qualcuno ha svuotato `settings`): dirlo, perche' altrimenti gli
+// avvisi semplicemente non partono e nessuno sa perche'.
+if (!chiavi) {
+  const quanti = db.prepare("SELECT COUNT(*) AS n FROM push_subscriptions").get().n;
+  if (quanti > 0) {
+    console.error(
+      `${quanti} telefoni sono iscritti agli avvisi ma le chiavi VAPID non ci sono: ` +
+        "apri una volta Agenda > Calendario e avvisi nel gestionale, che le rigenera.",
+    );
+  }
+}
+
+const contatto = base || "https://gestionale.mondoimmobiliarelecce.it";
 let inviati = 0;
+let notificati = 0;
 
 for (const riga of daAvvisare) {
   const inizio = quando(riga.due_at);
@@ -153,10 +215,67 @@ for (const riga of daAvvisare) {
     riga.cliente ? ` · ${riga.cliente}` : ""
   }`;
 
+  const telefoni = chiavi && !riga.pushed_at ? telefoniDi.all(riga.utente) : [];
+
   if (prova) {
-    console.log(`→ ${riga.email}: ${oggetto}`);
+    const strade = [
+      postaPronta && !riga.reminded_at ? `email a ${riga.email}` : "",
+      telefoni.length ? `${telefoni.length} telefono/i` : "",
+    ].filter(Boolean);
+    console.log(`→ ${strade.join(" + ") || "nessuna strada disponibile"}: ${oggetto}`);
     continue;
   }
+
+  /* --- la strada del telefono ------------------------------------------- */
+
+  if (telefoni.length > 0) {
+    // Sul telefono il corpo e' corto di proposito: la notifica ne mostra due
+    // righe e taglia il resto, quindi le note e il collegamento restano
+    // all'email. Quello che serve a chi la legge di corsa e' l'ora, con chi, e
+    // dove.
+    const corpo = [
+      `Alle ${ora}`,
+      riga.cliente || null,
+      riga.indirizzo?.trim() || riga.immobile || null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    const messaggio = JSON.stringify({
+      titolo: `${anticipo}: ${riga.title || "appuntamento"}`,
+      corpo,
+      // Si apre l'agenda e non la scheda: la scheda di un collega darebbe
+      // "non trovata", e chi tocca un avviso vuole sapere dove deve andare.
+      url: "/agenda",
+      tag: `attivita-${riga.id}`,
+    });
+
+    let almenoUno = false;
+    for (const telefono of telefoni) {
+      const esito = await manda(telefono, messaggio, chiavi, contatto);
+      if (esito.ok) {
+        almenoUno = true;
+        segnaConsegna.run(telefono.endpoint);
+      } else if (esito.daButtare) {
+        // Quel telefono non esiste piu'. Si cancella subito, altrimenti ci si
+        // riprova a ogni appuntamento per sempre.
+        buttaTelefono.run(telefono.endpoint);
+        console.error(`Telefono non piu' iscritto, tolto: ${esito.motivo}`);
+      } else {
+        console.error(`Avviso non consegnato (attività ${riga.id}): ${esito.motivo}`);
+      }
+    }
+    // Si segna solo se almeno un telefono l'ha ricevuto: se sono falliti tutti,
+    // al giro dopo ci si riprova.
+    if (almenoUno) {
+      segnaPush.run(riga.id);
+      notificati++;
+    }
+  }
+
+  /* --- la strada dell'email --------------------------------------------- */
+
+  if (!trasporto || riga.reminded_at) continue;
 
   try {
     await trasporto.sendMail({
@@ -168,7 +287,7 @@ for (const riga of daAvvisare) {
       // 76 caratteri, e qui dentro ci sono indirizzi di schede e note lunghe.
       textEncoding: "base64",
     });
-    segna.run(riga.id);
+    segnaEmail.run(riga.id);
     inviati++;
   } catch (errore) {
     // Un indirizzo rifiutato non deve bloccare gli altri avvisi. Non si segna
@@ -177,4 +296,8 @@ for (const riga of daAvvisare) {
   }
 }
 
-console.log(prova ? `${daAvvisare.length} avvisi da mandare.` : `${inviati} avvisi inviati.`);
+console.log(
+  prova
+    ? `${daAvvisare.length} avvisi da mandare.`
+    : `${notificati} avvisi sul telefono, ${inviati} per email.`,
+);

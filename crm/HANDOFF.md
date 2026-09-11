@@ -641,6 +641,101 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     che era gia' giusta. Dopo aver rilanciato il server si guarda che sia
     partito davvero, non che risponda: a rispondere era quello di prima.
 
+25. **Gli avvisi sul telefono** (11 settembre 2026). Scelto da lui fra quattro
+    strade, dopo aver detto che in agenzia usano **iPhone, Samsung e Xiaomi**:
+    con tre marche diverse, il calendario in abbonamento non risolve — Apple la
+    sveglia la fa suonare, Google no, e su Android i calendari esterni spesso
+    non compaiono nemmeno. La posta l'avrebbe risolto per tutti e tre, ma e'
+    ferma per sua decisione (punto 23).
+
+    Trenta minuti prima di ogni appuntamento arriva una notifica sul telefono,
+    a programma chiuso. **Niente da configurare sul server**, ed e' il punto: e'
+    la ragione per cui e' stato scelto questo e non l'SMTP.
+
+    **`src/lib/push.ts` — il protocollo scritto a mano.** Cifratura del
+    messaggio (RFC 8291), formato `aes128gcm` (RFC 8188), firma VAPID
+    (RFC 8292), tutto su `node:crypto`. Niente dipendenze nuove, come il lettore
+    Excel e il generatore iCalendar.
+
+    **Come e' stato verificato, ed e' l'unica cosa che conta qui:** la
+    crittografia e' stata confrontata **byte per byte con `web-push`**, la
+    libreria che usano tutti, installata nello scratchpad **come pietra di
+    paragone e non come dipendenza**. Quattro messaggi diversi — corto, json,
+    con gli accenti, da 3000 caratteri — stesse chiavi, stesso sale, byte
+    identici. Se un giorno quel file va toccato, **rifare quel confronto**: e'
+    l'unico modo serio di sapere che funziona ancora, perche' un errore di
+    crittografia non da' errore. Il servizio di consegna risponde 400 e basta.
+
+    Le tre cose che si sbagliano e che qui sono scritte apposta:
+    - **`aud` e' la sola origine dell'endpoint**, non l'endpoint intero. Con
+      l'endpoint intero si prende 401 e sembra un problema di chiavi.
+    - **La firma va in forma `r||s`**, 64 byte netti (`dsaEncoding:
+      "ieee-p1363"`). Quella predefinita di Node e' DER e viene rifiutata.
+    - **Lo zero in fondo alle stringhe** `"WebPush: info\0"` e
+      `"Content-Encoding: aes128gcm\0"` e' un terminatore, non decorazione:
+      toglierlo cambia tutte le chiavi senza dare errore.
+
+    **Le chiavi VAPID si generano da sole** alla prima apertura della pagina e
+    stanno in una tabella `settings` nell'archivio, non in un file sul server.
+    E' una scelta, non una scorciatoia: questo progetto si e' gia' fermato una
+    volta su una riga da compilare in `nano`, e un avviso che non parte finche'
+    qualcuno non apre un file e' un avviso che non parte. **Il cron pero' non le
+    genera** — legge e basta: due processi che si svegliassero insieme a tabella
+    vuota ne creerebbero due coppie diverse, e meta' dei telefoni resterebbe
+    legata a quella persa. Se mancano e ci sono iscritti, lo dice nel registro.
+
+    **`pushed_at` e' separata da `reminded_at`.** Con una colonna sola,
+    accendere la posta spegnerebbe in silenzio le notifiche. E il cron **non
+    esce piu' se manca l'SMTP**: era un'uscita anticipata, e avrebbe tenuto
+    ferme anche queste.
+
+    Il resto: `push_subscriptions` (un telefono per riga, `endpoint` unico —
+    lo stesso telefono lo ripropone uguale a ogni visita e senza `ON CONFLICT`
+    si accumulerebbe una riga per apertura); `public/sw.js`, che **non fa
+    cache** di proposito; `public/manifest.json` e le icone, generate con
+    `sharp` invece di mettere dei binari nel repository. 404 e 410 sono gli
+    unici stati che cancellano l'iscrizione: su tutto il resto si riprova.
+
+    **Il muro.** La notifica passa dalla stessa query mascherata dell'email: il
+    nome del cliente esce solo se `clients.owner_id` e' di chi riceve. Nel
+    messaggio non c'e' **mai** il numero di telefono, e il collegamento porta
+    all'**agenda** e non alla scheda — quella di un collega darebbe «non
+    trovata».
+
+    **iPhone: senza aggiungerlo alla schermata Home non funziona**, ed e' Apple
+    a volerlo. Il pacchetto degli avvisi in Safari non c'e' proprio, quindi la
+    pagina riconosce il caso e dice cosa fare invece di dire «non si puo'».
+
+    Verificato: **82 controlli**, tutti rifatti almeno due volte di fila.
+    11 sulla cifratura contro `web-push`, 24 sulla firma e sugli stati di
+    errore, 20 sul giro completo (appuntamento → cron → consegna a un finto
+    servizio → **messaggio riaperto e riletto**, compreso il nome del collega
+    che non esce), 27 in browser sulla pagina.
+
+    **Quello che da qui NON si verifica, e va detto:** l'ultimo metro. A Google
+    e ad Apple la rete non arriva, quindi che la notifica **compaia davvero su
+    un telefono vero** lo puo' dire solo lui, col pulsante *Mandami una prova*.
+    E' la stessa situazione dell'SMTP.
+
+    **Quattro trappole pagate nelle prove**, tutte «rosso che sembrava del
+    codice»:
+    - `execFileSync` **blocca il ciclo di eventi**, e il finto servizio di
+      consegna girava nello stesso processo: il cron chiamava e non rispondeva
+      nessuno. Stallo, non guasto.
+    - `due_at` scritto nell'ora del container (UTC) mentre il cron gira con
+      `TZ=Europe/Rome`: due ore di scarto e il filtro lo scartava. E' la
+      trappola del fuso del capitolo 6, ripresentata.
+    - `SELECT id FROM users LIMIT 1` **senza `ORDER BY`** ha restituito il
+      collega: le due schede finivano allo stesso proprietario e **il muro non
+      veniva provato affatto**. Adesso la prova si ferma da sola se i due id
+      coincidono.
+    - la prova delle chiavi non si rimetteva a posto, e alla seconda corsa le
+      trovava gia' create.
+
+    E una nel codice, la stessa del punto 24 e commessa **un'ora dopo averla
+    scritta**: lo spazio dopo `{PREAVVISO_MINUTI}` sparito nel riquadro nuovo,
+    «30minuti». L'ha presa la prova in browser.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -654,6 +749,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Completare l'indirizzo degli immobili vecchi** | Lavoro suo, a mano. L'indirizzo è obbligatorio solo per i salvataggi da adesso in poi; quelli già in archivio senza via mostrano il titolo al posto della via nelle liste finché qualcuno non li apre e lo aggiunge. **Da adesso però sa quali sono**: il cruscotto li conta e il numero apre l'elenco dei soli immobili da completare (punto 15). Nessun automatismo previsto: la via non si inventa. |
 | **Applicazione per i venditori** («Mondo Tracking») | **Finita, in esercizio e provata da lui**, fino alle modifiche del 7 settembre comprese: *«fatto tutto, funziona»*. La pagina col nome e le osservazioni dei visitatori, il riquadro per mandare il link, i tre portali col nostro sito, la firma di Virginia. Documentata per l'agenzia in `README.md` («La pagina del proprietario») e `CONSEGNA.md` (9-septies). Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
+| **Provare gli avvisi su un telefono vero** | **Aspetta lui, ed e' l'unica cosa che manca** agli avvisi del punto 25. Da qui non si arriva ne' a Google ne' ad Apple. Lui apre *Agenda → Calendario e avvisi* dal telefono, accende, e tocca *Mandami una prova*. Se non arriva, il messaggio dice gia' il motivo. Da provare su tutte e tre le marche, e sull'iPhone **dopo** averlo aggiunto alla schermata Home. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **La descrizione della PR #2** | **Rifatta il 7 settembre**, su sua richiesta. Adesso racconta la pagina del proprietario, i portali e i messaggi di rifiuto, e l'elenco delle cose aperte e' quello vero. Se si aggiunge una funzione, va rifatta anche li': e' l'unica presentazione del progetto che un estraneo legge. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |

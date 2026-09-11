@@ -59,6 +59,11 @@ const COLONNE_AGGIUNTE: {
   // Quando e' partito il promemoria dei 30 minuti: senza, ripartirebbe a ogni
   // giro del cron.
   { tabella: "activities", colonna: "reminded_at", definizione: "TEXT" },
+  // Quando e' partito l'avviso sul telefono. Separata da `reminded_at` di
+  // proposito: email e telefono sono due strade indipendenti, e una colonna
+  // sola vorrebbe dire che accendere la posta spegne in silenzio le notifiche
+  // (o viceversa) senza che nessuno capisca perche'.
+  { tabella: "activities", colonna: "pushed_at", definizione: "TEXT" },
   // Quando e' stata cambiata la password l'ultima volta, in millisecondi.
   //
   // Serve a far cadere le sessioni aperte prima del cambio. Senza, cambiare la

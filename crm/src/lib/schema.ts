@@ -244,6 +244,35 @@ CREATE TABLE IF NOT EXISTS valuations (
 CREATE INDEX IF NOT EXISTS idx_valuations_property ON valuations(property_id);
 CREATE INDEX IF NOT EXISTS idx_valuations_client   ON valuations(client_id);
 
+-- ------------------------------------------------- avvisi sul telefono (Web Push)
+-- Un telefono per riga: la stessa persona che entra da due telefoni ha due
+-- righe, e riceve l'avviso su tutti e due. L'indirizzo di consegna e' unico,
+-- perche' il browser ne da' uno solo per sito e ripetere l'iscrizione (per
+-- esempio riaprendo la pagina) non deve moltiplicare le righe.
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint   TEXT    NOT NULL UNIQUE,
+  p256dh     TEXT    NOT NULL,   -- la chiave pubblica di quel telefono
+  auth       TEXT    NOT NULL,   -- il segreto condiviso con quel telefono
+  device     TEXT,               -- come si chiama, per riconoscerlo nell'elenco
+  created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+  last_ok_at TEXT                -- l'ultima volta che un avviso e' arrivato
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
+
+-- ------------------------------------------------------------- impostazioni
+-- Roba che il programma genera da se' e deve ritrovare al riavvio: oggi le due
+-- chiavi VAPID degli avvisi. Sta qui e non in un file di configurazione
+-- apposta: cosi' non c'e' niente da compilare a mano sul server, che e' il
+-- punto in cui questo progetto si e' gia' fermato una volta.
+CREATE TABLE IF NOT EXISTS settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ---------------------------------------------------------------- registro accessi
 CREATE TABLE IF NOT EXISTS audit_log (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,

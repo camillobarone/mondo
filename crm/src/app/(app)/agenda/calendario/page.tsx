@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth";
-import { calendarToken } from "@/lib/queries";
+import { calendarToken, chiavePubblicaAvvisi, telefoniIscritti } from "@/lib/queries";
 import { PREAVVISO_MINUTI } from "@/lib/calendar";
 import { PageHeader, Card } from "@/components/ui";
-import { CopyField } from "@/components/client";
+import { CopyField, ModuloConEsito, AvvisoModulo } from "@/components/client";
+import { togliQuestoTelefono } from "@/lib/actions";
 import { ResetTokenButton } from "./reset-button";
+import { AvvisiTelefono } from "./avvisi-telefono";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,8 @@ export const dynamic = "force-dynamic";
 export default async function CalendarioPage() {
   const user = await requireUser();
   const token = calendarToken(user.id);
+  const chiavePubblica = chiavePubblicaAvvisi();
+  const telefoni = telefoniIscritti(user.id);
 
   // L'indirizzo con cui si e' arrivati qui e' anche quello che deve funzionare
   // dal telefono: si prende da li' invece di scriverlo in configurazione.
@@ -42,6 +46,62 @@ export default async function CalendarioPage() {
       />
 
       <div className="space-y-5">
+        <Card title="Avviso sul telefono, da solo">
+          <p className="text-sm text-slate-600">
+            È la strada che funziona su <strong>iPhone, Samsung e Xiaomi allo stesso
+            modo</strong>: {PREAVVISO_MINUTI} minuti{" "}
+            prima di ogni appuntamento il gestionale fa comparire l&apos;avviso sul
+            telefono, anche a programma chiuso.
+            Non serve nessun calendario collegato e nessun indirizzo email.
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Si accende <strong>su ogni telefono separatamente</strong>, una volta sola.
+            Toccando l&apos;avviso si apre l&apos;appuntamento.
+          </p>
+
+          <div className="mt-4">
+            <AvvisiTelefono chiavePubblica={chiavePubblica} />
+          </div>
+
+          {telefoni.length > 0 ? (
+            <div className="mt-5 border-t border-slate-200 pt-4">
+              <p className="text-sm font-medium text-slate-800">
+                Dove arrivano i tuoi avvisi
+              </p>
+              <ul className="mt-2 space-y-2">
+                {telefoni.map((telefono) => (
+                  <li
+                    key={telefono.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2"
+                  >
+                    <span className="text-sm text-slate-700">
+                      {telefono.device ?? "Dispositivo"}
+                      <span className="ml-2 text-xs text-slate-500">
+                        {telefono.last_ok_at
+                          ? `ultimo avviso ricevuto il ${telefono.last_ok_at.slice(8, 10)}/${telefono.last_ok_at.slice(5, 7)}`
+                          : "nessun avviso ancora ricevuto"}
+                      </span>
+                    </span>
+                    <ModuloConEsito azione={togliQuestoTelefono}>
+                      <input type="hidden" name="endpoint" value={telefono.endpoint} />
+                      <AvvisoModulo />
+                      <button type="submit" className="text-xs text-slate-500 hover:underline">
+                        togli
+                      </button>
+                    </ModuloConEsito>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-slate-500">
+                Nell&apos;avviso ci sono l&apos;ora e il titolo dell&apos;appuntamento. Il
+                nome del cliente compare solo se quella scheda è tua: se l&apos;appuntamento
+                è su una scheda di un collega, arriva senza nome — come già succede per il
+                promemoria via email.
+              </p>
+            </div>
+          ) : null}
+        </Card>
+
         <Card title="Un appuntamento alla volta">
           <p className="text-sm text-slate-600">
             Su ogni riga dell&apos;agenda c&apos;è <strong>Calendario</strong>: scarica

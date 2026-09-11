@@ -25,7 +25,12 @@ import {
   trackingToken,
   resetTrackingToken,
   revokeTrackingToken,
+  iscriviTelefono,
+  disiscriviTelefono,
+  iscrizioniDi,
+  chiaviAvvisi,
 } from "./queries";
+import { manda } from "./push";
 import type { Property } from "./types";
 import { ACTIVITY_TYPES } from "./types";
 
@@ -1705,4 +1710,107 @@ export async function reimpostaPassword(_prima: string | null, form: FormData) {
   if (errore) return errore;
 
   redirect("/login?cambiata=1");
+}
+
+/* ------------------------------------------- avvisi sul telefono (Web Push) */
+
+/**
+ * Registra questo telefono per gli avvisi.
+ *
+ * L'iscrizione la costruisce il browser, non noi: qui arriva gia' fatta e si
+ * salva soltanto. Non c'e' niente da validare oltre alla forma — se fosse
+ * finta, il servizio di consegna la rifiuterebbe e basta, e la riga verrebbe
+ * buttata al primo avviso.
+ */
+export async function iscriviQuestoTelefono(
+  _precedente: string | null,
+  dati: FormData,
+): Promise<string | null> {
+  const user = await requireUser();
+  const endpoint = String(dati.get("endpoint") ?? "").trim();
+  const p256dh = String(dati.get("p256dh") ?? "").trim();
+  const auth = String(dati.get("auth") ?? "").trim();
+  const device = String(dati.get("device") ?? "").trim() || null;
+
+  if (!endpoint || !p256dh || !auth) {
+    return "Il telefono non ha dato tutto quello che serve. Riprova.";
+  }
+  if (!endpoint.startsWith("https://")) {
+    return "L'indirizzo di consegna non è valido.";
+  }
+
+  iscriviTelefono(user.id, { endpoint, p256dh, auth }, device?.slice(0, 120) ?? null);
+  audit(user.id, "crea", "avvisi", null, device ?? endpoint.slice(0, 60));
+  revalidatePath("/agenda/calendario");
+  return null;
+}
+
+/** Toglie questo telefono dagli avvisi. */
+export async function togliQuestoTelefono(
+  _precedente: string | null,
+  dati: FormData,
+): Promise<string | null> {
+  const user = await requireUser();
+  const endpoint = String(dati.get("endpoint") ?? "").trim();
+  if (!endpoint) return "Non so quale telefono togliere.";
+
+  disiscriviTelefono(user.id, endpoint);
+  audit(user.id, "elimina", "avvisi", null, endpoint.slice(0, 60));
+  revalidatePath("/agenda/calendario");
+  return null;
+}
+
+/**
+ * Manda un avviso di prova a tutti i telefoni di chi lo chiede.
+ *
+ * E' l'unico modo di sapere se la catena funziona davvero: il permesso
+ * concesso nel browser dice soltanto che il telefono e' disposto a ricevere,
+ * non che noi sappiamo consegnare. Fra le due cose c'e' tutto il protocollo.
+ */
+export async function provaAvviso(
+  _precedente: string | null,
+): Promise<string | null> {
+  const user = await requireUser();
+  const iscrizioni = iscrizioniDi(user.id);
+  if (iscrizioni.length === 0) {
+    return "Nessun telefono iscritto: accendi prima gli avvisi qui sopra.";
+  }
+
+  const chiavi = chiaviAvvisi();
+  const messaggio = JSON.stringify({
+    titolo: "Prova riuscita",
+    corpo: "Gli avvisi funzionano. Trenta minuti prima di ogni appuntamento arriva così.",
+    url: "/agenda",
+    tag: "prova",
+  });
+
+  let arrivati = 0;
+  const motivi: string[] = [];
+  for (const iscrizione of iscrizioni) {
+    const esito = await manda(iscrizione, messaggio, chiavi, contattoAvvisi());
+    if (esito.ok) {
+      arrivati++;
+      run(`UPDATE push_subscriptions SET last_ok_at = datetime('now') WHERE endpoint = ?`, [
+        iscrizione.endpoint,
+      ]);
+    } else {
+      // Un telefono che non c'e' piu' si toglie subito: lasciarlo vorrebbe
+      // dire riprovarci a ogni appuntamento, per sempre.
+      if (esito.daButtare) disiscriviTelefono(user.id, iscrizione.endpoint);
+      motivi.push(esito.motivo ?? `errore ${esito.stato}`);
+    }
+  }
+
+  revalidatePath("/agenda/calendario");
+  if (arrivati > 0) return null;
+  return `L'avviso non è partito: ${motivi[0] ?? "motivo sconosciuto"}.`;
+}
+
+/**
+ * Il recapito che accompagna la firma degli avvisi. Deve essere un indirizzo
+ * del sito o un `mailto:`: serve al servizio di consegna per sapere a chi
+ * scrivere se qualcosa va storto.
+ */
+function contattoAvvisi(): string {
+  return indirizzoBase() || "https://gestionale.mondoimmobiliarelecce.it";
 }

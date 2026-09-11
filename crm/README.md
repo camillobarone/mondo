@@ -525,7 +525,36 @@ fare, o si elimina. Prima l'unica strada era cancellare e riscrivere.
 o del computer, con la sveglia già impostata **30 minuti prima**. È il modo più
 affidabile di avere l'avviso: entra subito e suona anche a gestionale chiuso.
 
-Da **Agenda → Calendario e avvisi** ci sono le altre due strade.
+Da **Agenda → Calendario e avvisi** ci sono le altre strade.
+
+### L'avviso sul telefono
+
+**È la strada che funziona su iPhone, Samsung e Xiaomi allo stesso modo**, e non
+ha bisogno di niente: né di un calendario collegato, né di un indirizzo email,
+né di una configurazione sul server. Trenta minuti prima di ogni appuntamento il
+gestionale fa comparire l'avviso sul telefono, anche a programma chiuso.
+Toccandolo si apre l'agenda.
+
+Si accende **una volta per ogni telefono**, dal pulsante *Accendi gli avvisi su
+questo telefono*. Il telefono chiede il permesso: va dato, altrimenti niente
+avvisi. Subito dopo c'è *Mandami una prova*, che serve a vedere con i propri
+occhi che arriva — è l'unico modo di essere sicuri.
+
+Nella stessa pagina, sotto, c'è l'elenco dei telefoni su cui gli avvisi sono
+accesi, con l'ultima volta che ne è arrivato uno. Da lì si tolgono, uno per uno.
+
+> **Su iPhone c'è un passaggio in più, e senza quello non funziona.** Apple le
+> notifiche non le manda a un sito aperto in Safari: manda solo a quelli
+> aggiunti alla schermata Home. Quindi, dall'iPhone: apri il gestionale in
+> **Safari**, tocca **Condividi** (il quadrato con la freccia in su), scegli
+> **Aggiungi a Home**, e poi apri il gestionale **da quell'icona**. Da lì il
+> pulsante per accendere gli avvisi compare. Se lo cerchi in Safari non lo
+> trovi, e la pagina te lo dice.
+
+Nell'avviso ci sono l'ora, il titolo dell'appuntamento e — se quella scheda è
+tua — il nome del cliente e la via. Se l'appuntamento è su una scheda di un
+collega arriva lo stesso, ma senza il nome: vale lo stesso muro di tutto il
+resto del gestionale.
 
 ### Abbonare il calendario
 
@@ -546,9 +575,10 @@ se ne genera uno nuovo e il vecchio smette di rispondere.
 > ignora e mostra soltanto l'appuntamento.
 >
 > Quindi per **vedere** l'agenda in Google l'abbonamento va benissimo; per
-> **essere avvisato** servono le altre due strade: il pulsante *Calendario*
-> sulla riga dell'agenda, che mette l'appuntamento nel tuo calendario dove la
-> sveglia suona davvero, oppure l'avviso per email qui sotto.
+> **essere avvisato** servono le altre strade: l'**avviso sul telefono** qui
+> sopra, che è la più comoda perché si accende una volta e basta; il pulsante
+> *Calendario* sulla riga dell'agenda, che mette l'appuntamento nel tuo
+> calendario dove la sveglia suona davvero; oppure l'avviso per email qui sotto.
 
 ### L'avviso per email
 
