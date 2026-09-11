@@ -552,6 +552,8 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
       costruiscono a mano campo per campo — se lo si dimentica li', la nota non
       compare e nessuno se ne accorge.
 
+    **In esercizio dall'11 settembre**, insieme al resto.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -1269,8 +1271,9 @@ ballo. Risparmia un giro di domande.
 > mandarlo su WhatsApp e revocarlo; nel cruscotto il richiamo per **gli annunci
 > rimasti online su case gia' vendute**.
 >
-> So che e' **tutto in esercizio e l'ho provato io sul gestionale vero**, fino
-> all'ultima modifica del 7 settembre: funziona.
+> So che e' **tutto in esercizio**: l'ultimo aggiornamento del server e' dell'11
+> settembre e comprende anche le due modifiche agli **Incroci** del 9. Mondo
+> Tracking l'ho provato io sul gestionale vero e funziona.
 >
 > **Le tre decisioni mie che il codice segue**, e che non si cambiano da soli:
 > il proprietario vede il **nome** di chi ha visitato e le sue **osservazioni**,
