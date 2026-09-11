@@ -606,7 +606,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 
 | Cosa | Stato |
 |---|---|
-| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password**, che solo lui puo' generare. Dalla parte del codice non manca piu' niente: `npm run posta` sa riconoscere i tre modi di sbagliare la password di Gmail (punto 23). Vedi il punto della situazione qui sotto. |
+| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Rimandato da lui l'11 settembre 2026**: *«per adesso rimandiamo, troppo complicato»* — la verifica in due passaggi piu' la password per le app sono due passaggi su Google, non sul gestionale. **Non riproporglielo**: quando serve, lo riprende lui. Dalla parte del codice non manca niente (punto 23), e il punto della situazione qui sotto resta valido parola per parola. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
@@ -619,8 +619,28 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 
 ### SMTP — dove siamo rimasti (aggiornato al 2 settembre 2026)
 
-**Si riprende da qui.** Manca **una cosa sola**: una password di posta che
-funzioni. Tutto il resto è fatto, sul server e nel codice.
+> **Fermo per sua decisione dall'11 settembre 2026.** Gli sono stati dati i
+> passi per intero e ha risposto *«per adesso rimandiamo, troppo complicato»*.
+> Quello che resta da fare sta tutto su Google — verifica in due passaggi e
+> password per le app — e nessuno può farlo al posto suo. **Non va rimesso in
+> cima alle cose da fare a ogni finestra nuova:** è una scelta sua, non una
+> dimenticanza. Qui sotto è tutto ancora buono per quando lo riprende.
+>
+> **Cosa comporta, e va detto se ne nasce un problema.** Senza posta il
+> gestionale funziona (ha funzionato così per settimane), ma due cose no:
+> l'**avviso per email 30 minuti prima** degli appuntamenti — restano il
+> pulsante *Calendario* sulla riga dell'agenda e l'abbonamento iCalendar — e
+> soprattutto **«Password dimenticata?»**, che continua a dire che la posta non
+> è configurata. Se qualcuno resta fuori, la via è
+> `npm run password -- --email ...` dal server, ed è l'unica.
+>
+> **Da non confondere con l'agenda dentro Google Calendar**, che è un'altra
+> cosa e **funziona già**: si copia l'indirizzo da *Agenda → Calendario e
+> avvisi* e si incolla in Google (*Altri calendari → + → Da URL*). Nessuna
+> password, nessun account collegato, niente a che vedere con l'SMTP.
+
+**Manca una cosa sola**: una password di posta che funzioni. Tutto il resto è
+fatto, sul server e nel codice.
 
 **La strada è cambiata: si va con Gmail, non più con SiteGround.** La casella
 `info@mondoimmobiliarelecce.it` è su SiteGround (MX `mailspamprotection.com`,
