@@ -334,6 +334,20 @@ qualcosa non va, **dice quale delle cinque righe è sbagliata** — nome
 inesistente, porta chiusa, cifratura sbagliata per quella porta, utenza o
 password rifiutate, mittente rifiutato. Il secondo manda un'email vera.
 
+Sui due modi di sbagliare la password di Gmail il comando è preciso, perché
+Google li rifiuta tutti e due con lo stesso identico errore:
+
+- se hai usato la **password normale** di Gmail, te lo dice e ti dà
+  l'indirizzo dove si genera quella per le app;
+- se l'hai incollata **con gli spazi dentro**, non prova nemmeno a connettersi:
+  te lo dice subito e ti mostra come va scritta.
+
+C'è un caso che sembra un altro: se nel file la riga è rimasta
+`SMTP_PASS=abcd efgh ijkl mnop`, il comando dice **«manca SMTP_PASS»** anche se
+tu la password l'hai scritta. È quella riga che si spezza al primo spazio. Lo
+spiega lui stesso in fondo al messaggio; la cura è sempre la stessa, scriverla
+tutta attaccata.
+
 Il riavvio serve perché il programma legge quel file solo all'avvio: finché non
 lo fai, gli avvisi partono dal cron ma *Password dimenticata?* continua a dire
 che la posta non è configurata.

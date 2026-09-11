@@ -36,6 +36,13 @@ const posta = {
   from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
 };
 
+// La posta dell'agenzia si spedisce da Gmail (la casella del dominio e' su
+// SiteGround, ma la password di quella non e' piu' valida e in ufficio leggono
+// su Gmail). Gmail ha un modo tutto suo di rifiutare l'accesso, e le sue
+// istruzioni non somigliano a quelle di nessun altro fornitore: per questo lo
+// si riconosce e gli si parla a parte.
+const gmail = /(^|\.)(gmail|googlemail)\.com$/i.test(posta.host ?? "");
+
 /* ---- 1. Le righe ci sono tutte? ------------------------------------------ */
 
 const mancanti = [
@@ -56,6 +63,37 @@ if (mancanti.length > 0) {
   console.error("  che manca qualcosa, vuol dire che non è stato letto: va");
   console.error("  caricato prima, sulla stessa riga di comando —");
   console.error("    set -a; . /etc/mondo-crm.env; set +a; node scripts/posta.mjs");
+  if (mancanti.includes("SMTP_PASS")) {
+    // Questo e' il modo di sbagliare piu' probabile con Gmail, e da' proprio
+    // questo messaggio: la password per le app Google la mostra a gruppi di
+    // quattro, e incollandola con gli spazi dentro
+    //   SMTP_PASS=abcd efgh ijkl mnop
+    // la riga si spezza al primo spazio. La shell legge «abcd» e prova a
+    // eseguire «efgh» come se fosse un comando; la password non arriva qui, e
+    // il file sembra compilato. Peggio ancora, systemd la stessa riga la legge
+    // in un altro modo — spazi compresi — quindi la prova e il servizio
+    // direbbero due cose diverse.
+    console.error("");
+    console.error("  Se la password l'hai incollata con gli spazi dentro");
+    console.error("    SMTP_PASS=abcd efgh ijkl mnop");
+    console.error("  la riga si spezza e la password non arriva. Va scritta tutta");
+    console.error("  attaccata: SMTP_PASS=abcdefghijklmnop");
+  }
+  process.exit(1);
+}
+
+/* ---- 1-bis. La password per le app di Gmail ha una forma nota ------------ */
+
+// Si controlla prima di connettersi perche' da qui si sa dire *cosa* correggere:
+// dal server tornerebbe soltanto un 535, lo stesso identico per la password
+// sbagliata, per quella normale di Gmail e per questa incollata male.
+if (gmail && /\s/.test(posta.pass)) {
+  console.error("✗ La password contiene degli spazi, e Google non ne mette.");
+  console.error("");
+  console.error("  La password per le app è di 16 lettere. Google le mostra a gruppi");
+  console.error("  di quattro solo per farle leggere: gli spazi non ne fanno parte.");
+  console.error("  Nel file va scritta tutta attaccata —");
+  console.error("    SMTP_PASS=abcdefghijklmnop");
   process.exit(1);
 }
 
@@ -70,6 +108,13 @@ console.log(`Utenza   : ${posta.user}`);
 console.log(`Mittente : ${posta.from}`);
 if (posta.port !== 465 && posta.port !== 587) {
   console.log(`⚠ La porta ${posta.port} non è una delle due solite (465 o 587).`);
+}
+// Solo un avviso, non un rifiuto: la forma potrebbe cambiare, e la parola
+// definitiva la dice il server qui sotto.
+if (gmail && !/^[a-z]{16}$/.test(posta.pass)) {
+  console.log("⚠ La password non ha la forma di una password per le app di Google");
+  console.log("  (16 lettere minuscole). Se è la password normale di Gmail, non");
+  console.log("  funzionerà: vedi sotto.");
 }
 console.log("");
 
@@ -123,6 +168,28 @@ function spiega(errore) {
     ];
   }
   if (codice === "EAUTH") {
+    // Google rifiuta con lo stesso 535 la password sbagliata e quella giusta
+    // ma del tipo sbagliato, e il suo messaggio ("Username and Password not
+    // accepted") manda a cercare una password che non esiste. Le istruzioni
+    // sue non somigliano a quelle di nessun altro fornitore.
+    if (gmail) {
+      return [
+        "Google ha rifiutato utenza e password.",
+        "→ Serve una «password per le app», non la password normale di Gmail:",
+        "  quella Google non l'accetta più dal 2022, e l'errore è questo identico.",
+        "",
+        "  Si genera su https://myaccount.google.com/apppasswords",
+        "  Se quella pagina non si apre, manca la verifica in due passaggi",
+        "  sull'account: va attivata prima, altrimenti Google non la offre.",
+        "",
+        "  Sono 16 lettere minuscole. Google le mostra a gruppi di quattro, ma",
+        "  gli spazi non fanno parte della password: nel file va scritta tutta",
+        "  attaccata.",
+        "",
+        "  Controlla anche che SMTP_USER sia l'indirizzo Gmail per intero,",
+        "  con la @ e quello che viene dopo.",
+      ];
+    }
     return [
       "Il server di posta ha rifiutato utenza e password.",
       "→ Sbagliata la riga SMTP_USER o SMTP_PASS.",
@@ -133,7 +200,9 @@ function spiega(errore) {
   if (codice === "EENVELOPE") {
     return [
       `Il server ha accettato l'accesso ma ha rifiutato il mittente «${posta.from}».`,
-      "→ SMTP_FROM deve essere una casella di questo dominio, di solito la stessa di SMTP_USER.",
+      gmail
+        ? "→ Gmail spedisce solo per conto dell'account con cui si è entrati: SMTP_FROM deve essere uguale a SMTP_USER."
+        : "→ SMTP_FROM deve essere una casella di questo dominio, di solito la stessa di SMTP_USER.",
     ];
   }
   return [testo];
@@ -147,7 +216,7 @@ try {
 } catch (errore) {
   console.error("✗ Non ha funzionato.");
   console.error("");
-  for (const riga of spiega(errore)) console.error(`  ${riga}`);
+  for (const riga of spiega(errore)) console.error(riga ? `  ${riga}` : "");
   console.error("");
   console.error("  Dopo aver corretto /etc/mondo-crm.env, ridai questo stesso comando.");
   process.exit(1);
@@ -191,6 +260,6 @@ try {
 } catch (errore) {
   console.error("✗ L'accesso funziona, ma l'invio no.");
   console.error("");
-  for (const riga of spiega(errore)) console.error(`  ${riga}`);
+  for (const riga of spiega(errore)) console.error(riga ? `  ${riga}` : "");
   process.exit(1);
 }

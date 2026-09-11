@@ -62,9 +62,25 @@ scrivi_posta() {
 # Se la password contiene spazi, apici o il simbolo del dollaro, mettila fra
 # apici singoli:  SMTP_PASS='pa$$word con spazi'
 #
-# L'host e' quello di chi ospita la CASELLA, che spesso non e' chi ospita
-# questo server: si trova dal record MX del dominio, o nel pannello del
-# fornitore alla voce "impostazioni client di posta".
+# Con Gmail — che e' la strada scelta qui — si scrive cosi':
+#   SMTP_HOST=smtp.gmail.com
+#   SMTP_PORT=465
+#   SMTP_USER=nome@gmail.com
+#   SMTP_PASS=abcdefghijklmnop   # 16 lettere, SENZA gli spazi
+#   SMTP_FROM=nome@gmail.com     # con Gmail dev'essere uguale a SMTP_USER
+#
+# La password NON e' quella con cui si legge la posta: Google non l'accetta
+# piu' dal 2022. Serve una "password per le app", da
+# myaccount.google.com/apppasswords, che compare solo se sull'account e'
+# attiva la verifica in due passaggi. Google la mostra a gruppi di quattro
+# lettere: gli spazi servono a leggerla e non fanno parte della password. Se
+# restano, questa riga si spezza al primo spazio e la password non arriva —
+# peggio, systemd e la shell la leggerebbero in due modi diversi, quindi
+# `npm run posta` e il servizio direbbero due cose che non tornano.
+#
+# Con un fornitore qualsiasi l'host e' quello di chi ospita la CASELLA, che
+# spesso non e' chi ospita questo server: si trova dal record MX del dominio,
+# o nel pannello del fornitore alla voce "impostazioni client di posta".
 #   SMTP_HOST=mail.tuodominio.it
 #   SMTP_PORT=465      # 465 cifrata subito, 587 con STARTTLS
 #   SMTP_USER=info@tuodominio.it
@@ -72,8 +88,8 @@ scrivi_posta() {
 #   SMTP_FROM=info@tuodominio.it
 #
 # Non far spedire direttamente a questo server se l'SPF del dominio non elenca
-# il suo IP: le email finirebbero nello spam. Appoggiarsi alla casella e' la
-# strada che non richiede di toccare i DNS.
+# il suo IP: le email finirebbero nello spam. Appoggiarsi alla casella (o a
+# Gmail, che si firma da solo) e' la strada che non richiede di toccare i DNS.
 SMTP_HOST=
 SMTP_PORT=587
 SMTP_USER=

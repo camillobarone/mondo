@@ -554,13 +554,59 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 
     **In esercizio dall'11 settembre**, insieme al resto.
 
+23. **`npm run posta` sa parlare di Gmail** (11 settembre 2026). Non sblocca
+    l'SMTP — quello aspetta una password che solo lui puo' generare — ma toglie
+    di mezzo i tre modi di sbagliarla, che Google rifiuta tutti con lo stesso
+    identico 535 e un messaggio che manda a cercare una password che non esiste.
+
+    - **La password normale di Gmail**: il ramo `EAUTH` si sdoppia. Con un host
+      che finisce per `gmail.com` il messaggio dice che serve una *password per
+      le app*, da dove si genera, e che la pagina non si apre senza la verifica
+      in due passaggi. Per tutti gli altri fornitori il testo di prima e'
+      rimasto identico: li' «la password della casella, non quella del
+      pannello» e' ancora il consiglio giusto.
+    - **La password incollata con gli spazi**: si rifiuta **prima di
+      connettersi**. Dal server tornerebbe lo stesso 535 di una password
+      sbagliata, e da qui invece si sa dire *cosa* correggere. Un avviso piu'
+      morbido (⚠, e si prova lo stesso) quando non ha la forma delle 16 lettere
+      minuscole: la forma potrebbe cambiare, e la parola definitiva la dice il
+      server.
+    - **La riga che si spezza**, che e' il caso peggiore perche' si traveste da
+      un altro: `SMTP_PASS=abcd efgh ijkl mnop` letta dalla shell non arriva, e
+      il messaggio era «manca SMTP_PASS» a chi la password l'aveva appena
+      scritta. Adesso «manca SMTP_PASS» porta con se' la spiegazione. Peggio
+      ancora, **systemd quella riga la legge in un altro modo** (tutta, spazi
+      compresi): la prova e il servizio direbbero due cose diverse. Sta fra le
+      trappole del capitolo 6.
+    - Con Gmail `SMTP_FROM` deve essere **uguale** a `SMTP_USER` — Google
+      spedisce solo per conto dell'account con cui si e' entrati — e anche
+      `EENVELOPE` adesso lo dice.
+    - Aggiornato il commento in `deploy/servizi.sh` con l'esempio Gmail:
+      l'esempio che c'era rimandava alla strada abbandonata. Il file
+      `/etc/mondo-crm.env` **non viene toccato** — `scrivi_posta` esce subito se
+      esiste — quindi vale solo per un'installazione da zero.
+
+    **Come e' stato provato, visto che da qui a Gmail non si arriva.** Due
+    strade, e servono tutte e due: 23 controlli con un finto `nodemailer` messo
+    in un `node_modules/` dello scratchpad (e' l'unico modo di accendere il ramo
+    Gmail, che dipende da `SMTP_HOST`, senza toccare `/etc/hosts` — cosa che tra
+    l'altro l'ambiente non permette), **piu'** due passaggi con il nodemailer
+    vero contro un finto server SMTP su `127.0.0.1`, per essere sicuri che il
+    sostituto non stesse nascondendo niente. Il file provato viene **copiato dal
+    vero a ogni corsa**, mai ricopiato a mano. Prove rifatte due volte di fila:
+    23 verdi, 0 rossi.
+
+    **Trappola nelle prove, la stessa di sempre:** i primi due rossi erano
+    colpa della prova — `--manda` finiva dentro `env` come se fosse il nome di
+    una variabile. Nel dubbio si guarda prima la prova.
+
 ---
 
 ## 5 · Cosa resta aperto
 
 | Cosa | Stato |
 |---|---|
-| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password.** Vedi il punto della situazione qui sotto. |
+| **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Cominciato il 27 agosto, fermo su una password**, che solo lui puo' generare. Dalla parte del codice non manca piu' niente: `npm run posta` sa riconoscere i tre modi di sbagliare la password di Gmail (punto 23). Vedi il punto della situazione qui sotto. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |
@@ -606,7 +652,10 @@ ssh root@77.81.234.151 "set -a; . /etc/mondo-crm.env; set +a; cd /opt/mondo-crm 
 ```
 
 `npm run posta` dice **quale delle cinque righe è sbagliata** invece di dare un
-codice d'errore. Quando passa: `-- --manda` per un'email vera, poi
+codice d'errore, e dall'11 settembre (punto 23) sui tre modi di sbagliare la
+password di Gmail è esplicito: la password normale al posto di quella per le
+app, gli spazi rimasti dentro, e la riga che si spezza e fa dire «manca
+SMTP_PASS» a chi l'aveva appena scritta. Quando passa: `-- --manda` per un'email vera, poi
 `systemctl restart mondo-crm` — il programma legge quel file solo all'avvio, e
 finché non riparte *Password dimenticata?* continua a dire che la posta non è
 configurata.
@@ -1167,9 +1216,20 @@ email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
 - **La posta del dominio non sta dove sta il gestionale.** Il server è su Aruba,
   ma le caselle `@mondoimmobiliarelecce.it` sono su **SiteGround** insieme al
   sito: lo dicono l'MX (`mailspamprotection.com`) e `mail.mondoimmobiliarelecce.it`
-  (35.214.x.x). `SMTP_HOST` è `mail.mondoimmobiliarelecce.it`. E l'IP di Aruba
-  non è nell'SPF del dominio: far spedire il server per conto suo manderebbe
-  tutto nello spam.
+  (35.214.x.x). E l'IP di Aruba non è nell'SPF del dominio: far spedire il
+  server per conto suo manderebbe tutto nello spam. **`SMTP_HOST` però non è
+  quello:** quella strada si è fermata sulla password della casella `info@`, e
+  dal 2 settembre si spedisce da **Gmail** (`smtp.gmail.com`, capitolo 5). Il
+  motivo per cui il pezzo qui sopra resta scritto è l'SPF — vale anche adesso,
+  ed è la ragione per cui ci si appoggia a una casella vera invece di far
+  spedire il server da solo.
+- **La password per le app di Google si incolla con gli spazi dentro, e i due
+  lettori del file non sono d'accordo.** Google la mostra a gruppi di quattro;
+  con `SMTP_PASS=abcd efgh ijkl mnop` la shell (`set -a; . /etc/mondo-crm.env`)
+  si ferma al primo spazio e la variabile **non arriva affatto**, mentre systemd
+  legge tutta la riga, spazi compresi. Cioè `npm run posta` e il servizio vero
+  possono dire due cose diverse sulla stessa riga. `posta.mjs` adesso li nomina
+  tutti e due — vedi il punto 23.
 
 ---
 
