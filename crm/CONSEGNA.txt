@@ -991,8 +991,35 @@ Quattro cose da sapere, perché si notano nell'uso:
 3. Per la stessa ragione, una richiesta di cancellazione GDPR va girata a
    voce anche all'altro: ognuno cancella solo la propria copia.
 4. Il ruolo titolare non dà più accesso ai dati altrui: serve solo a creare
-   e disattivare gli utenti. Il registro accessi ce l'hanno tutti, ma
-   ciascuno vede soltanto le proprie mosse.
+   e disattivare gli utenti, e a prendere i link dei calendari (qui sotto). Il
+   registro accessi ce l'hanno tutti, ma ciascuno vede soltanto le proprie
+   mosse.
+
+
+L'unica apertura nel muro: i calendari
+
+Aggiunta il 12 settembre 2026, chiesta da Camillo e voluta con cognizione di
+causa. In fondo alla pagina Utenti — che è del solo titolare — c'è
+l'indirizzo del calendario di ogni persona, con il pulsante per copiarlo. Serve
+a mettere i calendari dei collaboratori nel proprio Google Calendar, uno per
+colore.
+
+Cosa comporta, detto chiaro: quell'indirizzo vale come una password, e chi
+ce l'ha vede gli appuntamenti di quella persona — data, ora, cosa e con chi,
+senza entrare nel programma. È l'unico punto in cui il titolare vede qualcosa
+dei colleghi. Non apre nient'altro: clienti, immobili, richieste e recapiti
+restano dietro il muro come prima.
+
+Tre cose sono fatte apposta perché l'apertura resti stretta:
+
+- il link non esiste finché non lo si crea. La pagina non genera niente da
+  sola: ogni riga parte da un pulsante Crea il calendario. Aprire la pagina
+  Utenti non deve aprire una porta per ognuno;
+- ogni creazione finisce nel registro accessi, col nome di chi l'ha chiesta
+  e di chi riguarda;
+- si può spegnere: genera un indirizzo nuovo rende muto il vecchio.
+  Attenzione che ferma anche i calendari già collegati, compresi quelli sul tuo
+  Google, finché non li ricolleghi.
 
 
 Gli incroci con i colleghi

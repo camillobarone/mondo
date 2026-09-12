@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { requireOwner } from "@/lib/auth";
-import { usersWithLoad } from "@/lib/queries";
+import { usersWithLoad, calendariDellePersone } from "@/lib/queries";
+import { Calendari } from "./calendari";
 import { saveUser, eliminaUtente } from "@/lib/actions";
 import { shortDate } from "@/lib/format";
 import { SubmitButton, ConfirmButton } from "@/components/client";
@@ -22,6 +24,20 @@ export default async function UsersPage({
   const params = await searchParams;
   const users = usersWithLoad();
   const editing = params.modifica ? users.find((u) => u.id === Number(params.modifica)) : undefined;
+
+  // L'indirizzo con cui si e' arrivati qui e' anche quello che deve funzionare
+  // dentro Google: si prende da li' invece di scriverlo in configurazione.
+  // Stessa riga della pagina Calendario, e per lo stesso motivo.
+  const head = await headers();
+  const host = head.get("x-forwarded-host") ?? head.get("host") ?? "";
+  const protocollo = (head.get("x-forwarded-proto") ?? "https").split(",")[0]!.trim();
+  const calendari = calendariDellePersone().map((persona) => ({
+    id: persona.id,
+    name: persona.name,
+    indirizzo: persona.calendar_token
+      ? `${protocollo}://${host}/calendario/${persona.calendar_token}.ics`
+      : null,
+  }));
 
   return (
     <>
@@ -196,6 +212,37 @@ export default async function UsersPage({
               ))}
             </tbody>
           </table>
+        </Card>
+
+        <Card title="I calendari delle persone" className="lg:col-span-3">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="max-w-2xl text-sm text-slate-600">
+              <p>
+                Ogni persona ha il <strong>suo</strong> calendario, e ci finiscono
+                soltanto le attività assegnate a lei nella tendina
+                &laquo;assegnata a&raquo;. Un appuntamento assegnato a un collaboratore
+                compare sul calendario di quel collaboratore e{" "}
+                <strong>non sul tuo</strong>.
+              </p>
+              <p className="mt-2">
+                Gli indirizzi si incollano in Google Calendar, uno per volta:{" "}
+                <em>Altri calendari</em> &rarr; <em>+</em> &rarr; <em>Da URL</em>. Così
+                li vedi tutti insieme, ognuno di un colore, restando nel tuo Google.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Un indirizzo vale come una password: chi ce l&apos;ha vede gli
+                appuntamenti di quella persona, senza entrare nel programma. Vanno
+                mandati a chi di dovere e basta. Se uno finisce dove non doveva, si
+                genera il nuovo e il vecchio smette di rispondere.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Questa è l&apos;unica pagina dove vedi qualcosa dei colleghi, e ci
+                arriva solo il titolare. Ogni link creato finisce nel registro accessi.
+              </p>
+            </div>
+
+            <Calendari persone={calendari} />
+          </div>
         </Card>
 
         <Card title="Copia di sicurezza" className="lg:col-span-3">

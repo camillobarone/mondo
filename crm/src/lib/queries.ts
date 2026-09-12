@@ -934,6 +934,64 @@ export function calendarToken(userId: number): string {
   return token;
 }
 
+/**
+ * I calendari di tutte le persone, per la pagina Utenti.
+ *
+ * **Questa lettura scavalca il muro fra collaboratori, ed e' voluto.** E'
+ * l'unica del programma insieme a quelle degli incroci fra colleghi e della
+ * pagina del proprietario, e come quelle ha un motivo preciso: il titolare
+ * mette i calendari dei collaboratori nel proprio Google Calendar, uno per
+ * colore. Chiesto da Camillo il 12 settembre 2026, sapendo cosa comporta —
+ * chi ha il link vede gli appuntamenti di quella persona.
+ *
+ * Per questo la pagina che la usa e' protetta da `requireOwner`, la chiave
+ * **non si genera da sola** (vedi `calendarioDi`) e ogni creazione finisce nel
+ * registro accessi.
+ *
+ * Le colonne sono scritte a mano una per una, come nelle altre letture che
+ * attraversano il muro: un `SELECT *` porterebbe qui dentro l'impronta della
+ * password e il biglietto di recupero.
+ */
+export function calendariDellePersone(): {
+  id: number;
+  name: string;
+  email: string;
+  calendar_token: string | null;
+}[] {
+  return all(
+    `SELECT id, name, email, calendar_token
+       FROM users
+      WHERE active = 1
+      ORDER BY name COLLATE NOCASE`,
+  );
+}
+
+/**
+ * La chiave del calendario di una persona **senza crearla**.
+ *
+ * `calendarToken` la genera quando manca, ed e' giusto li': la chiede chi sta
+ * guardando la propria pagina. Qui no. La pagina Utenti elenca tutti, e
+ * generarle tutte all'apertura vorrebbe dire aprire una porta per ognuno
+ * anche solo passando di li' — la stessa ragione per cui i link del
+ * proprietario si creano un immobile alla volta.
+ */
+export function calendarioDi(userId: number): string | null {
+  return (
+    one<{ calendar_token: string | null }>(`SELECT calendar_token FROM users WHERE id = ?`, [
+      userId,
+    ])?.calendar_token ?? null
+  );
+}
+
+/** C'e' davvero, ed e' attiva? Serve prima di creare o rigenerare una chiave altrui. */
+export function utenteAttivo(userId: number): { id: number; name: string } | null {
+  return (
+    one<{ id: number; name: string }>(`SELECT id, name FROM users WHERE id = ? AND active = 1`, [
+      userId,
+    ]) ?? null
+  );
+}
+
 /** Genera una chiave nuova: la precedente smette di funzionare. */
 export function resetCalendarToken(userId: number): string {
   const token = crypto.randomBytes(24).toString("base64url");

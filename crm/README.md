@@ -567,6 +567,22 @@ autorizzare, ma anche che **quell'indirizzo vale come una password** — chi ce
 l'ha vede i tuoi appuntamenti. Se finisce dove non doveva, dalla stessa pagina
 se ne genera uno nuovo e il vecchio smette di rispondere.
 
+#### Un calendario per persona, tutti nel tuo Google
+
+Il calendario è di chi lo apre, e ci finiscono **solo le attività assegnate a
+lui** nella tendina *«assegnata a»* dell'agenda. Assegnare un appuntamento a un
+collaboratore lo manda sul calendario di quel collaboratore, e **non sul tuo**.
+
+Per vederli tutti insieme, il titolare trova in fondo alla pagina **Utenti**
+l'indirizzo di ogni persona, con il pulsante per copiarlo: si incollano in
+Google uno per volta (*Altri calendari → + → Da URL*) e diventano calendari
+distinti, ognuno del suo colore, che si accendono e si spengono con un clic.
+
+Il link di una persona **non esiste finché non lo crei**: la riga parte da un
+pulsante *Crea il calendario*. E vale la stessa avvertenza di sopra — chi ha
+quell'indirizzo vede gli appuntamenti di quella persona, quindi si manda a chi
+di dovere e basta.
+
 > **Su Google due cose da sapere.** La prima: ricontrolla quando decide lui,
 > anche dopo diverse ore, quindi un appuntamento appena inserito può non
 > comparire subito — Apple e Outlook sono più svelti. La seconda, che pesa di

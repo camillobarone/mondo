@@ -29,6 +29,9 @@ import {
   disiscriviTelefono,
   iscrizioniDi,
   chiaviAvvisi,
+  calendarioDi,
+  utenteAttivo,
+  resetCalendarToken,
 } from "./queries";
 import { manda } from "./push";
 import type { Property } from "./types";
@@ -1627,6 +1630,48 @@ export async function rigeneraCalendario() {
   run(`UPDATE users SET calendar_token = ? WHERE id = ?`, [token, user.id]);
   audit(user.id, "modifica", "utente", user.id, "nuovo indirizzo del calendario");
   revalidatePath("/agenda/calendario");
+}
+
+/**
+ * Crea il calendario di una persona, dalla pagina Utenti.
+ *
+ * **Lo puo' fare solo il titolare**, ed e' un'apertura voluta nel muro fra
+ * collaboratori: da qui prende i link dei colleghi per metterli nel proprio
+ * Google Calendar. Chi ha il link vede gli appuntamenti di quella persona,
+ * quindi ogni creazione finisce nel registro accessi con il nome di chi l'ha
+ * chiesta e di chi riguarda.
+ *
+ * Non crea niente se la chiave c'e' gia': premuto due volte, il pulsante non
+ * deve spegnere un calendario che qualcuno ha gia' collegato.
+ */
+export async function creaCalendarioDi(formData: FormData) {
+  const user = await requireOwner();
+  const id = Number(formData.get("user_id"));
+  const persona = utenteAttivo(id);
+  if (!persona) throw new Error(NEGATO);
+
+  if (calendarioDi(id)) return;
+  resetCalendarToken(id);
+  audit(user.id, "modifica", "utente", id, `creato il calendario di ${persona.name}`);
+  revalidatePath("/utenti");
+}
+
+/**
+ * Chiave nuova per il calendario di una persona: la precedente smette di
+ * rispondere. Serve quando un indirizzo e' finito dove non doveva.
+ *
+ * Il gemello per il proprio calendario e' `rigeneraCalendario`, e restano due
+ * azioni separate di proposito: quella non chiede il titolare, questa si'.
+ */
+export async function rigeneraCalendarioDi(formData: FormData) {
+  const user = await requireOwner();
+  const id = Number(formData.get("user_id"));
+  const persona = utenteAttivo(id);
+  if (!persona) throw new Error(NEGATO);
+
+  resetCalendarToken(id);
+  audit(user.id, "modifica", "utente", id, `nuovo indirizzo del calendario di ${persona.name}`);
+  revalidatePath("/utenti");
 }
 
 /* ======================================================== il proprio accesso */

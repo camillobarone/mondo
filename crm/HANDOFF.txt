@@ -790,6 +790,86 @@ Le cose costruite in questa sessione, in ordine
     diceva il numero esatto. Si legge il solo riquadro, non il corpo. Come
     sempre: nel dubbio si guarda prima la prova.
 
+27. Un calendario per persona, e il titolare li raccoglie (12 settembre
+    2026). Sua richiesta: aggiungere «Roberto Lefons» e «Alessandro Ciullo» fra
+    i profili a cui si assegna un'attivita', e avere per ognuno un calendario
+    da mettere in Google Calendar, separato dagli altri.
+
+    La prima meta' non e' stata scritta, perche' c'era gia' — e vale la
+    pena dirlo, perche' la tentazione era costruire un secondo meccanismo
+    accanto a quello che gia' funzionava. La tendina «assegnata a» elenca gli
+    utenti (activeUserOptions), e ogni utente ha di suo un feed
+    /calendario/<chiave>.ics filtrato su a.user_id. Quindi creare i due
+    profili come utenti bastava per i punti 1, 2 e 3 della richiesta.
+    Verificato prima di rispondere, non dedotto: 32 controlli in browser su
+    un archivio con tre profili e un appuntamento a testa — i tre .ics
+    separati, ciascuno col solo proprio appuntamento e la sveglia a -30
+    minuti, la chiave inventata che da' 404, e Roberto che vede l'attivita' ma
+    non il nome del cliente di Camillo.
+
+    Quello che mancava davvero era un solo pezzo, e non si sarebbe visto
+    senza chiederglielo: il link .ics lo vede solo chi ha fatto l'accesso,
+    sulla propria pagina. Camillo quelli dei collaboratori non li poteva
+    prendere. Gli sono state messe davanti le tre strade (li prende lui / se li
+    prendono loro / sono solo etichette e non entrano mai) e ha scelto la
+    prima: li mette tutti nel proprio Google, uno per colore.
+
+    - Riquadro «I calendari delle persone» in fondo alla pagina Utenti, che
+      e' gia' requireOwner. calendariDellePersone in queries.ts,
+      creaCalendarioDi e rigeneraCalendarioDi in actions.ts,
+      utenti/calendari.tsx per la parte di client.
+    - E' un'apertura voluta nel muro fra collaboratori, la quarta del
+      programma dopo gli incroci fra colleghi e la pagina del proprietario, e
+      va trattata come quelle: colonne scritte a mano una per una — un
+      SELECT * su users porterebbe li' dentro l'impronta della password e
+      il biglietto di recupero — e il perche' scritto sopra la funzione, non
+      nel commit.
+    - La chiave non si genera da sola. calendarToken la crea quando
+      manca, ed e' giusto sulla pagina di chi la sta guardando; qui no. La
+      pagina Utenti elenca tutti, e generarle all'apertura vorrebbe dire aprire
+      una porta per ognuno solo passando di li'. Per questo c'e'
+      calendarioDi, che legge e basta, e ogni riga parte da un pulsante
+      Crea il calendario — lo stesso stampo del link del proprietario.
+    - Ogni creazione e ogni rigenerazione finiscono nel registro accessi,
+      col nome di chi l'ha chiesta e di chi riguarda. E' l'unico modo di
+      accorgersi, dopo, che un link e' stato preso.
+    - creaCalendarioDi non fa niente se la chiave c'e' gia': premuto due
+      volte, il pulsante non deve spegnere un calendario che qualcuno ha appena
+      collegato. Chi vuole cambiarla passa dall'altro pulsante, che lo dice.
+    - rigeneraCalendario (la propria) e rigeneraCalendarioDi (di un altro)
+      restano due azioni separate: la prima non chiede il titolare, la
+      seconda si'. Fonderle avrebbe voluto dire un solo controllo per due casi
+      diversi, che e' il modo in cui i controlli si perdono.
+
+    Verificato in browser sulla build di produzione: 35 controlli, piu' i
+    32 di prima rifatti. Fra gli altri: il collaboratore che sulla pagina
+    Utenti viene rimandato via; nessuna chiave creata dalla sola apertura della
+    pagina; i tre link creati uno per volta e i tre .ics che restano
+    separati; il pulsante premuto due volte che non cambia niente; la chiave
+    rigenerata che spegne la vecchia (404) e conserva gli appuntamenti; le due
+    righe nel registro accessi; e la pagina di Roberto che mostra la chiave
+    rigenerata dal titolare e da nessuna parte quella di Camillo.
+
+    Due trappole nelle prove, tutte e due gia' scritte qui e ripagate lo
+    stesso:
+    - il link sta dentro un <input readOnly> (CopyField), e
+      textContent non lo vede: tre rossi su un codice giusto. Si legge
+      inputValue, non il testo della pagina. Sorella della trappola dei
+      <select>, che nella prova del punto 26 elencavano tutto il portafoglio.
+    - la prova sporcava l'archivio creando chiavi, e alla seconda corsa il
+      passo «nessun indirizzo prima di crearlo» falliva da solo. Adesso azzera
+      calendar_token all'inizio. E due prove non si lanciano insieme sullo
+      stesso archivio: una corsa in parallelo ha dato un rosso finto proprio
+      perche' l'altra le azzerava le chiavi sotto.
+
+    Quello che da qui NON si verifica: che Google digerisca i tre indirizzi.
+    La rete verso l'esterno e' chiusa. Il file e' lo stesso di sempre, quello
+    del suo calendario che gia' funziona, quindi non c'e' motivo di dubitarne —
+    ma la conferma la puo' dare solo lui.
+
+    Da fare a lui, ed e' il pezzo che resta: creare i due utenti da
+    Utenti → Nuovo utente. Da qui non si arriva all'archivio di produzione.
+
 
 5 · COSA RESTA APERTO
 ---------------------
@@ -1626,10 +1706,12 @@ ballo. Risparmia un giro di domande.
   | questa finestra si lavora solo su crm/, niente altri progetti.
   | 
   | So che ogni collaboratore vede solo le proprie schede (capitolo 10-bis di
-  | CONSEGNA.md). L'ultima cosa fatta e' una correzione agli incroci: negli
-  | «immobili da valutare» arrivavano comuni diversi da quelli chiesti, perche'
-  | «Lecce» sta dentro «Monteroni di Lecce» e il confronto si fermava li'. Prima
-  | ancora, gli avvisi sul telefono:
+  | CONSEGNA.md), con una sola apertura: dalla pagina Utenti il titolare
+  | prende i link dei calendari dei colleghi, per metterli nel proprio Google
+  | Calendar. L'ultima cosa fatta e' quella, insieme a una correzione agli
+  | incroci: negli «immobili da valutare» arrivavano comuni diversi da quelli
+  | chiesti, perche' «Lecce» sta dentro «Monteroni di Lecce» e il confronto si
+  | fermava li'. Prima ancora, gli avvisi sul telefono:
   | 30 minuti prima di ogni appuntamento arriva una notifica, a programma chiuso,
   | su iPhone Samsung e Xiaomi allo stesso modo. Si accendono da *Agenda →
   | Calendario e avvisi*, un telefono alla volta, e non c'e' niente da
