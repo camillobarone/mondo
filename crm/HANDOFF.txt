@@ -5,7 +5,7 @@ HANDOFF — PER RIPRENDERE IN UNA CHAT NUOVA
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-Aggiornato al 4 settembre 2026.
+Aggiornato al 12 settembre 2026.
 
   | Il documento gemello è CONSEGNA.md (anche in .txt): quello è per
   | l'agenzia, questo è per chi riprende il lavoro. README.md è il manuale
@@ -735,6 +735,61 @@ Le cose costruite in questa sessione, in ordine
     scritta: lo spazio dopo {PREAVVISO_MINUTI} sparito nel riquadro nuovo,
     «30minuti». L'ha presa la prova in browser.
 
+26. «Lecce» non e' piu' «Monteroni di Lecce» (12 settembre 2026). Sua
+    segnalazione: nel riquadro «immobili da valutare» della scheda cliente
+    arrivavano immobili di comuni diversi da quelli chiesti.
+
+    La causa: il confronto fra comuni passava da samePlace, che considera
+    uguali due luoghi quando uno contiene l'altro. Per le zone e' proprio
+    quello che serve — «Centro» dentro «Centro storico» — ma fra i comuni
+    «Lecce» sta dentro Monteroni di Lecce, San Cesario di Lecce,
+    Caprarica di Lecce, Castri' di Lecce, Minervino di Lecce,
+    San Donato di Lecce e perfino Muro Leccese. Sui 96 comuni in elenco gli
+    accostamenti sbagliati erano otto, e sette riguardavano Lecce: cioe'
+    il comune dove l'agenzia lavora di piu'. L'ottavo era
+    Corigliano d'Otranto ~ Otranto.
+
+    - sameComune in matching.ts, separata da samePlace e non
+      intercambiabile. Le quattro letture del comune (l'esclusione, il
+      punteggio, zoneApplicabili e explain) sono passate alla nuova; le due
+      delle zone sono rimaste dov'erano.
+    - Le due scritture che vanno tollerate lo stesso, perche' i comuni in
+      archivio sono battuti a mano: la provincia in coda («LECCE (LE)» =
+      «Lecce», ed e' la forma di buona parte del portafoglio) e il nome
+      accorciato, ma solo quando e' l'*inizio* e finisce su una parola intera
+      («Monteroni» = «Monteroni di Lecce»). E' l'unica direzione sicura: nessun
+      altro comune comincia per «Monteroni», mentre a finire per
+      «Lecce» sono in sei. Il confronto per contenimento sbagliava proprio
+      perche' non distingueva le due direzioni.
+    - L'immobile senza comune in scheda resta proposto, e non e' una
+      dimenticanza: non e' in un comune diverso, e' in un comune che non
+      sappiamo, e explain lo dice gia' con «Comune non indicato
+      sull'immobile». Escluderlo avrebbe nascosto le schede vecchie a tutte le
+      richieste in una volta sola. Ora c'e' scritto il perche', accanto al
+      controllo.
+
+    Non e' servita nessuna colonna nuova ne' nessuna conversione: e' cambiato
+    solo il confronto. Vale insieme per la scheda cliente, gli Incroci e
+    gli incroci fra colleghi, che passano tutti da evaluate.
+
+    Verificato in due modi. 4.894 controlli sulla regola, con le funzioni
+    estratte dal file vero e non ricopiate: tutte le 4.560 coppie di comuni
+    diversi dell'elenco (nessuna confusa), ogni comune contro se stesso con e
+    senza la provincia, gli otto accostamenti che prima passavano, le scritture
+    che devono continuare a valere, e le zone che devono continuare a tollerare
+    il contenimento. Poi 18 controlli in browser sulla build di produzione,
+    con due utenti: la richiesta a Lecce che non riceve piu' i cinque comuni
+    omonimi ma riceve «LECCE (LE)», «Lecce» e quello senza comune; il conteggio
+    che dice tre e ne apre tre; la direzione opposta (chi cerca a Monteroni
+    non riceve Lecce); e il muro fra collaboratori. Rifatti due volte di fila.
+
+    Trappola nelle prove, ed e' nuova: la scheda cliente ha anche le tendine
+    per proporre un immobile, e quelle elencano tutto il portafoglio.
+    Leggendo textContent("body") ogni immobile risulta proposto: sei controlli
+    rossi su un codice gia' giusto, smentiti dal conteggio della pagina che
+    diceva il numero esatto. Si legge il solo riquadro, non il corpo. Come
+    sempre: nel dubbio si guarda prima la prova.
+
 
 5 · COSA RESTA APERTO
 ---------------------
@@ -1449,6 +1504,14 @@ Trappole già pagate (non ripeterle)
   passano, e a occhio la riga sembra giusta. Si trova solo leggendo il testo
   della pagina in un browser. Cura: tenere espressione e parola sulla stessa
   riga, e andare a capo con {" "}.
+- Il confronto per contenimento va bene per le zone, non per i comuni.
+  samePlace considera uguali due luoghi quando uno contiene l'altro, ed e'
+  quello che serve fra le zone («Centro» / «Centro storico»). Fra i comuni
+  faceva passare Monteroni di Lecce per Lecce — sette comuni su otto
+  confusi contenevano «Lecce». Per i comuni c'e' sameComune, che tollera
+  la provincia in coda e il nome accorciato solo all'inizio. Le due
+  funzioni non sono intercambiabili: se aggiungi un confronto su un luogo,
+  guarda prima di cosa stai parlando.
 - I numeri di telefono dell'archivio sono senza +39: per WhatsApp si passa
   da whatsappHref() in src/lib/format.ts, mai da wa.me a mano.
 - La posta del dominio non sta dove sta il gestionale. Il server è su Aruba,
@@ -1563,7 +1626,10 @@ ballo. Risparmia un giro di domande.
   | questa finestra si lavora solo su crm/, niente altri progetti.
   | 
   | So che ogni collaboratore vede solo le proprie schede (capitolo 10-bis di
-  | CONSEGNA.md), e che l'ultima cosa costruita sono gli avvisi sul telefono:
+  | CONSEGNA.md). L'ultima cosa fatta e' una correzione agli incroci: negli
+  | «immobili da valutare» arrivavano comuni diversi da quelli chiesti, perche'
+  | «Lecce» sta dentro «Monteroni di Lecce» e il confronto si fermava li'. Prima
+  | ancora, gli avvisi sul telefono:
   | 30 minuti prima di ogni appuntamento arriva una notifica, a programma chiuso,
   | su iPhone Samsung e Xiaomi allo stesso modo. Si accendono da *Agenda →
   | Calendario e avvisi*, un telefono alla volta, e non c'e' niente da

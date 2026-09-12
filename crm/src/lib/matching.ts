@@ -59,16 +59,62 @@ function normalise(value: string | null | undefined): string {
 }
 
 /**
- * Due luoghi si considerano lo stesso anche quando uno contiene l'altro:
- * "Centro" e "Centro storico", "Cataldo" e "San Cataldo", "Porto Cesareo" e
- * "Porto Cesareo (LE)". Sotto i 4 caratteri non si azzarda: troppo facile un
- * falso accostamento.
+ * Due **zone** si considerano la stessa anche quando una contiene l'altra:
+ * "Centro" e "Centro storico", "Cataldo" e "San Cataldo". Sotto i 4 caratteri
+ * non si azzarda: troppo facile un falso accostamento.
+ *
+ * **Per i comuni c'e' `sameComune`**, e non e' intercambiabile: la tolleranza
+ * che qui serve, li' faceva passare Monteroni di Lecce per Lecce.
  */
 function samePlace(a: string, b: string): boolean {
   if (!a || !b) return false;
   if (a === b) return true;
   if (a.length < 4 || b.length < 4) return false;
   return a.includes(b) || b.includes(a);
+}
+
+/**
+ * Due comuni sono lo stesso comune. **Non si usa `samePlace`**, e la
+ * differenza non e' una sfumatura: li' basta che uno contenga l'altro — che
+ * per le zone e' proprio quello che serve — mentre fra i comuni «Lecce» sta
+ * dentro «Monteroni di Lecce», «San Cesario di Lecce», «Caprarica di Lecce»,
+ * «Castri' di Lecce», «Minervino di Lecce», «San Donato di Lecce» e perfino
+ * «Muro Leccese». Sette degli otto accostamenti sbagliati riguardavano Lecce,
+ * cioe' il comune dove l'agenzia lavora di piu': chi cercava casa a Lecce si
+ * vedeva proporre Monteroni, e viceversa.
+ *
+ * Due scritture diverse si tollerano lo stesso, perche' i comuni in archivio
+ * sono stati battuti a mano:
+ *
+ *   - **la provincia in coda** — «LECCE (LE)» e «Lecce» sono lo stesso posto,
+ *     ed e' la forma in cui sta scritta buona parte del portafoglio;
+ *   - **il nome accorciato**, ma solo quando e' l'*inizio* e finisce su una
+ *     parola intera: «Monteroni» vale «Monteroni di Lecce». E' l'unica
+ *     direzione sicura — nessun altro comune comincia per «Monteroni», mentre
+ *     a *finire* per «Lecce» sono in sei.
+ */
+function sameComune(a: string, b: string): boolean {
+  const primo = senzaProvincia(a);
+  const secondo = senzaProvincia(b);
+  if (!primo || !secondo) return false;
+  if (primo === secondo) return true;
+  return cominciaPer(primo, secondo) || cominciaPer(secondo, primo);
+}
+
+/**
+ * Toglie la sigla della provincia scritta in fondo. Dopo `normalise` le
+ * parentesi non ci sono piu', quindi «LECCE (LE)» e' arrivata qui come
+ * «lecce le». Lo spazio davanti alla sigla e' obbligatorio: senza, un comune
+ * di due lettere sparirebbe del tutto. Nessuno dei 96 comuni in elenco
+ * finisce con una parola uguale a una di queste sigle.
+ */
+function senzaProvincia(comune: string): string {
+  return comune.replace(/ (le|br|ta|ba|bt|fg)$/, "");
+}
+
+/** `intero` comincia per `parte`, e li' finisce una parola: «Monteroni di Lecce» / «Monteroni». */
+function cominciaPer(intero: string, parte: string): boolean {
+  return parte.length >= 4 && intero.startsWith(`${parte} `);
 }
 
 /**
@@ -209,7 +255,7 @@ function zoneApplicabili(
   property: ReadyProperty,
 ): string[] | null {
   const applicabili = requirement.aree.filter(
-    (area) => !area.comune || samePlace(area.comune, property.city),
+    (area) => !area.comune || sameComune(area.comune, property.city),
   );
   if (!applicabili.length) return null;
   if (applicabili.some((area) => !area.zone.length)) return null;
@@ -244,11 +290,17 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
   // qualsiasi di quelli chiesti. Le aree senza comune (arrivano dalle
   // richieste importate, dove la zona c'era e il comune no) non escludono
   // niente: non saprebbero cosa escludere.
+  //
+  // Anche l'immobile **senza comune in scheda** resta dentro, e non e' una
+  // dimenticanza: non e' in un comune diverso, e' in un comune che non
+  // sappiamo. `explain` lo dice con l'avvertenza «Comune non indicato
+  // sull'immobile», e a decidere e' chi telefona. Escluderlo nasconderebbe le
+  // schede vecchie a tutte le richieste in una volta sola.
   const comuniChiesti = requirement.aree.map((area) => area.comune).filter(Boolean);
   if (
     comuniChiesti.length &&
     property.city &&
-    !comuniChiesti.some((comune) => samePlace(comune, property.city))
+    !comuniChiesti.some((comune) => sameComune(comune, property.city))
   ) {
     return { ok: false, reason: "comune", gap: 0 };
   }
@@ -294,7 +346,7 @@ function evaluate(requirement: ReadyRequirement, property: ReadyProperty): Verdi
   if (requirement.budgetMin) check(property.price >= requirement.budgetMin);
   if (requirement.kinds.length) check(requirement.kinds.includes(property.kind));
   if (comuniChiesti.length) {
-    check(comuniChiesti.some((comune) => samePlace(comune, property.city)));
+    check(comuniChiesti.some((comune) => sameComune(comune, property.city)));
   }
   // Contano solo le zone del comune in cui l'immobile si trova davvero: le
   // zone chieste a Porto Cesareo non dicono niente su un immobile di Lecce.
@@ -354,7 +406,7 @@ function explain(scored: Scored): Match {
   }
   const comuniChiesti = requirement.aree.map((area) => area.comune).filter(Boolean);
   if (comuniChiesti.length) {
-    if (comuniChiesti.some((comune) => samePlace(comune, property.city))) {
+    if (comuniChiesti.some((comune) => sameComune(comune, property.city))) {
       reasons.push(`Comune: ${scored.property.city}`);
     } else {
       warnings.push(`Comune non indicato sull'immobile`);

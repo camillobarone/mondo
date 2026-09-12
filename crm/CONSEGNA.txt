@@ -690,6 +690,19 @@ famiglia dell'immobile, e solo quando si riconoscono tutte: se anche una sola
 non si riconosce — succede con le tipologie degli archivi importati — non si sa
 abbastanza per escludere, e decide l'agente.
 
+Quando due comuni sono lo stesso comune (corretto il 12 settembre 2026). Il
+programma tollera le scritture diverse — «LECCE (LE)» e «Lecce» sono lo stesso
+posto, e «Monteroni» vale «Monteroni di Lecce» — ma non confonde più due
+comuni diversi. Prima chi cercava a Lecce si vedeva proposti anche gli
+immobili di Monteroni di Lecce, San Cesario di Lecce, Caprarica, Castrì,
+Minervino, San Donato e Muro Leccese: sono tutti nomi che contengono la parola
+«Lecce», e al confronto bastava quello. Adesso no.
+
+Un immobile a cui manca il comune in scheda continua a essere proposto:
+non è in un comune diverso, è in un comune che non sappiamo, e accanto compare
+l'avvertenza «Comune non indicato sull'immobile». Si toglie di mezzo
+completando l'indirizzo — il cruscotto dice quali sono.
+
 
 Le richieste vecchie
 
