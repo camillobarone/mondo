@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eef7f7;
+  --color-brand-100: #d3ebeb;
+  --color-brand-200: #a8d6d7;
+  --color-brand-300: #74babc;
+  --color-brand-400: #47999c;
+  --color-brand-500: #2f7c80;
+  --color-brand-600: #246468;
+  --color-brand-700: #1f5154;
+  --color-brand-800: #1c4245;
+  --color-brand-900: #19383a;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-slate-100 text-slate-800 antialiased;
+  font-family: var(--font-sans);
+}
+
+/* Campi di inserimento --------------------------------------------------- */
+.field {
+  @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm
+         text-slate-900 shadow-xs outline-none transition
+         placeholder:text-slate-400
+         focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25
+         disabled:bg-slate-100 disabled:text-slate-500;
+}
+
+.field-label {
+  @apply mb-1 block text-xs font-semibold tracking-wide text-slate-600 uppercase;
+}
+
+/* Bottoni ---------------------------------------------------------------- */
+/* In Tailwind v4 una classe riusabile dentro @apply va dichiarata con @utility. */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2
+         text-sm font-medium transition select-none
+         focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:outline-none
+         disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-700;
+}
+
+@utility btn-secondary {
+  @apply btn border border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50;
+}
+
+@utility btn-danger {
+  @apply btn border border-red-200 bg-white text-red-700 hover:bg-red-50;
+}
+
+@utility btn-ghost {
+  @apply btn text-slate-600 hover:bg-slate-200/70;
+}
+
+/* Superfici -------------------------------------------------------------- */
+.card {
+  @apply rounded-lg border border-slate-200 bg-white shadow-xs;
+}
+
+.card-head {
+  @apply flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3;
+}
+
+.card-title {
+  @apply text-sm font-semibold text-slate-700;
+}
+
+/* Tabelle ---------------------------------------------------------------- */
+.tbl {
+  @apply w-full border-collapse text-sm;
+}
+
+.tbl thead th {
+  @apply border-b border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs
+         font-semibold tracking-wide text-slate-500 uppercase whitespace-nowrap;
+}
+
+.tbl tbody td {
+  @apply border-b border-slate-100 px-3 py-2.5 align-top;
+}
+
+.tbl tbody tr:hover {
+  @apply bg-brand-50/50;
+}
+
+/* Etichette di stato ----------------------------------------------------- */
+.chip {
+  @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs
+         font-medium whitespace-nowrap;
+}
+
+/* Stampa ------------------------------------------------------------------
+   Il resoconto per il proprietario nasce per finire su carta: in stampa
+   spariscono navigazione e comandi, e resta solo il documento. */
+@media print {
+  .no-print,
+  nav,
+  aside,
+  header.app-bar {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Un riquadro o una riga spezzati fra due fogli sono illeggibili. */
+  section,
+  li,
+  tr,
+  .card {
+    break-inside: avoid;
+  }
+
+  /* L'intestazione di una tabella lunga si ripete su ogni foglio. */
+  thead {
+    display: table-header-group;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}
