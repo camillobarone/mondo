@@ -1,6 +1,6 @@
 import "server-only";
 import crypto from "node:crypto";
-import { all, one, count, run } from "./db";
+import { db, all, one, count, run } from "./db";
 import { fromCsv, euro } from "./format";
 import { ZONES } from "./types";
 import { generaChiaviVapid } from "./push";
@@ -997,6 +997,179 @@ export function resetCalendarToken(userId: number): string {
   const token = crypto.randomBytes(24).toString("base64url");
   run(`UPDATE users SET calendar_token = ? WHERE id = ?`, [token, userId]);
   return token;
+}
+
+/* ============================================ Google Calendar: le letture
+
+   Gli appuntamenti finiscono dentro il Google del titolare, ma **in un
+   calendario per persona**, e dentro ognuno ci va quello che quella persona
+   vedrebbe nel proprio feed iCalendar — niente di piu'. Per questo il
+   mascheramento dei nomi si fa con l'id di **chi ha l'appuntamento assegnato**
+   (`a.user_id`) e non con quello di chi sta salvando: se Camillo segna una
+   visita sulla scheda di un suo cliente e la assegna a Roberto, nel calendario
+   di Roberto il nome del cliente non deve comparire, esattamente come non
+   comparirebbe nel suo abbonamento.                                         */
+
+export interface AttivitaDaGoogle {
+  attivita: ActivityRow;
+  /** A chi e' assegnata: il calendario in cui va scritta e' il suo. */
+  utente: { id: number; name: string; google_calendar_id: string | null };
+  /** L'evento gia' scritto in Google, se c'e'. */
+  eventId: string | null;
+}
+
+/** Tutto quello che serve per scrivere un appuntamento in Google. */
+export function attivitaDaGoogle(activityId: number): AttivitaDaGoogle | null {
+  const riga = one<{ user_id: number | null; google_event_id: string | null }>(
+    `SELECT user_id, google_event_id FROM activities WHERE id = ?`,
+    [activityId],
+  );
+  if (!riga?.user_id) return null;
+
+  const utente = one<{ id: number; name: string; google_calendar_id: string | null }>(
+    `SELECT id, name, google_calendar_id FROM users WHERE id = ? AND active = 1`,
+    [riga.user_id],
+  );
+  if (!utente) return null;
+
+  const attivita = one<ActivityRow>(`${ACTIVITY_SELECT} WHERE a.id = ?`, [
+    ...perNomiAttivita(utente.id),
+    activityId,
+  ]);
+  if (!attivita) return null;
+
+  return { attivita, utente, eventId: riga.google_event_id };
+}
+
+/**
+ * Gli appuntamenti che in Google non ci sono ancora, o che sono stati toccati
+ * dopo l'ultima scrittura.
+ *
+ * La finestra e' la stessa del feed iCalendar — un mese indietro e un anno
+ * avanti — perche' due strade che mostrano la stessa agenda non possono
+ * mostrarne due pezzi diversi. Il `LIMIT` c'e' perche' la prima
+ * risincronizzazione su un archivio pieno potrebbe essere di centinaia di
+ * eventi, e Google mette il freno molto prima: si fa a scaglioni.
+ */
+export function attivitaDaRisincronizzare(limite = 40): number[] {
+  return all<{ id: number }>(
+    `SELECT a.id
+       FROM activities a
+       JOIN users u ON u.id = a.user_id AND u.active = 1
+      WHERE a.due_at IS NOT NULL
+        AND date(a.due_at) >= date('now','localtime','-30 days')
+        AND date(a.due_at) <= date('now','localtime','+365 days')
+        AND a.google_synced_at IS NULL
+      ORDER BY a.due_at
+      LIMIT ?`,
+    [limite],
+  ).map((r) => r.id);
+}
+
+/** Quanti ne restano da mandare: il numero che la pagina mostra. */
+export function quantiDaRisincronizzare(): number {
+  return count(
+    `SELECT COUNT(*) AS n
+       FROM activities a
+       JOIN users u ON u.id = a.user_id AND u.active = 1
+      WHERE a.due_at IS NOT NULL
+        AND date(a.due_at) >= date('now','localtime','-30 days')
+        AND date(a.due_at) <= date('now','localtime','+365 days')
+        AND a.google_synced_at IS NULL`,
+  );
+}
+
+/** L'evento e' stato scritto: si segna quale e quando. */
+export function segnaSincronizzata(activityId: number, eventId: string): void {
+  run(
+    `UPDATE activities SET google_event_id = ?, google_synced_at = datetime('now') WHERE id = ?`,
+    [eventId, activityId],
+  );
+}
+
+/**
+ * Quello che va rimandato a Google.
+ *
+ * Si chiama a ogni salvataggio: azzerare `google_synced_at` fa ricadere
+ * l'appuntamento fra quelli da mandare, cosi' se la scrittura immediata
+ * fallisce — Google giu', rete lenta — la risincronizzazione lo riprende.
+ */
+export function segnaDaSincronizzare(activityId: number): void {
+  run(`UPDATE activities SET google_synced_at = NULL WHERE id = ?`, [activityId]);
+}
+
+/** Il calendario Google di una persona, e come si tiene da parte. */
+export function calendarioGoogleDi(userId: number): string | null {
+  return (
+    one<{ google_calendar_id: string | null }>(
+      `SELECT google_calendar_id FROM users WHERE id = ?`,
+      [userId],
+    )?.google_calendar_id ?? null
+  );
+}
+
+export function salvaCalendarioGoogle(userId: number, calendarId: string | null): void {
+  run(`UPDATE users SET google_calendar_id = ? WHERE id = ?`, [calendarId, userId]);
+}
+
+/**
+ * Dimentica tutto quello che riguarda Google.
+ *
+ * Serve allo scollegamento: i calendari restano nel Google del titolare (li'
+ * decide lui se tenerli), ma da questa parte non si conserva niente che
+ * puntasse a un collegamento che non c'e' piu'. Senza, un ricollegamento
+ * scriverebbe dentro calendari di un'autorizzazione vecchia.
+ */
+export function dimenticaGoogle(): void {
+  const scordati = db.transaction(() => {
+    run(`UPDATE users SET google_calendar_id = NULL`);
+    run(`UPDATE activities SET google_event_id = NULL, google_synced_at = NULL`);
+  });
+  scordati();
+}
+
+/* ===================================================== le impostazioni
+
+   `settings` e' una tabella chiave/valore, e ci stanno le cose che l'agenzia
+   ha una sola: le chiavi degli avvisi e il collegamento a Google. Non c'e' un
+   muro da rispettare — non sono schede di nessuno — ma **ci sono dentro dei
+   segreti**, quindi si legge una chiave per volta e non si espone mai la
+   tabella intera.                                                          */
+
+/** Il valore di un'impostazione, o `null` se non c'e'. */
+export function impostazione(chiave: string): string | null {
+  return (
+    one<{ value: string }>(`SELECT value FROM settings WHERE key = ?`, [chiave])?.value ?? null
+  );
+}
+
+/**
+ * Scrive piu' impostazioni insieme.
+ *
+ * In una transazione sola perche' vanno a coppie: un permesso salvato senza la
+ * sua scadenza verrebbe riusato per sempre, e a meta' strada fra i due `run`
+ * il programma potrebbe fermarsi.
+ */
+export function scriviImpostazioni(valori: Record<string, string>): void {
+  const scrivi = db.transaction((coppie: [string, string][]) => {
+    for (const [chiave, valore] of coppie) {
+      run(
+        `INSERT INTO settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        [chiave, valore],
+      );
+    }
+  });
+  scrivi(Object.entries(valori));
+}
+
+/** Toglie delle impostazioni. Quelle che non c'erano non danno fastidio. */
+export function cancellaImpostazioni(chiavi: string[]): void {
+  if (!chiavi.length) return;
+  run(
+    `DELETE FROM settings WHERE key IN (${chiavi.map(() => "?").join(",")})`,
+    chiavi,
+  );
 }
 
 /* ================================================== avvisi sul telefono */

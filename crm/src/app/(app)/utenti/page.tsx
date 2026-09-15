@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 import { requireOwner } from "@/lib/auth";
 import { usersWithLoad, calendariDellePersone } from "@/lib/queries";
@@ -243,6 +244,18 @@ export default async function UsersPage({
 
             <Calendari persone={calendari} />
           </div>
+
+          <p className="mt-4 border-t border-slate-100 pt-4 text-sm text-slate-600">
+            <strong>Google ci mette ore ad aggiornare</strong> i calendari a cui ci si
+            abbona, e non c&apos;è modo di dirgli di fare prima: per vedere subito un
+            appuntamento nuovo bisogna togliere il calendario e rimetterlo. Se ti serve
+            che compaia all&apos;istante, c&apos;è l&apos;altra strada —{" "}
+            <Link href="/utenti/google" className="text-brand-700 hover:underline">
+              collegare Google davvero
+            </Link>
+            , che scrive gli appuntamenti dentro il tuo calendario invece di farglieli
+            ricontrollare.
+          </p>
         </Card>
 
         <Card title="Copia di sicurezza" className="lg:col-span-3">

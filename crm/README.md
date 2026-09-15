@@ -583,6 +583,36 @@ pulsante *Crea il calendario*. E vale la stessa avvertenza di sopra — chi ha
 quell'indirizzo vede gli appuntamenti di quella persona, quindi si manda a chi
 di dovere e basta.
 
+#### Se Google ci mette troppo: collegarlo davvero
+
+L'abbonamento ha un difetto che non è nostro e non si può aggirare: **Google
+ricontrolla quando decide lui**, anche dopo ore, e per vedere subito un
+appuntamento nuovo bisogna togliere il calendario e rimetterlo. Il file gli
+chiede di ricontrollare ogni quarto d'ora; Google ignora la richiesta.
+
+Per questo c'è la seconda strada, in **Utenti → Google Calendar**: invece di
+lasciare che Google venga a guardare, è il gestionale che **scrive
+l'appuntamento dentro il tuo Google** appena lo salvi. Compare subito, si
+sposta quando lo sposti, sparisce quando lo cancelli.
+
+Si collega una volta sola, e serve prima una configurazione su Google Cloud —
+è spiegata passo per passo nella guida di consegna, capitolo *Collegare Google
+Calendar*. Le due chiavi che Google dà si incollano in una pagina del
+gestionale: **non c'è niente da scrivere sul server**.
+
+Da sapere, perché conta:
+
+- il gestionale crea calendari **suoi**, uno per persona, e può toccare solo
+  quelli: il tuo calendario personale non lo può né leggere né modificare, ed è
+  il permesso che Google ti mostra sulla schermata di consenso;
+- il calendario di una persona nasce al **suo primo appuntamento**, non al
+  collegamento: chi non ne ha non si ritrova un calendario vuoto;
+- gli appuntamenti già in agenda quando colleghi non salgono da soli — c'è un
+  pulsante che li manda, a gruppi;
+- **se Google non risponde, il gestionale salva lo stesso.** L'appuntamento
+  resta segnato come da mandare e ci va al giro dopo. Non succede mai che un
+  salvataggio fallisca perché Google ha il raffreddore.
+
 > **Su Google due cose da sapere.** La prima: ricontrolla quando decide lui,
 > anche dopo diverse ore, quindi un appuntamento appena inserito può non
 > comparire subito — Apple e Outlook sono più svelti. La seconda, che pesa di

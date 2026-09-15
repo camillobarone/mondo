@@ -32,8 +32,14 @@ import {
   calendarioDi,
   utenteAttivo,
   resetCalendarToken,
+  calendarioGoogleDi,
+  scriviImpostazioni,
+  cancellaImpostazioni,
+  dimenticaGoogle,
 } from "./queries";
 import { manda } from "./push";
+import { mandaAGoogle, togliDaGoogle, risincronizza } from "./google-sync";
+import { scollega as scollegaGoogle } from "./google";
 import type { Property } from "./types";
 import { ACTIVITY_TYPES } from "./types";
 
@@ -828,6 +834,12 @@ export async function saveActivity(form: FormData) {
   // scheda di un collega, che poi se la ritrova nel foglio da consegnare.
   esigiCollegamenti(user.id, { clientId, propertyId });
 
+  // L'id serve subito dopo per scrivere l'evento in Google, e si prende dal
+  // risultato dell'INSERT: `last_insert_rowid()` chiesto piu' avanti sarebbe
+  // vero adesso ma diventerebbe sbagliato il giorno in cui qualcuno infila
+  // un'altra scrittura in mezzo, senza che niente lo segnali.
+  let idAttivita = id;
+
   if (id) {
     esigiAttivita(user.id, id);
     run(
@@ -839,18 +851,26 @@ export async function saveActivity(form: FormData) {
     );
     audit(user.id, "modifica", "attivita", id);
   } else {
-    run(
+    const esito = run(
       `INSERT INTO activities
         (type, title, notes, client_id, property_id, user_id, due_at, outcome, interest, done_at)
        VALUES (?,?,?,?,?,?,?,?,?,?)`,
       [...values, doneNow],
     );
+    idAttivita = Number(esito.lastInsertRowid);
   }
 
   // Il "sentito l'ultima volta" del cliente si aggiorna da solo.
   if (clientId && doneNow) {
     run(`UPDATE clients SET last_contact_at = datetime('now') WHERE id = ?`, [clientId]);
   }
+
+  // In Google, se e' collegato. Non si aspetta l'esito e non si lascia
+  // passare un errore: l'appuntamento nel gestionale e' gia' salvato, e un
+  // guasto dalla parte di Google non deve far sembrare fallito un
+  // salvataggio riuscito. Quello che non arriva resta segnato come da
+  // mandare, e lo riprende la risincronizzazione.
+  if (idAttivita) await mandaAGoogle(idAttivita);
 
   if (clientId) revalidatePath(`/clienti/${clientId}`);
   if (propertyId) revalidatePath(`/immobili/${propertyId}`);
@@ -874,6 +894,10 @@ export async function completeActivity(form: FormData) {
     [nullable(form, "outcome"), id],
   );
 
+  // Segnata come fatta, in Google la sveglia va tolta: altrimenti suonerebbe
+  // per un appuntamento gia' chiuso.
+  await mandaAGoogle(id);
+
   const activity = one<{ client_id: number | null; property_id: number | null }>(
     `SELECT client_id, property_id FROM activities WHERE id = ?`,
     [id],
@@ -895,10 +919,24 @@ export async function deleteActivity(form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id"));
   esigiAttivita(user.id, id);
-  const activity = one<{ client_id: number | null; property_id: number | null }>(
-    `SELECT client_id, property_id FROM activities WHERE id = ?`,
+  const activity = one<{
+    client_id: number | null;
+    property_id: number | null;
+    google_event_id: string | null;
+    user_id: number | null;
+  }>(
+    `SELECT client_id, property_id, google_event_id, user_id FROM activities WHERE id = ?`,
     [id],
   );
+
+  // L'evento si toglie da Google **prima** di cancellare la riga: dopo, il suo
+  // identificativo non ci sarebbe piu' e l'appuntamento resterebbe nel
+  // calendario per sempre, senza che nessuno sappia piu' da dove toglierlo.
+  if (activity?.google_event_id && activity.user_id) {
+    const calendarId = calendarioGoogleDi(activity.user_id);
+    if (calendarId) await togliDaGoogle(calendarId, activity.google_event_id);
+  }
+
   run(`DELETE FROM activities WHERE id = ?`, [id]);
   audit(user.id, "elimina", "attivita", id);
   if (activity?.client_id) revalidatePath(`/clienti/${activity.client_id}`);
@@ -1672,6 +1710,78 @@ export async function rigeneraCalendarioDi(formData: FormData) {
   resetCalendarToken(id);
   audit(user.id, "modifica", "utente", id, `nuovo indirizzo del calendario di ${persona.name}`);
   revalidatePath("/utenti");
+}
+
+/* ====================================================== Google Calendar */
+
+/**
+ * Le chiavi prese dal pannello di Google Cloud.
+ *
+ * Si incollano qui e non in `/etc/mondo-crm.env` di proposito: chi usa questo
+ * programma su `nano` si e' gia' fermato una volta, e una configurazione che
+ * richiede SSH e' una configurazione che non si fa. Il Client ID non e' un
+ * segreto (viaggia nell'indirizzo del consenso); il segreto si', e sta in
+ * archivio insieme a tutto il resto, che e' gia' la cosa piu' protetta del
+ * server.
+ */
+export async function salvaChiaviGoogle(_prima: string | null, form: FormData) {
+  const user = await requireOwner();
+
+  // Gli spazi in coda sono il modo piu' comune di sbagliare un copia-incolla
+  // dal pannello di Google, e da Google tornerebbe un «invalid_client» che
+  // manda a cercare tutt'altro. Si tolgono qui, una volta.
+  const clientId = text(form, "client_id").trim();
+  const clientSecret = text(form, "client_secret").trim();
+
+  if (!clientId || !clientSecret) return "Servono sia il Client ID sia il segreto.";
+  if (!clientId.includes(".apps.googleusercontent.com")) {
+    return (
+      "Quello non sembra un Client ID di Google: finiscono tutti per " +
+      "«.apps.googleusercontent.com». Controlla di non aver copiato il nome del progetto."
+    );
+  }
+
+  scriviImpostazioni({ google_client_id: clientId, google_client_secret: clientSecret });
+  audit(user.id, "modifica", "impostazioni", null, "chiavi di Google salvate");
+  revalidatePath("/utenti/google");
+  return null;
+}
+
+/** Toglie il collegamento: a Google, e da questa parte. */
+export async function scollegaGoogleCalendar() {
+  const user = await requireOwner();
+  await scollegaGoogle();
+  // I calendari restano nel suo Google — li' decide lui se tenerli — ma da qui
+  // non si conservano piu' i riferimenti: puntavano a un'autorizzazione che
+  // non c'e' piu', e un ricollegamento ci scriverebbe dentro alla cieca.
+  dimenticaGoogle();
+  audit(user.id, "modifica", "impostazioni", null, "Google Calendar scollegato");
+  revalidatePath("/utenti/google");
+}
+
+/** Toglie anche le chiavi: si riparte da zero. */
+export async function dimenticaChiaviGoogle() {
+  const user = await requireOwner();
+  await scollegaGoogle();
+  dimenticaGoogle();
+  cancellaImpostazioni(["google_client_id", "google_client_secret"]);
+  audit(user.id, "modifica", "impostazioni", null, "chiavi di Google rimosse");
+  revalidatePath("/utenti/google");
+}
+
+/** Manda in Google gli appuntamenti rimasti indietro, uno scaglione per volta. */
+export async function risincronizzaGoogle(_prima: string | null, _form: FormData) {
+  await requireOwner();
+  const esito = await risincronizza();
+  revalidatePath("/utenti/google");
+
+  if (esito.motivo && !esito.mandati) return esito.motivo;
+  if (esito.motivo) {
+    return `Mandati ${esito.mandati}, poi mi sono fermato: ${esito.motivo}`;
+  }
+  return esito.mandati
+    ? `Mandati ${esito.mandati} appuntamenti. Se ne restano, ripremi.`
+    : "Non c'era niente da mandare: sono già tutti in Google.";
 }
 
 /* ======================================================== il proprio accesso */

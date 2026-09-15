@@ -56,6 +56,19 @@ const COLONNE_AGGIUNTE: {
   // Chiave dell'abbonamento al calendario: sta nell'indirizzo del feed, quindi
   // vale come password e si genera solo quando serve.
   { tabella: "users", colonna: "calendar_token", definizione: "TEXT" },
+  // Il calendario creato dentro il Google del titolare per questa persona.
+  // E' un identificativo che assegna Google, non una chiave nostra: si salva
+  // perche' senza non si saprebbe piu' dove scrivere gli eventi, e ricrearlo
+  // vorrebbe dire un secondo calendario doppione nel suo Google.
+  { tabella: "users", colonna: "google_calendar_id", definizione: "TEXT" },
+  // L'evento corrispondente dentro Google. Senza, un appuntamento modificato
+  // ne creerebbe uno nuovo invece di spostare quello di prima, e la settimana
+  // si riempirebbe di copie.
+  { tabella: "activities", colonna: "google_event_id", definizione: "TEXT" },
+  // Quando l'evento e' stato scritto in Google l'ultima volta. Serve alla
+  // risincronizzazione per sapere cosa e' rimasto indietro, e a non ripassare
+  // ogni volta su tutto l'archivio.
+  { tabella: "activities", colonna: "google_synced_at", definizione: "TEXT" },
   // Quando e' partito il promemoria dei 30 minuti: senza, ripartirebbe a ogni
   // giro del cron.
   { tabella: "activities", colonna: "reminded_at", definizione: "TEXT" },

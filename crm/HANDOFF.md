@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 12 settembre 2026.**
+**Aggiornato al 15 settembre 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -871,6 +871,105 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     **Da fare a lui, ed e' il pezzo che resta:** creare i due utenti da
     *Utenti → Nuovo utente*. Da qui non si arriva all'archivio di produzione.
 
+28. **Google Calendar collegato davvero** (15 settembre 2026). Sua
+    segnalazione, dopo aver provato l'abbonamento col calendario di Roberto:
+    *«non funziona, bisogna sempre eliminare il calendario da Google e
+    riattivare per vedere gli aggiornamenti»*.
+
+    **La prima cosa fatta e' stata verificare da che parte stava il difetto.**
+    Il feed cambia **all'istante** — 8 controlli: l'orario spostato, un
+    appuntamento aggiunto, uno cancellato, tutti visibili alla richiesta
+    successiva — e il file chiede gia' `REFRESH-INTERVAL:PT15M` e
+    `X-PUBLISHED-TTL:PT15M`, con `Cache-Control: private, no-store` e nessun
+    `ETag`. Dalla nostra parte non c'era niente da correggere: **Google
+    ricontrolla i calendari in abbonamento quando decide lui e ignora quelle
+    richieste**, e togliere-e-rimettere forza una lettura, che e' esattamente
+    quello che lui aveva osservato.
+
+    Gli sono state messe davanti tre strade — una pagina «Agenda di tutti»
+    dentro il gestionale, collegare Google sul serio, o tenersi cosi' — e ha
+    scelto la seconda, **sapendo che costa un progetto su Google Cloud**: la
+    domanda glielo diceva.
+
+    - **`src/lib/google.ts`** — OAuth e chiamate al calendario scritte a mano
+      su `fetch` e `node:crypto`. Niente `googleapis`: qualche centinaio di
+      pacchetti per quattro chiamate HTTP. Stessa scelta del lettore Excel,
+      del generatore iCalendar e del protocollo Web Push.
+    - **`src/lib/google-sync.ts`** — il ponte. Sta in un file suo per una
+      ragione sola: **da li' non si lancia mai un errore verso chi salva.**
+      L'appuntamento si salva sempre; in Google ci arriva subito se si puo', al
+      giro dopo se no.
+    - **L'ambito e' `calendar.app.created`, non `calendar`.** Il gestionale
+      crea calendari suoi e gestisce quelli, e **non puo' toccare il calendario
+      personale di chi autorizza**. Se un giorno Google lo rifiutasse, la riga
+      da cambiare e' una sola — ma allora si concede molto di piu' e va detto
+      a voce, non cambiato in silenzio.
+    - **Client id e segreto si incollano in una pagina**, non in
+      `/etc/mondo-crm.env`. Stessa ragione delle chiavi VAPID: questo progetto
+      si e' gia' fermato una volta su una riga da scrivere in `nano`.
+    - **Una sola autorizzazione, la sua**, e dentro il suo Google un calendario
+      per persona. Tre autorizzazioni sarebbero stati tre giri di schermate, e
+      i collaboratori un account Google non e' detto che lo vogliano.
+
+    **Le cose che, sbagliate, si rompono in silenzio** — e sono tutte provate:
+    - **`access_type=offline` e `prompt=consent`.** Senza il primo Google manda
+      solo un permesso da un'ora; senza il secondo, alla **seconda**
+      autorizzazione non manda nessun `refresh_token` e resta una schermata che
+      dice «fatto» su un collegamento morto.
+    - **Il fuso.** `new Date("2026-09-20T16:30:00")` si legge come ora locale e
+      `toISOString()` la riscrive in UTC: sul server, che gira con
+      `TZ=Europe/Rome`, **ogni appuntamento sarebbe finito in Google spostato di
+      due ore**. I conti si fanno in UTC su numeri senza fuso (`piuMinuti`), e
+      il fuso viaggia nel campo `timeZone` accanto all'orario, come `TZID` nei
+      file iCalendar. E' la terza volta che questa trappola si presenta.
+    - **`reminders.overrides: []` vuol dire «nessuna sveglia»; `minutes: 0`
+      vuol dire «suona adesso».** Sugli appuntamenti gia' fatti serve il primo.
+      Scritto sbagliato al primo giro e corretto prima di provare.
+    - **Il muro.** Il mascheramento dei nomi usa l'id di **chi ha
+      l'appuntamento assegnato**, non di chi salva: nel calendario di Roberto
+      il cliente di Camillo non ha nome, come nel suo feed iCalendar.
+
+    **Come e' stato verificato, ed e' l'unica cosa che conta qui.** A Google la
+    rete non arriva, quindi e' stato scritto **un finto Google** che risponde
+    come dice la documentazione (consenso, token, rinnovo, creazione
+    calendario, eventi, e i guasti su richiesta), e il codice vero ci e' stato
+    puntato contro con `GOOGLE_FINTO_BASE` — una variabile che **esiste solo
+    per le prove**, e che in esercizio non si imposta. **49 controlli in
+    browser sulla build di produzione**, rifatti due volte di fila: il giro
+    completo dal pannello vuoto all'appuntamento dentro Google, i tre parametri
+    del consenso, lo `state` inventato che non collega niente, l'orario e il
+    fuso letti dentro l'evento, l'appuntamento spostato che fa una modifica e
+    non un doppione, la sveglia che sparisce su quello fatto, il permesso breve
+    che si rinnova una volta sola, **Google giu' che non impedisce il
+    salvataggio**, la risincronizzazione che recupera, la cancellazione che
+    arriva anche di la', il permesso revocato che si racconta, e lo
+    scollegamento che non lascia agganci morti.
+
+    **Quello che da qui NON si verifica, e va detto:** che Google vero accetti
+    tutto questo. Il finto risponde come la documentazione, ma la documentazione
+    e la realta' ogni tanto litigano. Il primo collegamento vero lo vede lui.
+
+    **Tre trappole nelle prove, tutte «rosso che sembrava del codice»:**
+    - dopo l'invio, `networkidle` torna **prima** che l'azione di server abbia
+      finito: la prova leggeva il finto Google un attimo troppo presto e dava
+      rosso su un evento che poi arrivava. Si aspetta guardando **l'archivio**,
+      non la pagina.
+    - l'appuntamento era stato creato **senza cliente**, quindi per Camillo non
+      era ne' suo ne' su una sua scheda: la pagina di modifica giustamente non
+      si apriva, **e il controllo sul nome del cliente non provava niente**.
+      Era il muro che funzionava.
+    - l'agenda si apre su «Solo assegnate a me», e l'appuntamento era di
+      Roberto: cercarlo li' e' cercarlo dove non deve essere.
+
+    **Da fare a lui:** i sei passi su Google Cloud, scritti nel capitolo
+    **10-ter di `CONSEGNA.md`**. Il quarto — *Pubblica app* — non e'
+    facoltativo: in stato «Test» Google fa scadere il permesso **ogni sette
+    giorni**.
+
+    **Attenzione a non tenere tutte e due le strade insieme:** l'abbonamento
+    `.ics` continua a funzionare, e collegandoli entrambi lo stesso
+    appuntamento comparirebbe due volte.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -886,7 +985,8 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Provare gli avvisi su un telefono vero** | **Aspetta lui, ed e' l'unica cosa che manca** agli avvisi del punto 25. Da qui non si arriva ne' a Google ne' ad Apple. Lui apre *Agenda → Calendario e avvisi* dal telefono, accende, e tocca *Mandami una prova*. Se non arriva, il messaggio dice gia' il motivo. Da provare su tutte e tre le marche, e sull'iPhone **dopo** averlo aggiunto alla schermata Home. |
 | **Creare i due profili** «Roberto Lefons» e «Alessandro Ciullo» | **Aspetta lui**, e da qui non si puo' fare: all'archivio di produzione non si arriva. Si creano da *Utenti → Nuovo utente*, ruolo Collaboratore. Appena esistono entrano da soli nella tendina «assegnata a» e hanno il loro calendario — vedi il punto 27. Se non devono entrare nel programma, la password si mette a caso e non gliela si da'. |
-| **Provare i tre calendari su Google** | **Lunedi' 15 settembre**, detto da lui il 12: *«proveremo lunedi'»*. Crea i profili, prende i tre link da *Utenti → I calendari delle persone* e li incolla in Google (*Altri calendari → + → Da URL*). Da qui non si verifica: la rete verso Google e' chiusa. Il file e' lo stesso del suo calendario che gia' funziona, quindi non c'e' motivo di dubitarne — ma la conferma la da' lui. |
+| **I tre calendari in abbonamento** | **Provati da lui il 15 settembre, e non bastano**: Google li ricontrolla quando decide lui. Da qui e' nato il punto 28. Restano funzionanti per chi li ha gia' collegati. |
+| **Collegare Google Calendar** | **Aspetta lui**, ed e' l'unica cosa che manca al punto 28: i sei passi su Google Cloud del capitolo 10-ter di `CONSEGNA.md`. Da qui non si fanno — serve il suo account Google — e nemmeno si verifica, perche' la rete verso Google e' chiusa. Il quarto passo (*Pubblica app*) e' quello che si dimentica e che fa scadere il permesso ogni sette giorni. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **La descrizione della PR #2** | **Rifatta il 12 settembre.** Quella del 7 era rimasta indietro di sei cose — gli avvisi sul telefono, i calendari per persona, il confronto fra comuni, la zona che non e' piu' un'avvertenza — e conteneva **un esempio diventato falso**: citava *«Fuori dalle zone richieste (Frigole)»* come avvertenza, e quell'avvertenza non esiste piu'. Lezione: quando si cambia il modo in cui il programma **si racconta**, la descrizione della PR va riletta, non solo aggiornata in coda. E' l'unica presentazione del progetto che un estraneo legge. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
@@ -1520,6 +1620,13 @@ email/WhatsApp, generazione automatica dei contratti in PDF, app da scaricare.
   passano, e a occhio la riga sembra giusta. Si trova solo leggendo il testo
   della pagina in un browser. Cura: tenere espressione e parola sulla stessa
   riga, e andare a capo con `{" "}`.
+- **Il fuso, per la terza volta: mai far passare un orario da `new Date`.**
+  `new Date("2026-09-20T16:30:00")` viene letta come ora **locale** e
+  `toISOString()` la riscrive in **UTC**: sul server, che gira con
+  `TZ=Europe/Rome`, ogni orario si sposta di due ore. Vale per i file
+  iCalendar (`TZID`), per gli avvisi del telefono e per gli eventi mandati a
+  Google (`piuMinuti` in `google.ts`): i conti si fanno su numeri senza fuso, e
+  il fuso viaggia in un campo accanto. Non da' errore, sposta e basta.
 - **Il confronto per contenimento va bene per le zone, non per i comuni.**
   `samePlace` considera uguali due luoghi quando uno contiene l'altro, ed e'
   quello che serve fra le zone («Centro» / «Centro storico»). Fra i comuni
@@ -1641,8 +1748,12 @@ ballo. Risparmia un giro di domande.
 >
 > So che ogni collaboratore vede solo le proprie schede (capitolo 10-bis di
 > `CONSEGNA.md`), **con una sola apertura**: dalla pagina Utenti il titolare
-> prende i link dei calendari dei colleghi, per metterli nel proprio Google
-> Calendar. L'ultima cosa fatta e' quella, insieme a una **correzione agli
+> prende i link dei calendari dei colleghi. L'ultima cosa fatta e' il
+> **collegamento vero a Google Calendar** (*Utenti → Google Calendar*): gli
+> abbonamenti `.ics` erano troppo lenti — Google li ricontrolla quando decide
+> lui — e adesso e' il gestionale a scrivere gli appuntamenti dentro Google
+> appena si salvano. Aspetta che lui faccia i sei passi su Google Cloud del
+> capitolo 10-ter di `CONSEGNA.md`. Prima c'era una **correzione agli
 > incroci**: negli «immobili da valutare» arrivavano comuni diversi da quelli
 > chiesti, perche' «Lecce» sta dentro «Monteroni di Lecce» e il confronto si
 > fermava li'. Prima ancora, gli **avvisi sul telefono**:

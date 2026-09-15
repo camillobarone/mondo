@@ -1022,6 +1022,126 @@ Tre cose sono fatte apposta perché l'apertura resti stretta:
   Google, finché non li ricolleghi.
 
 
+10-TER · COLLEGARE GOOGLE CALENDAR
+----------------------------------
+
+Aggiunto il 15 settembre 2026, dopo che l'abbonamento si è rivelato troppo
+lento: Google ricontrolla i calendari a cui ci si abbona quando decide lui,
+anche dopo ore, e per vedere un appuntamento nuovo bisognava togliere il
+calendario da Google e rimetterlo. Il file gli chiede di ricontrollare ogni
+quarto d'ora e Google ignora la richiesta — non è una cosa che si possa
+sistemare da questa parte.
+
+La seconda strada rovescia il verso: invece di aspettare che Google venga a
+guardare, il gestionale scrive l'appuntamento dentro Google appena lo salvi.
+
+
+Cosa fa, in pratica
+
+- Crea nel tuo Google Calendar un calendario per persona, chiamato
+  Agenda Nome Cognome · Mondo. Compaiono sotto Altri calendari, e si
+  accendono e spengono con un clic come tutti gli altri.
+- Ogni appuntamento va nel calendario di chi è scritto nella tendina
+  «assegnata a». Lo sposti nel gestionale, si sposta in Google; lo cancelli,
+  sparisce; lo segni fatto, smette di suonare.
+- Il calendario di una persona nasce al suo primo appuntamento, non quando
+  colleghi: chi non ne ha non si ritrova un calendario vuoto fra i suoi.
+
+
+Cosa il gestionale NON può fare, ed è la parte importante
+
+Il permesso che chiede si chiama calendar.app.created, e vuol dire
+«posso creare calendari miei e gestire solo quelli». Il tuo calendario
+personale — quello con gli appuntamenti di famiglia, le riunioni, tutto — il
+gestionale non lo può leggere e non lo può toccare. È scritto sulla
+schermata di consenso di Google, e vale la pena rileggerlo lì: è la differenza
+fra dare una chiave di casa e dare un armadietto.
+
+
+I passi su Google Cloud, una volta sola
+
+Serve un account Google — quello dove vuoi vedere i calendari. Se sul
+computer sei entrato con più account, controlla in alto a destra quale stai
+usando prima di cominciare.
+
+1 · Crea il progetto. Vai su console.cloud.google.com. In alto, accanto al
+logo, c'è il selettore dei progetti: aprilo e scegli Nuovo progetto. Chiamalo
+come vuoi — per esempio Gestionale Mondo — e premi Crea. Aspetta che in alto
+compaia il nome del progetto nuovo: da lì in poi stai lavorando dentro quello.
+
+2 · Accendi il calendario. Menu a sinistra → API e servizi → Libreria.
+Cerca Google Calendar API, aprila e premi Abilita. Senza questo passo
+tutto il resto funziona e poi, al primo appuntamento, Google risponde che l'API
+non è stata usata in questo progetto.
+
+3 · La schermata di consenso. API e servizi → Schermata consenso OAuth.
+Scegli Esterno e premi Crea. Ti chiede tre cose: il nome
+dell'applicazione (quello che leggerai sulla schermata di consenso — scrivi
+Gestionale Mondo Immobiliare), la tua email di assistenza, e in fondo di nuovo
+la tua email. Salva e vai avanti fino alla fine, senza aggiungere ambiti né
+utenti di prova.
+
+4 · Pubblica. Sempre nella Schermata consenso OAuth, cerca il pulsante
+Pubblica app e confermalo. Questo passo non è facoltativo: se
+l'applicazione resta in stato Test, Google fa scadere il permesso ogni
+sette giorni e ogni lunedì ti ritroveresti a ricollegare tutto senza capire
+perché.
+
+5 · Le due chiavi. API e servizi → Credenziali → Crea credenziali →
+ID client OAuth. Tipo di applicazione: Applicazione web. In
+URI di reindirizzamento autorizzati premi Aggiungi URI e incolla:
+
+    https://gestionale.mondoimmobiliarelecce.it/google/callback
+
+Deve essere identico, senza spazi e senza barra in fondo. Lo trovi già
+pronto da copiare nella pagina del gestionale, in Utenti → Google Calendar.
+Premi Crea: Google mostra un riquadro con ID client e Client secret.
+Copiali — il segreto lo puoi rivedere anche dopo, ma tanto vale farlo adesso.
+
+6 · Nel gestionale. Utenti → Google Calendar, incolla le due stringhe,
+Salva le chiavi, poi Collega Google. Si apre la schermata di Google:
+scegli l'account giusto e accetta.
+
+  | Comparirà un avviso che l'app non è verificata. È normale e non è un
+  | problema: l'app è la tua, e Google lo dice a tutte quelle che non hanno
+  | passato la sua revisione — che serve a chi distribuisce un programma a
+  | sconosciuti, non a chi lo usa in ufficio. Si prosegue da Avanzate →
+  | Vai a Gestionale Mondo Immobiliare (non sicuro).
+
+7 · Gli appuntamenti che c'erano già. Il collegamento vale da adesso in poi.
+Per portare su quelli già in agenda c'è un pulsante nella stessa pagina, che li
+manda a gruppi: si preme finché il conteggio non arriva a zero. È fatto a
+gruppi apposta — Google mette il freno alle richieste troppo ravvicinate.
+
+
+Se qualcosa non va
+
+La pagina non dà codici d'errore: dice quale riga correggere. I tre casi che
+capitano davvero:
+
+  Google non riconosce il Client ID o il segreto
+      Copia-incolla incompleto, o spazi in coda. Si riprendono da Credenziali.
+
+  L'indirizzo di ritorno non è fra quelli autorizzati
+      Il passo 5: l'URI va scritto identico, ed è quello che la pagina ti
+      mostra da copiare.
+
+  Il permesso non vale più
+      O è stato tolto da myaccount.google.com/permissions, oppure l'app è
+      rimasta in stato Test (passo 4). Ricollega, e se ricapita ogni settimana,
+      pubblica l'app.
+
+
+Le due strade convivono
+
+L'abbonamento .ics resta dov'era e continua a funzionare: chi lo ha già
+collegato non deve cambiare niente. Le due cose non si danno fastidio, ma
+collegandole tutte e due lo stesso appuntamento comparirebbe due volte —
+una dal calendario in abbonamento, una da quello scritto dal gestionale. Scegline
+una: se colleghi Google davvero, togli da Google Calendar i calendari in
+abbonamento.
+
+
 Gli incroci con i colleghi
 
 La separazione avrebbe poco senso se poi le occasioni si perdessero. In
