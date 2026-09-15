@@ -1017,7 +1017,7 @@ gestionale **non lo può leggere e non lo può toccare**. È scritto sulla
 schermata di consenso di Google, e vale la pena rileggerlo lì: è la differenza
 fra dare una chiave di casa e dare un armadietto.
 
-### I passi su Google Cloud, una volta sola
+### Gli otto passi su Google Cloud, una volta sola
 
 Serve un account Google — **quello dove vuoi vedere i calendari**. Se sul
 computer sei entrato con più account, controlla in alto a destra quale stai
@@ -1040,15 +1040,44 @@ dell'applicazione (quello che leggerai sulla schermata di consenso — scrivi
 la tua email. Salva e vai avanti fino alla fine, senza aggiungere ambiti né
 utenti di prova.
 
-**4 · Pubblica.** Sempre nella *Schermata consenso OAuth*, cerca il pulsante
-**Pubblica app** e confermalo. **Questo passo non è facoltativo**: se
-l'applicazione resta in stato *Test*, Google fa scadere il permesso **ogni
-sette giorni** e ogni lunedì ti ritroveresti a ricollegare tutto senza capire
-perché.
+**4 · Branding.** Nella colonna a sinistra clicca **Branding** e compila, perché
+Google non lascia pubblicare un'app «Esterna» finché non sa di chi è. Se salti
+questo passo, al passo 5 ti risponde *«Per pubblicare l'app, devi completare la
+configurazione nella pagina Branding»* — è successo davvero la prima volta.
 
-**5 · Le due chiavi.** *API e servizi* → *Credenziali* → *Crea credenziali* →
-**ID client OAuth**. Tipo di applicazione: **Applicazione web**. In
-*URI di reindirizzamento autorizzati* premi *Aggiungi URI* e incolla:
+| Campo | Cosa metterci |
+|---|---|
+| Nome dell'app | `Gestionale Mondo Immobiliare` |
+| Email per l'assistenza utenti | la tua, dalla tendina |
+| Logo dell'app | lascialo vuoto, è facoltativo |
+| Home page dell'applicazione | `https://www.mondoimmobiliarelecce.it` |
+| Link all'informativa sulla privacy | `https://www.mondoimmobiliarelecce.it/informativa-sulla-privacy-e-sulluso-dei-dati-di-mondo-immobiliare/` |
+| Link ai termini di servizio | vuoto, se lo permette |
+| Domini autorizzati | `mondoimmobiliarelecce.it` |
+| Dati di contatto sviluppatore | la tua email |
+
+Il dominio autorizzato va scritto **nudo**: senza `https://`, senza `www.` e
+senza barra finale, altrimenti Google lo rifiuta. Quello singolo copre sia
+`www.` sia `gestionale.`, quindi ne basta uno. Poi **Salva**.
+
+**5 · Pubblica.** Colonna a sinistra → **Pubblico**. In cima c'è *Stato di
+pubblicazione*, che dirà **Test**: premi **Pubblica app** e conferma. Deve
+diventare **In produzione**.
+
+**Questo passo non è facoltativo**: se l'applicazione resta in stato *Test*,
+Google fa scadere il permesso **ogni sette giorni** e ogni lunedì ti
+ritroveresti a ricollegare tutto senza capire perché.
+
+Nella stessa pagina compare il *Tetto massimo di utenti OAuth*: **100**. Non è
+un problema — gli utenti qui siete voi dell'agenzia — e non va avviata nessuna
+procedura di **verifica**: quella serve a chi distribuisce un programma a
+sconosciuti. Restando non verificati, l'unica conseguenza è l'avviso che si
+vede al momento di autorizzare.
+
+**6 · Le due chiavi.** Colonna a sinistra → **Client** → **Crea client**. Tipo
+di applicazione: **Applicazione web**, nome `Gestionale`. *Origini JavaScript
+autorizzate* si lascia vuoto. In **URI di reindirizzamento autorizzati** premi
+*Aggiungi URI* e incolla:
 
 ```
 https://gestionale.mondoimmobiliarelecce.it/google/callback
@@ -1057,11 +1086,15 @@ https://gestionale.mondoimmobiliarelecce.it/google/callback
 Deve essere **identico**, senza spazi e senza barra in fondo. Lo trovi già
 pronto da copiare nella pagina del gestionale, in *Utenti → Google Calendar*.
 Premi *Crea*: Google mostra un riquadro con **ID client** e **Client secret**.
-Copiali — il segreto lo puoi rivedere anche dopo, ma tanto vale farlo adesso.
+**Copiali subito, con le iconcine**: il Client secret, una volta chiusa quella
+finestra, **non si rivede più**. C'è anche *Scarica JSON*, che è lo stesso
+segreto dentro un file di testo — se lo scarichi, non lasciarlo in *Download*.
+Se lo perdi non è un dramma: si cancella il client e se ne crea un altro.
 
-**6 · Nel gestionale.** *Utenti → Google Calendar*, incolla le due stringhe,
-*Salva le chiavi*, poi **Collega Google**. Si apre la schermata di Google:
-scegli l'account giusto e accetta.
+**7 · Nel gestionale.** *Utenti*, poi in fondo alla pagina il collegamento
+**«collegare Google davvero»**. Incolla le due stringhe, *Salva le chiavi*, poi
+**Collega Google**. Si apre la schermata di Google: scegli l'account giusto e
+accetta.
 
 > Comparirà un avviso che l'app **non è verificata**. È normale e non è un
 > problema: l'app è la tua, e Google lo dice a tutte quelle che non hanno
@@ -1069,7 +1102,7 @@ scegli l'account giusto e accetta.
 > sconosciuti, non a chi lo usa in ufficio. Si prosegue da *Avanzate* →
 > *Vai a Gestionale Mondo Immobiliare (non sicuro)*.
 
-**7 · Gli appuntamenti che c'erano già.** Il collegamento vale da adesso in poi.
+**8 · Gli appuntamenti che c'erano già.** Il collegamento vale da adesso in poi.
 Per portare su quelli già in agenda c'è un pulsante nella stessa pagina, che li
 manda a gruppi: si preme finché il conteggio non arriva a zero. È fatto a
 gruppi apposta — Google mette il freno alle richieste troppo ravvicinate.

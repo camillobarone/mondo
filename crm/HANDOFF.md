@@ -945,9 +945,29 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     arriva anche di la', il permesso revocato che si racconta, e lo
     scollegamento che non lascia agganci morti.
 
-    **Quello che da qui NON si verifica, e va detto:** che Google vero accetti
-    tutto questo. Il finto risponde come la documentazione, ma la documentazione
-    e la realta' ogni tanto litigano. Il primo collegamento vero lo vede lui.
+    **Collegato davvero il 15 settembre**, seguendo i passi con lui una
+    schermata per messaggio: chiavi salvate, consenso dato, *«Google e'
+    collegato»*. Quindi **Google vero accetta tutto quello che il finto Google
+    faceva credere** — l'ambito `calendar.app.created` compreso, che era la cosa
+    su cui avevo meno certezze.
+
+    **Due cose che la guida non diceva, e adesso le dice.** Il capitolo 10-ter
+    di `CONSEGNA.md` era scritto su sei passi e la realta' ne ha chiesti otto:
+    - **Branding va compilato prima**, altrimenti al momento di pubblicare
+      Google risponde *«Per pubblicare l'app, devi completare la configurazione
+      nella pagina Branding»*. Vuole home page, informativa privacy e **dominio
+      autorizzato scritto nudo** (`mondoimmobiliarelecce.it`, senza `https://`
+      ne' `www.`). L'informativa e'
+      `www.mondoimmobiliarelecce.it/informativa-sulla-privacy-e-sulluso-dei-dati-di-mondo-immobiliare/`.
+    - **La console e' cambiata**: non c'e' piu' «Schermata consenso OAuth» con
+      il modulo lungo, c'e' **Google Auth Platform** con *Panoramica, Branding,
+      Pubblico, Client, Accesso ai dati*. Le credenziali si creano da **Client**,
+      non da *API e servizi → Credenziali*.
+
+    **E una mia leggerezza, detta perche' non si ripeta:** gli avevo indicato un
+    pulsante «Google Calendar» in cima alla pagina Utenti che **non esiste** —
+    il collegamento l'avevo messo dentro l'ultimo paragrafo del riquadro dei
+    calendari. Prima di dire dove cliccare, si guarda il proprio codice.
 
     **Tre trappole nelle prove, tutte «rosso che sembrava del codice»:**
     - dopo l'invio, `networkidle` torna **prima** che l'azione di server abbia
@@ -986,7 +1006,8 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Provare gli avvisi su un telefono vero** | **Aspetta lui, ed e' l'unica cosa che manca** agli avvisi del punto 25. Da qui non si arriva ne' a Google ne' ad Apple. Lui apre *Agenda → Calendario e avvisi* dal telefono, accende, e tocca *Mandami una prova*. Se non arriva, il messaggio dice gia' il motivo. Da provare su tutte e tre le marche, e sull'iPhone **dopo** averlo aggiunto alla schermata Home. |
 | **Creare i due profili** «Roberto Lefons» e «Alessandro Ciullo» | **Aspetta lui**, e da qui non si puo' fare: all'archivio di produzione non si arriva. Si creano da *Utenti → Nuovo utente*, ruolo Collaboratore. Appena esistono entrano da soli nella tendina «assegnata a» e hanno il loro calendario — vedi il punto 27. Se non devono entrare nel programma, la password si mette a caso e non gliela si da'. |
 | **I tre calendari in abbonamento** | **Provati da lui il 15 settembre, e non bastano**: Google li ricontrolla quando decide lui. Da qui e' nato il punto 28. Restano funzionanti per chi li ha gia' collegati. |
-| **Collegare Google Calendar** | **Aspetta lui**, ed e' l'unica cosa che manca al punto 28: i sei passi su Google Cloud del capitolo 10-ter di `CONSEGNA.md`. Da qui non si fanno — serve il suo account Google — e nemmeno si verifica, perche' la rete verso Google e' chiusa. Il quarto passo (*Pubblica app*) e' quello che si dimentica e che fa scadere il permesso ogni sette giorni. |
+| **Collegare Google Calendar** | **Fatto il 15 settembre**, insieme a lui: app pubblicata, chiavi incollate, consenso dato, *«Google e' collegato»*. Gli otto passi sono nel capitolo 10-ter di `CONSEGNA.md`, corretti su quello che e' successo davvero. **Resta da premere** *Manda in Google i 13 rimasti* e guardare in Google Calendar sotto *Altri calendari* — lo fa lui quando ha tempo. |
+| **Togliere i calendari in abbonamento da Google** | Quando confermera' che i calendari nuovi ci sono: tenendo tutte e due le strade, ogni appuntamento comparirebbe **due volte**. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **La descrizione della PR #2** | **Rifatta il 12 settembre.** Quella del 7 era rimasta indietro di sei cose — gli avvisi sul telefono, i calendari per persona, il confronto fra comuni, la zona che non e' piu' un'avvertenza — e conteneva **un esempio diventato falso**: citava *«Fuori dalle zone richieste (Frigole)»* come avvertenza, e quell'avvertenza non esiste piu'. Lezione: quando si cambia il modo in cui il programma **si racconta**, la descrizione della PR va riletta, non solo aggiornata in coda. E' l'unica presentazione del progetto che un estraneo legge. |
 | **Incroci fra colleghi** | **Fatto** (`/incroci/colleghi`, `incrociFraColleghi` in `matching.ts`). Le due letture che scavalcano il muro sono le uniche del programma, hanno la selezione delle colonne scritta campo per campo apposta — un `SELECT *` li' porterebbe fuori prezzo minimo, provvigioni e note — e la richiesta altrui non legge nemmeno `client_id`. Resta aperto: **contatti in comune** (il rilevamento doppioni non attraversa il muro, quindi due schede della stessa persona non vengono segnalate) e **richieste di cancellazione GDPR**, che vanno girate a voce al collega. |
