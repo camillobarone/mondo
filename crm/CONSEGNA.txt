@@ -1166,6 +1166,23 @@ manda a gruppi: si preme finché il conteggio non arriva a zero. È fatto a
 gruppi apposta — Google mette il freno alle richieste troppo ravvicinate.
 
 
+Con quale account sei collegato
+
+È la prima cosa scritta nella pagina, nel riquadro azzurro: *«Collegato con
+l'account …»*. Vale la pena guardarla prima di ogni altra cosa, perché il
+problema più facile da avere è anche il meno riconoscibile: autorizzare con un
+account e cercare i calendari in un altro. È successo il 16 settembre 2026, e
+ci sono volute due ore per capirlo — i calendari c'erano, in un altro Gmail.
+
+Se l'account è quello sbagliato: scollega Google, poi Collega Google, e sulla
+schermata di Google scegli quello giusto (in alto ti mostra con quale stai
+per autorizzare). I calendari vengono ricreati nel nuovo account, e per
+rimandarci gli appuntamenti si usa il solito pulsante.
+
+I calendari rimasti nell'account vecchio non spariscono da soli: si cancellano a
+mano da lì, quando vuoi.
+
+
 Se qualcosa non va
 
 La pagina non dà codici d'errore: dice quale riga correggere. I tre casi che

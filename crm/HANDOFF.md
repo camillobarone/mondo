@@ -990,6 +990,56 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     `.ics` continua a funzionare, e collegandoli entrambi lo stesso
     appuntamento comparirebbe due volte.
 
+29. **«Collegato con l'account …»** (16 settembre 2026). Il giorno dopo aver
+    collegato Google, i calendari non si vedevano. Sono volute **due ore** per
+    scoprire che c'erano — ma dentro `immobiliarelecce@gmail.com`, mentre lui
+    guardava il calendario di `camillo.barone@gmail.com`.
+
+    **Niente era rotto, e questo e' il punto.** Le tre spunte erano verdi,
+    Google aveva accettato ogni scrittura e restituito gli identificativi degli
+    eventi. Mancava una riga a schermo: **con quale account**. Il gestionale lo
+    sapeva — aveva appena parlato con quell'account — e non lo diceva a nessuno.
+
+    - Allo scopo si e' aggiunto **`openid email`**. Serve a quello e basta:
+      leggere l'indirizzo dall'`id_token` che Google rimanda insieme ai token.
+      Non da' nessun accesso alla posta.
+    - **La firma dell'`id_token` non si verifica**, ed e' scritto perche' sopra
+      `indirizzoDalBiglietto`: quel biglietto arriva dalla risposta di
+      `oauth2.googleapis.com` a una chiamata nostra, su TLS, autenticata col
+      nostro segreto — non passa da nessun browser. E soprattutto **serve solo
+      a scrivere un indirizzo a schermo**, non decide nessun accesso. Se un
+      giorno decidesse qualcosa, la firma va verificata.
+    - L'indirizzo compare in **due punti** (il riquadro di stato e il testo del
+      consenso) e finisce nel **registro accessi**: *«Google Calendar collegato
+      con …»*. Si dimentica allo scollegamento, insieme al resto.
+
+    **Due cose che avevo scritto sbagliate, corrette qui:**
+    - la pagina e `CONSEGNA.md` dicevano che i calendari compaiono sotto
+      **«Altri calendari»**. Falso: quella e' la sezione degli **abbonamenti**.
+      I calendari creati dall'app sono **di proprieta'** di chi autorizza, e
+      Google li mette sotto **«Le mie agende»**. Detto sbagliato, ha mandato a
+      cercare nel posto sbagliato per mezza giornata;
+    - gli avevo indicato un pulsante in cima alla pagina Utenti che non esiste
+      (vedi punto 28).
+
+    **La morale, che vale oltre questa funzione:** quando una cosa «non
+    funziona» ma tutti i controlli interni sono verdi, la domanda giusta non e'
+    «cosa si e' rotto» ma **«cosa sto guardando»**. E se il programma sa una
+    cosa che servirebbe a rispondere, deve dirla senza che gliela si chieda.
+
+    Verificato contro il finto Google: **14 controlli**, due corse di fila, con
+    **due account diversi** per essere sicuri che l'indirizzo mostrato sia
+    davvero quello con cui si e' collegati — compreso lo scollega-e-ricollega
+    che cambia account, dopo il quale nessun utente resta agganciato a un
+    calendario di prima. Piu' il giro completo del punto 28 rifatto (50) e la
+    prova degli spazi (17).
+
+    **Trappola nelle prove, la solita:** la prova del punto 28 confrontava
+    l'ambito con l'**uguaglianza esatta**, e aggiungendo `openid email` e'
+    diventata rossa su un codice giusto. Adesso verifica le due cose che
+    contano davvero: che ci sia `calendar.app.created`, e che **non** ci sia
+    l'accesso pieno al calendario.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -1006,7 +1056,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Provare gli avvisi su un telefono vero** | **Aspetta lui, ed e' l'unica cosa che manca** agli avvisi del punto 25. Da qui non si arriva ne' a Google ne' ad Apple. Lui apre *Agenda → Calendario e avvisi* dal telefono, accende, e tocca *Mandami una prova*. Se non arriva, il messaggio dice gia' il motivo. Da provare su tutte e tre le marche, e sull'iPhone **dopo** averlo aggiunto alla schermata Home. |
 | **Creare i due profili** «Roberto Lefons» e «Alessandro Ciullo» | **Aspetta lui**, e da qui non si puo' fare: all'archivio di produzione non si arriva. Si creano da *Utenti → Nuovo utente*, ruolo Collaboratore. Appena esistono entrano da soli nella tendina «assegnata a» e hanno il loro calendario — vedi il punto 27. Se non devono entrare nel programma, la password si mette a caso e non gliela si da'. |
 | **I tre calendari in abbonamento** | **Provati da lui il 15 settembre, e non bastano**: Google li ricontrolla quando decide lui. Da qui e' nato il punto 28. Restano funzionanti per chi li ha gia' collegati. |
-| **Collegare Google Calendar** | **Fatto il 15 settembre**, insieme a lui: app pubblicata, chiavi incollate, consenso dato, *«Google e' collegato»*. Gli otto passi sono nel capitolo 10-ter di `CONSEGNA.md`, corretti su quello che e' successo davvero. **Resta da premere** *Manda in Google i 13 rimasti* e guardare in Google Calendar sotto *Altri calendari* — lo fa lui quando ha tempo. |
+| **Collegare Google Calendar** | **Fatto il 15 settembre**, e il 16 si e' scoperto che era collegato all'account **sbagliato** (punto 29): i calendari erano in `immobiliarelecce@gmail.com`, lui guardava `camillo.barone@gmail.com`. **Resta da fare a lui:** scollegare e ricollegare scegliendo l'account giusto, poi rimandare gli appuntamenti col pulsante. Adesso la pagina scrive con quale account e' collegata, quindi non puo' ricapitare in silenzio. |
 | **Togliere i calendari in abbonamento da Google** | Quando confermera' che i calendari nuovi ci sono: tenendo tutte e due le strade, ogni appuntamento comparirebbe **due volte**. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **La descrizione della PR #2** | **Rifatta il 12 settembre.** Quella del 7 era rimasta indietro di sei cose — gli avvisi sul telefono, i calendari per persona, il confronto fra comuni, la zona che non e' piu' un'avvertenza — e conteneva **un esempio diventato falso**: citava *«Fuori dalle zone richieste (Frigole)»* come avvertenza, e quell'avvertenza non esiste piu'. Lezione: quando si cambia il modo in cui il programma **si racconta**, la descrizione della PR va riletta, non solo aggiornata in coda. E' l'unica presentazione del progetto che un estraneo legge. |
