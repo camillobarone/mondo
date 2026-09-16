@@ -38,7 +38,12 @@ import {
   dimenticaGoogle,
 } from "./queries";
 import { manda } from "./push";
-import { mandaAGoogle, togliDaGoogle, risincronizza } from "./google-sync";
+import {
+  mandaAGoogle,
+  togliDaGoogle,
+  risincronizza,
+  creaCalendariMancanti,
+} from "./google-sync";
 import { scollega as scollegaGoogle } from "./google";
 import type { Property } from "./types";
 import { ACTIVITY_TYPES } from "./types";
@@ -1782,6 +1787,36 @@ export async function risincronizzaGoogle(_prima: string | null, _form: FormData
   return esito.mandati
     ? `Mandati ${esito.mandati} appuntamenti. Se ne restano, ripremi.`
     : "Non c'era niente da mandare: sono già tutti in Google.";
+}
+
+/**
+ * Crea adesso i calendari di tutte le persone che non ce l'hanno.
+ *
+ * Serve a prepararli in Google — colore, quali tenere accesi — senza dover
+ * inventare un appuntamento per farli nascere.
+ */
+export async function creaTuttiICalendariGoogle(_prima: string | null, _form: FormData) {
+  const user = await requireOwner();
+  const esito = await creaCalendariMancanti();
+  revalidatePath("/utenti/google");
+
+  if (esito.creati.length) {
+    audit(
+      user.id,
+      "modifica",
+      "impostazioni",
+      null,
+      `creati i calendari Google di ${esito.creati.join(", ")}`,
+    );
+  }
+
+  if (esito.motivo && !esito.creati.length) return esito.motivo;
+  if (esito.motivo) {
+    return `Creati quelli di ${esito.creati.join(", ")}, poi mi sono fermato: ${esito.motivo}`;
+  }
+  return esito.creati.length
+    ? `Creati in Google i calendari di ${esito.creati.join(", ")}. Ora li trovi sotto «Le mie agende».`
+    : "Ce li hanno già tutti: non c'era niente da creare.";
 }
 
 /* ======================================================== il proprio accesso */

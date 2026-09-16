@@ -1040,6 +1040,42 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     contano davvero: che ci sia `calendar.app.created`, e che **non** ci sia
     l'accesso pieno al calendario.
 
+30. **«Crea adesso i calendari mancanti»** (16 settembre 2026). Sua richiesta:
+    voleva il calendario «· Mondo» anche per Roberto e Alessandro, e me l'ha
+    chiesto **passandomi i loro due indirizzi `.ics`** — cioe' confondendo
+    ancora le due strade, che e' il segno che la pagina non le distingueva
+    abbastanza.
+
+    La causa vera non era una distrazione sua: il calendario di una persona
+    nasce al **primo appuntamento assegnato a lei** (punto 28), e loro due non
+    ne avevano. La scelta resta giusta per l'uso normale — nessuno vuole tre
+    calendari vuoti fra i propri — ma **chi vuole prepararli prima, per dargli
+    un colore in Google, non deve doversi inventare un appuntamento finto**.
+
+    - `creaCalendariMancanti` in `google-sync.ts`, `personeSenzaCalendarioGoogle`
+      in `queries.ts`, e un pulsante che li crea per tutte le persone attive.
+      Uno per volta e non in parallelo: Google mette il freno.
+    - Chi ce l'ha gia' viene saltato, e l'appuntamento che arriva dopo finisce
+      nel calendario che c'e'.
+    - Ogni creazione finisce nel registro accessi coi nomi.
+
+    **Il difetto trovato mentre lo provavo, ed e' quello che vale la pena
+    ricordare:** il riquadro compariva **solo quando mancavano dei calendari**.
+    Premuto il pulsante, i calendari venivano creati, il riquadro non aveva
+    piu' motivo di esistere e spariva — **portandosi via il messaggio che
+    diceva «fatto»**, perche' il modulo che lo tiene veniva smontato insieme.
+    Si premeva e non succedeva niente di visibile, che e' il modo migliore per
+    far credere che un programma sia rotto. Adesso il riquadro c'e' sempre e
+    cambia solo quello che dice dentro.
+
+    **Regola generale, perche' non e' la prima volta:** il posto dove compare
+    l'esito di un'azione non puo' dipendere da una condizione che quell'azione
+    cambia. Se lo fa, il messaggio si vede solo quando l'azione fallisce —
+    cioe' mai quando servirebbe di piu'.
+
+    Verificato contro il finto Google: 15 controlli, due corse di fila, piu' le
+    tre prove di prima rifatte (14, 50, 17).
+
 ---
 
 ## 5 · Cosa resta aperto

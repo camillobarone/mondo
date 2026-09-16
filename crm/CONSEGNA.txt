@@ -1166,6 +1166,18 @@ manda a gruppi: si preme finché il conteggio non arriva a zero. È fatto a
 gruppi apposta — Google mette il freno alle richieste troppo ravvicinate.
 
 
+Preparare i calendari prima che servano
+
+Il calendario di una persona nasce da sé al suo primo appuntamento: chi non
+ne ha non si ritrova un calendario vuoto fra i suoi. Se però li vuoi tutti
+subito — per metterli in Google, dargli un colore, decidere quali tenere accesi
+— nella pagina c'è il pulsante «Crea adesso i calendari mancanti», che li
+crea in un colpo per tutte le persone attive.
+
+Non fa doppioni: chi ce l'ha già viene saltato, e l'appuntamento che arriva dopo
+finisce nel calendario che c'è, non in uno nuovo.
+
+
 Con quale account sei collegato
 
 È la prima cosa scritta nella pagina, nel riquadro azzurro: *«Collegato con

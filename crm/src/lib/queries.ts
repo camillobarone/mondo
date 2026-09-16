@@ -1108,6 +1108,23 @@ export function calendarioGoogleDi(userId: number): string | null {
   );
 }
 
+/**
+ * Le persone che in Google un calendario non ce l'hanno ancora.
+ *
+ * Serve al pulsante che li crea tutti in una volta. Normalmente il calendario
+ * nasce al primo appuntamento di quella persona — chi non ne ha non deve
+ * ritrovarsi un calendario vuoto fra i suoi — ma chi vuole prepararli prima,
+ * per dargli un colore in Google, deve poterlo fare senza inventarsi
+ * appuntamenti finti. Chiesto da Camillo il 16 settembre 2026.
+ */
+export function personeSenzaCalendarioGoogle(): { id: number; name: string }[] {
+  return all<{ id: number; name: string }>(
+    `SELECT id, name FROM users
+      WHERE active = 1 AND (google_calendar_id IS NULL OR TRIM(google_calendar_id) = '')
+      ORDER BY name COLLATE NOCASE`,
+  );
+}
+
 export function salvaCalendarioGoogle(userId: number, calendarId: string | null): void {
   run(`UPDATE users SET google_calendar_id = ? WHERE id = ?`, [calendarId, userId]);
 }

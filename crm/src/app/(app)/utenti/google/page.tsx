@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { requireOwner } from "@/lib/auth";
 import { chiaviGoogle, googleCollegato, accountGoogle } from "@/lib/google";
-import { quantiDaRisincronizzare } from "@/lib/queries";
+import { quantiDaRisincronizzare, personeSenzaCalendarioGoogle } from "@/lib/queries";
 import {
   salvaChiaviGoogle,
   scollegaGoogleCalendar,
   dimenticaChiaviGoogle,
   risincronizzaGoogle,
+  creaTuttiICalendariGoogle,
 } from "@/lib/actions";
 import { ModuloConEsito, AvvisoModulo, SubmitButton, ConfirmButton, CopyField } from "@/components/client";
 import { PageHeader, Card, TextField, Banner } from "@/components/ui";
@@ -26,6 +27,7 @@ export default async function GooglePage({
   const collegato = googleCollegato();
   const account = accountGoogle();
   const daMandare = collegato ? quantiDaRisincronizzare() : 0;
+  const senzaCalendario = collegato ? personeSenzaCalendarioGoogle() : [];
   const ritorno = await indirizzoRitorno();
   const daAmbiente = Boolean(process.env.GOOGLE_CLIENT_ID);
 
@@ -185,6 +187,42 @@ export default async function GooglePage({
                 il motivo per cui la schermata di consenso parlava solo di calendari
                 creati dall&apos;app.
               </p>
+
+              {/*
+                Il riquadro c'è sempre, e cambia solo quello che dice dentro.
+                Facendolo comparire solo quando mancano dei calendari, appena
+                li si creava spariva — e si portava via il messaggio che
+                diceva «fatto», perché il modulo che lo tiene veniva smontato
+                insieme al riquadro. Si premeva il pulsante e non succedeva
+                niente di visibile, che è il modo migliore per far credere che
+                un programma sia rotto.
+              */}
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                <ModuloConEsito azione={creaTuttiICalendariGoogle}>
+                  {senzaCalendario.length ? (
+                    <>
+                      <p className="text-sm text-slate-700">
+                        In Google non hanno ancora un calendario:{" "}
+                        <strong>{senzaCalendario.map((p) => p.name).join(", ")}</strong>.
+                      </p>
+                      <p className="mt-1 mb-2.5 text-xs text-slate-600">
+                        Nasce da sé al primo appuntamento assegnato a quella persona. Se
+                        li vuoi subito — per metterli in Google e dargli un colore prima
+                        che servano — creali adesso.
+                      </p>
+                      <SubmitButton variant="secondary">
+                        Crea adesso i calendari mancanti
+                      </SubmitButton>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-700">
+                      Tutti hanno il loro calendario in Google. Li trovi sotto{" "}
+                      <em>Le mie agende</em>, con il nome <em>Agenda … · Mondo</em>.
+                    </p>
+                  )}
+                  <AvvisoModulo />
+                </ModuloConEsito>
+              </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <ModuloConEsito azione={risincronizzaGoogle}>

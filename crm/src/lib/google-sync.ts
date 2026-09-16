@@ -19,6 +19,7 @@ import {
   segnaSincronizzata,
   segnaDaSincronizzare,
   salvaCalendarioGoogle,
+  personeSenzaCalendarioGoogle,
 } from "./queries";
 import {
   googleCollegato,
@@ -132,6 +133,42 @@ export async function risincronizza(
   }
 
   return { mandati, falliti, motivo };
+}
+
+/**
+ * Crea in Google i calendari delle persone che non ce l'hanno.
+ *
+ * Il calendario di una persona nasce da se' al suo primo appuntamento, e per
+ * l'uso normale basta. Questo serve a chi vuole **prepararli prima**: metterli
+ * in Google, dargli un colore, decidere quali tenere accesi — senza dover
+ * inventare un appuntamento finto per farli comparire.
+ *
+ * Uno per volta e non in parallelo: Google mette il freno sulle richieste
+ * ravvicinate, e tre chiamate insieme si prendono un 403 che sembra un
+ * problema di permessi.
+ */
+export async function creaCalendariMancanti(): Promise<{
+  creati: string[];
+  motivo?: string;
+}> {
+  if (!googleCollegato()) return { creati: [], motivo: "Google non e' collegato." };
+
+  const creati: string[] = [];
+  for (const persona of personeSenzaCalendarioGoogle()) {
+    try {
+      const calendarId = await creaCalendario(nomeCalendario(persona.name));
+      salvaCalendarioGoogle(persona.id, calendarId);
+      creati.push(persona.name);
+    } catch (errore) {
+      const motivo =
+        errore instanceof ErroreGoogle ? errore.message : (errore as Error).message;
+      console.error(`[google] calendario di ${persona.name} non creato: ${motivo}`);
+      // Ci si ferma al primo guasto: se Google ha tolto il permesso o ha messo
+      // il freno, insistere peggiora e riempie il registro dello stesso errore.
+      return { creati, motivo };
+    }
+  }
+  return { creati };
 }
 
 /* ----------------------------------------------------------- il contenuto */
