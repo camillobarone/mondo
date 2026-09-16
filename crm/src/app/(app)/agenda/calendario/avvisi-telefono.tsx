@@ -139,7 +139,7 @@ export function AvvisiTelefono({ chiavePubblica }: { chiavePubblica: string }) {
     return (
       <Avviso tono="ambra" titolo="Su iPhone serve un passaggio in più">
         Apri questa pagina in <strong>Safari</strong>, tocca il pulsante{" "}
-        <strong>Condividi</strong> (il quadrato con la freccia in su) e scegli{" "}
+        <strong>Condividi</strong>{" "}(il quadrato con la freccia in su) e scegli{" "}
         <strong>Aggiungi a Home</strong>. Poi apri il gestionale da quell&apos;icona e torna
         qui: il pulsante per accendere gli avvisi comparirà. È Apple a volerlo così — dal
         browser le notifiche non le manda.
@@ -150,9 +150,9 @@ export function AvvisiTelefono({ chiavePubblica }: { chiavePubblica: string }) {
   if (stato === "non-sostenuto") {
     return (
       <Avviso tono="grigio" titolo="Questo browser non sa fare gli avvisi">
-        Provalo da <strong>Chrome</strong> su Android, o da Safari su iPhone dopo aver
+        Provalo da <strong>Chrome</strong>{" "}su Android, o da Safari su iPhone dopo aver
         aggiunto il gestionale alla schermata Home. Intanto resta il pulsante{" "}
-        <strong>Calendario</strong> sulla riga dell&apos;agenda.
+        <strong>Calendario</strong>{" "}sulla riga dell&apos;agenda.
       </Avviso>
     );
   }
@@ -162,7 +162,7 @@ export function AvvisiTelefono({ chiavePubblica }: { chiavePubblica: string }) {
       <Avviso tono="ambra" titolo="Gli avvisi sono stati bloccati su questo telefono">
         Il permesso è stato rifiutato, e da qui non si può più chiedere: lo decide il
         browser. Va rimesso a mano — nelle impostazioni del sito, alla voce{" "}
-        <strong>Notifiche</strong> — e poi si ricarica questa pagina.
+        <strong>Notifiche</strong>{" "}— e poi si ricarica questa pagina.
       </Avviso>
     );
   }

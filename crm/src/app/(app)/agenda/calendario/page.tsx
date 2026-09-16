@@ -126,7 +126,7 @@ export default async function CalendarioPage() {
             <div>
               <p className="font-medium text-slate-800">Google Calendar (da computer)</p>
               <p>
-                calendar.google.com → <em>Altri calendari</em> → <em>+</em> →{" "}
+                calendar.google.com → <em>Altri calendari</em> → <em>+</em>{" "}→{" "}
                 <em>Da URL</em> → incolla l&apos;indirizzo → <em>Aggiungi calendario</em>.
               </p>
               <p className="mt-1 text-amber-800">
@@ -137,9 +137,9 @@ export default async function CalendarioPage() {
             <div>
               <p className="font-medium text-slate-800">iPhone e iPad</p>
               <p>
-                Impostazioni → <em>Calendario</em> → <em>Account</em> →{" "}
-                <em>Aggiungi account</em> → <em>Altro</em> →{" "}
-                <em>Aggiungi calendario con sottoscrizione</em> → incolla l&apos;indirizzo.
+                Impostazioni → <em>Calendario</em> → <em>Account</em>{" "}→{" "}
+                <em>Aggiungi account</em> → <em>Altro</em>{" "}→{" "}
+                <em>Aggiungi calendario con sottoscrizione</em>{" "}→ incolla l&apos;indirizzo.
                 Oppure apri direttamente{" "}
                 <a href={webcal} className="text-brand-700 hover:underline">
                   questo collegamento
@@ -155,7 +155,7 @@ export default async function CalendarioPage() {
             <div>
               <p className="font-medium text-slate-800">Outlook</p>
               <p>
-                Calendario → <em>Aggiungi calendario</em> → <em>Sottoscrivi dal Web</em> →
+                Calendario → <em>Aggiungi calendario</em> → <em>Sottoscrivi dal Web</em>{" "}→
                 incolla l&apos;indirizzo.
               </p>
             </div>
@@ -164,21 +164,21 @@ export default async function CalendarioPage() {
           <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <p className="font-medium">Due cose da sapere su Google</p>
             <p className="mt-1">
-              <strong>La sveglia non suona.</strong> Dentro ogni appuntamento la sveglia
+              <strong>La sveglia non suona.</strong>{" "}Dentro ogni appuntamento la sveglia
               dei {PREAVVISO_MINUTI} minuti prima c&apos;è, e Apple e Outlook la fanno{" "}
-              suonare: Google invece <strong>non avvisa mai</strong> per i calendari a cui ci si
+              suonare: Google invece <strong>non avvisa mai</strong>{" "}per i calendari a cui ci si
               abbona, li mostra e basta. Non è una cosa da impostare — Google non offre
               proprio la possibilità. Quindi su Google l&apos;abbonamento serve a{" "}
-              <em>vedere</em> l&apos;agenda, non a essere avvisati.
+              <em>vedere</em>{" "}l&apos;agenda, non a essere avvisati.
             </p>
             <p className="mt-2">
-              <strong>Gli appuntamenti nuovi arrivano tardi.</strong> Google ricontrolla i
+              <strong>Gli appuntamenti nuovi arrivano tardi.</strong>{" "}Google ricontrolla i
               calendari esterni quando decide lui, anche dopo diverse ore. Apple e Outlook
               sono più svelti.
             </p>
             <p className="mt-2">
               Per tutti e due i problemi la risposta è la stessa:{" "}
-              <strong>Calendario</strong> sulla riga dell&apos;agenda. Quell&apos;appuntamento
+              <strong>Calendario</strong>{" "}sulla riga dell&apos;agenda. Quell&apos;appuntamento
               entra subito e diventa tuo, e da lì la sveglia suona anche su Google.
             </p>
           </div>
@@ -193,7 +193,7 @@ export default async function CalendarioPage() {
           </p>
           <p className="mt-2 text-xs text-slate-500">
             La configurazione della posta si fa una volta sola sul server, in{" "}
-            <code className="rounded bg-slate-100 px-1">CONSEGNA.md</code> c&apos;è come.
+            <code className="rounded bg-slate-100 px-1">CONSEGNA.md</code>{" "}c&apos;è come.
             Finché non è impostata, l&apos;avviso per email semplicemente non parte: il
             calendario funziona lo stesso.
           </p>

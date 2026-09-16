@@ -38,7 +38,7 @@ export default async function ImportPage() {
 
           <div className="mt-4">
             <Banner tone="blue">
-              <strong>Prima di importare tutto:</strong> prova con un file di 10 righe. Controlla che
+              <strong>Prima di importare tutto:</strong>{" "}prova con un file di 10 righe. Controlla che
               i dati finiscano nelle colonne giuste, poi carica l&apos;archivio completo.
             </Banner>
           </div>

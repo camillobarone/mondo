@@ -40,7 +40,7 @@ export async function TrackingBox({
       <Card title="Link per il proprietario">
         <p className="mb-3 text-sm text-slate-600">
           Una pagina che il proprietario apre dal telefono, senza password, per
-          vedere <strong>le visite</strong> e a che punto è la vendita. Non
+          vedere <strong>le visite</strong>{" "}e a che punto è la vendita. Non
           mostra né i nomi né i recapiti di chi è venuto a vedere.
         </p>
         <form action={creaLinkTracking}>

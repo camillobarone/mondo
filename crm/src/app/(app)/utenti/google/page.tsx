@@ -126,11 +126,22 @@ export default async function GooglePage({
           </ul>
 
           {collegato ? (
+            <>
             <p className="mt-4 text-xs text-slate-500">
-              I calendari si chiamano <em>Agenda Nome Cognome · Mondo</em> e compaiono
-              nel tuo Google sotto <em>Altri calendari</em>. Il calendario di una
-              persona nasce al suo primo appuntamento, non adesso.
+              I calendari si chiamano <em>Agenda Nome Cognome · Mondo</em>{" "}
+              e compaiono
+              nel tuo Google sotto <em>Le mie agende</em> — non sotto{" "}
+              <em>Altri calendari</em>, che è dove vanno quelli a cui ci si abbona: questi
+              sono tuoi, li possiedi tu. Il calendario di una persona nasce al suo primo
+              appuntamento, non adesso.
             </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Se in <em>Le mie agende</em> non li vedi, prima di pensare a un guasto
+              guarda in <em>Impostazioni → Impostazioni per i miei calendari</em>: lì ci
+              sono anche quelli che possiedi ma che hai tolto dalla vista, e basta
+              rimettergli la spunta.
+            </p>
+            </>
           ) : null}
         </Card>
 
@@ -192,7 +203,7 @@ export default async function GooglePage({
             <div className="space-y-3">
               <p className="max-w-2xl text-sm text-slate-600">
                 Ti manda sulla schermata di Google. Va fatto <strong>con l&apos;account
-                dove vuoi vedere i calendari</strong> — se sul computer sei entrato con
+                dove vuoi vedere i calendari</strong>{" "}— se sul computer sei entrato con
                 più account Google, guarda in alto quale ti propone.
               </p>
               <p className="max-w-2xl text-xs text-slate-500">

@@ -65,7 +65,7 @@ export default async function VisitHistoryPage({
 
       {conNote ? (
         <p className="mb-5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 print:hidden">
-          Il foglio riporta anche le <strong>note</strong> scritte in agenda, che spesso sono
+          Il foglio riporta anche le <strong>note</strong>{" "}scritte in agenda, che spesso sono
           promemoria per l&apos;ufficio («portare la planimetria»). Rileggile prima di stampare, o
           toglile con il comando qui sopra.
         </p>

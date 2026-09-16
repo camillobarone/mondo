@@ -1721,6 +1721,16 @@ Trappole già pagate (non ripeterle)
 - Le prove sui messaggi vanno fatte sulla build di produzione
   (npm run build + npx next start), mai in sviluppo: lì i messaggi si
   vedono comunque e ogni prova passa.
+- Lo spazio dopo un tag di chiusura sparisce se il testo va a capo, e
+  questa e' la forma che ha morso di piu': <strong>mai</strong> per i con
+  «per i calendari...» che prosegue sulla riga dopo rende «maiper». Nel
+  sorgente lo spazio si vede, sulla stessa riga del tag, e sembra a posto —
+  e' React che lo toglie, e lo si scopre solo leggendo l'HTML servito. Ci
+  sono cascato due volte nella stessa settimana, la seconda dopo aver guardato
+  il sorgente e dichiarato che era giusto. La cura e' {" "} esplicito:
+  </strong>{" "} a fine riga. Il 16 settembre ne sono stati corretti 26
+  in 10 file, e la prova che li tiene fermi non legge il sorgente: apre dodici
+  pagine e cerca </strong> attaccato a una lettera nell'HTML.
 - Lo spazio dopo {espressione} sparisce se il testo va a capo. In JSX,
   posta, {PREAVVISO_MINUTI} minuti prima di seguito a capo da altro testo
   rende «30minuti»: la riga successiva viene ripulita e con lei se ne va lo

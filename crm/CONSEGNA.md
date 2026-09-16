@@ -1000,8 +1000,13 @@ guardare, **il gestionale scrive l'appuntamento dentro Google** appena lo salvi.
 ### Cosa fa, in pratica
 
 - Crea nel tuo Google Calendar **un calendario per persona**, chiamato
-  *Agenda Nome Cognome · Mondo*. Compaiono sotto *Altri calendari*, e si
-  accendono e spengono con un clic come tutti gli altri.
+  *Agenda Nome Cognome · Mondo*. Compaiono sotto **«Le mie agende»** — non sotto
+  *Altri calendari*, che è dove vanno i calendari a cui ci si abbona: questi sono
+  **tuoi**, li possiedi tu. Si accendono e spengono con un clic come gli altri.
+
+  Se in *Le mie agende* non compaiono, prima di pensare a un guasto guarda in
+  *Impostazioni → Impostazioni per i miei calendari*: quell'elenco contiene
+  anche i calendari che possiedi ma che hai tolto dalla barra laterale.
 - Ogni appuntamento va nel calendario di **chi è scritto nella tendina
   «assegnata a»**. Lo sposti nel gestionale, si sposta in Google; lo cancelli,
   sparisce; lo segni fatto, smette di suonare.

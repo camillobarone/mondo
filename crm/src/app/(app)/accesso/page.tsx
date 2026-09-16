@@ -39,7 +39,7 @@ export default async function AccessoPage() {
 
         <Card title="Cambia la password">
           <Banner tone="blue">
-            Appena cambiata, <strong>tutti gli accessi già aperti si chiudono</strong> — anche
+            Appena cambiata, <strong>tutti gli accessi già aperti si chiudono</strong>{" "}— anche
             quelli su altri computer, e anche quelli di chi conosceva la password vecchia.
             Dovrai rientrare con quella nuova.
           </Banner>

@@ -219,7 +219,7 @@ export default async function UsersPage({
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="max-w-2xl text-sm text-slate-600">
               <p>
-                Ogni persona ha il <strong>suo</strong> calendario, e ci finiscono
+                Ogni persona ha il <strong>suo</strong>{" "}calendario, e ci finiscono
                 soltanto le attività assegnate a lei nella tendina
                 &laquo;assegnata a&raquo;. Un appuntamento assegnato a un collaboratore
                 compare sul calendario di quel collaboratore e{" "}
@@ -246,7 +246,7 @@ export default async function UsersPage({
           </div>
 
           <p className="mt-4 border-t border-slate-100 pt-4 text-sm text-slate-600">
-            <strong>Google ci mette ore ad aggiornare</strong> i calendari a cui ci si
+            <strong>Google ci mette ore ad aggiornare</strong>{" "}i calendari a cui ci si
             abbona, e non c&apos;è modo di dirgli di fare prima: per vedere subito un
             appuntamento nuovo bisogna togliere il calendario e rimetterlo. Se ti serve
             che compaia all&apos;istante, c&apos;è l&apos;altra strada —{" "}
@@ -276,7 +276,7 @@ export default async function UsersPage({
               &laquo;Copie di sicurezza&raquo;.
             </p>
             <p className="mt-2 text-xs text-slate-500">
-              Ognuno può comunque scaricare le <strong>proprie</strong> schede da Clienti
+              Ognuno può comunque scaricare le <strong>proprie</strong>{" "}schede da Clienti
               e da Immobili, con il pulsante &laquo;Esporta&raquo;.
             </p>
           </div>

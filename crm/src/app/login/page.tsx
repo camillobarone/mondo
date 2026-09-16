@@ -46,7 +46,7 @@ export default async function LoginPage({
             <div className="text-sm text-slate-600">
               <p className="font-medium text-slate-800">Nessun utente configurato.</p>
               <p className="mt-2">
-                Esegui <code className="rounded bg-slate-100 px-1.5 py-0.5">npm run seed</code> dal
+                Esegui <code className="rounded bg-slate-100 px-1.5 py-0.5">npm run seed</code>{" "}dal
                 terminale per creare il primo accesso, poi ricarica questa pagina.
               </p>
             </div>

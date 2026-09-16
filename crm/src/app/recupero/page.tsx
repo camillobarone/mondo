@@ -34,7 +34,7 @@ export default async function RecuperoPage() {
             <>
               <p className="mb-4 text-sm text-slate-600">
                 Scrivi l&apos;indirizzo con cui entri nel gestionale. Il collegamento vale{" "}
-                <strong>un&apos;ora</strong> e una volta sola.
+                <strong>un&apos;ora</strong>{" "}e una volta sola.
               </p>
               <ChiediRecuperoForm />
             </>
