@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireOwner } from "@/lib/auth";
-import { chiaviGoogle, googleCollegato } from "@/lib/google";
+import { chiaviGoogle, googleCollegato, accountGoogle } from "@/lib/google";
 import { quantiDaRisincronizzare } from "@/lib/queries";
 import {
   salvaChiaviGoogle,
@@ -24,6 +24,7 @@ export default async function GooglePage({
 
   const chiavi = chiaviGoogle();
   const collegato = googleCollegato();
+  const account = accountGoogle();
   const daMandare = collegato ? quantiDaRisincronizzare() : 0;
   const ritorno = await indirizzoRitorno();
   const daAmbiente = Boolean(process.env.GOOGLE_CLIENT_ID);
@@ -125,6 +126,25 @@ export default async function GooglePage({
             </li>
           </ul>
 
+          {collegato && account ? (
+            /*
+              Con quale account. Scritto grosso e per primo perche' e' la cosa
+              che e' mancata il 16 settembre 2026: i calendari erano stati
+              creati in un account, e venivano cercati in un altro. Due ore per
+              scoprirlo, e nessuna schermata che lo dicesse.
+            */
+            <div className="mt-4 rounded-md border border-brand-200 bg-brand-50 p-3">
+              <p className="text-xs text-slate-600">Collegato con l&apos;account</p>
+              <p className="font-medium break-all text-slate-800">{account}</p>
+              <p className="mt-1.5 text-xs text-slate-600">
+                I calendari nascono <strong>qui dentro</strong>. Se in Google Calendar
+                non li vedi, quasi sempre è perché stai guardando un altro account:
+                controlla in alto a destra, o scollega e ricollega scegliendo quello
+                giusto.
+              </p>
+            </div>
+          ) : null}
+
           {collegato ? (
             <>
             <p className="mt-4 text-xs text-slate-500">
@@ -153,8 +173,14 @@ export default async function GooglePage({
           ) : collegato ? (
             <div className="space-y-4">
               <p className="max-w-2xl text-sm text-slate-600">
-                Google è collegato. Il gestionale può creare calendari suoi e scrivere
-                lì dentro; <strong>il tuo calendario personale non lo può né leggere né
+                Google è collegato
+                {account ? (
+                  <>
+                    {" "}
+                    con <strong className="break-all">{account}</strong>
+                  </>
+                ) : null}
+                . Il gestionale può creare calendari suoi e scrivere lì dentro; <strong>il tuo calendario personale non lo può né leggere né
                 toccare</strong> — è il permesso <code>calendar.app.created</code>, ed è
                 il motivo per cui la schermata di consenso parlava solo di calendari
                 creati dall&apos;app.

@@ -72,10 +72,18 @@ const REVOCA = FINTO ? `${FINTO}/revoke` : "https://oauth2.googleapis.com/revoke
 const ATTESA_MASSIMA = 10_000;
 
 /**
- * Il permesso che si chiede. Vedi il commento in cima: `calendar.app.created`
- * tiene il gestionale fuori dall'agenda personale di chi autorizza.
+ * I permessi che si chiedono.
+ *
+ * - **`calendar.app.created`** — vedi il commento in cima: tiene il gestionale
+ *   fuori dall'agenda personale di chi autorizza.
+ * - **`openid email`** — serve a una cosa sola, e non e' un vezzo: **sapere con
+ *   quale account si e' collegato**, per poterlo scrivere sulla pagina. Il 16
+ *   settembre 2026 Camillo ha autorizzato con un account e ha cercato i
+ *   calendari in un altro, e ci sono volute due ore per capirlo, perche' da
+ *   nessuna parte c'era scritto quale dei due fosse. Non da' nessun accesso
+ *   alla posta: `email` restituisce l'indirizzo e basta.
  */
-export const AMBITO = "https://www.googleapis.com/auth/calendar.app.created";
+export const AMBITO = "https://www.googleapis.com/auth/calendar.app.created openid email";
 
 /**
  * Il fuso con cui si scrivono gli orari. Gli appuntamenti sono ore lette
@@ -160,8 +168,36 @@ interface RispostaToken {
   access_token?: string;
   refresh_token?: string;
   expires_in?: number;
+  /** Il biglietto firmato che contiene, fra le altre cose, l'indirizzo. */
+  id_token?: string;
   error?: string;
   error_description?: string;
+}
+
+/**
+ * L'indirizzo dell'account che ha autorizzato, letto dall'`id_token`.
+ *
+ * **La firma non viene verificata, ed e' una scelta consapevole:** quel
+ * biglietto non arriva da un browser ne' da un utente, arriva dalla risposta
+ * di `oauth2.googleapis.com` a una chiamata che abbiamo fatto noi, su TLS,
+ * autenticandoci col nostro segreto. Non c'e' nessuno in mezzo che possa
+ * averlo sostituito. E soprattutto: **serve solo a scrivere un indirizzo a
+ * schermo**, non decide nessun accesso. Se un giorno servisse a decidere
+ * qualcosa, la firma andrebbe verificata — e allora questo commento va
+ * riletto.
+ */
+function indirizzoDalBiglietto(idToken: string | undefined): string | null {
+  if (!idToken) return null;
+  const mezzo = idToken.split(".")[1];
+  if (!mezzo) return null;
+  try {
+    const dati = JSON.parse(Buffer.from(mezzo, "base64url").toString("utf8")) as {
+      email?: string;
+    };
+    return dati.email ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function chiediToken(corpo: Record<string, string>): Promise<RispostaToken> {
@@ -197,7 +233,12 @@ async function chiediToken(corpo: Record<string, string>): Promise<RispostaToken
 export async function scambiaCodice(
   codice: string,
   redirectUri: string,
-): Promise<{ refreshToken: string; accessToken: string; scadenza: number }> {
+): Promise<{
+  refreshToken: string;
+  accessToken: string;
+  scadenza: number;
+  account: string | null;
+}> {
   const chiavi = chiaviGoogle();
   if (!chiavi) throw new ErroreGoogle("Mancano il Client ID e il segreto di Google.");
 
@@ -223,7 +264,13 @@ export async function scambiaCodice(
     refreshToken: dati.refresh_token,
     accessToken: dati.access_token ?? "",
     scadenza: Date.now() + (dati.expires_in ?? 3600) * 1000,
+    account: indirizzoDalBiglietto(dati.id_token),
   };
+}
+
+/** Con quale account di Google siamo collegati, se lo sappiamo. */
+export function accountGoogle(): string | null {
+  return impostazione("google_account");
 }
 
 /**
@@ -276,6 +323,7 @@ export async function scollega(): Promise<void> {
     "google_refresh_token",
     "google_access_token",
     "google_token_expires",
+    "google_account",
   ]);
 }
 

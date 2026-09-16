@@ -56,8 +56,17 @@ export async function GET(request: Request) {
       google_refresh_token: token.refreshToken,
       google_access_token: token.accessToken,
       google_token_expires: String(token.scadenza),
+      // Se Google non lo manda si scrive un segnaposto invece di lasciare il
+      // campo vuoto: «non lo so» detto e' meglio di una riga che non compare.
+      google_account: token.account ?? "(account non comunicato da Google)",
     });
-    audit(user.id, "modifica", "impostazioni", null, "Google Calendar collegato");
+    audit(
+      user.id,
+      "modifica",
+      "impostazioni",
+      null,
+      `Google Calendar collegato con ${token.account ?? "account ignoto"}`,
+    );
   } catch (errore) {
     conMessaggio((errore as Error).message);
   }
