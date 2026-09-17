@@ -1375,6 +1375,46 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     `NON RIUSCITA:` con il motivo. Non arriva nessun segnale da nessun'altra
     parte.
 
+35. **La copia fuori sede passa da Drive a Box** (17 settembre 2026). Nata da
+    una sua domanda — *«alternativa a drive?»* — dopo che il `client_id`
+    condiviso di rclone era finito fra le cose in sospeso.
+
+    Gli avevo spiegato che il problema non e' Drive ma il tipo di accesso: i
+    servizi con login OAuth (Drive, OneDrive, Dropbox) passano da un'identita'
+    applicativa condivisa fra tutti gli utenti di rclone, ed e' quella che
+    Google ritira; i servizi con chiave d'accesso no. Consigliavo Aruba (stesso
+    fornitore del server, dati in Italia, accordo art. 28 gia' agli atti) o
+    Hetzner. **Ha scelto Box**, e va benissimo per il problema immediato:
+    l'annuncio di ritiro e' solo di Google.
+
+    Detto una volta e non ripetuto: **Box e' americana**, e per un archivio con
+    codici fiscali e documenti d'identita' la residenza dei dati e' una cosa da
+    aver scelto. Le copie principali restano quella sul server (Italia) e
+    quella sul disco in ufficio.
+
+    - **`backup-esterno.sh`: la destinazione e' un'impostazione.** Prima
+      `gdrive:` era scritto in due punti del codice. Ora legge
+      `CRM_BACKUP_REMOTO` da `/etc/mondo-crm.env` — fuori dalla cartella del
+      programma, quindi sopravvive agli aggiornamenti — e ne ricava anche il
+      nome da cercare fra i collegamenti di rclone. Senza quella riga il
+      comportamento e' identico a prima.
+    - Documentata la procedura Box per esteso in `deploy/README.md`, col
+      passaggio meno ovvio: il server non ha browser, quindi si risponde `n`
+      alla domanda sul browser, si esegue `rclone authorize "box"` **da
+      Windows** (rclone si installa con `winget install Rclone.Rclone`) e si
+      incolla il token nella sessione ssh che sta aspettando.
+
+    **In esercizio dal 17 settembre**: prima copia riuscita in 1m09s — database
+    e tutte le 84 foto, ricaricate da zero perche' per Box erano nuove.
+
+    **Il collegamento `gdrive` e' ancora configurato sul server** e la vecchia
+    cartella e' ancora su Drive: nessuno le usa piu'. Vanno tolte quando lui
+    decide, non prima — e' l'unica copia di agosto-settembre su Drive.
+
+    **Da fare, e gliel'ho detto:** il token di Box e' finito in chat mentre lo
+    incollava. Va revocato da Box (Impostazioni account → Sicurezza → App
+    collegate) e rifatta l'autorizzazione.
+
 ---
 
 ## 5 · Cosa resta aperto
