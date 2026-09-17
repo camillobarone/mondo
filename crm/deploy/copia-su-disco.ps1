@@ -46,40 +46,60 @@ param(
 $ErrorActionPreference = 'Stop'
 $oggi = Get-Date -Format 'yyyy-MM-dd'
 
-# Un comando esterno che scrive su stderr, in Windows PowerShell 5.1, diventa
-# un errore BLOCCANTE quando $ErrorActionPreference vale 'Stop' — anche quando
-# quella scrittura e' la risposta normale che stiamo aspettando. Il
-# "Permission denied (publickey,password)" di una chiave non ancora
-# autorizzata e' esattamente questo caso: e' la risposta giusta alla domanda
-# «sono gia' dentro?», e faceva morire lo script invece di far proseguire.
+# Due regole imparate su questo script, tutte e due da corse vere su Windows:
 #
-# PowerShell 7 non si comporta cosi', ed e' il motivo per cui la prova non
-# l'aveva visto. Qui si abbassa la preferenza attorno a ogni comando esterno e
-# si guarda $LASTEXITCODE, che e' l'unica cosa che dice davvero com'e' andata.
-function Esegui {
-    param([scriptblock] $Comando, [switch] $Interattivo)
+# 1. Un comando esterno che scrive su stderr, in Windows PowerShell 5.1,
+#    diventa un errore BLOCCANTE quando $ErrorActionPreference vale 'Stop' —
+#    anche quando quella scrittura e' la risposta normale che si aspettava.
+#    PowerShell 7 non fa cosi', quindi provare li' non basta.
+#
+# 2. Niente splatting verso un programma esterno: la forma con la chiocciola,
+#    che passa in blocco un elenco di opzioni. La versione che la usava ha
+#    consegnato a ssh un'opzione che nel codice non c'era mai stata — «Bad
+#    escape character» — e da Linux non c'e' modo di riprodurlo. Qui le
+#    chiamate si scrivono per esteso, un ramo per caso: piu' righe, nessuna
+#    interpretazione di mezzo.
+#
+# In entrambe si guarda $LASTEXITCODE, l'unica cosa che dice davvero com'e'
+# andata.
+#
+# BatchMode serve quando non c'e' nessuno davanti: senza, ssh si fermerebbe ad
+# aspettare una password che nessuno digitera' mai, e l'attivita' settimanale
+# non finirebbe piu'.
+
+function SshRemoto([string] $ComandoRemoto) {
     $prima = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        # -Interattivo quando il comando deve poter chiedere qualcosa a
-        # schermo: catturandogli i flussi si porterebbe via la richiesta
-        # della password, e resterebbe li' a aspettare un'accettazione muta.
-        if ($Interattivo) { & $Comando } else { & $Comando 2>&1 }
+        if ($NonInterattivo) {
+            & ssh -o BatchMode=yes -o ConnectTimeout=20 $Server $ComandoRemoto 2>&1
+        } else {
+            & ssh $Server $ComandoRemoto 2>&1
+        }
     } finally { $ErrorActionPreference = $prima }
 }
 
+function ScpRemoto([string] $Da, [string] $A, [switch] $Ricorsivo) {
+    $prima = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        if ($Ricorsivo -and $NonInterattivo) {
+            & scp -r -o BatchMode=yes -o ConnectTimeout=20 $Da $A 2>&1
+        } elseif ($Ricorsivo) {
+            & scp -r $Da $A 2>&1
+        } elseif ($NonInterattivo) {
+            & scp -o BatchMode=yes -o ConnectTimeout=20 $Da $A 2>&1
+        } else {
+            & scp $Da $A 2>&1
+        }
+    } finally { $ErrorActionPreference = $prima }
+}
 
 function Scrivi([string] $testo) {
     $riga = '{0}  {1}' -f (Get-Date -Format 's'), $testo
     try { Add-Content -Path $Registro -Value $riga -Encoding UTF8 } catch { }
     if (-not $NonInterattivo) { Write-Host $testo }
 }
-
-# Senza nessuno davanti, ssh non deve MAI fermarsi ad aspettare una password:
-# resterebbe li' per sempre e l'attivita' non finirebbe piu'. BatchMode la fa
-# fallire subito, e il registro dice perche'.
-$opzioni = @()
-if ($NonInterattivo) { $opzioni = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20') }
 
 function Fermati([string] $motivo) {
     Scrivi "NON RIUSCITA: $motivo"
@@ -108,7 +128,7 @@ Scrivi '1/3  preparo la copia sul server'
 # copia notturna messa sotto un nome fisso, cosi' la riga dopo sa cosa chiedere.
 # Apici singoli: il $(...) deve eseguirlo bash sul server, non PowerShell qui.
 $comando = 'cd ' + $Cartella + ' && sudo -u mondo node scripts/esporta-tutto.mjs backup/clienti-completo.csv && cp -f $(ls -t backup/mondo-*.db | head -1) backup/ultimo-archivio.db && echo PRONTO'
-$esito = Esegui { & ssh @opzioni $Server $comando }
+$esito = SshRemoto $comando
 if ($LASTEXITCODE -ne 0) {
     Fermati "il server non ha completato la preparazione ($esito)."
 }
@@ -120,15 +140,15 @@ Scrivi '3/3  scarico'
 $archivio = Join-Path $Destinazione "mondo-$oggi.db"
 $schede   = Join-Path $Destinazione "clienti-completo-$oggi.csv"
 
-Esegui { & scp @opzioni "${Server}:$Cartella/backup/ultimo-archivio.db" $archivio } | Out-Null
+ScpRemoto "${Server}:$Cartella/backup/ultimo-archivio.db" $archivio | Out-Null
 if ($LASTEXITCODE -ne 0) { Fermati 'copia del database non riuscita.' }
 
-Esegui { & scp @opzioni "${Server}:$Cartella/backup/clienti-completo.csv" $schede } | Out-Null
+ScpRemoto "${Server}:$Cartella/backup/clienti-completo.csv" $schede | Out-Null
 if ($LASTEXITCODE -ne 0) { Fermati 'copia del CSV non riuscita.' }
 
 if ($ConLeFoto) {
     Scrivi '     e le foto degli immobili'
-    Esegui { & scp -r @opzioni "${Server}:$Cartella/backup/foto" $Destinazione } | Out-Null
+    ScpRemoto -Ricorsivo "${Server}:$Cartella/backup/foto" $Destinazione | Out-Null
     if ($LASTEXITCODE -ne 0) { Fermati 'copia delle foto non riuscita.' }
 }
 

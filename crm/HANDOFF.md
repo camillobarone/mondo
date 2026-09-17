@@ -1333,6 +1333,36 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     l'aveva ucciso. Passa tutto e si ferma solo su `New-ScheduledTaskAction`,
     che su Linux non esiste.
 
+    **E si e' rotto una seconda volta, diversamente.** Installata la chiave e
+    registrata l'attivita', la copia falliva cosi':
+
+    ```
+    NON RIUSCITA: il server non ha completato la preparazione
+                  (Bad escape character 'ncodedCommand'.).
+    ```
+
+    E' `ssh` che si lamenta di aver ricevuto `-e ncodedCommand`, cioe' il
+    frammento di `-encodedCommand` — un'opzione di `powershell.exe` che nel
+    codice non compariva da nessuna parte.
+
+    **Come l'ho ristretto, e vale piu' della causa:** gli argomenti
+    dell'attivita' erano esatti (`Get-ScheduledTask … .Actions`), `ssh` era
+    quello di Windows (`Get-Command ssh`), e la copia falliva **uguale lanciata
+    a mano** — quindi non era l'attivita', era lo script. A quel punto il
+    confronto: `programma-copia-settimanale.ps1` chiama ssh nello stesso modo e
+    **funziona**; l'unica differenza era lo splatting `@opzioni` nella chiamata
+    di `copia-su-disco.ps1`.
+
+    Tolto lo splatting: `SshRemoto` e `ScpRemoto` scrivono la chiamata per
+    esteso, un ramo per caso (interattivo / non, ricorsivo / non). Piu' righe,
+    nessuna interpretazione di mezzo.
+
+    **Il meccanismo esatto non l'ho stabilito** — da Linux non si riproduce, e
+    non ho voluto tenere in piedi un costrutto che in una corsa vera ha
+    passato a un programma un'opzione mai scritta. **Regola: verso un programma
+    esterno, niente splatting.** Riprovati sei rami su sei, verificando anche
+    gli argomenti che arrivano davvero a ssh e scp nelle due modalita'.
+
 ---
 
 ## 5 · Cosa resta aperto
