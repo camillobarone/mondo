@@ -1172,8 +1172,26 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     senza trattino basso (`in vendita`), e il singolare quando la scheda
     cestinata è una sola.
 
-    **Il `.ps1` non è stato eseguito**: qui non c'è PowerShell. È scritto e
-    riletto, non provato — la prima corsa la fa lui.
+    **Il `.ps1` non si poteva eseguire da qui** (niente PowerShell in questo
+    ambiente): l'ha lanciato lui, ed è andato **al primo colpo**. In
+    `F:\backup-mondo` sono arrivati `clienti-completo-2026-09-17.csv` (180 KB)
+    e `mondo-2026-09-17.db` (592 KB).
+
+    **Quanto c'è davvero dentro quel foglio**, misurato con `diagnosi.mjs`
+    sull'archivio vero: 1.256 schede esportate + 3 cestinate = 1.259, cioè
+    tutte. Anagrafica e richieste piene (244 richieste). Ma **`offers: 0`** e
+    solo 12 immobili su 56 collegati a un proprietario, quindi le colonne
+    *Immobili acquistati* e *Proposte presentate* escono **vuote per tutti**, e
+    *Immobili visionati* pesca da 18 attività in croce.
+
+    **Il buco vero, e non è dell'export.** La vendita il gestionale la scrive
+    sull'immobile (stato, prezzo, rogito), ma **chi ha comprato** si ricava
+    solo dalla proposta accettata. Con zero proposte in archivio, di ogni
+    immobile venduto non risulta da nessuna parte il nome dell'acquirente.
+    Gliel'ho detto e gli ho messo davanti le due strade — registrare le
+    proposte sulle vendite già fatte (inserimento, nessun codice), o aggiungere
+    all'immobile un campo «acquirente» collegato alla scheda (modifica al
+    programma). **Non ha ancora scelto: non partire per conto tuo.**
 
 ---
 
