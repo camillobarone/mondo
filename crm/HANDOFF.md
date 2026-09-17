@@ -1126,6 +1126,55 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     fallisce in silenzio. Se un controllo può fallire per «non configurato»,
     il messaggio deve dire **dove ha cercato**, non solo che non ha trovato.
 
+32. **Un foglio con tutto l'archivio, e una cartella su F:** (17 settembre
+    2026). Sua richiesta, subito dopo la faccenda dei backup: *«crea una
+    cartella di backup su F:, in quella cartella crea anche un file csv con
+    tutti i nominativi dei clienti, acquirenti e venditori completo di ogni
+    informazione (dati personali e immobili venduti o visionati per ogni
+    cliente)»*.
+
+    **Da qui il suo disco F: non si tocca** — questo ambiente è un contenitore
+    Linux in cloud, senza rotta verso il suo PC e senza SSH verso il server
+    (provato: porta 22 irraggiungibile, client ssh assente). Quindi: il lavoro
+    è tutto negli script, i comandi li lancia lui.
+
+    - **`scripts/esporta-tutto.mjs`** — una riga per persona, 37 colonne:
+      anagrafica, privacy, antiriciclaggio, richieste, e poi **immobili di cui
+      è proprietario, venduti come proprietario, acquistati, proposte
+      presentate, immobili visionati** con date, prezzi, interesse ed esito.
+      Apre il database in sola lettura. Le schede cestinate (`deleted_at`)
+      restano fuori, e il conto di quante ne ha escluse lo stampa a schermo.
+    - **`deploy/copia-su-disco.ps1`** — da Windows: genera il CSV sul server,
+      mette da parte l'ultima copia notturna, crea la cartella su F: e scarica
+      database e foglio datandoli. `-ConLeFoto` porta via anche le immagini.
+      Controlla che il disco esista prima di scrivere: senza quel controllo
+      PowerShell creerebbe `F:\backup-mondo` da un'altra parte senza dire
+      niente, se la chiavetta non è infilata.
+
+    **Sul perché non è un pulsante nel gestionale.** Il *Scarica l'archivio* di
+    Utenti è stato tolto apposta (punto sul muro fra colleghi): con ognuno che
+    vede solo le proprie schede, un file con dentro tutto sarebbe la
+    separazione aggirata con un clic. Da riga di comando sul server la cosa
+    cambia: chi ci arriva ha già il `.db` intero sotto mano, l'export non gli
+    dà un potere nuovo. **Se un giorno chiedesse di rimetterlo nell'interfaccia,
+    è quella la domanda da rifargli**, non una questione tecnica.
+
+    **Verifica.** Archivio di prova costruito con lo schema vero (estratto da
+    `schema.ts` senza compilare TypeScript): un acquirente con due visite,
+    due proposte e un acquisto andato a rogito; una venditrice con due
+    immobili di cui uno venduto; uno che compra e vende insieme; e una scheda
+    cestinata che deve restare fuori. Riletto il CSV con un parser scritto per
+    l'occasione: 37 colonne su tutte le righe, il punto e virgola dentro una
+    nota correttamente virgolettato, la scheda cestinata assente.
+
+    Tre ritocchi nati dalla rilettura del foglio, non dai test: budget con un
+    solo estremo scritto *«fino a 300.000 €»* invece di «/ 300.000 €», stati
+    senza trattino basso (`in vendita`), e il singolare quando la scheda
+    cestinata è una sola.
+
+    **Il `.ps1` non è stato eseguito**: qui non c'è PowerShell. È scritto e
+    riletto, non provato — la prima corsa la fa lui.
+
 ---
 
 ## 5 · Cosa resta aperto

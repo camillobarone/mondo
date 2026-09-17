@@ -287,6 +287,41 @@ Esempio di riga da aggiungere a `crontab -e` per un backup ogni notte alle 2:
 0 2 * * * cd /percorso/di/crm && /usr/bin/npm run backup >> backup/backup.log 2>&1
 ```
 
+### Un foglio con tutto l'archivio
+
+Il `.db` è la copia che rimette in piedi il programma, ma non si apre con
+Excel. Quando serve l'archivio **leggibile** — per il commercialista, per un
+controllo, per tenerne una copia su un disco in ufficio:
+
+```bash
+node scripts/esporta-tutto.mjs
+```
+
+Esce un CSV in `backup/`, una riga per persona, con i dati anagrafici, la
+privacy, l'antiriciclaggio, le richieste aperte e — per ciascuna — **gli
+immobili di cui è proprietaria, quelli che ha venduto, quelli che ha comprato,
+le proposte fatte e le visite fatte**, con date, prezzi ed esito. Le schede
+cestinate restano fuori.
+
+Legge soltanto: apre il database in sola lettura e non tocca niente.
+
+> Questo file non passa dal gestionale, e non è una dimenticanza. Il pulsante
+> *Scarica l'archivio* è stato tolto da **Utenti** perché, da quando ognuno
+> vede solo le proprie schede, un file con dentro tutto sarebbe la separazione
+> aggirata con un clic. Qui la strada resta aperta perché chi la percorre è già
+> dentro il server, dove l'archivio sta tutto insieme comunque.
+>
+> ⚠️ Dentro ci sono codici fiscali, date di nascita ed estremi dei documenti:
+> va trattato come si tratta un archivio, non come un foglio qualsiasi.
+
+Da Windows c'è una scorciatoia che fa tutto in un colpo — genera il CSV sul
+server, crea la cartella sul disco e si porta giù database e foglio:
+
+```powershell
+.\deploy\copia-su-disco.ps1                      # in F:\backup-mondo
+.\deploy\copia-su-disco.ps1 -Destinazione D:\archivio -ConLeFoto
+```
+
 ---
 
 ## Quanto regge
@@ -918,6 +953,7 @@ src/
 scripts/
   seed.mjs        primo avvio e dati di esempio
   backup.mjs      copia di sicurezza
+  esporta-tutto.mjs  il CSV con tutte le schede e la loro storia
 ```
 
 Il motore degli incroci (`matching.ts`) esclude un immobile solo su tre criteri
