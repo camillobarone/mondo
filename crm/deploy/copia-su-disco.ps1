@@ -9,9 +9,13 @@
       2. crea la cartella di destinazione, se non c'e';
       3. scarica database e CSV, datandoli con il giorno di oggi.
 
-    Chiede la password del server tre volte, una per collegamento. Per non
-    digitarla piu': ssh-keygen, poi la chiave pubblica dentro
-    /root/.ssh/authorized_keys sul server.
+    A mano chiede la password del server tre volte, una per collegamento.
+    Per la copia settimanale automatica serve invece una chiave SSH, che
+    programma-copia-settimanale.ps1 crea e insegna a installare.
+
+    Ogni corsa lascia una riga nel registro, che sta fuori dal disco di
+    destinazione di proposito: se il disco non e' collegato, e' proprio quella
+    la cosa da poter leggere.
 
 .EXAMPLE
     .\copia-su-disco.ps1
@@ -20,6 +24,11 @@
 .EXAMPLE
     .\copia-su-disco.ps1 -Destinazione D:\archivio -ConLeFoto
     Copia altrove, portandosi via anche le foto degli immobili.
+
+.EXAMPLE
+    .\copia-su-disco.ps1 -NonInterattivo
+    Come la lancia l'attivita' settimanale: non chiede niente, non si ferma
+    mai ad aspettare, e scrive tutto nel registro.
 #>
 
 [CmdletBinding()]
@@ -27,53 +36,87 @@ param(
     [string] $Destinazione = 'F:\backup-mondo',
     [string] $Server       = 'root@77.81.234.151',
     [string] $Cartella     = '/opt/mondo-crm',
-    [switch] $ConLeFoto
+    [switch] $ConLeFoto,
+    # Senza nessuno davanti allo schermo: niente password da digitare, nessuna
+    # domanda, e un'uscita diversa da zero quando qualcosa non va.
+    [switch] $NonInterattivo,
+    [string] $Registro = (Join-Path $env:LOCALAPPDATA 'mondo-copia.log')
 )
 
 $ErrorActionPreference = 'Stop'
 $oggi = Get-Date -Format 'yyyy-MM-dd'
 
-# Il disco deve esistere: F: non c'e' se la chiavetta non e' infilata, e senza
-# questo controllo PowerShell creerebbe la cartella da un'altra parte senza
-# dire niente.
-$disco = Split-Path -Qualifier $Destinazione
-if (-not (Test-Path $disco)) {
-    throw "Il disco $disco non risulta collegato. Infila il disco e rilancia."
+function Scrivi([string] $testo) {
+    $riga = '{0}  {1}' -f (Get-Date -Format 's'), $testo
+    try { Add-Content -Path $Registro -Value $riga -Encoding UTF8 } catch { }
+    if (-not $NonInterattivo) { Write-Host $testo }
 }
 
-Write-Host "== 1/3  Preparo la copia sul server ====================================="
+# Senza nessuno davanti, ssh non deve MAI fermarsi ad aspettare una password:
+# resterebbe li' per sempre e l'attivita' non finirebbe piu'. BatchMode la fa
+# fallire subito, e il registro dice perche'.
+$opzioni = @()
+if ($NonInterattivo) { $opzioni = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20') }
+
+function Fermati([string] $motivo) {
+    Scrivi "NON RIUSCITA: $motivo"
+    if ($NonInterattivo) { exit 1 }
+    throw $motivo
+}
+
+Scrivi "--- copia verso $Destinazione"
+
+# Il disco deve esistere: F: non c'e' se il disco non e' collegato, e senza
+# questo controllo PowerShell creerebbe la cartella da un'altra parte senza
+# dire niente. A PC acceso ma disco staccato la copia salta, e la riga nel
+# registro e' l'unico modo di accorgersene.
+# Solo quando la destinazione e' su una lettera di unita': con un percorso di
+# rete o relativo non c'e' nessun disco da controllare, e Split-Path -Qualifier
+# si fermerebbe con un errore invece di lasciar proseguire.
+if ($Destinazione -match '^[A-Za-z]:') {
+    $disco = $Matches[0]
+    if (-not (Test-Path ($disco + '\'))) {
+        Fermati "il disco $disco non risulta collegato."
+    }
+}
+
+Scrivi '1/3  preparo la copia sul server'
 # Due lavori in una sola connessione: il CSV con tutte le schede, e l'ultima
 # copia notturna messa sotto un nome fisso, cosi' la riga dopo sa cosa chiedere.
 # Apici singoli: il $(...) deve eseguirlo bash sul server, non PowerShell qui.
 $comando = 'cd ' + $Cartella + ' && sudo -u mondo node scripts/esporta-tutto.mjs backup/clienti-completo.csv && cp -f $(ls -t backup/mondo-*.db | head -1) backup/ultimo-archivio.db && echo PRONTO'
-ssh $Server $comando
-if ($LASTEXITCODE -ne 0) { throw 'Il server non ha completato la preparazione: niente e'' stato copiato.' }
+$esito = & ssh @opzioni $Server $comando 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Fermati "il server non ha completato la preparazione ($esito)."
+}
 
-Write-Host "== 2/3  Cartella di destinazione ========================================"
+Scrivi '2/3  cartella di destinazione'
 New-Item -ItemType Directory -Force -Path $Destinazione | Out-Null
-Write-Host "   $Destinazione"
 
-Write-Host "== 3/3  Scarico =========================================================" 
+Scrivi '3/3  scarico'
 $archivio = Join-Path $Destinazione "mondo-$oggi.db"
 $schede   = Join-Path $Destinazione "clienti-completo-$oggi.csv"
 
-scp "${Server}:$Cartella/backup/ultimo-archivio.db" $archivio
-if ($LASTEXITCODE -ne 0) { throw 'Copia del database non riuscita.' }
+& scp @opzioni "${Server}:$Cartella/backup/ultimo-archivio.db" $archivio 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { Fermati 'copia del database non riuscita.' }
 
-scp "${Server}:$Cartella/backup/clienti-completo.csv" $schede
-if ($LASTEXITCODE -ne 0) { throw 'Copia del CSV non riuscita.' }
+& scp @opzioni "${Server}:$Cartella/backup/clienti-completo.csv" $schede 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { Fermati 'copia del CSV non riuscita.' }
 
 if ($ConLeFoto) {
-    Write-Host '   e le foto degli immobili...'
-    scp -r "${Server}:$Cartella/backup/foto" $Destinazione
-    if ($LASTEXITCODE -ne 0) { throw 'Copia delle foto non riuscita.' }
+    Scrivi '     e le foto degli immobili'
+    & scp -r @opzioni "${Server}:$Cartella/backup/foto" $Destinazione 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { Fermati 'copia delle foto non riuscita.' }
 }
 
-Write-Host ''
-Write-Host 'Fatto. In ' -NoNewline; Write-Host $Destinazione -ForegroundColor Green
-Get-ChildItem $Destinazione | Sort-Object LastWriteTime -Descending |
-    Select-Object -First 5 Name, @{n='MB';e={[math]::Round($_.Length/1MB,2)}}, LastWriteTime |
-    Format-Table -AutoSize
+$peso = [math]::Round(((Get-Item $archivio).Length + (Get-Item $schede).Length) / 1MB, 2)
+Scrivi "FATTA: mondo-$oggi.db e clienti-completo-$oggi.csv ($peso MB) in $Destinazione"
 
-Write-Host 'Il CSV contiene dati personali in chiaro: codici fiscali, date di'
-Write-Host 'nascita ed estremi dei documenti. Tienilo dove tieni l''archivio.'
+if (-not $NonInterattivo) {
+    Write-Host ''
+    Get-ChildItem $Destinazione -File | Sort-Object LastWriteTime -Descending |
+        Select-Object -First 5 Name, @{n='MB';e={[math]::Round($_.Length/1MB,2)}}, LastWriteTime |
+        Format-Table -AutoSize
+    Write-Host 'Il CSV contiene dati personali in chiaro: codici fiscali, date di'
+    Write-Host 'nascita ed estremi dei documenti. Tienilo dove tieni l''archivio.'
+}

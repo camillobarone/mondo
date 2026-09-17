@@ -322,9 +322,54 @@ Da Windows c'è una scorciatoia che fa tutto in un colpo — genera il CSV sul
 server, crea la cartella sul disco e si porta giù database e foglio:
 
 ```powershell
-.\deploy\copia-su-disco.ps1                      # in F:\backup-mondo
-.\deploy\copia-su-disco.ps1 -Destinazione D:\archivio -ConLeFoto
+.\copia-su-disco.ps1                      # in F:\backup-mondo
+.\copia-su-disco.ps1 -Destinazione D:\archivio -ConLeFoto
 ```
+
+### E farla da sola, ogni settimana
+
+```powershell
+.\programma-copia-settimanale.ps1
+```
+
+Da lanciare **una volta sola**. Crea una chiave SSH, la installa sul server
+(chiede la password di root l'ultima volta in vita tua), verifica che il
+collegamento senza password funzioni davvero, e registra l'attività
+settimanale di Windows. Poi non ci pensi più.
+
+La chiave non è un dettaglio burocratico: è il motivo per cui prima non poteva
+essere automatica. `copia-su-disco.ps1` chiedeva la password tre volte, e
+un'attività pianificata non ha nessuno che la digiti.
+
+Come si comporta:
+
+- **Parte il lunedì alle 9**, o quando decidi tu: `-Giorno Friday -Ora 18:00`.
+- **Se a quell'ora il PC era spento, parte appena si riaccende.** Non salta la
+  settimana in silenzio.
+- **Non chiede mai niente e non si ferma ad aspettare.** Se il collegamento non
+  funziona fallisce subito, invece di restare appesa per sempre a un prompt
+  della password che nessuno vede.
+- **Se il disco non è collegato**, salta la copia e lo scrive nel registro.
+
+Il registro è l'unico modo di accorgersi che qualcosa non va, perché dal
+gestionale non arriva nessun segnale — la stessa lezione della copia su Drive
+rimasta ferma un mese. Sta fuori dal disco di destinazione apposta, così si può
+leggere anche quando è proprio quel disco a mancare:
+
+```powershell
+Get-Content "$env:LOCALAPPDATA\mondo-copia.log" -Tail 10
+```
+
+L'ultima riga dice `FATTA:` o `NON RIUSCITA:` con il motivo. Per provarla subito
+senza aspettare il lunedì:
+
+```powershell
+Start-ScheduledTask -TaskName 'Mondo CRM - copia settimanale'
+```
+
+> ⚠️ La chiave è **senza passphrase**, come dev'essere per girare da sola: chi
+> entra in questo computer con il tuo utente entra anche nel server. Se il PC
+> cambia mano, togli la sua riga da `/root/.ssh/authorized_keys` sul server.
 
 ---
 

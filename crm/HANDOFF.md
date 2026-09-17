@@ -1249,6 +1249,56 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     da curl non si arriva). Il codice e' il gemello di `linkOwner`, che
     funziona, ma la prima pressione vera la fa lui.
 
+34. **La copia su F: diventa automatica** (17 settembre 2026). Sua richiesta:
+    *«mi serve che il backup su F sia automatico, settimanale, quando il pc è
+    acceso»*.
+
+    **L'ostacolo vero non era la pianificazione, era la password.**
+    `copia-su-disco.ps1` ne chiedeva tre, una per collegamento, e un'attivita'
+    pianificata non ha nessuno che le digiti. Senza chiave SSH il resto non
+    avrebbe avuto senso.
+
+    - **`deploy/programma-copia-settimanale.ps1`**, da lanciare una volta sola:
+      crea la chiave ed25519 se manca, la installa sul server, **verifica che
+      il collegamento senza password funzioni davvero** e solo allora registra
+      l'attivita'. Se la prova fallisce non registra niente: un'attivita' che
+      resta ferma ogni volta e' peggio di nessuna attivita'.
+    - **`copia-su-disco.ps1` rifatto** per girare senza nessuno davanti:
+      `-NonInterattivo` aggiunge `BatchMode=yes` e `ConnectTimeout` — senza,
+      ssh resterebbe appeso per sempre a un prompt che nessuno vede — scrive
+      un registro e **esce con codice diverso da zero** quando fallisce, cosi'
+      la cronologia di Windows lo segna come errore invece che come riuscita.
+    - Il registro sta in `%LOCALAPPDATA%\mondo-copia.log`, **fuori dal disco
+      di destinazione di proposito**: quando manca proprio quel disco, e' li'
+      che bisogna poter leggere perche'.
+    - `StartWhenAvailable` e' il pezzo che risponde a «quando il pc è acceso»:
+      se all'ora prevista era spento, Windows lancia l'attivita' appena si
+      riaccende invece di saltare la settimana.
+
+    **Due punti Windows che e' facile sbagliare**, entrambi gestiti nel codice
+    con il commento accanto: `ssh-keygen -N ''` non funziona da PowerShell
+    (l'argomento vuoto viene buttato via e la chiave esce protetta da
+    passphrase, cioe' inservibile) — ci vuole `-N '""'`, e dopo si verifica
+    con `ssh-keygen -y -P '""'` invece di sperarlo. E gli `.ps1` vanno scritti
+    **UTF-8 con BOM**, o Windows PowerShell 5.1 li legge come ANSI.
+
+    **Verifica, stavolta eseguita davvero.** La volta scorsa avevo consegnato
+    un `.ps1` mai passato da un parser (funziono', ma era fortuna). Qui ho
+    scaricato PowerShell 7 nell'ambiente: **entrambi gli script parsano**, e
+    `copia-su-disco.ps1` e' stato **eseguito** con `ssh` e `scp` finti su
+    cinque rami — corsa normale, disco non collegato, server che non risponde,
+    copia dei file fallita, di nuovo a posto — controllando ogni volta codice
+    d'uscita e riga nel registro. Verificato anche che il `$(...)` dentro il
+    comando remoto arrivi a bash intatto invece di essere valutato da
+    PowerShell.
+
+    **Non eseguibile da qui**: la parte con `Register-ScheduledTask`, che e'
+    solo-Windows. Quella la prova lui.
+
+    **Da sapere**: la chiave e' senza passphrase, obbligatoriamente. Chi entra
+    nel PC con il suo utente entra come root nel server. Gliel'ho detto, e sta
+    scritto in fondo allo script e nel README.
+
 ---
 
 ## 5 · Cosa resta aperto
