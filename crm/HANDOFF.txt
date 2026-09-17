@@ -1143,12 +1143,22 @@ Le cose costruite in questa sessione, in ordine
       chi li ha gia' collegati.
 
   Collegare Google Calendar
-      Fatto il 15 settembre, e il 16 si e' scoperto che era collegato
-      all'account sbagliato (punto 29): i calendari erano in
-      immobiliarelecce@gmail.com, lui guardava camillo.barone@gmail.com. Resta
-      da fare a lui: scollegare e ricollegare scegliendo l'account giusto, poi
-      rimandare gli appuntamenti col pulsante. Adesso la pagina scrive con
-      quale account e' collegata, quindi non puo' ricapitare in silenzio.
+      In esercizio dal 17 settembre 2026. Collegato il 15, il 16 scoperto
+      sull'account sbagliato (punto 29), ricollegato e calendari creati il 17:
+      «ora ci sono tutti i calendari». Resta da fargli confermare l'ultima
+      cosa, che e' il motivo di tutto: che spostando un appuntamento nel
+      gestionale si muova subito anche in Google.
+
+  Togliere da Google i calendari in abbonamento
+      Gli .ics aggiunti con Da URL vanno tolti, adesso che c'e' il collegamento
+      vero: tenendo tutte e due le strade ogni appuntamento compare due volte.
+      Detto a lui il 17 settembre.
+
+  Rigenerare le chiavi .ics finite in chat
+      Gli indirizzi dei calendari di Roberto, Alessandro e Virginia sono stati
+      incollati in conversazione durante le prove. Valgono come password. Un
+      clic da Utenti → genera un indirizzo nuovo. Non urgente — quei feed non
+      servono piu' — ma tanto vale chiuderli.
 
   Togliere i calendari in abbonamento da Google
       Quando confermera' che i calendari nuovi ci sono: tenendo tutte e due le
