@@ -1363,6 +1363,18 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     esterno, niente splatting.** Riprovati sei rami su sei, verificando anche
     gli argomenti che arrivano davvero a ssh e scp nelle due modalita'.
 
+    **Da qui in poi funziona, provato da lui** il 17 settembre 2026 lanciando
+    l'attivita' con `Start-ScheduledTask`: `FATTA: mondo-2026-09-17.db e
+    clienti-completo-2026-09-17.csv (0.75 MB) in F:\backup-mondo`. Cioe' la
+    catena intera — attivita' di Windows, chiave senza password, export sul
+    server, copia sul disco — senza nessuno che tocchi niente. Prima corsa
+    automatica prevista lunedi' 21 settembre alle 9.
+
+    **Se un giorno smette**, il primo posto da guardare e'
+    `%LOCALAPPDATA%\mondo-copia.log`: l'ultima riga dice `FATTA:` oppure
+    `NON RIUSCITA:` con il motivo. Non arriva nessun segnale da nessun'altra
+    parte.
+
 ---
 
 ## 5 · Cosa resta aperto
