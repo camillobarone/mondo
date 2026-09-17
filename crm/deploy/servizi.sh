@@ -108,10 +108,14 @@ TZ=Europe/Rome
 # Copia dell'archivio ogni notte alle 2. Le copie oltre i 60 giorni si
 # cancellano da sole.
 0 2 * * * $UTENTE cd $CARTELLA && /usr/bin/node scripts/backup.mjs >> $CARTELLA/backup/backup.log 2>&1
-# Copia fuori dal server, il primo di ogni mese alle 3 — un'ora dopo quella
-# notturna, cosi' trova sempre una copia fresca pronta da mandare. Finche'
-# rclone non e' installato e collegato a Google Drive non fa nulla di male.
-0 3 1 * * $UTENTE cd $CARTELLA && bash deploy/backup-esterno.sh
+# Copia fuori dal server, ogni domenica alle 3 — un'ora dopo quella notturna,
+# cosi' trova sempre una copia fresca pronta da mandare. Gira come root, non
+# come $UTENTE: root e' l'utente da cui la guida fa collegare rclone a Google
+# Drive, e la sua configurazione sta in /root/.config, che $UTENTE non puo'
+# leggere. Con l'utente sbagliato la copia si salta in silenzio — e' successo
+# per un mese intero. Finche' rclone non e' installato e collegato non fa nulla
+# di male.
+0 3 * * 0 root cd $CARTELLA && bash deploy/backup-esterno.sh
 # Avviso 30 minuti prima degli appuntamenti, per due strade: la notifica sul
 # telefono (non ha bisogno di niente configurato) e l'email, se la posta c'e'.
 # Gira ogni 5 minuti. Il file dell'ambiente si carica lo stesso anche senza

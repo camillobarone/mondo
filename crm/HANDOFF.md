@@ -1076,6 +1076,56 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     Verificato contro il finto Google: 15 controlli, due corse di fila, piu' le
     tre prove di prima rifatte (14, 50, 17).
 
+31. **La copia fuori dal server era ferma da un mese** (17 settembre 2026). Sua
+    domanda, apparentemente innocua: *«il database con tutti i nominativi dove
+    fa il backup?»* — e la verifica ha trovato il guasto.
+
+    **Come si presentava.** `rclone listremotes` lanciato da lui rispondeva
+    `gdrive:`, quindi sembrava tutto collegato. Ma nel registro
+    `backup/esterno.log` c'erano due righe sole: una copia riuscita il 14
+    agosto alle 12:36, e poi il 1° settembre alle 3 di notte *«rclone non è
+    ancora collegato a Google Drive: copia esterna saltata»*.
+
+    **Il motivo.** Quella del 14 agosto era una prova lanciata **a mano, da
+    root**, l'utente da cui `deploy/README.md` fa fare `rclone config`. Il cron
+    invece girava come `mondo` (`0 3 1 * * mondo …`), e la configurazione di
+    rclone sta in `/root/.config/rclone/rclone.conf`, che `mondo` non può
+    leggere. Da lì `rclone listremotes` tornava vuoto e la copia si saltava —
+    ogni volta, in silenzio. Trentaquattro giorni di archivio esistevano solo
+    sul disco del server: il database era intanto passato da 452 a 606 KB.
+
+    **La cosa peggiore non era il guasto, era che non si vedeva.** Il messaggio
+    nel registro diceva «non è ancora collegato», che si legge come «non l'hai
+    mai configurato» e non come «l'ho cercato dove non c'era». Il backup
+    notturno locale funzionava perfettamente, quindi da fuori sembrava tutto a
+    posto.
+
+    **Rimesso in piedi sul server**, senza aspettare il 1° ottobre: copiata la
+    configurazione in `/home/mondo/.config/rclone/`, poi lanciata la copia come
+    farebbe il cron (`sudo -H -u mondo bash deploy/backup-esterno.sh` — senza
+    `-H` la prova avrebbe letto la configurazione di root e sarebbe passata
+    comunque, dicendo il falso). 40 secondi, database di stanotte su Drive e 84
+    foto controllate.
+
+    **Corretto nel repository**, perché una reinstallazione da zero
+    ripeterebbe l'errore:
+    - `deploy/backup-esterno.sh` cerca la configurazione per nome, in ordine —
+      `RCLONE_CONFIG`, `/etc/mondo-crm-rclone.conf`, quella dell'utente che
+      sta girando, quella di root — e quando non la trova **scrive nel registro
+      dove ha guardato e con quale utente**, invece della frase generica.
+    - Il cron della copia esterna gira ora **come root**, non come `mondo`:
+      root è l'utente da cui la guida fa collegare rclone.
+    - **Da mensile a settimanale** (`0 3 * * 0`, ogni domenica): in un mese
+      l'archivio era cresciuto del 35%, e una copia al mese vuol dire fino a
+      trenta giorni di inserimenti a rischio.
+    - `deploy/README.md`: l'avvertenza di collegare rclone da root, come si
+      legge il registro, e il `client_id` da crearsi.
+
+    **Regola generale, e vale oltre questo caso:** un lavoro schedulato che
+    gira come un utente diverso da quello che ha configurato lo strumento
+    fallisce in silenzio. Se un controllo può fallire per «non configurato»,
+    il messaggio deve dire **dove ha cercato**, non solo che non ha trovato.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -1083,6 +1133,7 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | Cosa | Stato |
 |---|---|
 | **Configurare SMTP** in `/etc/mondo-crm.env` sul server | **Rimandato da lui l'11 settembre 2026**: *«per adesso rimandiamo, troppo complicato»* — la verifica in due passaggi piu' la password per le app sono due passaggi su Google, non sul gestionale. **Non riproporglielo**: quando serve, lo riprende lui. Dalla parte del codice non manca niente (punto 23), e il punto della situazione qui sotto resta valido parola per parola. |
+| **Un `client_id` di rclone tutto nostro** | Da fare prima o poi. Oggi la copia su Google Drive usa il `client_id` condiviso di rclone, che Google **ritira nel corso del 2026**: quando lo spegne la copia esterna smette di partire, e — come il 14 agosto — senza dare nessun segnale dal gestionale. Procedura in <https://rclone.org/drive/#making-your-own-client-id>, poi `rclone config` da root sul collegamento `gdrive`. |
 | **Inserire i dati dei venditori** | Rimandato da lui: *«dopo inserisco i dati dei venditori»*. |
 | **Messaggi di errore che si leggono** | **Fatto** il 3 settembre 2026 (punto 20). I rifiuti tornano dalle azioni come testo e compaiono sopra il pulsante Salva senza far perdere quello che si era scritto; sotto c'e' la rete di `error.tsx` e `not-found.tsx`. Resta da fare, se mai servisse: gli altri moduli non hanno controlli di server da raccontare, ma se glieli si aggiunge la strada e' `<ModuloConEsito>`, non `throw`. |
 | **Zone da correggere** | `ZONE_PER_COMUNE` in `types.ts` e' una lista di partenza: fitta per Lecce e Porto Cesareo, piu' scarna altrove, e scritta senza conoscere il mercato. Va fatta correggere a lui — aggiungere una voce e' una riga. |

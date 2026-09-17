@@ -93,8 +93,8 @@ quelle oltre i 60 giorni si cancellano da sole.
 > con lui. **Portane una fuori**, in un posto diverso.
 >
 > La via automatica è sotto, "Copia fuori dal server": una volta collegata,
-> il server manda da solo l'ultima copia su Google Drive ogni mese. In più, a
-> mano, quando vuoi:
+> il server manda da solo l'ultima copia su Google Drive ogni domenica. In più,
+> a mano, quando vuoi:
 >
 > ```bash
 > scp root@<IP>:/opt/mondo-crm/backup/*.db .
@@ -122,14 +122,35 @@ rclone config
 11. `Configure this as a Shared Drive?` — `n`
 12. `y` poi `q` per chiudere
 
-Da quel momento il collegamento resta. Il primo giorno di ogni mese, alle 3 di
-notte, il server manda da solo l'ultima copia dell'archivio e le foto nuove
-dentro una cartella `mondo-crm-backup` su quel Google Drive. Per controllare
-che sia partita bene, il mese dopo:
+Da quel momento il collegamento resta. Ogni domenica alle 3 di notte il server
+manda da solo l'ultima copia dell'archivio e le foto nuove dentro una cartella
+`mondo-crm-backup` su quel Google Drive. Per controllare che sia partita bene,
+il lunedì:
 
 ```bash
-cat /opt/mondo-crm/backup/esterno.log
+tail -5 /opt/mondo-crm/backup/esterno.log
 ```
+
+L'ultima riga deve dire `inviati mondo-….db e le foto a gdrive:mondo-crm-backup`.
+
+> ⚠️ **Collega rclone da root**, come fa il comando qui sopra dopo
+> `ssh root@<IP>`. La copia settimanale gira come root proprio per ritrovare
+> quella configurazione: se la crei da un altro utente, il file finisce in una
+> cartella che root non guarda e la copia si salta ogni volta. Nel registro
+> compare allora una riga che dice dove ha cercato — è il primo posto da
+> leggere se su Drive non arriva più niente.
+>
+> Il registro va guardato ogni tanto anche quando tutto sembra a posto: una
+> copia esterna che smette di partire non dà nessun segnale dal gestionale.
+> Fra il 14 agosto e il 17 settembre 2026 è rimasta ferma senza che nulla lo
+> facesse notare.
+
+**Un `client_id` tuo** — da fare prima o poi, non subito. Senza, rclone usa
+quello condiviso di tutti, che Google sta ritirando nel corso del 2026: quando
+lo spegne, la copia su Drive smette di partire. La procedura è in
+<https://rclone.org/drive/#making-your-own-client-id>, poi si rilancia
+`rclone config` sul collegamento `gdrive` per incollare `client_id` e
+`client_secret` al posto delle righe vuote.
 
 **Ripristinare** una copia:
 
