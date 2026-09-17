@@ -1411,9 +1411,14 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     cartella e' ancora su Drive: nessuno le usa piu'. Vanno tolte quando lui
     decide, non prima — e' l'unica copia di agosto-settembre su Drive.
 
-    **Da fare, e gliel'ho detto:** il token di Box e' finito in chat mentre lo
-    incollava. Va revocato da Box (Impostazioni account → Sicurezza → App
-    collegate) e rifatta l'autorizzazione.
+    **Il token di Box e' finito in chat** mentre lo incollava. Gliel'ho
+    spiegato — e' un `refresh_token`, cioe' una chiave permanente che apre
+    l'archivio con codici fiscali e documenti, e l'unico rimedio e' revocarla
+    e rifare l'autorizzazione, tre minuti senza interrompere niente. **Ha
+    detto di lasciarla** (*«no lasciala»*). Deciso da lui, con l'informazione
+    completa davanti: **non riproporglielo.** Se un giorno lo riprende, la
+    strada e' Box → Impostazioni account → Sicurezza → App collegate, togliere
+    rclone, poi `rclone config` → `e` → `box` → nuova autorizzazione.
 
 ---
 
