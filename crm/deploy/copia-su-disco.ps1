@@ -46,6 +46,29 @@ param(
 $ErrorActionPreference = 'Stop'
 $oggi = Get-Date -Format 'yyyy-MM-dd'
 
+# Un comando esterno che scrive su stderr, in Windows PowerShell 5.1, diventa
+# un errore BLOCCANTE quando $ErrorActionPreference vale 'Stop' — anche quando
+# quella scrittura e' la risposta normale che stiamo aspettando. Il
+# "Permission denied (publickey,password)" di una chiave non ancora
+# autorizzata e' esattamente questo caso: e' la risposta giusta alla domanda
+# «sono gia' dentro?», e faceva morire lo script invece di far proseguire.
+#
+# PowerShell 7 non si comporta cosi', ed e' il motivo per cui la prova non
+# l'aveva visto. Qui si abbassa la preferenza attorno a ogni comando esterno e
+# si guarda $LASTEXITCODE, che e' l'unica cosa che dice davvero com'e' andata.
+function Esegui {
+    param([scriptblock] $Comando, [switch] $Interattivo)
+    $prima = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        # -Interattivo quando il comando deve poter chiedere qualcosa a
+        # schermo: catturandogli i flussi si porterebbe via la richiesta
+        # della password, e resterebbe li' a aspettare un'accettazione muta.
+        if ($Interattivo) { & $Comando } else { & $Comando 2>&1 }
+    } finally { $ErrorActionPreference = $prima }
+}
+
+
 function Scrivi([string] $testo) {
     $riga = '{0}  {1}' -f (Get-Date -Format 's'), $testo
     try { Add-Content -Path $Registro -Value $riga -Encoding UTF8 } catch { }
@@ -85,7 +108,7 @@ Scrivi '1/3  preparo la copia sul server'
 # copia notturna messa sotto un nome fisso, cosi' la riga dopo sa cosa chiedere.
 # Apici singoli: il $(...) deve eseguirlo bash sul server, non PowerShell qui.
 $comando = 'cd ' + $Cartella + ' && sudo -u mondo node scripts/esporta-tutto.mjs backup/clienti-completo.csv && cp -f $(ls -t backup/mondo-*.db | head -1) backup/ultimo-archivio.db && echo PRONTO'
-$esito = & ssh @opzioni $Server $comando 2>&1
+$esito = Esegui { & ssh @opzioni $Server $comando }
 if ($LASTEXITCODE -ne 0) {
     Fermati "il server non ha completato la preparazione ($esito)."
 }
@@ -97,15 +120,15 @@ Scrivi '3/3  scarico'
 $archivio = Join-Path $Destinazione "mondo-$oggi.db"
 $schede   = Join-Path $Destinazione "clienti-completo-$oggi.csv"
 
-& scp @opzioni "${Server}:$Cartella/backup/ultimo-archivio.db" $archivio 2>&1 | Out-Null
+Esegui { & scp @opzioni "${Server}:$Cartella/backup/ultimo-archivio.db" $archivio } | Out-Null
 if ($LASTEXITCODE -ne 0) { Fermati 'copia del database non riuscita.' }
 
-& scp @opzioni "${Server}:$Cartella/backup/clienti-completo.csv" $schede 2>&1 | Out-Null
+Esegui { & scp @opzioni "${Server}:$Cartella/backup/clienti-completo.csv" $schede } | Out-Null
 if ($LASTEXITCODE -ne 0) { Fermati 'copia del CSV non riuscita.' }
 
 if ($ConLeFoto) {
     Scrivi '     e le foto degli immobili'
-    & scp -r @opzioni "${Server}:$Cartella/backup/foto" $Destinazione 2>&1 | Out-Null
+    Esegui { & scp -r @opzioni "${Server}:$Cartella/backup/foto" $Destinazione } | Out-Null
     if ($LASTEXITCODE -ne 0) { Fermati 'copia delle foto non riuscita.' }
 }
 

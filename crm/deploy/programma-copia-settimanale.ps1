@@ -39,6 +39,28 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Un comando esterno che scrive su stderr, in Windows PowerShell 5.1, diventa
+# un errore BLOCCANTE quando $ErrorActionPreference vale 'Stop' — anche quando
+# quella scrittura e' la risposta normale che stiamo aspettando. Il
+# "Permission denied (publickey,password)" di una chiave non ancora
+# autorizzata e' esattamente questo caso: e' la risposta giusta alla domanda
+# «sono gia' dentro?», e faceva morire lo script invece di far proseguire.
+#
+# PowerShell 7 non si comporta cosi', ed e' il motivo per cui la prova non
+# l'aveva visto. Qui si abbassa la preferenza attorno a ogni comando esterno e
+# si guarda $LASTEXITCODE, che e' l'unica cosa che dice davvero com'e' andata.
+function Esegui {
+    param([scriptblock] $Comando, [switch] $Interattivo)
+    $prima = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        # -Interattivo quando il comando deve poter chiedere qualcosa a
+        # schermo: catturandogli i flussi si porterebbe via la richiesta
+        # della password, e resterebbe li' a aspettare un'accettazione muta.
+        if ($Interattivo) { & $Comando } else { & $Comando 2>&1 }
+    } finally { $ErrorActionPreference = $prima }
+}
+
 if (-not (Test-Path $Script)) {
     throw "Non trovo $Script. Scaricalo prima, o indica dov'e' con -Script."
 }
@@ -61,7 +83,7 @@ if (Test-Path $chiave) {
     # l'argomento vuoto prima che ssh-keygen lo veda, e la chiave finirebbe
     # protetta da una passphrase chiesta a schermo — cioe' inservibile per
     # un'attivita' pianificata.
-    & ssh-keygen -t ed25519 -f $chiave -N '""' -C 'mondo-crm-copia' -q
+    Esegui { & ssh-keygen -t ed25519 -f $chiave -N '""' -C 'mondo-crm-copia' -q } | Out-Null
     if (-not (Test-Path $chiave)) {
         throw "ssh-keygen non ha creato la chiave. Provala a mano: ssh-keygen -t ed25519"
     }
@@ -69,7 +91,7 @@ if (Test-Path $chiave) {
     # E che sia davvero senza passphrase lo si verifica, invece di sperarlo:
     # con la passphrase l'attivita' settimanale resterebbe ferma ogni volta,
     # e il motivo non si vedrebbe da nessuna parte.
-    & ssh-keygen -y -P '""' -f $chiave 2>&1 | Out-Null
+    Esegui { & ssh-keygen -y -P '""' -f $chiave } | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "La chiave $chiave e' protetta da una passphrase: l'attivita' automatica non potrebbe usarla. Cancellala e rifalla con: ssh-keygen -t ed25519 -f `"$chiave`" (premendo solo Invio alle due domande)."
     }
@@ -77,13 +99,13 @@ if (Test-Path $chiave) {
 }
 
 # Gia' autorizzata? Si chiede al server, che e' l'unico a saperlo davvero.
-& ssh -o BatchMode=yes -o ConnectTimeout=20 $Server 'echo autorizzata' 2>&1 | Out-Null
+Esegui { & ssh -o BatchMode=yes -o ConnectTimeout=20 $Server 'echo autorizzata' } | Out-Null
 if ($LASTEXITCODE -eq 0) {
     Write-Host '   Gia'' autorizzata sul server: niente da fare.'
 } else {
     Write-Host '   La installo sul server. Digita la password di root UNA VOLTA:'
     $pubblica = Get-Content "$chiave.pub" -Raw
-    $pubblica | & ssh $Server 'mkdir -p /root/.ssh && chmod 700 /root/.ssh && cat >> /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys && echo INSTALLATA'
+    Esegui -Interattivo { $pubblica | & ssh $Server 'mkdir -p /root/.ssh && chmod 700 /root/.ssh && cat >> /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys && echo INSTALLATA' }
     if ($LASTEXITCODE -ne 0) {
         # Se l'automatismo non passa, la strada a mano resta: meglio dettarla
         # qui che lasciare in mano un errore e nessuna via d'uscita.
@@ -107,7 +129,7 @@ if ($LASTEXITCODE -eq 0) {
 # ------------------------------------------------------------ 2. la prova
 Write-Host '== 2/3  Prova del collegamento senza password ==========================='
 
-& ssh -o BatchMode=yes -o ConnectTimeout=20 $Server 'echo funziona' 2>&1 | Out-Null
+Esegui { & ssh -o BatchMode=yes -o ConnectTimeout=20 $Server 'echo funziona' } | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw 'Il collegamento senza password non funziona: l''attivita'' resterebbe ferma ogni volta. Non registro niente.'
 }

@@ -1299,6 +1299,40 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     nel PC con il suo utente entra come root nel server. Gliel'ho detto, e sta
     scritto in fondo allo script e nel README.
 
+    **E poi si e' rotto da lui, al primo lancio — la lezione vera di questo
+    punto.** Lo script creava la chiave, chiedeva al server «sono gia'
+    autorizzato?», e **moriva sulla risposta**:
+
+    ```
+    ssh.exe : root@…: Permission denied (publickey,password).
+    ```
+
+    Quel messaggio non e' un guasto: e' il «no» che stavamo cercando, ed e'
+    scritto su stderr. In **Windows PowerShell 5.1** un comando esterno che
+    scrive su stderr diventa un **errore bloccante** quando
+    `$ErrorActionPreference` vale `Stop`. In **PowerShell 7 no** — ed e'
+    esattamente il PowerShell che avevo scaricato per provare. La prova era
+    passata su tutti e cinque i rami, su un interprete che non ha il
+    comportamento che conta.
+
+    **Regola da portarsi dietro: PowerShell 7 su Linux non e' una prova valida
+    per uno script che girera' su Windows PowerShell 5.1.** Dove non si puo'
+    provare sul vero, almeno non si usa `Stop` attorno ai comandi esterni.
+
+    Corretto in entrambi gli script con `Esegui { … }`, che abbassa la
+    preferenza attorno a ogni chiamata esterna e lascia decidere a
+    `$LASTEXITCODE` — l'unica cosa che dice davvero com'e' andata. La variante
+    `-Interattivo` non cattura i flussi, altrimenti si porterebbe via la
+    richiesta della password.
+
+    Riprovato: parser pulito su entrambi, i cinque rami di `copia-su-disco`
+    rifatti con `$PSNativeCommandUseErrorActionPreference = $true` (il proxy
+    piu' vicino alla severita' di 5.1 ottenibile da qui), e il flusso del
+    programma-copia provato per intero con `ssh` e `ssh-keygen` finti —
+    compresi un `ssh-keygen` che scrive su stderr e il «Permission denied» che
+    l'aveva ucciso. Passa tutto e si ferma solo su `New-ScheduledTaskAction`,
+    che su Linux non esiste.
+
 ---
 
 ## 5 · Cosa resta aperto
