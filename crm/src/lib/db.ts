@@ -149,6 +149,24 @@ const COLONNE_AGGIUNTE: {
   // fa l'agenzia. Per questo si incolla a mano, un immobile alla volta, e solo
   // quando Camillo ha deciso di fidarsene.
   { tabella: "properties", colonna: "idealista_owner_url", definizione: "TEXT" },
+  // Chi ha comprato.
+  //
+  // Prima l'acquirente si ricavava solo dalla proposta accettata, e nelle
+  // proposte non c'era ancora niente: di un immobile venduto l'archivio sapeva
+  // prezzo e data del rogito, ma non il nome di chi l'aveva comprato. Da qui
+  // il campo: un legame diretto, dello stesso stampo di owner_client_id.
+  //
+  // Le due strade non si escludono. La proposta accettata resta il percorso
+  // completo — importo, data, esito — e questo campo e' il punto d'arrivo:
+  // chi ha in mano le chiavi. Su una vendita vecchia, di cui la trattativa non
+  // e' mai passata dal gestionale, e' anche l'unico modo di scriverlo.
+  {
+    tabella: "properties",
+    colonna: "buyer_client_id",
+    definizione: "INTEGER REFERENCES clients(id) ON DELETE SET NULL",
+    indice:
+      "CREATE INDEX IF NOT EXISTS idx_properties_buyer ON properties(buyer_client_id)",
+  },
   {
     tabella: "properties",
     colonna: "tracking_token",

@@ -303,6 +303,10 @@ immobili di cui è proprietaria, quelli che ha venduto, quelli che ha comprato,
 le proposte fatte e le visite fatte**, con date, prezzi ed esito. Le schede
 cestinate restano fuori.
 
+Gli immobili comprati si leggono da due parti insieme — il campo *acquirente*
+sull'immobile e la proposta accettata — e se lo stesso immobile arriva da tutte
+e due esce una riga sola.
+
 Legge soltanto: apre il database in sola lettura e non tocca niente.
 
 > Questo file non passa dal gestionale, e non è una dimenticanza. Il pulsante
@@ -367,6 +371,27 @@ stata compilata la scheda.
 Non è obbligatorio: un venditore che ha già venduto tutto resta in elenco senza
 immobili collegati. Ma un immobile senza proprietario sì che è un problema, e
 l'elenco immobili lo segnala in cima con il collegamento per vedere quali sono.
+
+### E chi ha comprato
+
+Dall'altra parte della vendita c'è **l'acquirente**, e si collega allo stesso
+modo. Sulla scheda dell'immobile, **quando la trattativa è avviata** — stato
+*proposta*, *compromesso* o *venduto* — compare il riquadro *Collega
+l'acquirente*, con la stessa ricerca per cognome o numero. Su un immobile
+appena acquisito non compare: sarebbe una domanda senza risposta, tutti i
+giorni, in cima alla scheda.
+
+Una volta collegato, il nome esce **in cima al riquadro Chiusura**, accanto al
+prezzo di rogito, e la scheda di quella persona guadagna il riquadro *Immobili
+acquistati*. Esce anche nell'esportazione degli immobili e in quella completa
+dell'archivio.
+
+**Perché serviva un campo suo.** Il programma sapeva già registrare la proposta
+d'acquisto, e da una proposta *accettata* l'acquirente si ricava. Ma di una
+casa venduta prima che esistesse il gestionale nessuna proposta è mai stata
+scritta: l'archivio ne conosceva prezzo e data del rogito, e non il nome di chi
+l'aveva comprata. Le due strade restano entrambe — la proposta racconta la
+trattativa e dice a quanto, questo campo dice chi ha le chiavi in mano.
 
 **I compleanni** compaiono in **Agenda**, in cima, da una settimana prima. Per
 ognuno c'è il pulsante per chiamare e quello per mandare gli auguri su WhatsApp

@@ -591,6 +591,39 @@ export async function linkOwner(form: FormData) {
   if (clientId) revalidatePath(`/clienti/${clientId}`);
 }
 
+/**
+ * Collega un immobile alla scheda di chi l'ha comprato, o scollega.
+ *
+ * Gemello di linkOwner, e per la stessa ragione: finche' l'acquirente si
+ * ricavava solo dalla proposta accettata, di una vendita l'archivio sapeva
+ * prezzo e data ma non il nome di chi aveva comprato — e le vendite fatte
+ * prima del gestionale non avevano nessuna proposta da cui ricavarlo.
+ */
+export async function linkBuyer(form: FormData) {
+  const user = await requireUser();
+  const propertyId = Number(form.get("property_id"));
+  const clientId = Number(form.get("client_id")) || null;
+  if (!propertyId) return;
+
+  esigiImmobile(user.id, propertyId);
+  esigiCollegamenti(user.id, { clientId });
+
+  run(`UPDATE properties SET buyer_client_id = ?, updated_at = datetime('now') WHERE id = ?`, [
+    clientId, propertyId,
+  ]);
+  audit(
+    user.id,
+    "modifica",
+    "immobile",
+    propertyId,
+    clientId ? `acquirente collegato (cliente ${clientId})` : "acquirente scollegato",
+  );
+
+  revalidatePath(`/immobili/${propertyId}`);
+  revalidatePath("/immobili");
+  if (clientId) revalidatePath(`/clienti/${clientId}`);
+}
+
 /* ------------------------------------------------------------------ foto */
 
 export interface PhotoResult {

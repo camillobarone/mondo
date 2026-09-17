@@ -6,6 +6,7 @@ import {
   activitiesOfClient,
   requirementsOfClient,
   propertiesOfClient,
+  propertiesBoughtByClient,
   offersOfClient,
   activeUserOptions,
   giorniAlCompleanno,
@@ -14,7 +15,7 @@ import {
 } from "@/lib/queries";
 import { leggiAree, descriviArea } from "@/lib/aree";
 import { requirementSummary } from "@/lib/matching";
-import { deleteClient, linkOwner, saveContactInfo } from "@/lib/actions";
+import { deleteClient, linkOwner, linkBuyer, saveContactInfo } from "@/lib/actions";
 import {
   euro,
   budgetRange,
@@ -62,6 +63,7 @@ export default async function ClientPage({
 
   const requirements = requirementsOfClient(user.id, clientId);
   const properties = propertiesOfClient(user.id, clientId);
+  const bought = propertiesBoughtByClient(user.id, clientId);
   const offers = offersOfClient(user.id, clientId);
   const activities = activitiesOfClient(user.id, clientId);
   const users = activeUserOptions();
@@ -628,6 +630,44 @@ export default async function ClientPage({
               </form>
             ) : null}
           </Card>
+
+          {/* Solo se ha comprato: a un venditore un riquadro vuoto intitolato
+              "Immobili acquistati" non dice niente, e la scheda e' gia' lunga. */}
+          {bought.length > 0 ? (
+            <Card title={`Immobili acquistati (${bought.length})`} bodyClassName="">
+              <ul className="divide-y divide-slate-100">
+                {bought.map((property) => (
+                  <li
+                    key={property.id}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5"
+                  >
+                    <div className="min-w-0">
+                      <Link
+                        href={`/immobili/${property.id}`}
+                        className="text-sm font-medium text-slate-800 hover:text-brand-700 hover:underline"
+                      >
+                        {property.title}
+                      </Link>
+                      <p className="text-xs text-slate-500">
+                        {euro(property.sold_price ?? property.price)}
+                        {property.deed_date ? ` · rogito ${shortDate(property.deed_date)}` : ""}
+                      </p>
+                    </div>
+                    <span className="flex items-center gap-2">
+                      <StatusChip value={property.status} kind="property" />
+                      <form action={linkBuyer}>
+                        <input type="hidden" name="property_id" value={property.id} />
+                        <input type="hidden" name="client_id" value="" />
+                        <button type="submit" className="text-xs text-slate-400 hover:text-red-600">
+                          scollega
+                        </button>
+                      </form>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
 
           {offers.length > 0 ? (
             <Card title={`Proposte fatte (${offers.length})`} bodyClassName="">

@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS properties (
   status            TEXT    NOT NULL DEFAULT 'acquisizione',
                     -- acquisizione|in_vendita|proposta|compromesso|venduto|ritirato
   owner_client_id   INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+  buyer_client_id   INTEGER REFERENCES clients(id) ON DELETE SET NULL, -- chi ha comprato
   agent_id          INTEGER REFERENCES users(id)   ON DELETE SET NULL,
   mandate_start     TEXT,
   mandate_end       TEXT,
@@ -130,6 +131,10 @@ CREATE TABLE IF NOT EXISTS properties (
 CREATE INDEX IF NOT EXISTS idx_properties_status   ON properties(status);
 CREATE INDEX IF NOT EXISTS idx_properties_city     ON properties(city);
 CREATE INDEX IF NOT EXISTS idx_properties_owner    ON properties(owner_client_id);
+-- L'indice su buyer_client_id sta in COLONNE_AGGIUNTE, non qui: su un archivio
+-- gia' in esercizio questo file gira prima che la colonna venga aggiunta, e
+-- l'indice fallirebbe a ogni avvio con "no such column".
+
 CREATE INDEX IF NOT EXISTS idx_properties_mandate  ON properties(mandate_end);
 
 -- ---------------------------------------------------------------- richieste

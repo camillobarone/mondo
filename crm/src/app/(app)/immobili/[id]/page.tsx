@@ -11,8 +11,13 @@ import {
   activeUserOptions,
 } from "@/lib/queries";
 import { matchesForProperty, countMatchesForProperty, nearMissesForProperty } from "@/lib/matching";
-import { photosOfProperty, searchOwnerCandidates, ownerPhoneForProperty } from "@/lib/queries";
-import { linkOwner } from "@/lib/actions";
+import {
+  photosOfProperty,
+  searchOwnerCandidates,
+  searchBuyerCandidates,
+  ownerPhoneForProperty,
+} from "@/lib/queries";
+import { linkOwner, linkBuyer } from "@/lib/actions";
 import { SubmitButton } from "@/components/client";
 import { PhotoGallery } from "./photo-gallery";
 import { TrackingBox } from "./tracking-box";
@@ -33,6 +38,7 @@ import { ActivityForm } from "../../agenda/activity-form";
 import { CompleteButton } from "../../agenda/complete-button";
 import { OfferForm, OfferStatusForm, CloseDealForm, ValuationForm } from "./forms";
 import { PROPERTY_STATUSES, OFFER_STATUSES } from "@/lib/types";
+import type { Client } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +47,7 @@ export default async function PropertyPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ proprietario?: string }>;
+  searchParams: Promise<{ proprietario?: string; acquirente?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
@@ -60,6 +66,9 @@ export default async function PropertyPage({
   const proprietari = property.owner_client_id
     ? { rows: [], total: 0, searched: false }
     : searchOwnerCandidates(user.id, query.proprietario);
+  const acquirenti = property.buyer_client_id
+    ? { rows: [], total: 0, searched: false }
+    : searchBuyerCandidates(user.id, query.acquirente);
   const telefonoProprietario = ownerPhoneForProperty(user.id, property.id);
   const offers = offersOfProperty(user.id, propertyId);
   const activities = activitiesOfProperty(user.id, propertyId);
@@ -203,75 +212,37 @@ export default async function PropertyPage({
           </Card>
 
           {!property.owner_client_id ? (
-            <Card title="Collega il proprietario" bodyClassName="">
-              <form method="get" className="flex flex-wrap items-end gap-2 p-4 pb-3">
-                <div className="min-w-0 flex-1">
-                  <label className="field-label" htmlFor="proprietario">
-                    Cerca il proprietario
-                  </label>
-                  <input
-                    id="proprietario"
-                    name="proprietario"
-                    defaultValue={query.proprietario ?? ""}
-                    placeholder="Cognome, nome o numero di telefono"
-                    className="field"
-                    autoComplete="off"
-                  />
-                </div>
-                <button type="submit" className="btn-secondary">
-                  Cerca
-                </button>
-              </form>
+            <CollegaScheda
+              titolo="Collega il proprietario"
+              campo="proprietario"
+              etichetta="Cerca il proprietario"
+              valore={query.proprietario}
+              candidati={proprietari}
+              azione={linkOwner}
+              propertyId={property.id}
+              vuotoConRicerca="Nessun cliente trovato con questo nome."
+              vuotoSenzaRicerca="Nessun cliente è ancora segnato come venditore: cerca per cognome qui sopra."
+              introElenco="Clienti già segnati come venditori. Se non c'è, cercalo qui sopra."
+            />
+          ) : null}
 
-              {proprietari.rows.length === 0 ? (
-                <p className="px-4 pb-4 text-sm text-slate-500">
-                  {proprietari.searched
-                    ? "Nessun cliente trovato con questo nome."
-                    : "Nessun cliente è ancora segnato come venditore: cerca per cognome qui sopra."}
-                </p>
-              ) : (
-                <>
-                  <p className="px-4 pb-1 text-xs text-slate-400">
-                    {proprietari.searched
-                      ? `${proprietari.total} trovati${
-                          proprietari.total > proprietari.rows.length
-                            ? `, mostrati i primi ${proprietari.rows.length} — restringi la ricerca`
-                            : ""
-                        }`
-                      : "Clienti già segnati come venditori. Se non c'è, cercalo qui sopra."}
-                  </p>
-                  <ul className="divide-y divide-slate-100 border-t border-slate-100">
-                    {proprietari.rows.map((candidato) => (
-                      <li
-                        key={candidato.id}
-                        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm text-slate-800">{fullName(candidato)}</p>
-                          <p className="text-xs text-slate-500">
-                            {candidato.mobile ?? candidato.phone ?? "nessun recapito"}
-                            {candidato.city ? ` · ${candidato.city}` : ""}
-                          </p>
-                        </div>
-                        <form action={linkOwner}>
-                          <input type="hidden" name="property_id" value={property.id} />
-                          <input type="hidden" name="client_id" value={candidato.id} />
-                          <SubmitButton>Collega</SubmitButton>
-                        </form>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-
-              <p className="px-4 py-3 text-xs text-slate-400">
-                Se non è ancora in archivio,{" "}
-                <Link href="/clienti/nuovo" className="text-brand-700 hover:underline">
-                  creagli prima la scheda
-                </Link>
-                .
-              </p>
-            </Card>
+          {/* L'acquirente si chiede solo quando c'e' una trattativa: su un
+              immobile appena acquisito il riquadro sarebbe una domanda senza
+              risposta, in cima alla scheda, tutti i giorni. */}
+          {!property.buyer_client_id &&
+          ["proposta", "compromesso", "venduto"].includes(property.status) ? (
+            <CollegaScheda
+              titolo="Collega l'acquirente"
+              campo="acquirente"
+              etichetta="Cerca l'acquirente"
+              valore={query.acquirente}
+              candidati={acquirenti}
+              azione={linkBuyer}
+              propertyId={property.id}
+              vuotoConRicerca="Nessun cliente trovato con questo nome."
+              vuotoSenzaRicerca="Nessun cliente è ancora segnato come acquirente: cerca per cognome qui sopra."
+              introElenco="Clienti già segnati come acquirenti. Se non c'è, cercalo qui sopra."
+            />
           ) : null}
 
           <Card title="Incarico">
@@ -351,6 +322,30 @@ export default async function PropertyPage({
           {property.status === "venduto" ? (
             <Card title="Chiusura">
               <dl>
+                <DataRow label="Acquirente">
+                  {property.buyer_client_id ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/clienti/${property.buyer_client_id}`}
+                        className="text-brand-700 hover:underline"
+                      >
+                        {property.buyer_name}
+                      </Link>
+                      <form action={linkBuyer}>
+                        <input type="hidden" name="property_id" value={property.id} />
+                        <input type="hidden" name="client_id" value="" />
+                        <button
+                          type="submit"
+                          className="text-xs text-slate-400 hover:text-red-600"
+                        >
+                          scollega
+                        </button>
+                      </form>
+                    </span>
+                  ) : (
+                    <span className="text-amber-700">non collegato a una scheda</span>
+                  )}
+                </DataRow>
                 <DataRow label="Prezzo di rogito">{euro(property.sold_price)}</DataRow>
                 <DataRow label="Compromesso">{shortDate(property.preliminary_date)}</DataRow>
                 <DataRow label="Rogito">{shortDate(property.deed_date)}</DataRow>
@@ -682,5 +677,112 @@ export default async function PropertyPage({
         </div>
       </div>
     </>
+  );
+}
+
+
+/**
+ * Il riquadro che cerca una scheda cliente e la collega all'immobile.
+ *
+ * Uno solo per due usi — il proprietario e l'acquirente — perche' e' lo stesso
+ * gesto: cerca una persona, premi Collega. Tenerne due copie voleva dire che
+ * la correzione fatta su una mancava sull'altra, e il riquadro sbagliato
+ * sarebbe stato quello usato meno, cioe' quello su cui nessuno se ne accorge.
+ *
+ * La ricerca viaggia in un GET con un nome proprio (`proprietario`,
+ * `acquirente`): due riquadri aperti sulla stessa pagina non si rubano il
+ * testo scritto dentro.
+ */
+function CollegaScheda({
+  titolo,
+  campo,
+  etichetta,
+  valore,
+  candidati,
+  azione,
+  propertyId,
+  vuotoConRicerca,
+  vuotoSenzaRicerca,
+  introElenco,
+}: {
+  titolo: string;
+  campo: string;
+  etichetta: string;
+  valore: string | undefined;
+  candidati: { rows: Client[]; total: number; searched: boolean };
+  azione: (form: FormData) => Promise<void>;
+  propertyId: number;
+  vuotoConRicerca: string;
+  vuotoSenzaRicerca: string;
+  introElenco: string;
+}) {
+  return (
+    <Card title={titolo} bodyClassName="">
+      <form method="get" className="flex flex-wrap items-end gap-2 p-4 pb-3">
+        <div className="min-w-0 flex-1">
+          <label className="field-label" htmlFor={campo}>
+            {etichetta}
+          </label>
+          <input
+            id={campo}
+            name={campo}
+            defaultValue={valore ?? ""}
+            placeholder="Cognome, nome o numero di telefono"
+            className="field"
+            autoComplete="off"
+          />
+        </div>
+        <button type="submit" className="btn-secondary">
+          Cerca
+        </button>
+      </form>
+
+      {candidati.rows.length === 0 ? (
+        <p className="px-4 pb-4 text-sm text-slate-500">
+          {candidati.searched ? vuotoConRicerca : vuotoSenzaRicerca}
+        </p>
+      ) : (
+        <>
+          <p className="px-4 pb-1 text-xs text-slate-400">
+            {candidati.searched
+              ? `${candidati.total} trovati${
+                  candidati.total > candidati.rows.length
+                    ? `, mostrati i primi ${candidati.rows.length} — restringi la ricerca`
+                    : ""
+                }`
+              : introElenco}
+          </p>
+          <ul className="divide-y divide-slate-100 border-t border-slate-100">
+            {candidati.rows.map((candidato) => (
+              <li
+                key={candidato.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-800">{fullName(candidato)}</p>
+                  <p className="text-xs text-slate-500">
+                    {candidato.mobile ?? candidato.phone ?? "nessun recapito"}
+                    {candidato.city ? ` · ${candidato.city}` : ""}
+                  </p>
+                </div>
+                <form action={azione}>
+                  <input type="hidden" name="property_id" value={propertyId} />
+                  <input type="hidden" name="client_id" value={candidato.id} />
+                  <SubmitButton>Collega</SubmitButton>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <p className="px-4 py-3 text-xs text-slate-400">
+        Se non è ancora in archivio,{" "}
+        <Link href="/clienti/nuovo" className="text-brand-700 hover:underline">
+          creagli prima la scheda
+        </Link>
+        .
+      </p>
+    </Card>
   );
 }

@@ -391,6 +391,8 @@ const IMMOBILE_ANNUNCIO_DA_TOGLIERE = `(
 
 export type PropertyRow = Property & {
   owner_name: string | null;
+  /** Chi ha comprato, quando la vendita ha un acquirente collegato. */
+  buyer_name: string | null;
   agent_name: string | null;
 };
 
@@ -482,9 +484,11 @@ export function listProperties(
   const rows = all<PropertyRow>(
     `SELECT p.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS owner_name,
+            TRIM(COALESCE(b.first_name,'') || ' ' || COALESCE(b.last_name,'')) AS buyer_name,
             u.name AS agent_name
        FROM properties p
        LEFT JOIN clients c ON c.id = p.owner_client_id
+       LEFT JOIN clients b ON b.id = p.buyer_client_id
        LEFT JOIN users   u ON u.id = p.agent_id
       WHERE ${sql}
       ORDER BY
@@ -508,9 +512,11 @@ export function listAllProperties(utente: number, filters: PropertyFilters): Pro
   return all<PropertyRow>(
     `SELECT p.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS owner_name,
+            TRIM(COALESCE(b.first_name,'') || ' ' || COALESCE(b.last_name,'')) AS buyer_name,
             u.name AS agent_name
        FROM properties p
        LEFT JOIN clients c ON c.id = p.owner_client_id
+       LEFT JOIN clients b ON b.id = p.buyer_client_id
        LEFT JOIN users   u ON u.id = p.agent_id
       WHERE ${sql}
       ORDER BY p.updated_at DESC`,
@@ -523,9 +529,11 @@ export function getProperty(utente: number, id: number): PropertyRow | undefined
   return one<PropertyRow>(
     `SELECT p.*,
             TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')) AS owner_name,
+            TRIM(COALESCE(b.first_name,'') || ' ' || COALESCE(b.last_name,'')) AS buyer_name,
             u.name AS agent_name
        FROM properties p
        LEFT JOIN clients c ON c.id = p.owner_client_id
+       LEFT JOIN clients b ON b.id = p.buyer_client_id
        LEFT JOIN users   u ON u.id = p.agent_id
       WHERE p.id = ? AND p.deleted_at IS NULL AND ${IMMOBILE_MIO}`,
     [id, utente],
@@ -544,6 +552,22 @@ export function propertiesOfClient(utente: number, clientId: number): Property[]
     `SELECT * FROM properties
       WHERE owner_client_id = ? AND deleted_at IS NULL AND agent_id = ?
       ORDER BY updated_at DESC`,
+    [clientId, utente],
+  );
+}
+
+/**
+ * Gli immobili che un cliente ha comprato.
+ *
+ * Stessa regola di sopra: si vede quello che si segue. Un cliente puo' aver
+ * comprato per il tramite di un collega, e in quel caso la sua scheda qui non
+ * lo mostra — l'affare e' del collega.
+ */
+export function propertiesBoughtByClient(utente: number, clientId: number): Property[] {
+  return all<Property>(
+    `SELECT * FROM properties
+      WHERE buyer_client_id = ? AND deleted_at IS NULL AND agent_id = ?
+      ORDER BY COALESCE(deed_date, preliminary_date, updated_at) DESC`,
     [clientId, utente],
   );
 }
@@ -1809,20 +1833,30 @@ export function daSistemare(utente: number): {
 }
 
 /**
- * Chi proporre come proprietario di un immobile.
+ * Chi proporre come proprietario, o come acquirente, di un immobile.
  *
- * Senza ricerca mostra solo chi e' gia' segnato come venditore o locatore:
- * di solito sono pochi e c'e' subito quello giusto. Con la ricerca cerca in
- * tutto l'archivio, perche' il proprietario spesso e' una scheda che quel
- * ruolo non ce l'ha — in un archivio importato non ce l'ha quasi nessuno,
- * e filtrare per ruolo lo renderebbe introvabile.
+ * Senza ricerca mostra solo chi ha gia' il ruolo giusto: di solito sono pochi
+ * e c'e' subito quello giusto. Con la ricerca cerca in tutto l'archivio,
+ * perche' la persona spesso e' una scheda che quel ruolo non ce l'ha — in un
+ * archivio importato non ce l'ha quasi nessuno, e filtrare per ruolo la
+ * renderebbe introvabile.
  *
  * In nessun caso si riversano mille nomi in una tendina.
+ *
+ * Anche la ricerca guarda solo la propria rubrica. Era il punto piu' aperto
+ * del programma: bastava scrivere tre cifre di un numero per pescare
+ * qualsiasi scheda dell'archivio, ruolo o non ruolo.
+ *
+ * Conseguenza da conoscere: se la persona e' gia' seguita da un collega, qui
+ * non compare, e va creata una scheda propria. E' il prezzo della
+ * separazione, ed e' anche il motivo per cui la segnalazione dei contatti in
+ * comune merita un discorso a parte.
  */
-export function searchOwnerCandidates(
+function searchClientCandidates(
   utente: number,
   q: string | undefined,
-  limit = 15,
+  ruoli: string[],
+  limit: number,
 ): {
   rows: Client[];
   total: number;
@@ -1830,26 +1864,25 @@ export function searchOwnerCandidates(
 } {
   const cerca = q?.trim();
 
-  // Anche la ricerca guarda solo la propria rubrica. Era il punto piu' aperto
-  // del programma: bastava scrivere tre cifre di un numero per pescare
-  // qualsiasi scheda dell'archivio, ruolo o non ruolo.
-  //
-  // Conseguenza da conoscere: se il proprietario e' gia' seguito da un
-  // collega, qui non compare, e va creata una scheda propria. E' il prezzo
-  // della separazione, ed e' anche il motivo per cui la segnalazione dei
-  // contatti in comune merita un discorso a parte.
   if (!cerca) {
+    // I ruoli sono nostri, non arrivano da fuori, ma passano lo stesso come
+    // parametri: una regola che vale sempre costa meno di una che vale quando
+    // ci si ricorda perche' era stata fatta un'eccezione.
+    const perRuolo = ruoli.map(() => `(',' || c.roles || ',') LIKE ?`).join("\n             OR ");
+    const comeRuolo = ruoli.map((ruolo) => `%,${ruolo},%`);
     const where = `c.deleted_at IS NULL AND ${CLIENTE_MIO}
-        AND ((',' || c.roles || ',') LIKE '%,venditore,%'
-             OR (',' || c.roles || ',') LIKE '%,locatore,%')`;
+        AND (${perRuolo})`;
     return {
       rows: all<Client>(
         `SELECT c.* FROM clients c WHERE ${where}
           ORDER BY c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE
           LIMIT ?`,
-        [utente, limit],
+        [utente, ...comeRuolo, limit],
       ),
-      total: count(`SELECT COUNT(*) AS n FROM clients c WHERE ${where}`, [utente]),
+      total: count(`SELECT COUNT(*) AS n FROM clients c WHERE ${where}`, [
+        utente,
+        ...comeRuolo,
+      ]),
       searched: false,
     };
   }
@@ -1873,6 +1906,22 @@ export function searchOwnerCandidates(
     total: count(`SELECT COUNT(*) AS n FROM clients c WHERE ${where}`, params),
     searched: true,
   };
+}
+
+/** Chi proporre come proprietario: chi vende o affitta. */
+export function searchOwnerCandidates(utente: number, q: string | undefined, limit = 15) {
+  return searchClientCandidates(utente, q, ["venditore", "locatore"], limit);
+}
+
+/**
+ * Chi proporre come acquirente: chi compra o prende in affitto.
+ *
+ * Su una vendita vecchia l'acquirente puo' essere segnato come venditore, o
+ * non avere ruoli affatto: per questo la ricerca per nome non filtra per
+ * ruolo, e solo l'elenco iniziale lo fa.
+ */
+export function searchBuyerCandidates(utente: number, q: string | undefined, limit = 15) {
+  return searchClientCandidates(utente, q, ["acquirente", "conduttore"], limit);
 }
 
 /* =========================================================== compleanni */

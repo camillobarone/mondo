@@ -1191,7 +1191,63 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     Gliel'ho detto e gli ho messo davanti le due strade — registrare le
     proposte sulle vendite già fatte (inserimento, nessun codice), o aggiungere
     all'immobile un campo «acquirente» collegato alla scheda (modifica al
-    programma). **Non ha ancora scelto: non partire per conto tuo.**
+    programma). **Ha scelto la seconda lo stesso giorno: vedi il punto 33.**
+
+33. **Il campo acquirente sull'immobile** (17 settembre 2026). Sua scelta, fra
+    le due che gli avevo messo davanti quando l'export ha scoperto il buco:
+    *«aggiungi il campo acquirente all'immobile»*.
+
+    **Il buco.** La vendita il gestionale la scriveva sull'immobile — stato,
+    prezzo di rogito, date — ma **chi aveva comprato** si ricavava solo dalla
+    proposta accettata, e in `offers` non c'era nemmeno una riga. Di ogni casa
+    venduta l'archivio sapeva quanto e quando, non il nome dell'acquirente. Per
+    le vendite fatte prima del gestionale non c'era proprio modo di scriverlo.
+
+    - `properties.buyer_client_id`, con indice, e la voce in `COLONNE_AGGIUNTE`
+      per l'archivio gia' in esercizio.
+    - `linkBuyer` gemella di `linkOwner`, stessi controlli di appartenenza.
+    - `searchBuyerCandidates` sui ruoli acquirente/conduttore. Nel farla ho
+      **unito i due corpi in `searchClientCandidates`**: erano cinquanta righe
+      identiche, e due copie vogliono dire che la correzione fatta su una manca
+      sull'altra — proprio sul riquadro usato meno, dove nessuno se ne accorge.
+    - Stessa cosa nel JSX: il riquadro «Collega il proprietario» e' diventato
+      **`<CollegaScheda>`**, usato due volte. La ricerca viaggia in un GET con
+      un nome proprio (`proprietario`, `acquirente`) cosi' i due riquadri non
+      si rubano il testo scritto dentro.
+    - Il riquadro dell'acquirente compare **solo a trattativa avviata**
+      (proposta/compromesso/venduto): su un immobile appena acquisito sarebbe
+      una domanda senza risposta in cima alla scheda, tutti i giorni.
+    - Scheda cliente: riquadro «Immobili acquistati», solo se ha comprato.
+    - `esporta-tutto.mjs` legge i comprati da **due fonti tenute insieme** —
+      il campo e la proposta accettata — e sullo stesso immobile fa una riga
+      sola; il prezzo lo prende dalla proposta, se c'e', altrimenti da
+      `sold_price`, altrimenti scrive «prezzo non registrato».
+    - Colonna «Acquirente» anche nell'esportazione degli immobili.
+
+    **L'errore che ho fatto, ed era scritto nel codice tre righe sopra.** Avevo
+    messo `CREATE INDEX ... ON properties(buyer_client_id)` **dentro
+    `schema.ts`**. Su un archivio gia' esistente `SCHEMA` gira *prima* della
+    migrazione: la colonna in quel momento non c'e' ancora e la compilazione e'
+    morta con `no such column: buyer_client_id`. Il commento di
+    `COLONNE_AGGIUNTE` avverte esattamente di questo, e l'avevo appena letto.
+    **L'indice di una colonna aggiunta dopo va solo in `COLONNE_AGGIUNTE`**,
+    mai in `schema.ts`.
+
+    **Verifica.** Typecheck e `npm run build` puliti. Migrazione provata sul
+    vero: il `data/mondo.db` locale aveva la tabella senza la colonna, dopo la
+    correzione colonna e indice risultano presenti. Export provato su quattro
+    casi — comprato col solo campo, col solo `offers`, con tutti e due sullo
+    stesso immobile (una riga sola), e senza nessun prezzo. Poi **prova di resa
+    vera**: `next start` sull'archivio di prova con un cookie di sessione
+    firmato a mano (`CRM_SECRET` fissato), e le pagine chieste con curl —
+    venduto senza acquirente mostra il riquadro e «non collegato»; venduto con
+    acquirente non mostra il riquadro e porta il link a `/clienti/2`; appena
+    acquisito non mostra ne' l'uno ne' l'altra; la scheda dell'acquirente dice
+    «Immobili acquistati (1)» e quella della venditrice non ha il riquadro.
+
+    **Non provata**: la pressione del pulsante *Collega* (e' una Server Action,
+    da curl non si arriva). Il codice e' il gemello di `linkOwner`, che
+    funziona, ma la prima pressione vera la fa lui.
 
 ---
 

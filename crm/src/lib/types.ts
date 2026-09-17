@@ -92,6 +92,12 @@ export interface Property {
   min_price: number | null;
   status: string;
   owner_client_id: number | null;
+  /**
+   * Chi ha comprato. Si collega dalla scheda dell'immobile, come il
+   * proprietario, e resta `null` finche' la vendita non ha un acquirente
+   * con una scheda in archivio.
+   */
+  buyer_client_id: number | null;
   agent_id: number | null;
   mandate_start: string | null;
   mandate_end: string | null;

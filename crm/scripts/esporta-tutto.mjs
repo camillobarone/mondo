@@ -3,6 +3,10 @@
  * Un CSV con tutte le schede: dati personali, richieste, e per ogni persona
  * gli immobili che ha venduto, comprato, proposto o soltanto visitato.
  *
+ * "Comprato" si legge dal campo acquirente dell'immobile e dalle proposte
+ * accettate, tenuti insieme: il primo vale anche per le vendite fatte prima
+ * del gestionale, le seconde dicono a quanto e' stato trattato.
+ *
  *   cd /opt/mondo-crm && node scripts/esporta-tutto.mjs
  *   node scripts/esporta-tutto.mjs /dove/voglio/il/file.csv
  *
@@ -136,6 +140,18 @@ for (const p of immobili.values()) {
   mandati.get(p.owner_client_id).push(p);
 }
 
+// Gli acquisti: gli immobili intestati a chi li ha comprati.
+//
+// La colonna 'buyer_client_id' e' nata perche' questo foglio non sapeva
+// rispondere a "chi ha comprato": l'acquirente si ricavava solo dalla
+// proposta accettata, e di proposte in archivio non ce n'era nessuna.
+const acquisti = new Map();
+for (const p of immobili.values()) {
+  if (!p.buyer_client_id) continue;
+  if (!acquisti.has(p.buyer_client_id)) acquisti.set(p.buyer_client_id, []);
+  acquisti.get(p.buyer_client_id).push(p);
+}
+
 // ------------------------------------------------------------------ colonne
 
 const INTESTAZIONI = [
@@ -161,9 +177,20 @@ const righe = clienti.map((c) => {
   const sueProposte = proposte.get(c.id) ?? [];
 
   const venduti = suoi.filter((p) => p.status === "venduto");
-  // Comprato vuol dire proposta accettata: il rogito, quando c'e', sta
-  // sull'immobile e si aggiunge solo se e' stato registrato.
-  const acquistati = sueProposte.filter((o) => o.status === "accettata");
+
+  // Comprato si sa da due parti, e vanno tenute insieme: il campo acquirente
+  // sull'immobile — che vale anche per una vendita mai passata dal gestionale
+  // — e la proposta accettata, che in piu' dice a quanto. Se lo stesso
+  // immobile arriva da tutte e due, esce una riga sola.
+  const propostaAccettata = new Map(
+    sueProposte.filter((o) => o.status === "accettata").map((o) => [o.property_id, o]),
+  );
+  const acquistati = [
+    ...new Set([
+      ...(acquisti.get(c.id) ?? []).map((p) => p.id),
+      ...propostaAccettata.keys(),
+    ]),
+  ];
 
   const dataVisita = (v) => data(v.done_at ?? v.due_at ?? v.created_at);
   const ultima = sueVisite.length ? dataVisita(sueVisite[sueVisite.length - 1]) : "";
@@ -212,10 +239,14 @@ const righe = clienti.map((c) => {
       }),
     ),
     elenco(
-      acquistati.map((o) => {
-        const p = immobili.get(o.property_id);
+      acquistati.map((idImmobile) => {
+        const p = immobili.get(idImmobile);
+        // Il prezzo della proposta e' quello trattato; se la proposta non c'e'
+        // resta quello scritto sull'immobile al rogito.
+        const quanto = propostaAccettata.get(idImmobile)?.amount ?? p?.sold_price;
         const rogito = p?.deed_date ? `, rogito ${data(p.deed_date)}` : "";
-        return `${descrivi(o.property_id)} (${euro(o.amount)}${rogito})`;
+        const prezzo = quanto ? euro(quanto) : "prezzo non registrato";
+        return `${descrivi(idImmobile)} (${prezzo}${rogito})`;
       }),
     ),
     elenco(
@@ -246,10 +277,12 @@ db.close();
 const peso = (fs.statSync(destinazione).size / 1024).toFixed(0);
 const conVisite = righe.filter((r) => r[34]).length;
 const conMandato = clienti.filter((c) => mandati.has(c.id)).length;
+const conAcquisto = clienti.filter((c) => acquisti.has(c.id)).length;
 
 console.log(`Esportate ${clienti.length} schede in ${destinazione} (${peso} KB).`);
 console.log(`  di cui con almeno una visita: ${conVisite}`);
 console.log(`  di cui proprietari di un immobile: ${conMandato}`);
+console.log(`  di cui hanno comprato un immobile: ${conAcquisto}`);
 if (scartati) {
   console.log(
     scartati === 1 ? "Esclusa 1 scheda cestinata." : `Escluse ${scartati} schede cestinate.`,
