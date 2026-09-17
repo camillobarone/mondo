@@ -145,7 +145,65 @@ L'ultima riga deve dire `inviati mondo-….db e le foto a gdrive:mondo-crm-backu
 > Fra il 14 agosto e il 17 settembre 2026 è rimasta ferma senza che nulla lo
 > facesse notare.
 
-### Un `client_id` tuo
+### Cambiare destinazione
+
+La destinazione non è scritta nel programma: sta in `/etc/mondo-crm.env`, che
+è fuori dalla cartella del gestionale e quindi sopravvive agli aggiornamenti.
+
+```bash
+echo 'CRM_BACKUP_REMOTO=box:mondo-crm-backup' >> /etc/mondo-crm.env
+```
+
+Senza quella riga resta `gdrive:mondo-crm-backup`, come è sempre stato. Il nome
+prima dei due punti dev'essere un collegamento che rclone conosce: se non lo
+trova, la copia si salta e **lo scrive nel registro dicendo quale nome ha
+cercato**.
+
+### Box invece di Drive
+
+Rclone parla con Box come con Drive. Sul server:
+
+```bash
+ssh root@<IP>
+rclone config
+```
+
+1. `n` — nuovo collegamento
+2. Nome: `box`
+3. Tipo: cerca `Box` nell'elenco e scrivi il suo numero
+4. `client_id`, `client_secret`, `box_config_file`, `access_token` — tutti vuoti, solo Invio
+5. `box_sub_type` — `1` (account personale)
+6. `Edit advanced config?` — `n`
+7. `Use web browser to automatically authenticate?` — **`n`**: il server non ha
+   un browser
+
+A quel punto rclone stampa un comando da eseguire **su un computer con il
+browser**, tipo `rclone authorize "box"`. Su Windows si installa rclone una
+volta sola:
+
+```powershell
+winget install Rclone.Rclone
+```
+
+poi si esegue quel comando così com'è: si apre il browser, si entra in Box, e
+alla fine il terminale stampa un blocco di testo da **incollare nel server**,
+dove rclone sta aspettando. Poi `n` alla domanda sulla cartella condivisa, `y`
+per confermare e `q` per uscire.
+
+Infine si dice al gestionale di usarlo, e si prova senza aspettare la domenica:
+
+```bash
+echo 'CRM_BACKUP_REMOTO=box:mondo-crm-backup' >> /etc/mondo-crm.env
+bash /opt/mondo-crm/deploy/backup-esterno.sh
+tail -3 /opt/mondo-crm/backup/esterno.log
+```
+
+> Box è un'azienda americana. Per un archivio con dentro codici fiscali e
+> documenti d'identità, dove stanno i dati è una cosa che il titolare del
+> trattamento deve sapere di aver scelto. La copia sul server (Italia) e quella
+> sul disco in ufficio restano le principali.
+
+### Un `client_id` tuo — solo se resti su Drive
 
 Senza, rclone usa quello condiviso di tutti i suoi utenti, che **Google ritira
 nel corso del 2026**: quando lo spegne, la copia su Drive smette di partire —

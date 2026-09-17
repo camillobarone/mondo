@@ -14,8 +14,27 @@
 set -euo pipefail
 
 CARTELLA="${CARTELLA:-/opt/mondo-crm}"
-REMOTO="gdrive:mondo-crm-backup"
 REGISTRO="$CARTELLA/backup/esterno.log"
+
+# Dove mandare le copie. Si cambia senza toccare questo file: basta una riga in
+# /etc/mondo-crm.env, per esempio
+#
+#     CRM_BACKUP_REMOTO=box:mondo-crm-backup
+#
+# Quel file sta fuori dalla cartella del programma apposta: un aggiornamento
+# non se lo porta via. Cosi' cambiare fornitore — o smettere di usarne uno che
+# chiude — e' una riga, non una modifica al programma.
+if [[ -f /etc/mondo-crm.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  . /etc/mondo-crm.env
+  set +a
+fi
+REMOTO="${CRM_BACKUP_REMOTO:-gdrive:mondo-crm-backup}"
+
+# Il nome del collegamento e' quello che sta prima dei due punti: e' quello che
+# rclone deve conoscere perche' il resto abbia senso.
+NOME_REMOTO="${REMOTO%%:*}"
 
 cd "$CARTELLA"
 
@@ -61,8 +80,8 @@ if [[ -z "$CONFIG" ]]; then
 fi
 export RCLONE_CONFIG="$CONFIG"
 
-if ! rclone listremotes 2>/dev/null | grep -q '^gdrive:'; then
-  registra "in $CONFIG non c'è nessun collegamento chiamato 'gdrive': copia esterna saltata."
+if ! rclone listremotes 2>/dev/null | grep -qx "$NOME_REMOTO:"; then
+  registra "in $CONFIG non c'è nessun collegamento chiamato '$NOME_REMOTO': copia esterna saltata."
   exit 0
 fi
 
