@@ -145,12 +145,68 @@ L'ultima riga deve dire `inviati mondo-….db e le foto a gdrive:mondo-crm-backu
 > Fra il 14 agosto e il 17 settembre 2026 è rimasta ferma senza che nulla lo
 > facesse notare.
 
-**Un `client_id` tuo** — da fare prima o poi, non subito. Senza, rclone usa
-quello condiviso di tutti, che Google sta ritirando nel corso del 2026: quando
-lo spegne, la copia su Drive smette di partire. La procedura è in
-<https://rclone.org/drive/#making-your-own-client-id>, poi si rilancia
-`rclone config` sul collegamento `gdrive` per incollare `client_id` e
-`client_secret` al posto delle righe vuote.
+### Un `client_id` tuo
+
+Senza, rclone usa quello condiviso di tutti i suoi utenti, che **Google ritira
+nel corso del 2026**: quando lo spegne, la copia su Drive smette di partire —
+e, come al solito, in silenzio.
+
+Il progetto Google **esiste già**: è quello creato per il calendario
+(`CONSEGNA.md`, «Gli otto passi su Google Cloud»). Non se ne fa un altro, si
+aggiungono due cose a quello.
+
+**Su `console.cloud.google.com`**, dopo aver controllato in alto che il
+progetto selezionato sia quello del gestionale:
+
+1. *API e servizi* → *Libreria* → cerca **Google Drive API** → **Abilita**.
+   Per il calendario era stata accesa solo la Calendar API: senza questa,
+   l'autorizzazione riesce e poi il primo caricamento fallisce.
+2. *API e servizi* → **Client** → **Crea client**. Tipo di applicazione:
+   **Applicazione desktop** (non *Applicazione web* come quella del
+   gestionale: rclone gira da riga di comando e non ha un indirizzo di
+   ritorno). Nome: `rclone backup`.
+3. Copia **ID client** e **Client secret**.
+
+**Sul server**, si modifica il collegamento che c'è già invece di rifarlo:
+
+```bash
+ssh root@<IP>
+rclone config
+```
+
+`e` per modificare, poi `gdrive`. Alle domande si incollano `client_id` e
+`client_secret`, e alla fine si rifà l'autorizzazione (`Already have a token -
+refresh? y`).
+
+**Lo `scope` merita un pensiero**, ed è lo stesso ragionamento del calendario:
+
+- **`3` (`drive.file`)** — rclone vede **solo i file che ha creato lui**. È un
+  armadietto, non la chiave di casa: un programma di copia non ha nessun
+  motivo di poter leggere il resto del tuo Drive. Costo: i file caricati prima,
+  dal `client_id` condiviso, per lui non esistono più — la prima copia li
+  ricarica in una cartella nuova, ed è questione di pochi minuti. La vecchia
+  resta su Drive finché non la cancelli a mano.
+- **`1` (accesso completo)** — nessun ricaricamento, la cartella di prima
+  continua a essere la sua. In cambio rclone può leggere e scrivere tutto il
+  Drive di quell'account.
+
+**Poi va cancellata la copia vecchia della configurazione**, che tiene ancora
+il `client_id` ritirato:
+
+```bash
+rm -f /home/mondo/.config/rclone/rclone.conf
+```
+
+Serviva quando il cron girava come `mondo`; adesso gira come root e quel file
+è solo una trappola per il giorno in cui qualcosa ci ricadesse sopra.
+
+**Verifica**, senza aspettare la domenica:
+
+```bash
+rclone lsd gdrive:
+bash /opt/mondo-crm/deploy/backup-esterno.sh
+tail -3 /opt/mondo-crm/backup/esterno.log
+```
 
 **Ripristinare** una copia:
 
