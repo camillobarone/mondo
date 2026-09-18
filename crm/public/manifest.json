@@ -1,0 +1,16 @@
+{
+  "name": "Mondo Immobiliare — Gestionale",
+  "short_name": "Gestionale",
+  "description": "Clienti, immobili e agenda di Mondo Immobiliare Lecce.",
+  "start_url": "/agenda",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1f5154",
+  "lang": "it-IT",
+  "icons": [
+    { "src": "/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icona-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
