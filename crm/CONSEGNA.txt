@@ -268,6 +268,12 @@ quella persona nel programma non deve entrare, la password non si dà a nessuno
 e il profilo funziona lo stesso: compare nella tendina «assegnata a» e ha il
 suo calendario. Si può rilanciare: chi c'è già non viene toccato.
 
+Se quella persona l'hai già creata a mano da Utenti, con un'altra email, il
+comando non ne crea una seconda: si ferma e ti dice quale indirizzo ha
+trovato. Due profili per la stessa persona vogliono dire appuntamenti segnati
+su quello che lei non apre mai — è successo il 18 settembre 2026, ed è il
+motivo per cui adesso controlla anche il nome.
+
 Le email che mette sono nome.cognome@mondoimmobiliarelecce.it. Sono nomi
 utente: contano solo perché devono essere diversi uno dall'altro. Vanno
 corrette da Utenti se quelle persone devono ricevere l'avviso per email prima

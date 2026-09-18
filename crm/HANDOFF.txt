@@ -1513,6 +1513,35 @@ Le cose costruite in questa sessione, in ordine
     ci sono davvero, con la chiave del calendario gia' generata — la riga
     aperta dal 12 settembre si chiude qui.
 
+    E li' e' inciampato, subito. Lui quei due profili li aveva gia' creati
+    a mano dalle pagine, con le loro email vere (rolef707@gmail.com,
+    sandrociullo@libero.it); il comando guardava i doppioni solo
+    sull'email, non li ha riconosciuti, e l'agenzia si e' ritrovata quattro
+    profili per due persone, con due calendari doppi e due nomi ripetuti
+    nella tendina «assegnata a». Non e' un disturbo estetico: e'
+    l'appuntamento segnato sul profilo che quella persona non apre mai.
+    Rimediato in due clic — via i due creati dal comando, che avevano «niente»
+    in carico — e l'elenco e' tornato a quattro utenti. Effetto collaterale
+    buono: se ne sono andate con loro le due chiavi .ics e le due password
+    che il comando aveva stampato e che erano finite in conversazione.
+
+    Corretto lo stesso giorno: adesso, prima di creare, guarda anche il
+    nome. Se c'e' gia' qualcuno che si chiama cosi' con un'altra email, non
+    crea niente, dice quale email ha trovato e suggerisce il comando esatto per
+    dare il calendario a quel profilo (`--nome "..." --email <quella
+    trovata>`), lasciando aperta la strada dell'omonimo vero da Utenti. Non
+    indovina e non fonde niente da solo: gli omonimi esistono, e un comando che
+    li unisce in silenzio fa un danno peggiore del doppione. Provato
+    riproducendo il caso: due profili a mano con le email vere, il comando
+    rilanciato, nessun quinto utente creato e il suggerimento stampato che,
+    eseguito, genera davvero il calendario mancante.
+
+    La lezione, che vale oltre questo comando: cio' che per il programma e'
+    la stessa persona non e' cio' che e' la stessa persona per chi ci lavora.
+    L'email e' la chiave tecnica, il nome e' quello che l'agenzia vede. Un
+    controllo sulla sola chiave tecnica passa liscio proprio nel caso che fa
+    danno.
+
     Nello stesso giro, dal systemctl status, e' saltato fuori un contorno che
     non c'entra con questo lavoro ma va saputo: quattro «Failed to find
     Server Action» nel log della mattina (08:35, 10:20, 11:04, 11:43). Non e'

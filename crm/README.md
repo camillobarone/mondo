@@ -960,6 +960,11 @@ Si può rilanciare quante volte si vuole: chi c'è già non viene toccato — n�
 password, né il calendario, che se qualcuno l'ha collegato in Google non deve
 spegnersi per una seconda corsa.
 
+**Se quella persona esiste già con un'altra email** — perché l'avevi creata a
+mano da *Utenti* — il comando **non ne crea una seconda**: te lo dice e si
+ferma. Due profili per la stessa persona vogliono dire appuntamenti segnati su
+quello che lei non apre mai.
+
 L'email è un nome utente, non per forza una casella vera: conta solo che sia
 diversa da tutte le altre. Va però messa quella giusta se quella persona deve
 ricevere l'avviso per email prima degli appuntamenti. Si cambia da *Utenti*.

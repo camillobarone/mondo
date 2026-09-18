@@ -113,10 +113,40 @@ const registra = db.prepare(
    VALUES (?, ?, 'utente', ?, ?)`,
 );
 
+let saltati = 0;
+
 for (const persona of persone) {
   const esistente = db
     .prepare("SELECT id, name, email, role, active, calendar_token FROM users WHERE email = ? COLLATE NOCASE")
     .get(persona.email);
+
+  // Stesso nome, email diversa: quasi sempre e' la stessa persona, creata a
+  // mano dalle pagine con il suo indirizzo vero. Il 18 settembre 2026 e'
+  // successo davvero — Camillo aveva gia' fatto Roberto e Alessandro con le
+  // loro email, il comando non li ha riconosciuti (guardava solo l'email) e
+  // l'agenzia si e' ritrovata quattro profili per due persone, con due
+  // calendari doppi. Un doppione fra gli assegnatari non e' un disturbo
+  // estetico: e' l'appuntamento segnato sul profilo che quella persona non
+  // apre mai.
+  //
+  // Non si tenta di indovinare: gli omonimi esistono. Si dice cosa si e'
+  // trovato e si lascia decidere.
+  if (!esistente) {
+    const stessoNome = db
+      .prepare("SELECT id, email FROM users WHERE name = ? COLLATE NOCASE")
+      .get(persona.nome);
+    if (stessoNome) {
+      console.log(`${persona.nome} c'è già, ma con un'altra email: ${stessoNome.email}`);
+      console.log("  Non ne creo un secondo: due profili per la stessa persona vogliono dire");
+      console.log("  appuntamenti segnati su quello sbagliato.");
+      console.log(`  Se è la stessa persona non devi fare niente. Se le serve il calendario:`);
+      console.log(`    npm run persone -- --nome "${persona.nome}" --email ${stessoNome.email}`);
+      console.log("  Se invece è un omonimo vero, crealo da Utenti → Nuovo utente.");
+      console.log("");
+      saltati++;
+      continue;
+    }
+  }
 
   let id;
   if (esistente) {
@@ -155,6 +185,11 @@ for (const persona of persone) {
     registra.run(titolare?.id ?? null, "modifica", id, `creato il calendario di ${persona.nome}`);
     console.log(`  Calendario: ${base}/calendario/${token}.ics`);
   }
+  console.log("");
+}
+
+if (saltati) {
+  console.log(`${saltati} ${saltati === 1 ? "persona saltata" : "persone saltate"}: c'era già qualcuno con quel nome.`);
   console.log("");
 }
 
