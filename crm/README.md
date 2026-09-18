@@ -619,6 +619,18 @@ te ne accorgi finché non squilla il telefono.
 
 ## L'agenda nel tuo calendario, e l'avviso mezz'ora prima
 
+Accanto al nome del cliente, in ogni riga dell'agenda, c'è il suo **numero di
+telefono**: dal telefono si tocca e parte la chiamata, senza passare dalla
+scheda. È il cellulare, o il fisso se il cellulare non c'è.
+
+Lo stesso numero è dentro gli appuntamenti che finiscono nel calendario —
+quelli scaricati con *Calendario*, quelli dell'abbonamento e quelli scritti
+dentro Google — nella riga *«Cliente: Mario Rossi · 340…»*. È lo stesso posto
+in cui lo scrive l'avviso per email.
+
+Il numero segue la stessa regola del nome: se la scheda è di un collega non
+compare né l'uno né l'altro.
+
 Ogni riga dell'agenda ha ora **Modifica** e **Calendario**.
 
 **Modifica** apre l'attività per intero — anche quelle già svolte. Si sposta
@@ -669,8 +681,9 @@ percorso esatto per ciascuno, e il pulsante per copiarlo.
 
 Non è un account collegato: è un indirizzo. Vuol dire che non c'è niente da
 autorizzare, ma anche che **quell'indirizzo vale come una password** — chi ce
-l'ha vede i tuoi appuntamenti. Se finisce dove non doveva, dalla stessa pagina
-se ne genera uno nuovo e il vecchio smette di rispondere.
+l'ha vede i tuoi appuntamenti, con dentro il nome e il numero di telefono dei
+clienti. Se finisce dove non doveva, dalla stessa pagina se ne genera uno nuovo
+e il vecchio smette di rispondere.
 
 #### Un calendario per persona, tutti nel tuo Google
 
@@ -926,6 +939,31 @@ mosse.
 
 Gli utenti si creano da **Utenti** (solo il titolare).
 
+### Aggiungere una persona dal server
+
+Un profilo serve anche a chi nel programma non entra mai: basta che esista
+perché compaia nella tendina *«assegnata a»* dell'agenda e perché abbia il suo
+calendario. Dalle pagine sono due passaggi in due posti diversi — *Utenti →
+Nuovo utente*, poi *I calendari delle persone → Crea il calendario*. Dal
+server è un comando solo:
+
+```bash
+npm run persone                                  # Roberto Lefons e Alessandro Ciullo
+npm run persone -- --nome "Tizia Caia" --email tizia@mondoimmobiliarelecce.it
+```
+
+Crea il profilo come Collaboratore, genera la chiave del calendario e stampa
+l'indirizzo `.ics` e una password a caso. **Se quella persona nel programma non
+deve entrare, la password non si dà a nessuno**: il profilo funziona lo stesso.
+
+Si può rilanciare quante volte si vuole: chi c'è già non viene toccato — né la
+password, né il calendario, che se qualcuno l'ha collegato in Google non deve
+spegnersi per una seconda corsa.
+
+L'email è un nome utente, non per forza una casella vera: conta solo che sia
+diversa da tutte le altre. Va però messa quella giusta se quella persona deve
+ricevere l'avviso per email prima degli appuntamenti. Si cambia da *Utenti*.
+
 ### La propria password
 
 Ognuno si cambia la propria da **Il mio accesso**, il collegamento in fondo alla
@@ -1022,6 +1060,7 @@ src/
   app/(app)/      le schermate del programma
 scripts/
   seed.mjs        primo avvio e dati di esempio
+  persone.mjs     un profilo e il suo calendario, da riga di comando
   backup.mjs      copia di sicurezza
   esporta-tutto.mjs  il CSV con tutte le schede e la loro storia
 ```

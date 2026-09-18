@@ -11,7 +11,8 @@
     "promemoria": "node scripts/promemoria.mjs",
     "posta": "node scripts/posta.mjs",
     "testo": "node scripts/testo.mjs",
-    "password": "node scripts/password.mjs"
+    "password": "node scripts/password.mjs",
+    "persone": "node scripts/persone.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.2",

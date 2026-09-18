@@ -3,7 +3,7 @@
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-**Aggiornato al 15 settembre 2026.**
+**Aggiornato al 18 settembre 2026.**
 
 > Il documento gemello è `CONSEGNA.md` (anche in `.txt`): quello è per
 > l'agenzia, questo è per chi riprende il lavoro. `README.md` è il manuale
@@ -1420,6 +1420,101 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     strada e' Box → Impostazioni account → Sicurezza → App collegate, togliere
     rclone, poi `rclone config` → `e` → `box` → nuova autorizzazione.
 
+36. **I due profili, e il telefono dentro l'appuntamento** (18 settembre
+    2026). Sua richiesta, in due righe: *«Devi creare l'agenda per Roberto
+    Lefons e Alessandro Ciullo. Negli appuntamenti dell'agenda deve comparire
+    anche il telefono del cliente»*.
+
+    **La prima meta' non si puo' fare da qui, e non e' una scusa**: i profili
+    sono righe nell'archivio di produzione, che sta sul server dell'agenzia e
+    da fuori non si raggiunge. Restava aperta da sei giorni proprio per questo
+    (punto 27). Quello che si poteva fare era togliergli di mezzo il lavoro:
+    `npm run persone` crea i due profili come Collaboratori **e** genera la
+    chiave del loro calendario, che dalle pagine sono due passaggi in due
+    posti diversi (*Utenti → Nuovo utente*, poi *I calendari delle persone →
+    Crea il calendario*). Un comando, e stampa i due indirizzi `.ics`.
+
+    - **Si puo' rilanciare.** Chi c'e' gia' non viene toccato: ne' la
+      password, ne' il ruolo, ne' la chiave del calendario — che se qualcuno
+      l'ha appena collegata in Google non deve spegnersi per una seconda corsa
+      distratta. E' la stessa regola di `creaCalendarioDi`, e per lo stesso
+      motivo.
+    - **Si ferma se l'archivio e' vuoto.** Un archivio senza nemmeno un utente
+      non e' quello dell'agenzia: e' un database di prova, o il percorso
+      sbagliato. Meglio fermarsi che lasciare due profili dove non servono e
+      credere di averli messi dove servivano.
+    - Le email sono `nome.cognome@mondoimmobiliarelecce.it`. **Sono nomi
+      utente, non caselle**: contano solo perche' devono essere diversi uno
+      dall'altro. Se le caselle vere sono altre, si cambiano da *Utenti* in
+      dieci secondi — e vanno cambiate se quelle persone devono ricevere
+      l'avviso per email prima degli appuntamenti.
+    - La password si genera a caso e si stampa. Se nel programma non devono
+      entrare, non la si da' a nessuno: il profilo resta un nome nella tendina
+      «assegnata a» e il suo calendario funziona lo stesso.
+    - Le due righe finiscono nel registro accessi intestate al titolare. Non
+      c'e' nessuno che ha fatto l'accesso — il comando gira sul server — ma
+      un profilo comparso dal nulla, riletto fra sei mesi, non deve essere un
+      mistero.
+
+    **Il telefono nell'appuntamento** e' una colonna sola, `client_phone`,
+    aggiunta a `ACTIVITY_SELECT` accanto al nome del cliente e mascherata
+    **dallo stesso `CASE`**. E' il punto che conta: nome e numero escono
+    insieme o non escono per niente, quindi il muro fra collaboratori non ha
+    bisogno di un secondo controllo che qualcuno, un giorno, si dimentichera'
+    di scrivere. `COALESCE(c.mobile, c.phone)` — il cellulare se c'e', il
+    fisso se no — che e' l'ordine con cui si proverebbe a chiamare, ed e'
+    quello che l'avviso per posta usava gia' da settembre.
+
+    - In agenda il numero sta **attaccato al nome**, e' un collegamento
+      `tel:` e da telefono apre il tastierino gia' scritto. Dall'elenco alla
+      telefonata senza passare dalla scheda: e' tutto il senso della
+      richiesta.
+    - Nei file `.ics` e in Google finisce dentro la descrizione, nella forma
+      `Cliente: Mario Rossi · 3401112233`. **La stessa dell'avviso per email**,
+      che la usava da prima: tre strade che raccontano lo stesso appuntamento
+      non possono scriverlo in tre modi diversi. Sul telefono il numero nella
+      descrizione dell'evento si tocca e parte la chiamata.
+    - `VisitRow` non aggiunge piu' il telefono per conto suo: ce l'ha
+      `ActivityRow`, ed e' lo stesso numero mascherato allo stesso modo. Una
+      colonna calcolata in due punti e' una colonna che prima o poi si calcola
+      in due modi.
+    - **Adesso l'indirizzo `.ics` vale di piu' di prima.** Chi lo trovasse non
+      vedrebbe solo che c'e' un appuntamento: vedrebbe chi e' e che numero ha.
+      Il commento sulla rotta lo dice, e la pagina *Calendario e avvisi* lo
+      dice a chi legge. E' il motivo per cui la riga «rigenerare le chiavi
+      finite in chat», qui sotto, e' passata da «tanto vale» a da fare.
+
+    Verificato in browser sulla build di produzione, 21 controlli, piu' il
+    finto Google per la strada che il browser non fa vedere:
+
+    - il numero in agenda, il `tel:` ripulito dagli spazi (`+39 333 2211445`
+      diventa `tel:+393332211445`), il cliente senza nessun recapito che
+      mostra il nome e niente altro — non un separatore appeso;
+    - Roberto che sul **suo** cliente vede il fisso `0832 123456` (la prova
+      del `COALESCE`: quel cliente il cellulare non ce l'ha) e sul cliente di
+      Camillo non vede ne' il nome ne' il numero, ne' in pagina ne'
+      nell'`.ics` del singolo appuntamento;
+    - i due profili nella tendina «assegnata a», i due calendari nella pagina
+      *Utenti* con indirizzi diversi, una chiave inventata che da' 404, il
+      collaboratore rimandato via da *Utenti*;
+    - `GOOGLE_FINTO_BASE` — la variabile che esiste apposta (punto 28) — per
+      leggere i sei eventi come Google li riceve: descrizione **identica** a
+      quella del feed `.ics`, compreso il cliente senza numero e quello del
+      collega senza niente.
+
+    Due trappole gia' scritte qui e ripagate lo stesso: la tendina «assegnata
+    a» elenca tutti gli utenti, quindi leggendo `textContent("body")` Roberto
+    e Alessandro «c'erano» anche prima di crearli — si legge il `<select>`,
+    non il corpo; e il link del calendario sta dentro un `<input readOnly>`,
+    quindi si legge `value`, non il testo.
+
+    Rimasto li' apposta, e da decidere da lui: nella descrizione dell'evento
+    il collegamento alla scheda del cliente c'e' **anche quando la scheda e'
+    di un collega** e quindi non si apre (da' «non trovata»). E' cosi' da
+    prima di questo lavoro, l'avviso per email invece il link lo omette. Una
+    riga per allinearli, ma nessuno l'ha chiesto e non e' roba di questo
+    punto.
+
 ---
 
 ## 5 · Cosa resta aperto
@@ -1435,11 +1530,11 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
 | **Applicazione per i venditori** («Mondo Tracking») | **Finita, in esercizio e provata da lui**, fino alle modifiche del 7 settembre comprese: *«fatto tutto, funziona»*. La pagina col nome e le osservazioni dei visitatori, il riquadro per mandare il link, i tre portali col nostro sito, la firma di Virginia. Documentata per l'agenzia in `README.md` («La pagina del proprietario») e `CONSEGNA.md` (9-septies). Vedi «I due progetti nuovi», qui sotto. |
 | **Pubblicazione sui portali** | **Progetto nuovo, e il piu' urgente dei due.** Ha dismesso Casagest24 e pubblica a mano. Vedi «I due progetti nuovi», qui sotto. |
 | **Provare gli avvisi su un telefono vero** | **Aspetta lui, ed e' l'unica cosa che manca** agli avvisi del punto 25. Da qui non si arriva ne' a Google ne' ad Apple. Lui apre *Agenda → Calendario e avvisi* dal telefono, accende, e tocca *Mandami una prova*. Se non arriva, il messaggio dice gia' il motivo. Da provare su tutte e tre le marche, e sull'iPhone **dopo** averlo aggiunto alla schermata Home. |
-| **Creare i due profili** «Roberto Lefons» e «Alessandro Ciullo» | **Aspetta lui**, e da qui non si puo' fare: all'archivio di produzione non si arriva. Si creano da *Utenti → Nuovo utente*, ruolo Collaboratore. Appena esistono entrano da soli nella tendina «assegnata a» e hanno il loro calendario — vedi il punto 27. Se non devono entrare nel programma, la password si mette a caso e non gliela si da'. |
+| **Creare i due profili** «Roberto Lefons» e «Alessandro Ciullo» | **Aspetta lui, ma adesso e' un comando solo**: sul server, nella cartella del programma, `npm run persone` — crea i due profili come Collaboratori, genera la chiave del loro calendario e stampa i due indirizzi `.ics`. Si puo' rilanciare senza rompere niente. A mano resta la strada di prima: *Utenti → Nuovo utente*, ruolo Collaboratore, poi *I calendari delle persone → Crea il calendario*. Appena esistono entrano da soli nella tendina «assegnata a» — vedi i punti 27 e 36. Da qui non si puo' fare: all'archivio di produzione non si arriva. Le email che il comando mette sono `nome.cognome@mondoimmobiliarelecce.it`: se le caselle vere sono altre si cambiano da *Utenti*, e vanno cambiate se quelle persone devono ricevere l'avviso per email. |
 | **I tre calendari in abbonamento** | **Provati da lui il 15 settembre, e non bastano**: Google li ricontrolla quando decide lui. Da qui e' nato il punto 28. Restano funzionanti per chi li ha gia' collegati. |
 | **Collegare Google Calendar** | **In esercizio dal 17 settembre 2026.** Collegato il 15, il 16 scoperto sull'account sbagliato (punto 29), ricollegato e calendari creati il 17: *«ora ci sono tutti i calendari»*. Resta da fargli confermare **l'ultima cosa, che e' il motivo di tutto**: che spostando un appuntamento nel gestionale si muova **subito** anche in Google. |
 | **Togliere da Google i calendari in abbonamento** | Gli `.ics` aggiunti con *Da URL* vanno tolti, adesso che c'e' il collegamento vero: tenendo tutte e due le strade **ogni appuntamento compare due volte**. Detto a lui il 17 settembre. |
-| **Rigenerare le chiavi `.ics` finite in chat** | Gli indirizzi dei calendari di Roberto, Alessandro e Virginia sono stati incollati in conversazione durante le prove. Valgono come password. Un clic da *Utenti* → *genera un indirizzo nuovo*. Non urgente — quei feed non servono piu' — ma tanto vale chiuderli. |
+| **Rigenerare le chiavi `.ics` finite in chat** | Gli indirizzi dei calendari di Roberto, Alessandro e Virginia sono stati incollati in conversazione durante le prove. Valgono come password. Un clic da *Utenti* → *genera un indirizzo nuovo*. **Era «tanto vale», dal 18 settembre e' da fare**: da quel giorno dentro quei feed c'e' anche il numero di telefono dei clienti (punto 36), quindi una chiave in giro non mostra piu' soltanto che c'e' un appuntamento. |
 | **Togliere i calendari in abbonamento da Google** | Quando confermera' che i calendari nuovi ci sono: tenendo tutte e due le strade, ogni appuntamento comparirebbe **due volte**. |
 | **Controllo giornaliero della PR #2** | Vedi capitolo 7. |
 | **La descrizione della PR #2** | **Rifatta il 12 settembre.** Quella del 7 era rimasta indietro di sei cose — gli avvisi sul telefono, i calendari per persona, il confronto fra comuni, la zona che non e' piu' un'avvertenza — e conteneva **un esempio diventato falso**: citava *«Fuori dalle zone richieste (Frigole)»* come avvertenza, e quell'avvertenza non esiste piu'. Lezione: quando si cambia il modo in cui il programma **si racconta**, la descrizione della PR va riletta, non solo aggiornata in coda. E' l'unica presentazione del progetto che un estraneo legge. |

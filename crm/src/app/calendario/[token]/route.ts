@@ -11,8 +11,15 @@ export const dynamic = "force-dynamic";
  * l'accesso. Al posto della password c'e' la chiave nell'indirizzo, lunga e
  * casuale, revocabile in qualunque momento dalla pagina Calendario.
  *
- * Espone solo gli appuntamenti di quella persona, e nessun dato personale
- * oltre a quelli: niente recapiti, niente prezzi.
+ * Espone solo gli appuntamenti di quella persona: quelli, con dentro il nome
+ * e il numero del cliente — serve a chiamarlo mentre si e' in giro, ed e' il
+ * motivo per cui il calendario si porta dietro anche il telefono. Niente
+ * prezzi, niente schede, niente che non sia l'appuntamento.
+ *
+ * Questo alza il valore della chiave: chi la trovasse avrebbe anche i numeri.
+ * Vale piu' di prima come password, e piu' di prima va rigenerata (pagina
+ * Calendario, o Utenti per quella di un altro) se l'indirizzo finisce dove non
+ * doveva.
  */
 export async function GET(
   _request: Request,

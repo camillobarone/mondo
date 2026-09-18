@@ -122,6 +122,23 @@ export interface EventoOpzioni {
 }
 
 /**
+ * Il numero del cliente attaccato al suo nome, quando c'e'.
+ *
+ * Sta nella riga del nome e non su una sua: chi apre l'evento sul telefono
+ * vede il cliente e il numero insieme, e i calendari rendono il numero
+ * chiamabile con un tocco. Esce solo se c'e' il nome — la query lo maschera
+ * insieme a quello, quindi il cliente di un collega qui arriva senza l'uno
+ * ne' l'altro.
+ *
+ * La forma e' quella dell'avviso per posta («Cliente: Mario Rossi ·
+ * 3401112233»): sono due strade che avvisano dello stesso appuntamento e non
+ * devono scriverlo in due modi diversi.
+ */
+function telefono(attivita: ActivityRow): string {
+  return attivita.client_phone ? ` · ${attivita.client_phone}` : "";
+}
+
+/**
  * Un appuntamento dell'agenda diventa un evento. Restituisce null per le
  * attivita' senza data: una nota o una telefonata gia' fatta non e' un
  * appuntamento, e nel calendario sarebbe solo rumore.
@@ -139,7 +156,7 @@ export function evento(
     .join(" · ");
 
   const descrizione = [
-    attivita.client_name ? `Cliente: ${attivita.client_name}` : "",
+    attivita.client_name ? `Cliente: ${attivita.client_name}${telefono(attivita)}` : "",
     attivita.property_title ? `Immobile: ${attivita.property_title}` : "",
     attivita.notes ?? "",
     base && attivita.property_id ? `${base}/immobili/${attivita.property_id}` : "",

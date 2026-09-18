@@ -761,6 +761,7 @@ export function requirementsOfClient(utente: number, clientId: number): Requirem
 
 export type ActivityRow = Activity & {
   client_name: string | null;
+  client_phone: string | null;
   property_title: string | null;
   property_address: string | null;
   property_city: string | null;
@@ -771,20 +772,23 @@ export type ActivityRow = Activity & {
 /**
  * Le colonne di un'attivita', con i nomi collegati.
  *
- * Il nome del cliente e il titolo dell'immobile escono solo se quella scheda
- * e' di chi guarda. Non e' pignoleria: un'attivita' puo' essere mia e toccare
+ * Il nome del cliente, il suo numero e il titolo dell'immobile escono solo se
+ * quella scheda e' di chi guarda. Non e' pignoleria: un'attivita' puo' essere mia e toccare
  * la scheda di un collega — una visita fatta insieme, un immobile passato di
  * mano — e in quel caso l'attivita' si vede, ma il nome che ci sta attaccato
  * no. Senza questo taglio il muro avrebbe una finestra proprio dove passa
  * tutto il lavoro quotidiano.
  *
- * Vuole due parametri in testa, prima di quelli della WHERE: vedi perAttivita.
+ * Vuole sei parametri in testa, prima di quelli della WHERE: vedi perNomiAttivita.
  */
 const ACTIVITY_SELECT = `
   SELECT a.*,
          CASE WHEN c.owner_id = ?
               THEN TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,''))
               END AS client_name,
+         -- Il cellulare se c'e', il fisso se no: e' l'ordine con cui si
+         -- proverebbe a chiamare, ed e' lo stesso dell'avviso per posta.
+         CASE WHEN c.owner_id = ? THEN COALESCE(c.mobile, c.phone) END AS client_phone,
          CASE WHEN p.agent_id = ? THEN p.title   END AS property_title,
          CASE WHEN p.agent_id = ? THEN p.address END AS property_address,
          CASE WHEN p.agent_id = ? THEN p.city    END AS property_city,
@@ -795,8 +799,15 @@ const ACTIVITY_SELECT = `
     LEFT JOIN properties p ON p.id = a.property_id
     LEFT JOIN users      u ON u.id = a.user_id`;
 
-/** I cinque parametri che ACTIVITY_SELECT si aspetta prima della WHERE. */
-const perNomiAttivita = (utente: number) => [utente, utente, utente, utente, utente];
+/** I sei parametri che ACTIVITY_SELECT si aspetta prima della WHERE. */
+const perNomiAttivita = (utente: number) => [
+  utente,
+  utente,
+  utente,
+  utente,
+  utente,
+  utente,
+];
 
 export function activitiesOfClient(
   utente: number,
@@ -826,7 +837,12 @@ export function activitiesOfProperty(
   );
 }
 
-export type VisitRow = ActivityRow & { client_phone: string | null };
+/**
+ * Lo storico delle visite ha le stesse colonne di un'attivita': il telefono
+ * del cliente, che prima si aggiungeva qui, adesso sta dentro ActivityRow ed
+ * e' lo stesso numero, mascherato allo stesso modo.
+ */
+export type VisitRow = ActivityRow;
 
 /**
  * Visite e appuntamenti registrati su un immobile, dal piu' vecchio al piu'

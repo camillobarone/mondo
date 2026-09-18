@@ -5,7 +5,7 @@ HANDOFF — PER RIPRENDERE IN UNA CHAT NUOVA
 Da incollare (o allegare) all'inizio di una nuova conversazione. Dice chi è
 l'utente, cos'è già stato fatto, dove sta ogni cosa e cosa resta aperto.
 
-Aggiornato al 15 settembre 2026.
+Aggiornato al 18 settembre 2026.
 
   | Il documento gemello è CONSEGNA.md (anche in .txt): quello è per
   | l'agenzia, questo è per chi riprende il lavoro. README.md è il manuale
@@ -1075,6 +1075,445 @@ Le cose costruite in questa sessione, in ordine
     Verificato contro il finto Google: 15 controlli, due corse di fila, piu' le
     tre prove di prima rifatte (14, 50, 17).
 
+31. La copia fuori dal server era ferma da un mese (17 settembre 2026). Sua
+    domanda, apparentemente innocua: *«il database con tutti i nominativi dove
+    fa il backup?»* — e la verifica ha trovato il guasto.
+
+    Come si presentava. rclone listremotes lanciato da lui rispondeva
+    gdrive:, quindi sembrava tutto collegato. Ma nel registro
+    backup/esterno.log c'erano due righe sole: una copia riuscita il 14
+    agosto alle 12:36, e poi il 1° settembre alle 3 di notte *«rclone non è
+    ancora collegato a Google Drive: copia esterna saltata»*.
+
+    Il motivo. Quella del 14 agosto era una prova lanciata a mano, da
+    root, l'utente da cui deploy/README.md fa fare rclone config. Il cron
+    invece girava come mondo (0 3 1   mondo …), e la configurazione di
+    rclone sta in /root/.config/rclone/rclone.conf, che mondo non può
+    leggere. Da lì rclone listremotes tornava vuoto e la copia si saltava —
+    ogni volta, in silenzio. Trentaquattro giorni di archivio esistevano solo
+    sul disco del server: il database era intanto passato da 452 a 606 KB.
+
+    La cosa peggiore non era il guasto, era che non si vedeva. Il messaggio
+    nel registro diceva «non è ancora collegato», che si legge come «non l'hai
+    mai configurato» e non come «l'ho cercato dove non c'era». Il backup
+    notturno locale funzionava perfettamente, quindi da fuori sembrava tutto a
+    posto.
+
+    Rimesso in piedi sul server, senza aspettare il 1° ottobre: copiata la
+    configurazione in /home/mondo/.config/rclone/, poi lanciata la copia come
+    farebbe il cron (sudo -H -u mondo bash deploy/backup-esterno.sh — senza
+    -H la prova avrebbe letto la configurazione di root e sarebbe passata
+    comunque, dicendo il falso). 40 secondi, database di stanotte su Drive e 84
+    foto controllate.
+
+    Corretto nel repository, perché una reinstallazione da zero
+    ripeterebbe l'errore:
+    - deploy/backup-esterno.sh cerca la configurazione per nome, in ordine —
+      RCLONE_CONFIG, /etc/mondo-crm-rclone.conf, quella dell'utente che
+      sta girando, quella di root — e quando non la trova scrive nel registro
+      dove ha guardato e con quale utente, invece della frase generica.
+    - Il cron della copia esterna gira ora come root, non come mondo:
+      root è l'utente da cui la guida fa collegare rclone.
+    - Da mensile a settimanale (0 3   0, ogni domenica): in un mese
+      l'archivio era cresciuto del 35%, e una copia al mese vuol dire fino a
+      trenta giorni di inserimenti a rischio.
+    - deploy/README.md: l'avvertenza di collegare rclone da root, come si
+      legge il registro, e il client_id da crearsi.
+
+    Regola generale, e vale oltre questo caso: un lavoro schedulato che
+    gira come un utente diverso da quello che ha configurato lo strumento
+    fallisce in silenzio. Se un controllo può fallire per «non configurato»,
+    il messaggio deve dire dove ha cercato, non solo che non ha trovato.
+
+32. Un foglio con tutto l'archivio, e una cartella su F: (17 settembre
+    2026). Sua richiesta, subito dopo la faccenda dei backup: *«crea una
+    cartella di backup su F:, in quella cartella crea anche un file csv con
+    tutti i nominativi dei clienti, acquirenti e venditori completo di ogni
+    informazione (dati personali e immobili venduti o visionati per ogni
+    cliente)»*.
+
+    Da qui il suo disco F: non si tocca — questo ambiente è un contenitore
+    Linux in cloud, senza rotta verso il suo PC e senza SSH verso il server
+    (provato: porta 22 irraggiungibile, client ssh assente). Quindi: il lavoro
+    è tutto negli script, i comandi li lancia lui.
+
+    - scripts/esporta-tutto.mjs — una riga per persona, 37 colonne:
+      anagrafica, privacy, antiriciclaggio, richieste, e poi immobili di cui
+      è proprietario, venduti come proprietario, acquistati, proposte
+      presentate, immobili visionati con date, prezzi, interesse ed esito.
+      Apre il database in sola lettura. Le schede cestinate (deleted_at)
+      restano fuori, e il conto di quante ne ha escluse lo stampa a schermo.
+    - deploy/copia-su-disco.ps1 — da Windows: genera il CSV sul server,
+      mette da parte l'ultima copia notturna, crea la cartella su F: e scarica
+      database e foglio datandoli. -ConLeFoto porta via anche le immagini.
+      Controlla che il disco esista prima di scrivere: senza quel controllo
+      PowerShell creerebbe F:\backup-mondo da un'altra parte senza dire
+      niente, se la chiavetta non è infilata.
+
+    Sul perché non è un pulsante nel gestionale. Il Scarica l'archivio di
+    Utenti è stato tolto apposta (punto sul muro fra colleghi): con ognuno che
+    vede solo le proprie schede, un file con dentro tutto sarebbe la
+    separazione aggirata con un clic. Da riga di comando sul server la cosa
+    cambia: chi ci arriva ha già il .db intero sotto mano, l'export non gli
+    dà un potere nuovo. Se un giorno chiedesse di rimetterlo nell'interfaccia,
+    è quella la domanda da rifargli, non una questione tecnica.
+
+    Verifica. Archivio di prova costruito con lo schema vero (estratto da
+    schema.ts senza compilare TypeScript): un acquirente con due visite,
+    due proposte e un acquisto andato a rogito; una venditrice con due
+    immobili di cui uno venduto; uno che compra e vende insieme; e una scheda
+    cestinata che deve restare fuori. Riletto il CSV con un parser scritto per
+    l'occasione: 37 colonne su tutte le righe, il punto e virgola dentro una
+    nota correttamente virgolettato, la scheda cestinata assente.
+
+    Tre ritocchi nati dalla rilettura del foglio, non dai test: budget con un
+    solo estremo scritto «fino a 300.000 €» invece di «/ 300.000 €», stati
+    senza trattino basso (in vendita), e il singolare quando la scheda
+    cestinata è una sola.
+
+    Il .ps1 non si poteva eseguire da qui (niente PowerShell in questo
+    ambiente): l'ha lanciato lui, ed è andato al primo colpo. In
+    F:\backup-mondo sono arrivati clienti-completo-2026-09-17.csv (180 KB)
+    e mondo-2026-09-17.db (592 KB).
+
+    Quanto c'è davvero dentro quel foglio, misurato con diagnosi.mjs
+    sull'archivio vero: 1.256 schede esportate + 3 cestinate = 1.259, cioè
+    tutte. Anagrafica e richieste piene (244 richieste). Ma offers: 0 e
+    solo 12 immobili su 56 collegati a un proprietario, quindi le colonne
+    Immobili acquistati e Proposte presentate escono vuote per tutti, e
+    Immobili visionati pesca da 18 attività in croce.
+
+    Il buco vero, e non è dell'export. La vendita il gestionale la scrive
+    sull'immobile (stato, prezzo, rogito), ma chi ha comprato si ricava
+    solo dalla proposta accettata. Con zero proposte in archivio, di ogni
+    immobile venduto non risulta da nessuna parte il nome dell'acquirente.
+    Gliel'ho detto e gli ho messo davanti le due strade — registrare le
+    proposte sulle vendite già fatte (inserimento, nessun codice), o aggiungere
+    all'immobile un campo «acquirente» collegato alla scheda (modifica al
+    programma). Ha scelto la seconda lo stesso giorno: vedi il punto 33.
+
+33. Il campo acquirente sull'immobile (17 settembre 2026). Sua scelta, fra
+    le due che gli avevo messo davanti quando l'export ha scoperto il buco:
+    «aggiungi il campo acquirente all'immobile».
+
+    Il buco. La vendita il gestionale la scriveva sull'immobile — stato,
+    prezzo di rogito, date — ma chi aveva comprato si ricavava solo dalla
+    proposta accettata, e in offers non c'era nemmeno una riga. Di ogni casa
+    venduta l'archivio sapeva quanto e quando, non il nome dell'acquirente. Per
+    le vendite fatte prima del gestionale non c'era proprio modo di scriverlo.
+
+    - properties.buyer_client_id, con indice, e la voce in COLONNE_AGGIUNTE
+      per l'archivio gia' in esercizio.
+    - linkBuyer gemella di linkOwner, stessi controlli di appartenenza.
+    - searchBuyerCandidates sui ruoli acquirente/conduttore. Nel farla ho
+      unito i due corpi in searchClientCandidates: erano cinquanta righe
+      identiche, e due copie vogliono dire che la correzione fatta su una manca
+      sull'altra — proprio sul riquadro usato meno, dove nessuno se ne accorge.
+    - Stessa cosa nel JSX: il riquadro «Collega il proprietario» e' diventato
+      <CollegaScheda>, usato due volte. La ricerca viaggia in un GET con
+      un nome proprio (proprietario, acquirente) cosi' i due riquadri non
+      si rubano il testo scritto dentro.
+    - Il riquadro dell'acquirente compare solo a trattativa avviata
+      (proposta/compromesso/venduto): su un immobile appena acquisito sarebbe
+      una domanda senza risposta in cima alla scheda, tutti i giorni.
+    - Scheda cliente: riquadro «Immobili acquistati», solo se ha comprato.
+    - esporta-tutto.mjs legge i comprati da due fonti tenute insieme —
+      il campo e la proposta accettata — e sullo stesso immobile fa una riga
+      sola; il prezzo lo prende dalla proposta, se c'e', altrimenti da
+      sold_price, altrimenti scrive «prezzo non registrato».
+    - Colonna «Acquirente» anche nell'esportazione degli immobili.
+
+    L'errore che ho fatto, ed era scritto nel codice tre righe sopra. Avevo
+    messo CREATE INDEX ... ON properties(buyer_client_id) dentro
+    schema.ts. Su un archivio gia' esistente SCHEMA gira prima della
+    migrazione: la colonna in quel momento non c'e' ancora e la compilazione e'
+    morta con no such column: buyer_client_id. Il commento di
+    COLONNE_AGGIUNTE avverte esattamente di questo, e l'avevo appena letto.
+    L'indice di una colonna aggiunta dopo va solo in COLONNE_AGGIUNTE,
+    mai in schema.ts.
+
+    Verifica. Typecheck e npm run build puliti. Migrazione provata sul
+    vero: il data/mondo.db locale aveva la tabella senza la colonna, dopo la
+    correzione colonna e indice risultano presenti. Export provato su quattro
+    casi — comprato col solo campo, col solo offers, con tutti e due sullo
+    stesso immobile (una riga sola), e senza nessun prezzo. Poi prova di resa
+    vera: next start sull'archivio di prova con un cookie di sessione
+    firmato a mano (CRM_SECRET fissato), e le pagine chieste con curl —
+    venduto senza acquirente mostra il riquadro e «non collegato»; venduto con
+    acquirente non mostra il riquadro e porta il link a /clienti/2; appena
+    acquisito non mostra ne' l'uno ne' l'altra; la scheda dell'acquirente dice
+    «Immobili acquistati (1)» e quella della venditrice non ha il riquadro.
+
+    Non provata: la pressione del pulsante Collega (e' una Server Action,
+    da curl non si arriva). Il codice e' il gemello di linkOwner, che
+    funziona, ma la prima pressione vera la fa lui.
+
+34. La copia su F: diventa automatica (17 settembre 2026). Sua richiesta:
+    *«mi serve che il backup su F sia automatico, settimanale, quando il pc è
+    acceso»*.
+
+    L'ostacolo vero non era la pianificazione, era la password.
+    copia-su-disco.ps1 ne chiedeva tre, una per collegamento, e un'attivita'
+    pianificata non ha nessuno che le digiti. Senza chiave SSH il resto non
+    avrebbe avuto senso.
+
+    - deploy/programma-copia-settimanale.ps1, da lanciare una volta sola:
+      crea la chiave ed25519 se manca, la installa sul server, verifica che
+      il collegamento senza password funzioni davvero e solo allora registra
+      l'attivita'. Se la prova fallisce non registra niente: un'attivita' che
+      resta ferma ogni volta e' peggio di nessuna attivita'.
+    - copia-su-disco.ps1 rifatto per girare senza nessuno davanti:
+      -NonInterattivo aggiunge BatchMode=yes e ConnectTimeout — senza,
+      ssh resterebbe appeso per sempre a un prompt che nessuno vede — scrive
+      un registro e esce con codice diverso da zero quando fallisce, cosi'
+      la cronologia di Windows lo segna come errore invece che come riuscita.
+    - Il registro sta in %LOCALAPPDATA%\mondo-copia.log, fuori dal disco
+      di destinazione di proposito: quando manca proprio quel disco, e' li'
+      che bisogna poter leggere perche'.
+    - StartWhenAvailable e' il pezzo che risponde a «quando il pc è acceso»:
+      se all'ora prevista era spento, Windows lancia l'attivita' appena si
+      riaccende invece di saltare la settimana.
+
+    Due punti Windows che e' facile sbagliare, entrambi gestiti nel codice
+    con il commento accanto: ssh-keygen -N '' non funziona da PowerShell
+    (l'argomento vuoto viene buttato via e la chiave esce protetta da
+    passphrase, cioe' inservibile) — ci vuole -N '""', e dopo si verifica
+    con ssh-keygen -y -P '""' invece di sperarlo. E gli .ps1 vanno scritti
+    UTF-8 con BOM, o Windows PowerShell 5.1 li legge come ANSI.
+
+    Verifica, stavolta eseguita davvero. La volta scorsa avevo consegnato
+    un .ps1 mai passato da un parser (funziono', ma era fortuna). Qui ho
+    scaricato PowerShell 7 nell'ambiente: entrambi gli script parsano, e
+    copia-su-disco.ps1 e' stato eseguito con ssh e scp finti su
+    cinque rami — corsa normale, disco non collegato, server che non risponde,
+    copia dei file fallita, di nuovo a posto — controllando ogni volta codice
+    d'uscita e riga nel registro. Verificato anche che il $(...) dentro il
+    comando remoto arrivi a bash intatto invece di essere valutato da
+    PowerShell.
+
+    Non eseguibile da qui: la parte con Register-ScheduledTask, che e'
+    solo-Windows. Quella la prova lui.
+
+    Da sapere: la chiave e' senza passphrase, obbligatoriamente. Chi entra
+    nel PC con il suo utente entra come root nel server. Gliel'ho detto, e sta
+    scritto in fondo allo script e nel README.
+
+    E poi si e' rotto da lui, al primo lancio — la lezione vera di questo
+    punto. Lo script creava la chiave, chiedeva al server «sono gia'
+    autorizzato?», e moriva sulla risposta:
+
+    ```
+    ssh.exe : root@…: Permission denied (publickey,password).
+    ```
+
+    Quel messaggio non e' un guasto: e' il «no» che stavamo cercando, ed e'
+    scritto su stderr. In Windows PowerShell 5.1 un comando esterno che
+    scrive su stderr diventa un errore bloccante quando
+    $ErrorActionPreference vale Stop. In PowerShell 7 no — ed e'
+    esattamente il PowerShell che avevo scaricato per provare. La prova era
+    passata su tutti e cinque i rami, su un interprete che non ha il
+    comportamento che conta.
+
+    Regola da portarsi dietro: PowerShell 7 su Linux non e' una prova valida
+    per uno script che girera' su Windows PowerShell 5.1. Dove non si puo'
+    provare sul vero, almeno non si usa Stop attorno ai comandi esterni.
+
+    Corretto in entrambi gli script con Esegui { … }, che abbassa la
+    preferenza attorno a ogni chiamata esterna e lascia decidere a
+    $LASTEXITCODE — l'unica cosa che dice davvero com'e' andata. La variante
+    -Interattivo non cattura i flussi, altrimenti si porterebbe via la
+    richiesta della password.
+
+    Riprovato: parser pulito su entrambi, i cinque rami di copia-su-disco
+    rifatti con $PSNativeCommandUseErrorActionPreference = $true (il proxy
+    piu' vicino alla severita' di 5.1 ottenibile da qui), e il flusso del
+    programma-copia provato per intero con ssh e ssh-keygen finti —
+    compresi un ssh-keygen che scrive su stderr e il «Permission denied» che
+    l'aveva ucciso. Passa tutto e si ferma solo su New-ScheduledTaskAction,
+    che su Linux non esiste.
+
+    E si e' rotto una seconda volta, diversamente. Installata la chiave e
+    registrata l'attivita', la copia falliva cosi':
+
+    ```
+    NON RIUSCITA: il server non ha completato la preparazione
+                  (Bad escape character 'ncodedCommand'.).
+    ```
+
+    E' ssh che si lamenta di aver ricevuto -e ncodedCommand, cioe' il
+    frammento di -encodedCommand — un'opzione di powershell.exe che nel
+    codice non compariva da nessuna parte.
+
+    Come l'ho ristretto, e vale piu' della causa: gli argomenti
+    dell'attivita' erano esatti (Get-ScheduledTask … .Actions), ssh era
+    quello di Windows (Get-Command ssh), e la copia falliva uguale lanciata
+    a mano — quindi non era l'attivita', era lo script. A quel punto il
+    confronto: programma-copia-settimanale.ps1 chiama ssh nello stesso modo e
+    funziona; l'unica differenza era lo splatting @opzioni nella chiamata
+    di copia-su-disco.ps1.
+
+    Tolto lo splatting: SshRemoto e ScpRemoto scrivono la chiamata per
+    esteso, un ramo per caso (interattivo / non, ricorsivo / non). Piu' righe,
+    nessuna interpretazione di mezzo.
+
+    Il meccanismo esatto non l'ho stabilito — da Linux non si riproduce, e
+    non ho voluto tenere in piedi un costrutto che in una corsa vera ha
+    passato a un programma un'opzione mai scritta. Regola: verso un programma
+    esterno, niente splatting. Riprovati sei rami su sei, verificando anche
+    gli argomenti che arrivano davvero a ssh e scp nelle due modalita'.
+
+    Da qui in poi funziona, provato da lui il 17 settembre 2026 lanciando
+    l'attivita' con Start-ScheduledTask: `FATTA: mondo-2026-09-17.db e
+    clienti-completo-2026-09-17.csv (0.75 MB) in F:\backup-mondo`. Cioe' la
+    catena intera — attivita' di Windows, chiave senza password, export sul
+    server, copia sul disco — senza nessuno che tocchi niente. Prima corsa
+    automatica prevista lunedi' 21 settembre alle 9.
+
+    Se un giorno smette, il primo posto da guardare e'
+    %LOCALAPPDATA%\mondo-copia.log: l'ultima riga dice FATTA: oppure
+    NON RIUSCITA: con il motivo. Non arriva nessun segnale da nessun'altra
+    parte.
+
+35. La copia fuori sede passa da Drive a Box (17 settembre 2026). Nata da
+    una sua domanda — «alternativa a drive?» — dopo che il client_id
+    condiviso di rclone era finito fra le cose in sospeso.
+
+    Gli avevo spiegato che il problema non e' Drive ma il tipo di accesso: i
+    servizi con login OAuth (Drive, OneDrive, Dropbox) passano da un'identita'
+    applicativa condivisa fra tutti gli utenti di rclone, ed e' quella che
+    Google ritira; i servizi con chiave d'accesso no. Consigliavo Aruba (stesso
+    fornitore del server, dati in Italia, accordo art. 28 gia' agli atti) o
+    Hetzner. Ha scelto Box, e va benissimo per il problema immediato:
+    l'annuncio di ritiro e' solo di Google.
+
+    Detto una volta e non ripetuto: Box e' americana, e per un archivio con
+    codici fiscali e documenti d'identita' la residenza dei dati e' una cosa da
+    aver scelto. Le copie principali restano quella sul server (Italia) e
+    quella sul disco in ufficio.
+
+    - backup-esterno.sh: la destinazione e' un'impostazione. Prima
+      gdrive: era scritto in due punti del codice. Ora legge
+      CRM_BACKUP_REMOTO da /etc/mondo-crm.env — fuori dalla cartella del
+      programma, quindi sopravvive agli aggiornamenti — e ne ricava anche il
+      nome da cercare fra i collegamenti di rclone. Senza quella riga il
+      comportamento e' identico a prima.
+    - Documentata la procedura Box per esteso in deploy/README.md, col
+      passaggio meno ovvio: il server non ha browser, quindi si risponde n
+      alla domanda sul browser, si esegue rclone authorize "box" da
+      Windows (rclone si installa con winget install Rclone.Rclone) e si
+      incolla il token nella sessione ssh che sta aspettando.
+
+    In esercizio dal 17 settembre: prima copia riuscita in 1m09s — database
+    e tutte le 84 foto, ricaricate da zero perche' per Box erano nuove.
+
+    Il collegamento gdrive e' ancora configurato sul server e la vecchia
+    cartella e' ancora su Drive: nessuno le usa piu'. Vanno tolte quando lui
+    decide, non prima — e' l'unica copia di agosto-settembre su Drive.
+
+    Il token di Box e' finito in chat mentre lo incollava. Gliel'ho
+    spiegato — e' un refresh_token, cioe' una chiave permanente che apre
+    l'archivio con codici fiscali e documenti, e l'unico rimedio e' revocarla
+    e rifare l'autorizzazione, tre minuti senza interrompere niente. Ha
+    detto di lasciarla («no lasciala»). Deciso da lui, con l'informazione
+    completa davanti: non riproporglielo. Se un giorno lo riprende, la
+    strada e' Box → Impostazioni account → Sicurezza → App collegate, togliere
+    rclone, poi rclone config → e → box → nuova autorizzazione.
+
+36. I due profili, e il telefono dentro l'appuntamento (18 settembre
+    2026). Sua richiesta, in due righe: *«Devi creare l'agenda per Roberto
+    Lefons e Alessandro Ciullo. Negli appuntamenti dell'agenda deve comparire
+    anche il telefono del cliente»*.
+
+    La prima meta' non si puo' fare da qui, e non e' una scusa: i profili
+    sono righe nell'archivio di produzione, che sta sul server dell'agenzia e
+    da fuori non si raggiunge. Restava aperta da sei giorni proprio per questo
+    (punto 27). Quello che si poteva fare era togliergli di mezzo il lavoro:
+    npm run persone crea i due profili come Collaboratori e genera la
+    chiave del loro calendario, che dalle pagine sono due passaggi in due
+    posti diversi (Utenti → Nuovo utente, poi *I calendari delle persone →
+    Crea il calendario*). Un comando, e stampa i due indirizzi .ics.
+
+    - Si puo' rilanciare. Chi c'e' gia' non viene toccato: ne' la
+      password, ne' il ruolo, ne' la chiave del calendario — che se qualcuno
+      l'ha appena collegata in Google non deve spegnersi per una seconda corsa
+      distratta. E' la stessa regola di creaCalendarioDi, e per lo stesso
+      motivo.
+    - Si ferma se l'archivio e' vuoto. Un archivio senza nemmeno un utente
+      non e' quello dell'agenzia: e' un database di prova, o il percorso
+      sbagliato. Meglio fermarsi che lasciare due profili dove non servono e
+      credere di averli messi dove servivano.
+    - Le email sono nome.cognome@mondoimmobiliarelecce.it. Sono nomi
+      utente, non caselle: contano solo perche' devono essere diversi uno
+      dall'altro. Se le caselle vere sono altre, si cambiano da Utenti in
+      dieci secondi — e vanno cambiate se quelle persone devono ricevere
+      l'avviso per email prima degli appuntamenti.
+    - La password si genera a caso e si stampa. Se nel programma non devono
+      entrare, non la si da' a nessuno: il profilo resta un nome nella tendina
+      «assegnata a» e il suo calendario funziona lo stesso.
+    - Le due righe finiscono nel registro accessi intestate al titolare. Non
+      c'e' nessuno che ha fatto l'accesso — il comando gira sul server — ma
+      un profilo comparso dal nulla, riletto fra sei mesi, non deve essere un
+      mistero.
+
+    Il telefono nell'appuntamento e' una colonna sola, client_phone,
+    aggiunta a ACTIVITY_SELECT accanto al nome del cliente e mascherata
+    dallo stesso CASE. E' il punto che conta: nome e numero escono
+    insieme o non escono per niente, quindi il muro fra collaboratori non ha
+    bisogno di un secondo controllo che qualcuno, un giorno, si dimentichera'
+    di scrivere. COALESCE(c.mobile, c.phone) — il cellulare se c'e', il
+    fisso se no — che e' l'ordine con cui si proverebbe a chiamare, ed e'
+    quello che l'avviso per posta usava gia' da settembre.
+
+    - In agenda il numero sta attaccato al nome, e' un collegamento
+      tel: e da telefono apre il tastierino gia' scritto. Dall'elenco alla
+      telefonata senza passare dalla scheda: e' tutto il senso della
+      richiesta.
+    - Nei file .ics e in Google finisce dentro la descrizione, nella forma
+      Cliente: Mario Rossi · 3401112233. La stessa dell'avviso per email,
+      che la usava da prima: tre strade che raccontano lo stesso appuntamento
+      non possono scriverlo in tre modi diversi. Sul telefono il numero nella
+      descrizione dell'evento si tocca e parte la chiamata.
+    - VisitRow non aggiunge piu' il telefono per conto suo: ce l'ha
+      ActivityRow, ed e' lo stesso numero mascherato allo stesso modo. Una
+      colonna calcolata in due punti e' una colonna che prima o poi si calcola
+      in due modi.
+    - Adesso l'indirizzo .ics vale di piu' di prima. Chi lo trovasse non
+      vedrebbe solo che c'e' un appuntamento: vedrebbe chi e' e che numero ha.
+      Il commento sulla rotta lo dice, e la pagina Calendario e avvisi lo
+      dice a chi legge. E' il motivo per cui la riga «rigenerare le chiavi
+      finite in chat», qui sotto, e' passata da «tanto vale» a da fare.
+
+    Verificato in browser sulla build di produzione, 21 controlli, piu' il
+    finto Google per la strada che il browser non fa vedere:
+
+    - il numero in agenda, il tel: ripulito dagli spazi (+39 333 2211445
+      diventa tel:+393332211445), il cliente senza nessun recapito che
+      mostra il nome e niente altro — non un separatore appeso;
+    - Roberto che sul suo cliente vede il fisso 0832 123456 (la prova
+      del COALESCE: quel cliente il cellulare non ce l'ha) e sul cliente di
+      Camillo non vede ne' il nome ne' il numero, ne' in pagina ne'
+      nell'.ics del singolo appuntamento;
+    - i due profili nella tendina «assegnata a», i due calendari nella pagina
+      Utenti con indirizzi diversi, una chiave inventata che da' 404, il
+      collaboratore rimandato via da Utenti;
+    - GOOGLE_FINTO_BASE — la variabile che esiste apposta (punto 28) — per
+      leggere i sei eventi come Google li riceve: descrizione identica a
+      quella del feed .ics, compreso il cliente senza numero e quello del
+      collega senza niente.
+
+    Due trappole gia' scritte qui e ripagate lo stesso: la tendina «assegnata
+    a» elenca tutti gli utenti, quindi leggendo textContent("body") Roberto
+    e Alessandro «c'erano» anche prima di crearli — si legge il <select>,
+    non il corpo; e il link del calendario sta dentro un <input readOnly>,
+    quindi si legge value, non il testo.
+
+    Rimasto li' apposta, e da decidere da lui: nella descrizione dell'evento
+    il collegamento alla scheda del cliente c'e' anche quando la scheda e'
+    di un collega e quindi non si apre (da' «non trovata»). E' cosi' da
+    prima di questo lavoro, l'avviso per email invece il link lo omette. Una
+    riga per allinearli, ma nessuno l'ha chiesto e non e' roba di questo
+    punto.
+
 
 5 · COSA RESTA APERTO
 ---------------------
@@ -1086,6 +1525,14 @@ Le cose costruite in questa sessione, in ordine
       quando serve, lo riprende lui. Dalla parte del codice non manca niente
       (punto 23), e il punto della situazione qui sotto resta valido parola per
       parola.
+
+  Un client_id di rclone tutto nostro
+      Da fare prima o poi. Oggi la copia su Google Drive usa il client_id
+      condiviso di rclone, che Google ritira nel corso del 2026: quando lo
+      spegne la copia esterna smette di partire, e — come il 14 agosto — senza
+      dare nessun segnale dal gestionale. Procedura in
+      <https://rclone.org/drive/#making-your-own-client-id>, poi rclone config
+      da root sul collegamento gdrive.
 
   Inserire i dati dei venditori
       Rimandato da lui: «dopo inserisco i dati dei venditori».
@@ -1131,11 +1578,17 @@ Le cose costruite in questa sessione, in ordine
       sull'iPhone dopo averlo aggiunto alla schermata Home.
 
   Creare i due profili «Roberto Lefons» e «Alessandro Ciullo»
-      Aspetta lui, e da qui non si puo' fare: all'archivio di produzione non si
-      arriva. Si creano da Utenti → Nuovo utente, ruolo Collaboratore. Appena
-      esistono entrano da soli nella tendina «assegnata a» e hanno il loro
-      calendario — vedi il punto 27. Se non devono entrare nel programma, la
-      password si mette a caso e non gliela si da'.
+      Aspetta lui, ma adesso e' un comando solo: sul server, nella cartella del
+      programma, npm run persone — crea i due profili come Collaboratori,
+      genera la chiave del loro calendario e stampa i due indirizzi .ics. Si
+      puo' rilanciare senza rompere niente. A mano resta la strada di prima:
+      Utenti → Nuovo utente, ruolo Collaboratore, poi I calendari delle persone
+      → Crea il calendario. Appena esistono entrano da soli nella tendina
+      «assegnata a» — vedi i punti 27 e 36. Da qui non si puo' fare:
+      all'archivio di produzione non si arriva. Le email che il comando mette
+      sono nome.cognome@mondoimmobiliarelecce.it: se le caselle vere sono altre
+      si cambiano da Utenti, e vanno cambiate se quelle persone devono ricevere
+      l'avviso per email.
 
   I tre calendari in abbonamento
       Provati da lui il 15 settembre, e non bastano: Google li ricontrolla
@@ -1157,8 +1610,10 @@ Le cose costruite in questa sessione, in ordine
   Rigenerare le chiavi .ics finite in chat
       Gli indirizzi dei calendari di Roberto, Alessandro e Virginia sono stati
       incollati in conversazione durante le prove. Valgono come password. Un
-      clic da Utenti → genera un indirizzo nuovo. Non urgente — quei feed non
-      servono piu' — ma tanto vale chiuderli.
+      clic da Utenti → genera un indirizzo nuovo. Era «tanto vale», dal 18
+      settembre e' da fare: da quel giorno dentro quei feed c'e' anche il
+      numero di telefono dei clienti (punto 36), quindi una chiave in giro non
+      mostra piu' soltanto che c'e' un appuntamento.
 
   Togliere i calendari in abbonamento da Google
       Quando confermera' che i calendari nuovi ci sono: tenendo tutte e due le

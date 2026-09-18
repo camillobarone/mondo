@@ -191,6 +191,7 @@ function contenuto(attivita: {
   done_at: string | null;
   client_id: number | null;
   client_name: string | null;
+  client_phone: string | null;
   property_id: number | null;
   property_title: string | null;
 }) {
@@ -200,7 +201,11 @@ function contenuto(attivita: {
     .join(" · ");
 
   const descrizione = [
-    attivita.client_name ? `Cliente: ${attivita.client_name}` : "",
+    // Il numero attaccato al nome, come nel feed iCalendar e nell'avviso per
+    // posta. Nell'app di Google si tocca e parte la chiamata.
+    attivita.client_name
+      ? `Cliente: ${attivita.client_name}${attivita.client_phone ? ` · ${attivita.client_phone}` : ""}`
+      : "",
     attivita.property_title ? `Immobile: ${attivita.property_title}` : "",
     attivita.notes ?? "",
     base && attivita.property_id ? `${base}/immobili/${attivita.property_id}` : "",

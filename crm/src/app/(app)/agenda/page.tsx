@@ -10,6 +10,11 @@ import type { ActivityRow } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
+/** Il numero da chiamare, pulito, se l'attivita' ne ha uno. */
+function clientePhone(item: ActivityRow): string | null {
+  return item.client_name ? phoneHref(item.client_phone) : null;
+}
+
 function Section({
   title,
   items,
@@ -50,6 +55,25 @@ function Section({
                       >
                         {item.client_name}
                       </Link>
+                    ) : null}
+                    {/*
+                      Il numero attaccato al nome, e cliccabile: dall'agenda
+                      alla telefonata senza passare dalla scheda. Da telefono
+                      «tel:» apre il tastierino col numero gia' scritto, da
+                      computer non fa niente di male. Esce solo con il nome —
+                      la query li maschera insieme, quindi sul cliente di un
+                      collega qui non c'e' ne' l'uno ne' l'altro.
+                    */}
+                    {clientePhone(item) ? (
+                      <>
+                        <span className="text-slate-400"> · </span>
+                        <a
+                          href={`tel:${clientePhone(item)}`}
+                          className="text-brand-700 hover:underline"
+                        >
+                          {item.client_phone}
+                        </a>
+                      </>
                     ) : null}
                     {item.client_name && item.property_title ? (
                       <span className="text-slate-400"> · </span>

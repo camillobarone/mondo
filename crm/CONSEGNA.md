@@ -4,7 +4,7 @@ Documento di riferimento per riprendere il lavoro fra sei mesi, o per passarlo a
 un'altra persona. Contiene dove sta ogni cosa, chi la gestisce, cosa è stato
 fatto e cosa è rimasto fuori.
 
-**Aggiornato al 2 settembre 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
+**Aggiornato al 18 settembre 2026.** Esiste anche come `CONSEGNA.txt`, stessa cosa
 in testo semplice, da aprire con il Blocco note senza bisogno di niente.
 
 > **Nessuna password è scritta qui**, di proposito: questo file sta dentro il
@@ -241,6 +241,25 @@ nel programma):
 ```
 cd /opt/mondo-crm && sudo -u mondo npm run seed -- --email nome@dominio.it --password "una password lunga"
 ```
+
+**Creare una persona con il suo calendario**, in un comando solo — il profilo
+come Collaboratore *più* la chiave del calendario, che dalle pagine sono due
+passaggi in due posti diversi:
+```
+cd /opt/mondo-crm && sudo -u mondo npm run persone
+```
+Senza altro, crea **Roberto Lefons** e **Alessandro Ciullo**. Per chiunque
+altro: `npm run persone -- --nome "Tizia Caia" --email tizia@dominio.it`.
+
+Stampa per ognuno l'indirizzo `.ics` del calendario e una password a caso — se
+quella persona nel programma non deve entrare, la password non si dà a nessuno
+e il profilo funziona lo stesso: compare nella tendina *«assegnata a»* e ha il
+suo calendario. Si può rilanciare: chi c'è già non viene toccato.
+
+Le email che mette sono `nome.cognome@mondoimmobiliarelecce.it`. Sono nomi
+utente: contano solo perché devono essere diversi uno dall'altro. Vanno
+corrette da *Utenti* se quelle persone devono ricevere l'avviso per email prima
+degli appuntamenti.
 
 **Installazione da zero** su un server nuovo:
 ```
@@ -559,6 +578,13 @@ richiesta il 4 agosto 2026. Il codice resta nella storia del repository.
 
 ### Agenda: modifica, calendario, avvisi
 
+- **Il numero del cliente è nella riga**, accanto al nome, ed è cliccabile: dal
+  telefono si tocca e parte la chiamata. È il cellulare, o il fisso se il
+  cellulare manca. Lo stesso numero sta dentro gli appuntamenti che finiscono
+  nel calendario — quelli scaricati, quelli dell'abbonamento e quelli scritti
+  dentro Google — nella riga *«Cliente: Mario Rossi · 340…»*, la stessa forma
+  dell'avviso per email. Se la scheda è di un collega non compare né il nome né
+  il numero. *(18 settembre 2026)*
 - Ogni riga dell'agenda ha **Modifica** (anche per le attività già svolte:
   spostare, correggere, aggiungere il commento, togliere la spunta *Fatto*,
   eliminare) e **Calendario**, che scarica quell'appuntamento con la sveglia a
@@ -967,10 +993,12 @@ a mettere i calendari dei collaboratori nel proprio Google Calendar, uno per
 colore.
 
 **Cosa comporta, detto chiaro:** quell'indirizzo vale come una password, e chi
-ce l'ha vede gli **appuntamenti** di quella persona — data, ora, cosa e con chi,
-senza entrare nel programma. È l'unico punto in cui il titolare vede qualcosa
-dei colleghi. Non apre nient'altro: clienti, immobili, richieste e recapiti
-restano dietro il muro come prima.
+ce l'ha vede gli **appuntamenti** di quella persona — data, ora, cosa, con chi e
+**il numero di telefono di quel cliente** (dal 18 settembre 2026: serve a
+chiamarlo mentre si è in giro), senza entrare nel programma. È l'unico punto in
+cui il titolare vede qualcosa dei colleghi. Non apre nient'altro: le schede di
+clienti, immobili e richieste restano dietro il muro come prima — quello che
+esce è l'appuntamento, con dentro il nome e il numero di chi riguarda.
 
 Tre cose sono fatte apposta perché l'apertura resti stretta:
 

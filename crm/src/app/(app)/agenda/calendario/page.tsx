@@ -116,8 +116,9 @@ export default async function CalendarioPage() {
 
         <Card title="Tutta l'agenda, sempre allineata">
           <p className="mb-3 text-sm text-slate-600">
-            Questo indirizzo è il tuo calendario. Chi lo riceve vede i tuoi appuntamenti:
-            trattalo come una password, non mandarlo in giro.
+            Questo indirizzo è il tuo calendario. Chi lo riceve vede i tuoi appuntamenti,
+            con il nome e il numero di telefono dei clienti: trattalo come una password,
+            non mandarlo in giro.
           </p>
 
           <CopyField value={indirizzo} etichetta="Indirizzo del calendario" />
