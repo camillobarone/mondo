@@ -556,3 +556,22 @@ export const ZONES = [
   "Porto Cesareo",
   "Torre Lapillo",
 ] as const;
+
+/* ------------------------------------------------- l'esito di un modulo */
+
+/**
+ * Cosa un'azione risponde al modulo che l'ha chiamata (`ModuloConEsito`).
+ *
+ * Una stringa vuol dire **e' andata male**, ed e' il caso di gran lunga piu'
+ * comune: un campo mancante, un'email gia' presa. Chi ha invece qualcosa di
+ * buono da dire lo dichiara, perche' altrimenti finisce nel riquadro rosso —
+ * ed e' successo davvero: il 18 settembre 2026 «Creati in Google i calendari
+ * di ...» e' comparso sullo schermo di Camillo colorato da errore, su una cosa
+ * perfettamente riuscita. Un programma che avvisa allo stesso modo quando va
+ * bene e quando va male insegna a non fidarsi dei suoi avvisi.
+ *
+ * Sta qui e non accanto al componente perche' lo dicono le azioni, che girano
+ * sul server, e lo legge il browser: un tipo condiviso non puo' abitare in un
+ * file «use client».
+ */
+export type EsitoModulo = string | { riuscito: true; testo: string };

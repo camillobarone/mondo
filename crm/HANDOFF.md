@@ -1555,6 +1555,30 @@ registro accessi) · Importazione da Excel · **Ricerca globale** ·
     nel log, vuol dire che qualcuno lavora su una scheda vecchia senza
     accorgersene.
 
+    **Terza cosa vista dal suo schermo, e corretta subito**: «Creati in Google
+    i calendari di Alessandro, Immobiliare Colazzo, Roberto» gli e' comparso
+    **nel riquadro rosso**, su un'operazione perfettamente riuscita. Non era
+    una svista di quella pagina: `AvvisoModulo` era rosso e basta — un solo
+    canale di ritorno per tutto — e le due azioni di Google ci mandavano dentro
+    anche gli esiti buoni. Un programma che avvisa allo stesso modo quando va
+    bene e quando va male insegna a non fidarsi dei suoi avvisi, e il prezzo lo
+    paga il giorno in cui un rosso vero viene ignorato.
+
+    - `EsitoModulo` (in `types.ts`, non accanto al componente: lo scrivono le
+      azioni sul server e lo legge il browser, e un tipo condiviso non puo'
+      abitare in un file «use client»). **Una stringa vuol dire che e' andata
+      male** — cosi' le quattro azioni che rispondono solo errori non si toccano
+      e restano rosse — e chi ha una buona notizia la dichiara:
+      `{ riuscito: true, testo }`.
+    - Verde con `role="status"`, rosso con `role="alert"`. Non e' pignoleria:
+      `alert` interrompe chi usa il lettore di schermo, e per una cosa riuscita
+      non deve. E il colore da solo non basterebbe — chi non distingue il rosso
+      dal verde si ritroverebbe due messaggi identici.
+
+    Provato in browser sulla build: il verde sui due pulsanti di Google, il
+    rosso che **resta** rosso su un Client ID scritto male e sul rifiuto di una
+    scheda cliente, piu' i 21 controlli di prima rifatti.
+
     Rimasto li' apposta, e da decidere da lui: nella descrizione dell'evento
     il collegamento alla scheda del cliente c'e' **anche quando la scheda e'
     di un collega** e quindi non si apre (da' «non trovata»). E' cosi' da

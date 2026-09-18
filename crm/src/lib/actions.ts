@@ -45,7 +45,7 @@ import {
   creaCalendariMancanti,
 } from "./google-sync";
 import { scollega as scollegaGoogle } from "./google";
-import type { Property } from "./types";
+import type { Property, EsitoModulo } from "./types";
 import { ACTIVITY_TYPES } from "./types";
 
 /* ------------------------------------------- come si dice di no a un modulo */
@@ -218,7 +218,7 @@ export async function logoutAction() {
 
 /* ============================================================== clienti */
 
-export async function saveClient(_prev: string | null, form: FormData) {
+export async function saveClient(_prev: EsitoModulo | null, form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id") ?? 0);
 
@@ -390,7 +390,7 @@ export async function saveContactInfo(form: FormData) {
 
 /* ============================================================= immobili */
 
-export async function saveProperty(_prev: string | null, form: FormData) {
+export async function saveProperty(_prev: EsitoModulo | null, form: FormData) {
   const user = await requireUser();
   const id = Number(form.get("id") ?? 0);
 
@@ -1762,7 +1762,7 @@ export async function rigeneraCalendarioDi(formData: FormData) {
  * archivio insieme a tutto il resto, che e' gia' la cosa piu' protetta del
  * server.
  */
-export async function salvaChiaviGoogle(_prima: string | null, form: FormData) {
+export async function salvaChiaviGoogle(_prima: EsitoModulo | null, form: FormData) {
   const user = await requireOwner();
 
   // Gli spazi in coda sono il modo piu' comune di sbagliare un copia-incolla
@@ -1808,7 +1808,10 @@ export async function dimenticaChiaviGoogle() {
 }
 
 /** Manda in Google gli appuntamenti rimasti indietro, uno scaglione per volta. */
-export async function risincronizzaGoogle(_prima: string | null, _form: FormData) {
+export async function risincronizzaGoogle(
+  _prima: EsitoModulo | null,
+  _form: FormData,
+): Promise<EsitoModulo> {
   await requireOwner();
   const esito = await risincronizza();
   revalidatePath("/utenti/google");
@@ -1817,9 +1820,12 @@ export async function risincronizzaGoogle(_prima: string | null, _form: FormData
   if (esito.motivo) {
     return `Mandati ${esito.mandati}, poi mi sono fermato: ${esito.motivo}`;
   }
-  return esito.mandati
-    ? `Mandati ${esito.mandati} appuntamenti. Se ne restano, ripremi.`
-    : "Non c'era niente da mandare: sono già tutti in Google.";
+  return {
+    riuscito: true,
+    testo: esito.mandati
+      ? `Mandati ${esito.mandati} appuntamenti. Se ne restano, ripremi.`
+      : "Non c'era niente da mandare: sono già tutti in Google.",
+  };
 }
 
 /**
@@ -1828,7 +1834,10 @@ export async function risincronizzaGoogle(_prima: string | null, _form: FormData
  * Serve a prepararli in Google — colore, quali tenere accesi — senza dover
  * inventare un appuntamento per farli nascere.
  */
-export async function creaTuttiICalendariGoogle(_prima: string | null, _form: FormData) {
+export async function creaTuttiICalendariGoogle(
+  _prima: EsitoModulo | null,
+  _form: FormData,
+): Promise<EsitoModulo> {
   const user = await requireOwner();
   const esito = await creaCalendariMancanti();
   revalidatePath("/utenti/google");
@@ -1847,9 +1856,14 @@ export async function creaTuttiICalendariGoogle(_prima: string | null, _form: Fo
   if (esito.motivo) {
     return `Creati quelli di ${esito.creati.join(", ")}, poi mi sono fermato: ${esito.motivo}`;
   }
-  return esito.creati.length
-    ? `Creati in Google i calendari di ${esito.creati.join(", ")}. Ora li trovi sotto «Le mie agende».`
-    : "Ce li hanno già tutti: non c'era niente da creare.";
+  // Queste due sono buone notizie, e vanno dette come tali: il riquadro rosso
+  // su «creati» faceva sembrare guasto quello che era appena riuscito.
+  return {
+    riuscito: true,
+    testo: esito.creati.length
+      ? `Creati in Google i calendari di ${esito.creati.join(", ")}. Ora li trovi sotto «Le mie agende».`
+      : "Ce li hanno già tutti: non c'era niente da creare.",
+  };
 }
 
 /* ======================================================== il proprio accesso */
@@ -1970,7 +1984,7 @@ export async function iscriviQuestoTelefono(
 
 /** Toglie questo telefono dagli avvisi. */
 export async function togliQuestoTelefono(
-  _precedente: string | null,
+  _precedente: EsitoModulo | null,
   dati: FormData,
 ): Promise<string | null> {
   const user = await requireUser();

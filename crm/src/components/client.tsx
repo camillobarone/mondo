@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import type { EsitoModulo } from "@/lib/types";
 import {
   createContext,
   useActionState,
@@ -118,7 +119,7 @@ export function Collapsible({
  * mezzo ai due ci sono i campi, che restano componenti di server: una proprieta'
  * dovrebbe attraversarli uno per uno.
  */
-const ContestoEsito = createContext<string | null>(null);
+const ContestoEsito = createContext<EsitoModulo | null>(null);
 
 /**
  * Un modulo che, quando il server rifiuta il salvataggio, mostra il perche'
@@ -141,14 +142,14 @@ export function ModuloConEsito({
   className = "",
   children,
 }: {
-  azione: (precedente: string | null, dati: FormData) => Promise<string | null>;
+  azione: (precedente: EsitoModulo | null, dati: FormData) => Promise<EsitoModulo | null>;
   className?: string;
   children: ReactNode;
 }) {
-  const [errore, invia] = useActionState(azione, null);
+  const [esito, invia] = useActionState(azione, null);
 
   return (
-    <ContestoEsito.Provider value={errore}>
+    <ContestoEsito.Provider value={esito}>
       {/*
         `onReset` che rifiuta non e' un vezzo, e senza di lui meta' del lavoro
         qui sopra non servirebbe a niente.
@@ -181,15 +182,25 @@ export function ModuloConEsito({
  * il salvataggio sembrerebbe non aver fatto niente.
  */
 export function AvvisoModulo() {
-  const errore = useContext(ContestoEsito);
-  if (!errore) return null;
+  const esito = useContext(ContestoEsito);
+  if (!esito) return null;
+
+  const riuscito = typeof esito !== "string";
 
   return (
     <p
-      role="alert"
-      className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+      // `alert` interrompe chi usa il lettore di schermo, e per un guasto e'
+      // giusto; per una cosa riuscita no — li' basta `status`, che aspetta una
+      // pausa. La differenza di colore da sola non basterebbe: chi non
+      // distingue il rosso dal verde si ritroverebbe due messaggi identici.
+      role={riuscito ? "status" : "alert"}
+      className={
+        riuscito
+          ? "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+          : "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+      }
     >
-      {errore}
+      {riuscito ? esito.testo : esito}
     </p>
   );
 }
