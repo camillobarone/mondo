@@ -1507,6 +1507,24 @@ Le cose costruite in questa sessione, in ordine
     non il corpo; e il link del calendario sta dentro un <input readOnly>,
     quindi si legge value, non il testo.
 
+    In esercizio dal 18 settembre 2026, un'ora dopo il commit: ha
+    aggiornato il server con deploy/aggiorna.sh (copia a 0,58 MB, ricompilato,
+    ripartito alle 12:59) e lanciato npm run persone. I due profili adesso
+    ci sono davvero, con la chiave del calendario gia' generata — la riga
+    aperta dal 12 settembre si chiude qui.
+
+    Nello stesso giro, dal systemctl status, e' saltato fuori un contorno che
+    non c'entra con questo lavoro ma va saputo: quattro «Failed to find
+    Server Action» nel log della mattina (08:35, 10:20, 11:04, 11:43). Non e'
+    un guasto — e' una pagina rimasta aperta nel browser da prima del riavvio
+    del 17, che manda comandi con gli identificativi della compilazione
+    vecchia. Quei clic non hanno fatto niente, ed e' la parte che conta: chi
+    ha premuto Salva in quei momenti non ha salvato. Si risolve ricaricando
+    la pagina (Ctrl+F5), e va fatto dopo ogni aggiornamento, su ogni
+    computer e telefono dove il gestionale resta aperto. Se ricompare spesso
+    nel log, vuol dire che qualcuno lavora su una scheda vecchia senza
+    accorgersene.
+
     Rimasto li' apposta, e da decidere da lui: nella descrizione dell'evento
     il collegamento alla scheda del cliente c'e' anche quando la scheda e'
     di un collega e quindi non si apre (da' «non trovata»). E' cosi' da
@@ -1578,17 +1596,15 @@ Le cose costruite in questa sessione, in ordine
       sull'iPhone dopo averlo aggiunto alla schermata Home.
 
   Creare i due profili «Roberto Lefons» e «Alessandro Ciullo»
-      Aspetta lui, ma adesso e' un comando solo: sul server, nella cartella del
-      programma, npm run persone — crea i due profili come Collaboratori,
-      genera la chiave del loro calendario e stampa i due indirizzi .ics. Si
-      puo' rilanciare senza rompere niente. A mano resta la strada di prima:
-      Utenti → Nuovo utente, ruolo Collaboratore, poi I calendari delle persone
-      → Crea il calendario. Appena esistono entrano da soli nella tendina
-      «assegnata a» — vedi i punti 27 e 36. Da qui non si puo' fare:
-      all'archivio di produzione non si arriva. Le email che il comando mette
-      sono nome.cognome@mondoimmobiliarelecce.it: se le caselle vere sono altre
-      si cambiano da Utenti, e vanno cambiate se quelle persone devono ricevere
-      l'avviso per email.
+      Fatto: esistono in produzione dal 18 settembre 2026. Li ha creati lui con
+      npm run persone sul server, subito dopo l'aggiornamento (punto 36). Sono
+      Collaboratori a Lecce, con l'email nome.cognome@mondoimmobiliarelecce.it
+      e la chiave del calendario gia' generata. Resta da fargli confermare due
+      cose: che le email siano quelle giuste — vanno corrette da Utenti se
+      quelle persone devono ricevere l'avviso per posta prima degli
+      appuntamenti — e che in Utenti → Google Calendar → Crea adesso i
+      calendari mancanti siano comparsi i loro due calendari dentro il suo
+      Google.
 
   I tre calendari in abbonamento
       Provati da lui il 15 settembre, e non bastano: Google li ricontrolla
@@ -1609,11 +1625,19 @@ Le cose costruite in questa sessione, in ordine
 
   Rigenerare le chiavi .ics finite in chat
       Gli indirizzi dei calendari di Roberto, Alessandro e Virginia sono stati
-      incollati in conversazione durante le prove. Valgono come password. Un
-      clic da Utenti → genera un indirizzo nuovo. Era «tanto vale», dal 18
-      settembre e' da fare: da quel giorno dentro quei feed c'e' anche il
-      numero di telefono dei clienti (punto 36), quindi una chiave in giro non
-      mostra piu' soltanto che c'e' un appuntamento.
+      incollati in conversazione durante le prove di settembre. Valgono come
+      password. Un clic da Utenti → genera un indirizzo nuovo. Era «tanto
+      vale», dal 18 settembre e' da fare: da quel giorno dentro quei feed c'e'
+      anche il numero di telefono dei clienti (punto 36), quindi una chiave in
+      giro non mostra piu' soltanto che c'e' un appuntamento. Il 18 ce ne sono
+      finite altre due, piu' due password: npm run persone stampa a schermo gli
+      indirizzi e le password appena create, e lui ha incollato in chat tutto
+      quello che il comando aveva scritto. Quei due .ics non servono comunque a
+      niente — i calendari veri li fa il collegamento a Google — quindi
+      rigenerarli non costa niente. Le password contano solo se quei due
+      profili devono entrare davvero nel programma: in quel caso si cambiano da
+      Utenti o con npm run password. Detto a lui il 18; decide lui, e non si
+      ripropone — stessa regola del token di Box (punto 35).
 
   Togliere i calendari in abbonamento da Google
       Quando confermera' che i calendari nuovi ci sono: tenendo tutte e due le
